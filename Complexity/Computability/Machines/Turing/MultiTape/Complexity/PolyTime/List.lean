@@ -7,6 +7,7 @@ Authors: Erik Demaine, Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
@@ -868,13 +869,6 @@ theorem bitsAppend {γ : Type}
   encBits :=
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsAppend γ encIn left right
       hleft.tidy hright.tidy)
-
-/-- Reverse a raw bit string using an accumulator that grows by one bit per step. -/
-@[fun_prop]
-theorem bitsReverse :
-    ComputableInPolyTime List.reverse encBits
-  encBits :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.bitsReverse
 
 /-- Take a computed unary number of bits from a computed bit string. -/
 @[fun_prop]
