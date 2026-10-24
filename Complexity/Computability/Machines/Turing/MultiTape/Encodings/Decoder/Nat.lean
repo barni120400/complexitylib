@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Basic
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
 public import Mathlib.Data.List.DropRight
 import Complexity.Foundations.Data.Nat.Bits
