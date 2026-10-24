@@ -373,3 +373,24 @@ example (routine : List Bool → List Bool) (hc : RoutineContract routine)
   polytime
 
 end ComplexityTests.PolyTimePlainSource
+
+-- A specialized raw Boolean fold does not block the generic direct captured-fold recipe.
+section
+variable {γ α β : Type} (input : γ ↪ List Bool) (element : α ↪ List Bool)
+    (stateEncoding : β ↪ List Bool) (listEncoding : List α ↪ List Bool)
+    [ListEncoding element listEncoding] [SizedListEncoding element listEncoding]
+    (list : γ → List α) (initial : γ → β) (step : γ → β → α → β)
+    (hlist : ComputableTidilyInPolyTime list input listEncoding)
+    (hinitial : ComputableTidilyInPolyTime initial input stateEncoding)
+    (hstep : ComputableTidilyInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+      (encPair (encPair input stateEncoding) element) stateEncoding)
+    (growth : γ → ℕ) (hpoly : PolyBounded (fun x => (input x).length) growth)
+    (hgrowth : ∀ x state value, value ∈ list x →
+      (stateEncoding (step x state value)).length ≤ (stateEncoding state).length + growth x)
+
+example : ComputableTidilyInPolyTime
+    (fun x => (list x).foldl (fun state value => step x state value) (initial x))
+      input stateEncoding := by
+  polytime
+
+end
