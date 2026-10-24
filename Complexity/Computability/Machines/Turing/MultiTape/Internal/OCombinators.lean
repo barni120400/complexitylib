@@ -155,4 +155,9 @@ theorem snd' {β₁ β₂ : Type u} {enc₁ : β₁ ↪ List Bool} {enc₂ : β�
     {f : α → β₁ × β₂} (h : ComputableInO f encIn (encPair enc₁ enc₂) T S) :
     ComputableInO (fun a => (f a).2) encIn enc₂ T S := (snd enc₁ enc₂).comp_linear h
 
+/-- Reinterpret an encoding along an equivalence, retaining the same machine and budgets. -/
+theorem of_equiv {δ : Type*} {f : α → β} (h : ComputableInO f encIn encMid T S) (e : δ ≃ α) :
+    ComputableInO (f ∘ e) (encOfEquiv e encIn) encMid (T ∘ e) (S ∘ e) :=
+  h.of_encIn_eq e fun _ => rfl
+
 end Turing.MultiTapeTM.ComputableInO

@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
+import Mathlib.Tactic.Linarith
 
 /-!
 # Direct consequences of charged asymptotic bounds
@@ -34,6 +35,45 @@ theorem of_bounds {t s : α → ℕ}
     (hl : ∀ a, (encOut (f a)).length ≤ k * (S a + 1)) :
     ComputableInO f encIn encOut T S :=
   ⟨k, hf.mono ht hs, hl⟩
+
+/-- Weaken both bounds by independent pointwise estimates and a common constant. -/
+theorem mono {T' S' : α → ℕ} (h : ComputableInO f encIn encOut T S) (k : ℕ)
+    (hT : ∀ a, T a ≤ k * (T' a + 1)) (hS : ∀ a, S a ≤ k * (S' a + 1)) :
+    ComputableInO f encIn encOut T' S' :=
+  let ⟨c, hc, hl⟩ := h
+  of_bounds hc (c * (k + 1)) (fun a => by nlinarith [hT a])
+    (fun a => by nlinarith [hS a]) (fun a => by nlinarith [hS a, hl a])
+
+/-- Pointwise larger bounds retain the same encoded-output charge. -/
+theorem mono_le {T' S' : α → ℕ} (h : ComputableInO f encIn encOut T S)
+    (hT : ∀ a, T a ≤ T' a) (hS : ∀ a, S a ≤ S' a) :
+    ComputableInO f encIn encOut T' S' :=
+  h.mono 1 (fun a => by have := hT a; omega) (fun a => by have := hS a; omega)
+
+/-- Weaken independent time and charged workspace bounds up to constants. -/
+theorem weaken {T' S' : α → ℕ} (h : ComputableInO f encIn encOut T S)
+    (hT : T ≼ T') (hS : S ≼ S') : ComputableInO f encIn encOut T' S' :=
+  let ⟨k₁, h₁⟩ := hT
+  let ⟨k₂, h₂⟩ := hS
+  h.mono (k₁ + k₂) (fun a => (h₁ a).trans (Nat.mul_le_mul_right _ (Nat.le_add_right _ _)))
+    (fun a => (h₂ a).trans (Nat.mul_le_mul_right _ (Nat.le_add_left _ _)))
+
+/-- An equal encoded output reuses the same machine and both resource budgets. -/
+theorem of_enc_eq {γ : Type*} {encC : γ ↪ List Bool} {g : α → γ}
+    (h : ComputableInO f encIn encOut T S) (hg : ∀ a, encC (g a) = encOut (f a)) :
+    ComputableInO g encIn encC T S := by
+  obtain ⟨c, ⟨k, State, hfinite, tm, htm⟩, hl⟩ := h
+  exact ⟨c, ⟨k, State, hfinite, tm, fun a => hg a ▸ htm a⟩,
+    fun a => by rw [hg a]; exact hl a⟩
+
+/-- Pull back along an input map preserving the complete encoded word. No algorithm for the
+semantic map is assumed: the realizing machine receives exactly the same word. -/
+theorem of_encIn_eq {δ : Type*} {encD : δ ↪ List Bool}
+    (h : ComputableInO f encIn encOut T S) (g : δ → α)
+    (hg : ∀ a, encIn (g a) = encD a) :
+    ComputableInO (f ∘ g) encD encOut (T ∘ g) (S ∘ g) := by
+  obtain ⟨c, ⟨k, State, hfinite, tm, htm⟩, hl⟩ := h
+  exact ⟨c, ⟨k, State, hfinite, tm, fun a => hg a ▸ htm (g a)⟩, fun a => hl (g a)⟩
 
 /-- Polynomial bounds on both resource functions give a plain polynomial-time certificate. -/
 theorem computableInPolyTime (h : ComputableInO f encIn encOut T S)
