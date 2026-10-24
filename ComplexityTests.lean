@@ -422,6 +422,7 @@ import ComplexityTests.RotationWalk
 import ComplexityTests.Routing
 import ComplexityTests.SATPolyTime
 import ComplexityTests.SBPAmplification
+import ComplexityTests.STCON
 import ComplexityTests.SavedPrediction
 import ComplexityTests.SearchTree
 import ComplexityTests.SearchTreeErase
