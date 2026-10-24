@@ -22,9 +22,10 @@ import Complexity.Foundations.Data.BitString.Binary
 
 This module formalizes Rahul Ilango's ETH lower bound for partial-function Minimum Circuit Size
 Problem (`MCSP*` / `PartialMCSP`) [Ilango2020FOCS, Theorem I.3, pp. 424, 427–428; ECCC TR20-183,
-Section 1.1, Theorem 3, p. 3, and Section 3, Theorem 11 & Lemma 12, pp. 21–26]: under the
-Exponential Time Hypothesis (`ETH`), `PartialMCSP` on partial Boolean functions of truth-table
-size $N = 2^m$ cannot be decided in time $N^{o(\log \log N)} = 2^{o(m \log m)}$.
+Section 1.2.2, Theorem 3, p. 6, and Section 3, Theorem 11 (p. 20) & Lemma 12 (p. 22),
+construction and proof pp. 21–26]: under the Exponential Time Hypothesis (`ETH`), `PartialMCSP` on
+partial Boolean functions of arity $m$ (truth-table size $N = 2^m$) is not decidable in
+subexponential time $2^{o(m \log m)} = N^{o(\log \log N)}$ (`¬DecidableInSubexpTime`).
 
 ## Overview of the reduction and faithfulness
 
@@ -63,7 +64,7 @@ size $N = 2^m$ cannot be decided in time $N^{o(\log \log N)} = 2^{o(m \log m)}$.
    $\pi \in S_{2n}$.
 
 4. **Equivalence across circuit and formula models** (Issue #798 Decision D5,
-   [ECCC TR20-183, Section 3, Theorem 11, pp. 21–24]):
+   [ECCC TR20-183, Section 3, Theorem 11, p. 20, construction and proof pp. 21–24]):
    For $n \ge 2$, the instance `ilangoInstance G` of arity $6n$ and threshold $s = 6n - 1$ has all
    $6n$ variables positively essential (`ilangoInstance_posEssential`). By
    `Circuit.exists_posFormula_of_cost_binaryCost_le`, any circuit $c$ with at most $6n - 1$ binary
@@ -91,14 +92,19 @@ size $N = 2^m$ cannot be decided in time $N^{o(\log \log N)} = 2^{o(m \log m)}$.
   [ECCC TR20-183, Section 3, Lemma 12, pp. 22, 24–26].
 * `Cslib.PartialMCSP.mem_BipartitePermutationIndependentSet_iff_ilangoInstance_mem`: correctness of
   `ilangoInstance` for $2 \le G.1$ across `PartialMCSP`, `PartialMCSP.BinaryGate`, and
-  `PartialMCSP.MonotoneReadOnce` [ECCC TR20-183, Section 3, Theorem 11, pp. 21–24].
+  `PartialMCSP.MonotoneReadOnce` [ECCC TR20-183, Section 3, Theorem 11, p. 20, proof pp. 21–24].
 * `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP`,
   `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP_encBinary`,
   `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate`,
+  `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate_encBinary`,
   `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP`,
-  `Cslib.Complexity.ETH.exists_not_decidableInTimeO_PartialMCSP_tableSize`: Ilango's FOCS 2020
-  Theorem 3 (`PartialMCSP` requires time $N^{\Omega(\log \log N)} = 2^{\Omega(m \log m)}$ under
-  `ETH`).
+  `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP_encBinary`,
+  `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP_tableSize`,
+  `Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP_tableSize_encBinary`: Ilango's FOCS
+  2020 Theorem I.3 / ECCC TR20-183 Section 1.2.2 Theorem 3 (under `ETH`, `PartialMCSP` and its
+  binary-gate and monotone-read-once variants reject the subexponential decider family
+  `DecidableInSubexpTime` at $m \log_2 m = \log_2 N \cdot \log_2 \log_2 N$, i.e., are not decidable
+  in time $2^{o(m \log m)} = N^{o(\log \log N)}$).
 
 ## References
 
@@ -119,7 +125,7 @@ namespace PartialMCSP
 /-! ### Read-once monotone formula variant of `PartialMCSP` -/
 
 /-- **Read-once positive formula variant of `PartialMCSP`** [Ilango2020FOCS, Section III.B; ECCC
-TR20-183, Section 3, Theorem 11, p. 21]: instances `x : PartialMCSP.Instance` that agree with some
+TR20-183, Section 3, Theorem 11, p. 20]: instances `x : PartialMCSP.Instance` that agree with some
 read-once positive Boolean formula `F : PosFormula x.arity` with at most `x.threshold` binary
 gates. -/
 def MonotoneReadOnce : Set Instance :=
@@ -378,8 +384,8 @@ def ilangoGamma (G : BipartitePermutationGraph) (w : BitString (6 * G.1)) : Opti
     none
 
 /-- **Ilango's `PartialMCSP` instance** [Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183,
-Section 3, Theorem 11, p. 21]: partial truth table $\gamma_G$ on $6n$ variables with size threshold
-$s = 6n - 1$. -/
+Section 3, Theorem 11, pp. 20–21]: partial truth table $\gamma_G$ on $6n$ variables with size
+threshold $s = 6n - 1$. -/
 def ilangoInstance (G : BipartitePermutationGraph) : Instance where
   arity := 6 * G.1
   table i := ilangoGamma G ((BitString.equivFin (6 * G.1)).symm i)
@@ -1578,7 +1584,7 @@ theorem mem_BipartitePermutationIndependentSet_of_ilangoInstance_mem_binaryGate
   exact h7
 
 /-- **Ilango's Theorem 11 (monotone read-once equivalence for $n \ge 2$)**
-[ECCC TR20-183, Section 3, Theorem 11, p. 21]: for $2 \le G.1$,
+[ECCC TR20-183, Section 3, Theorem 11, p. 20, proof pp. 21–24]: for $2 \le G.1$,
 `G ∈ BipartitePermutationIndependentSet ↔ ilangoInstance G ∈ PartialMCSP.MonotoneReadOnce`. -/
 theorem mem_BipartitePermutationIndependentSet_iff_ilangoInstance_mem_monotoneReadOnce
     {G : BipartitePermutationGraph} (hG : 2 ≤ G.1) :
@@ -1588,7 +1594,7 @@ theorem mem_BipartitePermutationIndependentSet_iff_ilangoInstance_mem_monotoneRe
       (monotoneReadOnce_subset_binaryGate h)⟩
 
 /-- **Ilango's Theorem 11 (binary-gate equivalence for $n \ge 2$)**
-[ECCC TR20-183, Section 3, Theorem 11, p. 21]: for $2 \le G.1$,
+[ECCC TR20-183, Section 3, Theorem 11, p. 20, proof pp. 21–24]: for $2 \le G.1$,
 `G ∈ BipartitePermutationIndependentSet ↔ ilangoInstance G ∈ PartialMCSP.BinaryGate`. -/
 theorem mem_BipartitePermutationIndependentSet_iff_ilangoInstance_mem_binaryGate
     {G : BipartitePermutationGraph} (hG : 2 ≤ G.1) :
@@ -1598,7 +1604,7 @@ theorem mem_BipartitePermutationIndependentSet_iff_ilangoInstance_mem_binaryGate
     mem_BipartitePermutationIndependentSet_of_ilangoInstance_mem_binaryGate hG⟩
 
 /-- **Ilango's Theorem 11 (all-gates equivalence for $n \ge 2$)**
-[ECCC TR20-183, Section 3, Theorem 11, p. 21]: for $2 \le G.1$,
+[ECCC TR20-183, Section 3, Theorem 11, p. 20, proof pp. 21–24]: for $2 \le G.1$,
 `G ∈ BipartitePermutationIndependentSet ↔ ilangoInstance G ∈ PartialMCSP`. -/
 theorem mem_BipartitePermutationIndependentSet_iff_ilangoInstance_mem
     {G : BipartitePermutationGraph} (hG : 2 ≤ G.1) :
@@ -1690,8 +1696,8 @@ theorem decideSmallBPIS_eq_true_iff {G : BipartitePermutationGraph} (hG : G.1 < 
         (Subsingleton.elim _ _) (Subsingleton.elim _ _)
 
 /-- **Total reduction from `BipartitePermutationIndependentSet` to `PartialMCSP`**
-[Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11, p. 21]: maps $G$ to
-`ilangoInstance G` when $2 \le G.1$, and to `trivialYesInstance` / `trivialNoInstance` when
+[Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11, pp. 20–21]: maps $G$
+to `ilangoInstance G` when $2 \le G.1$, and to `trivialYesInstance` / `trivialNoInstance` when
 $G.1 < 2$. -/
 def ilangoReduction (G : BipartitePermutationGraph) : Instance :=
   if G.1 < 2 then
@@ -1927,80 +1933,84 @@ theorem ilangoRawFromFuel_eq (G : BipartitePermutationGraph) :
     simp only [hG, decide_false, Bool.false_eq_true, ↓reduceIte, Prod.mk.injEq]
     exact ⟨(ofFn_ilangoInstance_table G).symm, rfl⟩
 
-open ComputableTidilyInPolyTime in
-@[local fun_prop] private theorem bool_or' {α : Type} {encA : α ↪ List Bool}
-    {left right : α → Bool}
-    (hleft : ComputableTidilyInPolyTime left encA encBool)
-    (hright : ComputableTidilyInPolyTime right encA encBool) :
-    ComputableTidilyInPolyTime (fun a => left a || right a) encA encBool :=
-  bool_or.comp (hleft.prod hright)
+open ComputableInPolyTime in
+@[local fun_prop] private theorem unary_range' {α : Type} {input : α ↪ List Bool} {n : α → ℕ}
+    (hn : ComputableInPolyTime n input encUnary) :
+    ComputableInPolyTime (fun a => List.range (n a)) input (encList encUnary) :=
+  (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.range).comp hn
 
-open ComputableTidilyInPolyTime in
-@[local fun_prop] private theorem bool_beq' {α : Type} {encA : α ↪ List Bool}
-    {left right : α → Bool}
-    (hleft : ComputableTidilyInPolyTime left encA encBool)
-    (hright : ComputableTidilyInPolyTime right encA encBool) :
-    ComputableTidilyInPolyTime (fun a => left a == right a) encA encBool :=
-  bool_beq.comp (hleft.prod hright)
+open ComputableInPolyTime in
+@[local fun_prop] private theorem unary_lt' {α : Type} {input : α ↪ List Bool}
+    {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => decide (left a < right a)) input encBool :=
+  (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_lt).comp (hleft.prod hright)
 
-open ComputableTidilyInPolyTime in
-@[local fun_prop] private theorem optionSome' {α β : Type} {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool} {f : α → β}
-    (hf : ComputableTidilyInPolyTime f encA encB) :
-    ComputableTidilyInPolyTime (fun a => some (f a)) encA (encOption encB) :=
-  (optionSome encB).comp hf
+open ComputableInPolyTime in
+@[local fun_prop] private theorem unary_le' {α : Type} {input : α ↪ List Bool}
+    {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encUnary)
+    (hright : ComputableInPolyTime right input encUnary) :
+    ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
+  (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_le).comp (hleft.prod hright)
 
-open ComputableTidilyInPolyTime in
-@[local fun_prop] private theorem cond' {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
-    {condition : α → Bool} {yes no : α → β}
-    (hcondition : ComputableTidilyInPolyTime condition encA encBool)
-    (hyes : ComputableTidilyInPolyTime yes encA encB)
-    (hno : ComputableTidilyInPolyTime no encA encB) :
-    ComputableTidilyInPolyTime (fun a => if condition a then yes a else no a) encA encB :=
-  hcondition.cond hyes hno
-
-open ComputableTidilyInPolyTime in
+open ComputableInPolyTime in
 @[local fun_prop] private theorem unary_testBit' {α : Type} {input : α ↪ List Bool} {n i : α → ℕ}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hi : ComputableTidilyInPolyTime i input encUnary) :
-    ComputableTidilyInPolyTime (fun a => (n a).testBit (i a)) input encBool :=
-  binary_testBit (unary_to_binary.comp hn) hi
+    (hn : ComputableInPolyTime n input encUnary)
+    (hi : ComputableInPolyTime i input encUnary) :
+    ComputableInPolyTime (fun a => (n a).testBit (i a)) input encBool :=
+  (ComputableInPolyTime.of_tidy
+    (ComputableTidilyInPolyTime.binary_testBit
+      (ComputableTidilyInPolyTime.unary_to_binary.comp
+        (ComputableTidilyInPolyTime.fst encUnary encUnary))
+      (ComputableTidilyInPolyTime.snd encUnary encUnary))).comp (hn.prod hi)
 
-open ComputableTidilyInPolyTime in
-@[local fun_prop] private theorem computableTidilyInPolyTime_decideSmallBPIS :
-    ComputableTidilyInPolyTime decideSmallBPIS encBipartitePermutationGraph encBool := by
+open ComputableInPolyTime in
+@[local fun_prop] private theorem computableInPolyTime_decideSmallBPIS :
+    ComputableInPolyTime decideSmallBPIS encBipartitePermutationGraph encBool := by
   unfold decideSmallBPIS BipartitePermutationGraph encBipartitePermutationGraph
-  fun_prop
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) (by fun_prop)
 
-open ComputableTidilyInPolyTime in
-@[local fun_prop] private theorem computableTidilyInPolyTime_ilangoEntry :
-    ComputableTidilyInPolyTime (fun p : BipartitePermutationGraph × ℕ => ilangoEntry p.1 p.2)
+open ComputableInPolyTime in
+@[local fun_prop] private theorem computableInPolyTime_ilangoEntry :
+    ComputableInPolyTime (fun p : BipartitePermutationGraph × ℕ => ilangoEntry p.1 p.2)
       (encPair encBipartitePermutationGraph encUnary) (encOption encBool) := by
   unfold ilangoEntry BipartitePermutationGraph encBipartitePermutationGraph
-  fun_prop
+  simp only [List.all_eq_not_any_not]
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) ?_
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) ?_
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) ?_
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) ?_
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) ?_
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) ?_
+  refine ite' (encC := encBool) (by fun_prop) (by fun_prop) (by fun_prop)
 
-open ComputableTidilyInPolyTime in
-private theorem computableTidilyInPolyTime_ilangoRawFromFuel :
-    ComputableTidilyInPolyTime ilangoRawFromFuel
+open ComputableInPolyTime in
+private theorem computableInPolyTime_ilangoRawFromFuel :
+    ComputableInPolyTime ilangoRawFromFuel
       (encPair encBipartitePermutationGraph encUnary)
       (encPair (encList (encOption encBool)) encUnary) := by
-  have h1 := computableTidilyInPolyTime_decideSmallBPIS
-  have h2 := computableTidilyInPolyTime_ilangoEntry
+  have h1 := computableInPolyTime_decideSmallBPIS
+  have h2 := computableInPolyTime_ilangoEntry
   unfold ilangoRawFromFuel BipartitePermutationGraph encBipartitePermutationGraph at *
+  refine ite' (by fun_prop)
+    (ite' (by fun_prop) (by fun_prop) (by fun_prop)) ?_
   fun_prop
 
-open ComputableTidilyInPolyTime in
-private theorem computableTidilyInPolyTime_ilangoRawFromFuel_binary :
-    ComputableTidilyInPolyTime ilangoRawFromFuel
+open ComputableInPolyTime in
+private theorem computableInPolyTime_ilangoRawFromFuel_binary :
+    ComputableInPolyTime ilangoRawFromFuel
       (encPair encBipartitePermutationGraph encUnary)
       (encPair (encList (encOption encBool)) encNat) := by
-  have hconv : ComputableTidilyInPolyTime
+  have hconv : ComputableInPolyTime
       (fun q : List (Option Bool) × ℕ => (q.1, q.2))
       (encPair (encList (encOption encBool)) encUnary)
       (encPair (encList (encOption encBool)) encNat) :=
     (fst (encList (encOption encBool)) encUnary).prod
-      (unary_to_binary.comp (snd (encList (encOption encBool)) encUnary))
-  exact hconv.comp computableTidilyInPolyTime_ilangoRawFromFuel
+      ((ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_to_binary).comp
+        (snd (encList (encOption encBool)) encUnary))
+  exact hconv.comp computableInPolyTime_ilangoRawFromFuel
 
 private theorem foldl_double_replicate (k : ℕ) (acc : ℕ) :
     (List.replicate k true).foldl (fun n _ => n + n) acc = acc * 2 ^ k := by
@@ -2062,24 +2072,24 @@ private theorem computableTidilyInO_twoPow :
     omega
   · simp [foldl_double_replicate]
 
-private theorem computableTidilyInPolyTime_sixMulFst :
-    ComputableTidilyInPolyTime (fun G : BipartitePermutationGraph => 6 * G.1)
+private theorem computableInPolyTime_sixMulFst :
+    ComputableInPolyTime (fun G : BipartitePermutationGraph => 6 * G.1)
       encBipartitePermutationGraph encUnary := by
   unfold BipartitePermutationGraph encBipartitePermutationGraph
   fun_prop
 
-private theorem exists_computableTidilyInO_ilangoReduction_of_raw
+private theorem exists_computableInO_ilangoReduction_of_raw
     {encOut : (List (Option Bool) × ℕ) ↪ List Bool}
     {encInst : Instance ↪ List Bool}
-    (hRaw : ComputableTidilyInPolyTime ilangoRawFromFuel
+    (hRaw : ComputableInPolyTime ilangoRawFromFuel
       (encPair encBipartitePermutationGraph encUnary) encOut)
     (henc : ∀ I : Instance, encInst I = encOut (List.ofFn I.table, I.threshold)) :
-    ∃ C D : ℕ, ComputableTidilyInO ilangoReduction
+    ∃ C D : ℕ, ComputableInO ilangoReduction
       encBipartitePermutationGraph encInst
       (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D)
       (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) := by
-  obtain ⟨d₁, _, hd₁⟩ := computableTidilyInPolyTime_sixMulFst.exists_degree
-  obtain ⟨d₂, _, hd₂⟩ := hRaw.exists_degree
+  obtain ⟨d₁, _, hd₁⟩ := computableInPolyTime_sixMulFst.tidy.exists_degree
+  obtain ⟨d₂, _, hd₂⟩ := hRaw.tidy.exists_degree
   have hId : ComputableTidilyInO (fun G : BipartitePermutationGraph => G)
       encBipartitePermutationGraph encBipartitePermutationGraph
       (fun G => (encBipartitePermutationGraph G).length)
@@ -2138,52 +2148,36 @@ private theorem exists_computableTidilyInO_ilangoReduction_of_raw
     generalize 2 ^ (C * G.1) * (L + 1) ^ D = W at ht1 ht2 ht3 hpow_pair ⊢
     generalize 3 ^ d₂ = K₃ at hpow_pair ⊢
     nlinarith
-  refine ⟨C, D, (hComp.mono (3 ^ d₂ + 3) hbound hbound).of_enc_eq fun G => ?_⟩
+  refine ⟨C, D, .of_tidy ((hComp.mono (3 ^ d₂ + 3) hbound hbound).of_enc_eq fun G => ?_)⟩
   rw [henc, ← ilangoRawFromFuel_eq]
   rfl
 
-private theorem exists_computableTidilyInO_ilangoReduction :
-    ∃ C D : ℕ, ComputableTidilyInO ilangoReduction
-      encBipartitePermutationGraph PartialMCSP.enc
-      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D)
-      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) :=
-  exists_computableTidilyInO_ilangoReduction_of_raw
-    computableTidilyInPolyTime_ilangoRawFromFuel enc_apply
-
-private theorem exists_computableTidilyInO_ilangoReduction_encBinary :
-    ∃ C D : ℕ, ComputableTidilyInO ilangoReduction
-      encBipartitePermutationGraph PartialMCSP.encBinary
-      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D)
-      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) :=
-  exists_computableTidilyInO_ilangoReduction_of_raw
-    computableTidilyInPolyTime_ilangoRawFromFuel_binary encBinary_apply
-
 /-- **Plain $2^{O(n)}$-time computability of Ilango's reduction** under unary threshold encoding
 (`PartialMCSP.enc`) [Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11,
-p. 21]. -/
+pp. 20–21]. -/
 theorem exists_computableInO_ilangoReduction :
     ∃ C D : ℕ, ComputableInO ilangoReduction
       encBipartitePermutationGraph PartialMCSP.enc
       (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D)
-      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) := by
-  obtain ⟨C, D, h⟩ := exists_computableTidilyInO_ilangoReduction
-  exact ⟨C, D, h.computableInO⟩
+      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) :=
+  exists_computableInO_ilangoReduction_of_raw
+    computableInPolyTime_ilangoRawFromFuel enc_apply
 
 /-- **Plain $2^{O(n)}$-time computability of Ilango's reduction** under binary threshold encoding
 (`PartialMCSP.encBinary`) [Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3,
-Theorem 11, p. 21]. -/
+Theorem 11, pp. 20–21]. -/
 theorem exists_computableInO_ilangoReduction_encBinary :
     ∃ C D : ℕ, ComputableInO ilangoReduction
       encBipartitePermutationGraph PartialMCSP.encBinary
       (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D)
-      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) := by
-  obtain ⟨C, D, h⟩ := exists_computableTidilyInO_ilangoReduction_encBinary
-  exact ⟨C, D, h.computableInO⟩
+      (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D) :=
+  exists_computableInO_ilangoReduction_of_raw
+    computableInPolyTime_ilangoRawFromFuel_binary encBinary_apply
 
 /-! ## Section 7: Subexponential-Time Transfer and Ilango's ETH Lower Bounds -/
 
 /-- The truth-table size $N = 2^m$ of a `PartialMCSP.Instance` of arity $m$
-[Ilango2020FOCS, Theorem I.3, p. 424; ECCC TR20-183, Theorem 3, p. 3]. -/
+[Ilango2020FOCS, Theorem I.3, p. 424; ECCC TR20-183, Section 1.2.2, Theorem 3, p. 6]. -/
 def Instance.tableSize (x : Instance) : ℕ :=
   2 ^ x.arity
 
@@ -2241,7 +2235,7 @@ private theorem mul_le_pow_add_mul_log (C : ℕ) {ε : ℝ} (hε : 0 < ε) (n : 
 
 private theorem decidableInSubexpTime_bpis_of_ilangoReduction_aux
     {B : Set Instance} {encB : Instance ↪ List Bool}
-    (hred : ∃ C D : ℕ, ComputableTidilyInO ilangoReduction
+    (hred : ∃ C D : ℕ, ComputableInO ilangoReduction
       encBipartitePermutationGraph encB
       (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D)
       (fun G => 2 ^ (C * G.1) * ((encBipartitePermutationGraph G).length + 1) ^ D))
@@ -2251,6 +2245,7 @@ private theorem decidableInSubexpTime_bpis_of_ilangoReduction_aux
       fun G => G.1 * Nat.log 2 G.1 := by
   intro ε hε
   obtain ⟨C, D, hfO⟩ := hred
+  have hfO := hfO.tidy
   obtain ⟨l, hl⟩ := hfO.length_le_time
   set δ : ℝ := ε / 48
   have hδ : 0 < δ := by positivity
@@ -2375,7 +2370,7 @@ theorem decidableInSubexpTime_bpis_of_ilangoReduction
     DecidableInSubexpTime BipartitePermutationIndependentSet encBipartitePermutationGraph
       fun G => G.1 * Nat.log 2 G.1 :=
   decidableInSubexpTime_bpis_of_ilangoReduction_aux
-    exists_computableTidilyInO_ilangoReduction hiff hsub
+    exists_computableInO_ilangoReduction hiff hsub
 
 /-- **Subexponential-time transfer along Ilango's $2^{O(n)}$-time reduction** (binary threshold
 encoding `PartialMCSP.encBinary`): if a target problem `B` on `PartialMCSP.Instance` is decidable in
@@ -2388,7 +2383,7 @@ theorem decidableInSubexpTime_bpis_of_ilangoReduction_encBinary
     DecidableInSubexpTime BipartitePermutationIndependentSet encBipartitePermutationGraph
       fun G => G.1 * Nat.log 2 G.1 :=
   decidableInSubexpTime_bpis_of_ilangoReduction_aux
-    exists_computableTidilyInO_ilangoReduction_encBinary hiff hsub
+    exists_computableInO_ilangoReduction_encBinary hiff hsub
 
 end PartialMCSP
 
@@ -2397,10 +2392,10 @@ namespace Complexity
 open PartialMCSP Turing.MultiTapeTM
 
 /-- **Ilango's ETH Lower Bound for `PartialMCSP` (unary threshold encoding)**
-[Ilango2020FOCS, Theorem I.3, pp. 424, 427–428; ECCC TR20-183, Section 1.1, Theorem 3, p. 3, and
-Section 3, Theorem 11, p. 21]: under `ETH`, `PartialMCSP` on $m$-variable partial Boolean functions
-cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$ (where $N = 2^m$ is the truth-table
-size). -/
+[Ilango2020FOCS, Theorem I.3, pp. 424, 427–428; ECCC TR20-183, Section 1.2.2, Theorem 3, p. 6, and
+Section 3, Theorem 11, pp. 20–21]: under `ETH`, `PartialMCSP` on $m$-variable partial Boolean
+functions cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$ (where $N = 2^m$ is the
+truth-table size). -/
 theorem ETH.not_decidableInSubexpTime_PartialMCSP (h : ETH) :
     ¬DecidableInSubexpTime PartialMCSP PartialMCSP.enc
       fun I => I.arity * Nat.log 2 I.arity :=
@@ -2409,9 +2404,10 @@ theorem ETH.not_decidableInSubexpTime_PartialMCSP (h : ETH) :
       mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem hsub)
 
 /-- **Ilango's ETH Lower Bound for `PartialMCSP` (binary threshold encoding)**
-[Ilango2020FOCS, Theorem I.3, pp. 424, 427–428; ECCC TR20-183, Section 1.1, Theorem 3, p. 3, and
-Section 3, Theorem 11, p. 21]: under `ETH`, `PartialMCSP` on $m$-variable partial Boolean functions
-cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$ under binary threshold encoding. -/
+[Ilango2020FOCS, Theorem I.3, pp. 424, 427–428; ECCC TR20-183, Section 1.2.2, Theorem 3, p. 6, and
+Section 3, Theorem 11, pp. 20–21]: under `ETH`, `PartialMCSP` on $m$-variable partial Boolean
+functions cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$ under binary threshold
+encoding. -/
 theorem ETH.not_decidableInSubexpTime_PartialMCSP_encBinary (h : ETH) :
     ¬DecidableInSubexpTime PartialMCSP PartialMCSP.encBinary
       fun I => I.arity * Nat.log 2 I.arity :=
@@ -2420,9 +2416,9 @@ theorem ETH.not_decidableInSubexpTime_PartialMCSP_encBinary (h : ETH) :
       mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem hsub)
 
 /-- **Ilango's ETH Lower Bound for `PartialMCSP.BinaryGate` (unary threshold encoding)**
-[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, Theorem 11, p. 21]: under `ETH`,
-`PartialMCSP.BinaryGate` (circuit size measured by binary AND/OR gates) cannot be decided in time
-$2^{o(m \log m)} = N^{o(\log \log N)}$. -/
+[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, Theorem 11, pp. 20–21]: under
+`ETH`, `PartialMCSP.BinaryGate` (circuit size measured by binary AND/OR gates) cannot be decided in
+time $2^{o(m \log m)} = N^{o(\log \log N)}$. -/
 theorem ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate (h : ETH) :
     ¬DecidableInSubexpTime PartialMCSP.BinaryGate PartialMCSP.enc
       fun I => I.arity * Nat.log 2 I.arity :=
@@ -2431,9 +2427,9 @@ theorem ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate (h : ETH) :
       mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem_binaryGate hsub)
 
 /-- **Ilango's ETH Lower Bound for `PartialMCSP.BinaryGate` (binary threshold encoding)**
-[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, Theorem 11, p. 21]: under `ETH`,
-`PartialMCSP.BinaryGate` cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$ under
-binary threshold encoding. -/
+[Ilango2020FOCS, Section III.B, p. 427; ECCC TR20-183, Section 3, Theorem 11, pp. 20–21]: under
+`ETH`, `PartialMCSP.BinaryGate` cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$
+under binary threshold encoding. -/
 theorem ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate_encBinary (h : ETH) :
     ¬DecidableInSubexpTime PartialMCSP.BinaryGate PartialMCSP.encBinary
       fun I => I.arity * Nat.log 2 I.arity :=
@@ -2442,9 +2438,9 @@ theorem ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate_encBinary (h : ETH)
       mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem_binaryGate hsub)
 
 /-- **Ilango's ETH Lower Bound for `PartialMCSP.MonotoneReadOnce` (unary threshold encoding)**
-[Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11, p. 21]: under `ETH`,
-even deciding whether a partial Boolean function has a monotone read-once formula of size at most
-`threshold` cannot be done in time $2^{o(m \log m)} = N^{o(\log \log N)}$. -/
+[Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11, pp. 20–21]: under
+`ETH`, even deciding whether a partial Boolean function has a monotone read-once formula of size at
+most `threshold` cannot be done in time $2^{o(m \log m)} = N^{o(\log \log N)}$. -/
 theorem ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP (h : ETH) :
     ¬DecidableInSubexpTime PartialMCSP.MonotoneReadOnce PartialMCSP.enc
       fun I => I.arity * Nat.log 2 I.arity :=
@@ -2453,9 +2449,9 @@ theorem ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP (h : ETH) :
       mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem_monotoneReadOnce hsub)
 
 /-- **Ilango's ETH Lower Bound for `PartialMCSP.MonotoneReadOnce` (binary threshold encoding)**
-[Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11, p. 21]: under `ETH`,
-`PartialMCSP.MonotoneReadOnce` cannot be decided in time $2^{o(m \log m)} = N^{o(\log \log N)}$
-under binary threshold encoding. -/
+[Ilango2020FOCS, Section III.B, p. 428; ECCC TR20-183, Section 3, Theorem 11, pp. 20–21]: under
+`ETH`, `PartialMCSP.MonotoneReadOnce` cannot be decided in time
+$2^{o(m \log m)} = N^{o(\log \log N)}$ under binary threshold encoding. -/
 theorem ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP_encBinary (h : ETH) :
     ¬DecidableInSubexpTime PartialMCSP.MonotoneReadOnce PartialMCSP.encBinary
       fun I => I.arity * Nat.log 2 I.arity :=
@@ -2464,7 +2460,7 @@ theorem ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP_encBinary (h :
       mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem_monotoneReadOnce hsub)
 
 /-- **Truth-table-size ($N = 2^m$) formulation of Ilango's ETH Lower Bound for `PartialMCSP`**
-[Ilango2020FOCS, Theorem I.3, p. 424; ECCC TR20-183, Section 1.1, Theorem 3, p. 3]: under `ETH`,
+[Ilango2020FOCS, Theorem I.3, p. 424; ECCC TR20-183, Section 1.2.2, Theorem 3, p. 6]: under `ETH`,
 `PartialMCSP` on partial truth tables of size $N = I.\text{tableSize} = 2^m$ is not decidable in
 time $N^{o(\log \log N)} = 2^{o(\log_2 N \cdot \log_2 \log_2 N)}$. -/
 theorem ETH.not_decidableInSubexpTime_PartialMCSP_tableSize (h : ETH) :
@@ -2473,8 +2469,8 @@ theorem ETH.not_decidableInSubexpTime_PartialMCSP_tableSize (h : ETH) :
   simpa only [Instance.log_tableSize] using h.not_decidableInSubexpTime_PartialMCSP
 
 /-- **Truth-table-size ($N = 2^m$) formulation of Ilango's ETH Lower Bound for `PartialMCSP`
-(binary threshold encoding)** [Ilango2020FOCS, Theorem I.3, p. 424; ECCC TR20-183, Section 1.1,
-Theorem 3, p. 3]: under `ETH`, `PartialMCSP` on partial truth tables of size
+(binary threshold encoding)** [Ilango2020FOCS, Theorem I.3, p. 424; ECCC TR20-183, Section 1.2.2,
+Theorem 3, p. 6]: under `ETH`, `PartialMCSP` on partial truth tables of size
 $N = I.\text{tableSize} = 2^m$ is not decidable in time
 $N^{o(\log \log N)} = 2^{o(\log_2 N \cdot \log_2 \log_2 N)}$ under binary threshold encoding. -/
 theorem ETH.not_decidableInSubexpTime_PartialMCSP_tableSize_encBinary (h : ETH) :

@@ -13,10 +13,11 @@ public import Complexity.Computability.Circuit.Monotone.Formula
 /-!
 # Positive and read-once Boolean formulas from tight binary-cost circuits
 
-A one-output De Morgan circuit `c : Circuit Boolean.signature n 1` that depends on all `n` inputs
-must use at least `n - 1` binary (`AND`/`OR`) gates
+A one-output De Morgan circuit `c : Circuit Boolean.signature n 1` on `n ≥ 1` variables that
+depends on all `n` inputs must use at least `n - 1` binary (`AND`/`OR`) gates
 (`Circuit.card_inputSupport_le_cost_binaryCost`).
-When this bound is tight (`c.program.cost binaryCost ≤ n - 1`), no gate in the backward cone of the
+When `n ≥ 1` and this bound is tight (`c.program.cost binaryCost ≤ n - 1`, i.e.
+`c.program.cost binaryCost + 1 ≤ n`), no gate in the backward cone of the
 output can share wires or use a Boolean constant, so the circuit unfolds without duplication into a
 constant-free negation-normal-form formula (`LitFormula`) of leaf size `n` in which each of the `n`
 variables appears at a single leaf (`Circuit.exists_litFormula_of_cost_binaryCost_le`).
