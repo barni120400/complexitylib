@@ -228,9 +228,10 @@ bootstrap_worktree_cache() {
   fi
 }
 
-# refuse_primary_or_symlink_target <wt_path>
+# refuse_primary_or_symlink_target <wt_path> [prospective|seed]
 refuse_primary_or_symlink_target() {
   local wt_path="$1"
+  local mode="${2:-seed}"
   local root_real wt_real
   root_real="$(resolve_path "$ROOT")"
   wt_real="$(resolve_path "$wt_path")"
@@ -243,6 +244,10 @@ refuse_primary_or_symlink_target() {
       echo "Refusing to seed inside primary checkout .lake: $wt_path" >&2
       return 1
       ;;
+    "$root_real/.git"|"$root_real/.git/"*)
+      echo "Refusing to seed inside primary checkout .git: $wt_path" >&2
+      return 1
+      ;;
     "$root_real"/*)
       local wt_top=""
       if [ -d "$wt_real" ] && [ -e "$wt_real/.git" ]; then
@@ -252,8 +257,19 @@ refuse_primary_or_symlink_target() {
         fi
       fi
       if [ "$wt_top" != "$wt_real" ]; then
-        echo "Refusing to seed inside primary checkout subdirectory: $wt_path" >&2
-        return 1
+        if [ "$mode" = "prospective" ]; then
+          case "$wt_real" in
+            "$root_real/.worktrees/"*)
+              ;;
+            *)
+              echo "Refusing to seed inside primary checkout subdirectory: $wt_path" >&2
+              return 1
+              ;;
+          esac
+        else
+          echo "Refusing to seed inside primary checkout subdirectory: $wt_path" >&2
+          return 1
+        fi
       fi
       ;;
   esac
@@ -291,7 +307,7 @@ refuse_primary_or_symlink_target() {
 seed_lake() {
   local wt_path="$1"
   local copy_mode="${2:-none}"
-  refuse_primary_or_symlink_target "$wt_path"
+  refuse_primary_or_symlink_target "$wt_path" "seed"
   if [ ! -d "$ROOT/.lake" ]; then
     echo "No root .lake directory found at $ROOT/.lake; skipping cache seed."
     bootstrap_worktree_cache "$wt_path"
@@ -363,6 +379,7 @@ case "$cmd" in
       dir_name="${branch//\//-}"
     fi
     wt_path="$ROOT/.worktrees/$dir_name"
+    refuse_primary_or_symlink_target "$wt_path" "prospective"
     if git show-ref --verify --quiet "refs/heads/$branch"; then
       if [ "$force_reset" = "true" ]; then
         effective_base="${base_ref:-origin/main}"

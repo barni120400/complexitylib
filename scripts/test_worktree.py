@@ -350,6 +350,23 @@ class WorktreeSeedTests(unittest.TestCase):
         self.assertEqual(reg_res.returncode, 0, reg_res.stderr)
         self.assert_cache_isolated(registered)
 
+    def test_create_refuses_prohibited_targets_before_git_worktree_add(self) -> None:
+        shutil.rmtree(self.root / ".lake", ignore_errors=True)
+        before_wt_list = git(self.root, "worktree", "list", "--porcelain")
+
+        for idx, bad_dir in enumerate(("..", "../.lake/forbidden", "../forbidden-subdir", ".")):
+            with self.subTest(bad_dir=bad_dir):
+                branch = f"fixture-invalid-target-{idx}"
+                res = subprocess.run(
+                    [str(self.root / "scripts/worktree.sh"), "create", branch, bad_dir, "HEAD"],
+                    cwd=self.root, text=True, capture_output=True, env=GIT_ENV,
+                )
+                self.assertNotEqual(res.returncode, 0)
+                self.assertIn("primary checkout", res.stderr)
+                self.assertFalse((self.root / ".lake").exists())
+                self.assertFalse((self.root / "forbidden-subdir").exists())
+                self.assertEqual(git(self.root, "worktree", "list", "--porcelain"), before_wt_list)
+
     def test_source_symlinks_to_primary_checkout_are_dereferenced(self) -> None:
         primary_file = self.root / "PrimarySecret.lean"
         primary_file.write_text("primary content\n", encoding="utf-8")
