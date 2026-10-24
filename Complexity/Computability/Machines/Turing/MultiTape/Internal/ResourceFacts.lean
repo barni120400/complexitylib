@@ -45,6 +45,13 @@ theorem ComputesInTimeAndSpace.length_output_le {input output : List Symbol} {t 
   rw [heq]
   simpa using tm.length_output_runFrom_le (tm.initCfg input) t
 
+/-- **An output computed without bounds is computed within bounds**: the time at which the machine
+halts, and the space it has used by then. -/
+theorem Computes.exists_computesInTimeAndSpace {input output : List Symbol}
+    (h : tm.Computes input output) : ∃ t s, tm.ComputesInTimeAndSpace input output t s :=
+  let ⟨u, hu, _⟩ := h
+  ⟨u, _, h, runsInTime_of_halted hu, runsInSpace_of_halted hu le_rfl⟩
+
 end Machine
 
 variable {α β : Type*} {f : α → β} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool}
