@@ -7,6 +7,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeLoops
+import Complexity.Computability.Machines.Turing.MultiTape.Internal.UnaryMachines
 
 /-!
 # Direct plain list primitives
@@ -20,7 +21,7 @@ computability calculus.
 
 namespace Turing.MultiTapeTM
 
-open Cslib
+open Cslib Internal.Unary
 
 private theorem ofTransducer {Q : Type} [Finite Q] (τ : Transducer Bool Q)
     {α β : Type*} {input : α ↪ List Bool} {output : β ↪ List Bool} {f : α → β}
@@ -30,27 +31,6 @@ private theorem ofTransducer {Q : Type} [Finite Q] (τ : Transducer Bool Q)
     0, _, inferInstance, τ.toTM, fun a => ?_⟩
   rw [hf a]
   exact τ.computesInTimeAndSpace_toTM (input a)
-
-private def unarySuccTransducer : Transducer Bool Bool where
-  q₀ := true
-  step q bit := (false, if q then [true, bit] else [bit])
-  final q := if q then [true] else []
-  length_step_le q bit := by cases q <;> simp
-  length_final_le q := by cases q <;> simp
-
-private theorem unarySuccRun (word : List Bool) :
-    unarySuccTransducer.run true word = true :: word ∧
-      unarySuccTransducer.run false word = word := by
-  induction word with
-  | nil => constructor <;> rfl
-  | cons bit word ih =>
-    constructor
-    · change [true, bit] ++ unarySuccTransducer.run false word = true :: bit :: word
-      rw [ih.2]
-      rfl
-    · change [bit] ++ unarySuccTransducer.run false word = bit :: word
-      rw [ih.2]
-      rfl
 
 private def snocTransducer : Transducer Bool (Option Bool) where
   q₀ := none
