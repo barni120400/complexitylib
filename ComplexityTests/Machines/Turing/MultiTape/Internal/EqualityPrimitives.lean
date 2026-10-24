@@ -44,7 +44,18 @@ run_cmd do
     if (← getEnv).contains name then
       throwError "A higher tidy calculus was imported: {name}"
 
+/-- info: 'Turing.MultiTapeTM.ComputableInDegree.eqWordsStep' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInDegree.eqWordsStep
+
+/-- info: 'Turing.MultiTapeTM.ComputableInDegree.eqWordsResult' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInDegree.eqWordsResult
+
+/-- info: 'Turing.MultiTapeTM.ComputableInO.eqWords' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInO.eqWords
+
+/-- info: 'Turing.MultiTapeTM.ComputableInO.eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInO.eq

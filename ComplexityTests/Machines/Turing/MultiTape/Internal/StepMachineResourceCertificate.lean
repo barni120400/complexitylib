@@ -7,7 +7,7 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: local-only (test driver)
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachine
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachineComp
 
 /-! # A direct resource-certified streaming emitter
 
@@ -116,6 +116,15 @@ example : ∃ t, ComputableInBigO (fun _ : List Bool => ([] : List Bool)) encBit
     rfl
   · intros
     exact ⟨le_rfl, le_rfl⟩
+
+-- Full composition telescope retains the public formulas for independent component resources.
+example {σf σg : Type} {f : StepMachine σf Bool Bool} {g : StepMachine σg Bool Bool}
+    {encF : σf ↪ List Bool} {encG : σg ↪ List Bool}
+    {Tf Sf : σf → ℕ} {Tg Sg : σg → ℕ}
+    (hf : f.ResourceCertificate encF Tf Sf) (hg : g.ResourceCertificate encG Tg Sg) :
+    (g.comp f).ResourceCertificate (StepMachine.encCompState encF encG)
+      (StepMachine.compTime encF encG Tf Sf Tg) (StepMachine.compSpace encF encG Sf Sg) :=
+  hf.comp hg
 
 /-- info: 'Turing.StepMachine.ResourceCertificate.computableInBigO' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

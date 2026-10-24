@@ -11,8 +11,10 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.StepMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.StepMachine.Comp
-public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
-public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OLoops
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinarySizeFacts
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 import Mathlib.Data.Nat.Size
 import Mathlib.Tactic.Linarith
@@ -104,6 +106,17 @@ lemma CompState.cd_inO : ComputableInO CompState.cd (encCompState encF encG) enc
     (fun s => (encCompState encF encG s).length)
     fun s => (encCompState encF encG s).length :=
   (snd _ _).snd'.snd'.of_equiv CompState.equivProd
+
+/-- Reconstruct a composition state from its defining tuple encoding. -/
+lemma CompState.fromProd_inO :
+    ComputableInO (CompState.equivProd (σf := σf) (σg := σg)).symm
+      (encPair (encPair encG encNat) (encPair encPhase (encPair encF encCountdown)))
+      (encCompState encF encG)
+      (fun p => (encPair (encPair encG encNat)
+        (encPair encPhase (encPair encF encCountdown)) p).length)
+      (fun p => (encPair (encPair encG encNat)
+        (encPair encPhase (encPair encF encCountdown)) p).length) :=
+  .of_eq fun _ => rfl
 
 /-! ### Countdowns -/
 
@@ -219,8 +232,8 @@ lemma moveOn_inO : ComputableInO (fun q : ℕ × ℕ × SignType => moveOn q.1 q
     have h₂ := length_encPair (enc₁ := encNat) (enc₂ := encMove) q.2
     have h₃ := (show (encNat (q.2.1 - 1)).length ≤ (encNat q.2.1).length from by
       simpa [Nat.size_eq_bits_len] using Nat.size_le_size (Nat.sub_le q.2.1 1))
-    have h₄ := length_encNat_add_le q.1 1
-    have h₅ := length_encNat_add_le q.2.1 1
+    have h₄ := ComputableTidilyInO.length_encNat_add_le q.1 1
+    have h₅ := ComputableTidilyInO.length_encNat_add_le q.2.1 1
     have h₆ := length_encPair (enc₁ := encNat) (enc₂ := encNat) (q.2.1, q.1 + 1)
     simp only [Function.comp_apply] at h₁ h₂ h₃ h₆ ⊢
     split_ifs <;> nlinarith
@@ -414,6 +427,52 @@ lemma stepF_inO (hf : f.ResourceCertificate encF Tf Sf) :
   · simp only [Function.comp_apply]
     bigO
 
+/-- Run the next component's step on its reconstructed input symbol. -/
+lemma stepG_round_inO (hg : g.ResourceCertificate encG Tg Sg) :
+    ComputableInO
+      (fun p : CompState σf σg × Option Bool => g.step p.1.g.1 (p.1.cd.symbol p.1.g.2))
+      encArg (encPair encG (encPair encMove encBits))
+      (fun p => 4 * (encArg p).length + Tg p.1.g.1)
+      (fun p => 4 * (encArg p).length + Sg p.1.g.1) := by
+  have hs := fst (encCompState encF encG) (encOption encBool)
+  have hgp : ComputableInO (fun p : CompState σf σg × Option Bool => p.1.g)
+      encArg (encPair encG encNat) _ _ := CompState.g_inO.comp_linear hs
+  have hcd : ComputableInO (fun p : CompState σf σg × Option Bool => p.1.cd)
+      encArg encCountdown _ _ := CompState.cd_inO.comp_linear hs
+  have hsym : ComputableInO
+      (fun p : CompState σf σg × Option Bool => p.1.cd.symbol p.1.g.2)
+      encArg (encOption encBool) _ _ := Countdown.symbol_inO.comp_linear (hgp.snd'.prod hcd)
+  have hr := (hg.computable_step.comp (hgp.fst'.prod hsym)).mono_le
+    (T' := fun p => 4 * (encArg p).length + Tg p.1.g.1)
+    (S' := fun p => 4 * (encArg p).length + Sg p.1.g.1)
+    (fun p => by dsimp only; omega) fun p => by
+      dsimp only; omega
+  exact hr
+
+/-- Compute the new head position, separating its certificate from state assembly. -/
+lemma stepG_head_inO (hg : g.ResourceCertificate encG Tg Sg) :
+    ComputableInO
+      (fun p : CompState σf σg × Option Bool =>
+        moveOn p.1.cd.len p.1.g.2 (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1)
+      encArg encNat
+      (fun p => 6 * (encArg p).length + Tg p.1.g.1 +
+        ((encPair encNat (encPair encNat encMove)
+          (p.1.cd.len, p.1.g.2, (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1)).length + 1) ^ 2)
+      (fun p => 6 * (encArg p).length + Sg p.1.g.1 +
+        (encPair encNat (encPair encNat encMove)
+          (p.1.cd.len, p.1.g.2, (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1)).length + 1) := by
+  have hs := fst (encCompState encF encG) (encOption encBool)
+  have hgp := CompState.g_inO.comp_linear hs
+  have hcd := CompState.cd_inO.comp_linear hs
+  have hr := stepG_round_inO (encF := encF) hg
+  have hq : ComputableInO
+      (fun p : CompState σf σg × Option Bool =>
+        moveOn p.1.cd.len p.1.g.2 (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1)
+      encArg encNat _ _ := moveOn_inO.comp ((Countdown.len_inO.comp_linear hcd).prod
+    (hgp.snd'.prod hr.snd'.fst'))
+  exact hq.mono_le (fun _ => by simp only [Function.comp_apply]; omega)
+    (fun _ => by simp only [Function.comp_apply]; omega)
+
 /-- **Stepping `g`**, the step of the composition once `f` has halted. -/
 lemma stepG_inO (hg : g.ResourceCertificate encG Tg Sg) :
     ComputableInO (fun p : CompState σf σg × Option Bool =>
@@ -423,25 +482,12 @@ lemma stepG_inO (hg : g.ResourceCertificate encG Tg Sg) :
           CompState σf σg), (0 : SignType), (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.2))
       encArg encRes
       (fun p => compTime encF encG Tf Sf Tg p.1) fun p => compSpace encF encG Sf Sg p.1 := by
-  have hs := fst (encCompState encF encG) (encOption encBool)
-  have hgp := CompState.g_inO.comp_linear hs
-  have hcd := CompState.cd_inO.comp_linear hs
-  have hsym := Countdown.symbol_inO.comp_linear (hgp.snd'.prod hcd)
-  have hr := (hg.computable_step.comp (hgp.fst'.prod hsym)).mono_le
-    (T' := fun p => 4 * (encArg p).length + Tg p.1.g.1)
-    (S' := fun p => 4 * (encArg p).length + Sg p.1.g.1)
-    (fun p => by simp only [Function.comp_apply]; omega) fun p => by
-      simp only [Function.comp_apply]; omega
-  have hq := moveOn_inO.comp ((Countdown.len_inO.comp_linear hcd).prod
-    (hgp.snd'.prod hr.snd'.fst'))
+  have hr := stepG_round_inO (encF := encF) hg
+  have hq := stepG_head_inO (encF := encF) hg
   have hstart := Countdown.start_inO.comp_linear hq
-  have hst := (((hr.fst'.prod hq).prod ((const CompPhase.rewindStart (encMid := encPhase)).prod
-    ((const f.init (encMid := encF)).prod hstart))).of_enc_eq (encOut := encCompState encF encG)
-      (g := fun p : CompState σf σg × Option Bool =>
-        (⟨((g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).1,
-          moveOn p.1.cd.len p.1.g.2 (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1), .rewindStart,
-          f.init, .start (moveOn p.1.cd.len p.1.g.2 (g.step p.1.g.1 (p.1.cd.symbol p.1.g.2)).2.1)⟩ :
-          CompState σf σg)) fun p => rfl)
+  have hst := CompState.fromProd_inO.comp_linear
+    ((hr.fst'.prod hq).prod ((const CompPhase.rewindStart (encMid := encPhase)).prod
+      ((const f.init (encMid := encF)).prod hstart)))
   -- the head of `g` and the countdown are within the size of the state
   obtain ⟨hgs, hpg, hlen, -⟩ := parts_bigO (encF := encF) (encG := encG)
   have hA := encArg_bigO (encF := encF) (encG := encG)
@@ -467,8 +513,7 @@ lemma stepG_inO (hg : g.ResourceCertificate encG Tg Sg) :
         fun p => compSpace encF encG Sf Sg p.1 :=
     BigOLe.trans (by simp only [length_encPair]; bigO) hLs
   refine (hst.prod ((const (0 : SignType) (encMid := encMove)).prod hr.snd'.snd')).weaken ?_ ?_ <;>
-  · simp only [Function.comp_apply]
-    bigO
+  · bigO
 
 lemma le_compTime (s : CompState σf σg) :
     (encCompState encF encG s).length + 1 ≤ compTime encF encG Tf Sf Tg s := by
@@ -543,7 +588,8 @@ lemma compStep_eq (f : StepMachine σf Bool Bool) (g : StepMachine σg Bool Bool
   obtain ⟨⟨sg, _ | _ | _, sf, cd⟩, a⟩ := p <;> simp [compStep]
 
 /-- **Composition preserves step-machine resource certificates.** -/
-public theorem ResourceCertificate.comp (hf : f.ResourceCertificate encF Tf Sf) (hg : g.ResourceCertificate encG Tg Sg) :
+public theorem ResourceCertificate.comp (hf : f.ResourceCertificate encF Tf Sf)
+    (hg : g.ResourceCertificate encG Tg Sg) :
     (g.comp f).ResourceCertificate (encCompState encF encG) (compTime encF encG Tf Sf Tg)
       (compSpace encF encG Sf Sg) where
   computable_halt := by

@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinarySizeFacts
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
@@ -180,26 +181,6 @@ lemma iterate_countStep (step : β → β) (t : ℕ) (b : β) {k : ℕ} (hk : k 
   | succ k ih =>
     rw [Function.iterate_succ_apply', ih (by omega), show t - k = t - (k + 1) + 1 by omega,
       countStep, Function.iterate_succ_apply']
-
-/-- The length of `encNat` is monotone. -/
-public lemma length_encNat_mono {m n : ℕ} (h : m ≤ n) : (encNat m).length ≤ (encNat n).length := by
-  simpa [Nat.size_eq_bits_len] using Nat.size_le_size h
-
--- upstream: vendored crei:crei/tidy-universal @9cce4cc7 (unsubmitted)
--- vendored: `length_encNat_add_le` below, from that revision's `Complexity/Binary`
-
-/-- Adding `i` adds at most `i` bits. -/
-public lemma length_encNat_add_le (n i : ℕ) : (encNat (n + i)).length ≤ (encNat n).length + i := by
-  induction i with
-  | zero => rfl
-  | succ i ih =>
-    refine le_trans ?_ (Nat.add_le_add_right ih 1)
-    simp only [encNat_apply, Nat.size_eq_bits_len, ← Nat.add_assoc]
-    refine Nat.size_le.mpr ((Nat.succ_le_of_lt (Nat.lt_size_self _)).trans_lt ?_)
-    rw [pow_succ]
-    have := Nat.one_le_two_pow (n := (n + i).size)
-    omega
-
 
 /-- A round of the counted iteration. -/
 lemma countStep_inO {step : β → β} {Ts Ss : β → ℕ}
