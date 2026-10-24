@@ -122,3 +122,48 @@ info: 'Turing.MultiTapeTM.ComputableInPolyTime.bitsReverse' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Turing.MultiTapeTM.ComputableInPolyTime.bitsReverse
+
+-- The full generic input and element encodings are retained; no finite/nonempty element premise.
+example {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
+    {head : γ → α} {tail : γ → List α}
+    (hhead : ComputableInPolyTime head encIn encA)
+    (htail : ComputableInPolyTime tail encIn (encList encA)) :
+    ComputableInPolyTime (fun x => head x :: tail x) encIn (encList encA) := by
+  fail_if_success (clear hhead; fun_prop)
+  fail_if_success (clear htail; fun_prop)
+  fun_prop
+
+example {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
+    {left right : γ → List α}
+    (hleft : ComputableInPolyTime left encIn (encList encA))
+    (hright : ComputableInPolyTime right encIn (encList encA)) :
+    ComputableInPolyTime (fun x => (left x).reverse ++ right x) encIn (encList encA) := by
+  fail_if_success (clear hleft; fun_prop)
+  fail_if_success (clear hright; fun_prop)
+  fun_prop
+
+-- A captured computed word may change representation before the direct reverse recipe.
+example {γ : Type} {input : γ ↪ List Bool} {word : γ → List Bool}
+    (hword : ComputableInPolyTime word input encBits) :
+    ComputableInPolyTime (fun x => (word x).reverse) input encBits := by
+  fail_if_success (clear hword; fun_prop)
+  exact ComputableInPolyTime.bitsReverseWithInput hword
+
+-- Framed reversal also works when the element type is empty.
+example (encoding : Empty ↪ List Bool) :
+    ComputableInPolyTime (List.reverse : List Empty → List Empty)
+      (encList encoding) (encList encoding) := by
+  exact ComputableInPolyTime.listReverseWithInput ComputableInPolyTime.id'
+
+example : ComputableInPolyTime (fun p : ℕ × List ℕ => (p.1 :: p.2).reverse ++ p.2)
+    (encPair encUnary (encList encUnary)) (encList encUnary) := by
+  fun_prop
+
+example : (([false, true] : List Bool).reverse ++ [true]) = [true, false, true] := rfl
+
+/--
+info: 'Turing.MultiTapeTM.ComputableInPolyTime.listReverseWithInput' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.listReverseWithInput
