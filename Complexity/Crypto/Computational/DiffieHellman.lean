@@ -28,10 +28,13 @@ The Decisional Diffie–Hellman (DDH) experiment ([BonehShoup2023], Attack Game 
 real tuple `(d, encode (α • g), encode (β • g), encode ((α * β) • g))` against the ideal tuple
 `(d, encode (α • g), encode (β • g), encode (γ • g))` with an independent uniform `γ`.
 
-We prove the hierarchy of reductions `DiscreteLog ≤ CDH ≤ DDH` and the worst-case-to-average-case
-random self-reducibility of DDH (`ddhRerandomizeLaw_real` and `ddhRerandomizeLaw_ideal`), which
-maps any fixed real DDH tuple to the uniform real DDH distribution and any fixed non-DDH tuple to
-the uniform ideal DDH distribution.
+We prove the implications `DDH ⇒ CDH ⇒ DiscreteLog` between the assumptions, and the
+distributional rerandomisation lemma underlying the random self-reducibility of DDH
+([BonehShoup2023], Exercises 10.8–10.9; `ddhRerandomizeLaw_real` and `ddhRerandomizeLaw_ideal`):
+rerandomising maps any fixed real DDH tuple to the uniform real DDH distribution and any fixed
+non-DDH tuple to the uniform ideal DDH distribution. The rerandomisation acts on group elements with
+exact uniform exponents; the efficient worst-case-to-average-case algorithm (Exercise 10.10) is not
+formalized. The Diffie–Hellman assumptions are hypotheses, not theorems.
 
 ## Main definitions
 
@@ -44,7 +47,7 @@ the uniform ideal DDH distribution.
   the real and ideal Decisional Diffie–Hellman experiments and assumption.
 * `Cslib.Crypto.PrimeOrderGroupFamily.cdhToDDHDistinguisher`: the reduction from CDH to DDH.
 * `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomize`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw`: random self-reduction for DDH tuples.
+  `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw`: rerandomisation of DDH tuples.
 
 ## Main results
 
@@ -55,12 +58,13 @@ the uniform ideal DDH distribution.
   `Cslib.Crypto.PrimeOrderGroupFamily.DDH.discreteLog`: `DDH` implies `CDH` and `DiscreteLog`
   when `1 / q` is negligible.
 * `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw_real`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw_ideal`: random self-reducibility of DDH.
+  `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw_ideal`: the distributional rerandomisation
+  lemma for DDH tuples.
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Sections 10.4–10.6.
+  Version 0.6][BonehShoup2023], Section 10.5 (Attack Games 10.5–10.6, Exercises 10.7–10.9).
 -/
 
 @[expose] public section

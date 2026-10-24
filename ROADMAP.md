@@ -1241,15 +1241,17 @@ Jukna coverage below is an additional target beyond the V1 port:
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
   approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
 * **Diffie–Hellman assumptions and ElGamal encryption (#640, track C, #873).** Boneh–Shoup
-  Sections 10.4–10.6 and 11.4. Over a `PrimeOrderGroupFamily`,
+  Section 10.5 and Exercise 11.5. Over a `PrimeOrderGroupFamily`,
   [Computational and Decisional Diffie–Hellman](Complexity/Crypto/Computational/DiffieHellman.lean)
   (`cdhGame`, `CDH`, `ddhRealGame`, `ddhIdealGame`, `DDH`) are formalized with the reductions
-  `DiscreteLog ≤ CDH ≤ DDH` (`CDH.discreteLog`, `DDH.cdh`, `DDH.discreteLog`) and worst-case-to-average-case
-  random self-reducibility of DDH (`ddhRerandomizeLaw_real`, `ddhRerandomizeLaw_ideal`).
+  `DDH ⇒ CDH ⇒ DiscreteLog` (`CDH.discreteLog`, `DDH.cdh`, `DDH.discreteLog`) and the distributional
+  DDH rerandomisation lemma (`ddhRerandomizeLaw_real`, `ddhRerandomizeLaw_ideal`, Exercises 10.8–10.9).
   [ElGamal public-key encryption](Complexity/Crypto/Computational/ElGamal.lean) (`elGamalEncrypt`,
   `elGamalDecrypt`, polynomial-time encoded decryption `decodeElGamal`, and bit encryption
-  `elGamalCPAGame`) is proved IND-CPA secure under DDH (`advantage_elGamalCPAGame_le`,
-  `DDH.elGamalINDCPA`, Boneh–Shoup Theorem 11.1). Open: hashed ElGamal, Cramer–Shoup CCA
+  `elGamalCPAGame`) is proved IND-CPA secure for one-bit messages under DDH
+  (`advantage_elGamalCPAGame_le`, `DDH.elGamalINDCPA`, Boneh–Shoup Exercise 11.5(a)). Open:
+  group-element messages and efficient honest key generation/encryption, the efficient DDH random
+  self-reduction (Exercise 10.10), hashed ElGamal, Cramer–Shoup CCA
   security, and Pedersen commitments over `PrimeOrderGroupFamily`.
 * **Lattice identification and signatures (#640, track B).** The short-integer-solution
   hypothesis, exact box rejection sampling and Lyubashevsky identification are in review (#660).

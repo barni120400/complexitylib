@@ -20,8 +20,9 @@ import Mathlib.SetTheory.Cardinal.Finite
 /-!
 # ElGamal encryption and IND-CPA security under DDH
 
-Over a `PrimeOrderGroupFamily`, ElGamal public-key encryption ([BonehShoup2023], Section 11.4) uses
-a group description `d`, a secret exponent `α : ZMod (F.order d)`, and the public key `u = α • g`.
+Over a `PrimeOrderGroupFamily`, multiplicative ElGamal encryption ([BonehShoup2023], Exercise 11.5)
+uses a group description `d`, a secret exponent `α : ZMod (F.order d)`, and the public key
+`u = α • g`.
 To encrypt a group element `m : F.Carrier d` with randomness `β : ZMod (F.order d)`, the sender
 forms the ciphertext `(v, e) = (β • g, β • u + m) = (β • g, (α * β) • g + m)`. Decryption recovers
 `e - α • v = m`, and encoded decryption (`decodeElGamal`) computes this in polynomial time from
@@ -34,7 +35,16 @@ chooses two challenge bits with a saved state word, and receives an ElGamal encr
 selected challenge bit. Replacing the Diffie–Hellman mask `(α * β) • g` with an independent uniform
 `γ • g` masks the message perfectly (`uniform_smul_generator_add`), reducing IND-CPA security of
 ElGamal encryption directly to the Decisional Diffie–Hellman assumption (`DDH.elGamalINDCPA`,
-[BonehShoup2023], Theorem 11.1).
+[BonehShoup2023], Exercise 11.5(a)).
+
+## Limitations
+
+Security is proved for one-bit messages `{0, g}` through the library's bit-message
+`Encryption.Adversary`, not for adversarially chosen group-element messages. The experiment is a
+hand-written game whose key generation and encryption sample exact uniform exponents in
+`ZMod (F.order d)`; only decryption (`decodeElGamal`) is certified polynomial time, and the scheme
+is not an instance of `Encryption.INDCPA` with efficient honest algorithms. The Diffie–Hellman
+assumptions are hypotheses, not theorems.
 
 ## Main definitions
 
@@ -60,13 +70,13 @@ ElGamal encryption directly to the Decisional Diffie–Hellman assumption (`DDH.
   `γ • g + m` is uniformly distributed over `F.Carrier d`.
 * `Cslib.Crypto.PrimeOrderGroupFamily.advantage_elGamalCPAGame_le`,
   `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_elGamalToDDHDistinguisher`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.DDH.elGamalINDCPA`: ElGamal IND-CPA security under DDH
-  ([BonehShoup2023], Theorem 11.1).
+  `Cslib.Crypto.PrimeOrderGroupFamily.DDH.elGamalINDCPA`: ElGamal IND-CPA security for bit
+  messages under DDH ([BonehShoup2023], Exercise 11.5(a)).
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 11.4, Theorem 11.1.
+  Version 0.6][BonehShoup2023], Exercise 11.5(a) (multiplicative ElGamal).
 -/
 
 @[expose] public section
@@ -224,7 +234,7 @@ theorem computableInPolyTime_encodeBit :
   exact ComputableInPolyTime.of_tidy
     (F.computableInPolyTime_smul.tidy.comp (hd.prod (hbit.prod hgen)))
 
-/-- The IND-CPA experiment for ElGamal bit encryption ([BonehShoup2023], Section 11.4): draw `d`
+/-- The IND-CPA experiment for ElGamal bit encryption ([BonehShoup2023], Exercise 11.5): draw `d`
 from `setup n` and a uniform secret key `α : ZMod (F.order d)`, pass the encoded public key
 `(d, encode (α • g))` to `adversary.choose`, encrypt the selected challenge bit under a fresh
 uniform exponent `β : ZMod (F.order d)`, and pass the saved state and encoded ciphertext to
@@ -252,7 +262,7 @@ def elGamalINDCPA (setup : ℕ → PMF F.Desc) : Prop :=
     Encryption.Adversary.IsPPT
 
 /-- The DDH distinguisher constructed from an IND-CPA adversary ([BonehShoup2023], proof of
-Theorem 11.1): given `(d, u, v, w)`, pass `(d, u)` as the public key, encrypt the selected
+Exercise 11.5(a)): given `(d, u, v, w)`, pass `(d, u)` as the public key, encrypt the selected
 challenge bit by masking with `w`, and return the adversary's guess. -/
 def elGamalToDDHDistinguisher (adversary : Encryption.Adversary) (bit : Bool) (n : ℕ)
     (input : F.Desc × List Bool × List Bool × List Bool) : ProbComp Bool := do
@@ -295,7 +305,7 @@ theorem ddhIdealGame_elGamalToDDHDistinguisher_false_eq_true (setup : ℕ → PM
       (fun x => ProbComp.eval (adversary.guess n choice.2
         (encPair encBits encBits (F.encode d (β • F.generator d), F.encode d x))))).symm
 
-/-- **Quantitative reduction of ElGamal IND-CPA to DDH** ([BonehShoup2023], Theorem 11.1): the
+/-- **Quantitative reduction of ElGamal IND-CPA to DDH** ([BonehShoup2023], Exercise 11.5(a)): the
 IND-CPA distinguishing advantage of `adversary` is bounded by the sum of the DDH advantages of
 `elGamalToDDHDistinguisher adversary false` and `elGamalToDDHDistinguisher adversary true`. -/
 theorem advantage_elGamalCPAGame_le (setup : ℕ → PMF F.Desc)
@@ -351,7 +361,7 @@ theorem isPPTOn_elGamalToDDHDistinguisher {adversary : Encryption.Adversary}
   exact (hchoose.preprocess (by fun_prop) hpk).bind_with (hguess.preprocess hct)
 
 /-- **ElGamal bit encryption is IND-CPA secure under the DDH assumption**
-([BonehShoup2023], Theorem 11.1). -/
+([BonehShoup2023], Exercise 11.5(a)). -/
 theorem DDH.elGamalINDCPA {F : PrimeOrderGroupFamily} {setup : ℕ → PMF F.Desc}
     (hDDH : F.DDH setup) : F.elGamalINDCPA setup := by
   intro adversary hA
