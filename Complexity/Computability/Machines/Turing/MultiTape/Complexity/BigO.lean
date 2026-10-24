@@ -8,6 +8,7 @@ module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 -- vendored: use core's fold homomorphism law for the captured-parameter identity.
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigOLe
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
@@ -737,22 +738,6 @@ public theorem ComputableTidilyInBigO.of_bounds
 /-- Weakening the bounds, up to constant factors. -/
 public theorem ComputableTidilyInBigO.weaken (h : ComputableTidilyInBigO f encIn encOut T S)
     (hT : T ≼ T') (hS : S ≼ S') : ComputableTidilyInBigO f encIn encOut T' S' :=
-  let ⟨c, hc⟩ := h
-  .of_bounds hc ((BigOLe.const_mul c (u := fun a => T a + 1)
-    (.of_le_linear 1 1 fun _ => by omega)).trans hT)
-    ((BigOLe.const_mul c (u := fun a => S a + 1) (.of_le_linear 1 1 fun _ => by omega)).trans hS)
-
-/-- Bounds up to constant factors. -/
-public theorem ComputableInBigO.of_bounds (h : ComputableInTimeAndSpace f encIn encOut t s)
-    (ht : t ≼ T) (hs : s ≼ S) : ComputableInBigO f encIn encOut T S :=
-  let ⟨k₁, h₁⟩ := ht
-  let ⟨k₂, h₂⟩ := hs
-  ⟨k₁ + k₂, h.mono (fun a => (h₁ a).trans (Nat.mul_le_mul_right _ (Nat.le_add_right _ _)))
-    fun a => (h₂ a).trans (Nat.mul_le_mul_right _ (Nat.le_add_left _ _))⟩
-
-/-- Weakening the bounds, up to constant factors. -/
-public theorem ComputableInBigO.weaken (h : ComputableInBigO f encIn encOut T S)
-    (hT : T ≼ T') (hS : S ≼ S') : ComputableInBigO f encIn encOut T' S' :=
   let ⟨c, hc⟩ := h
   .of_bounds hc ((BigOLe.const_mul c (u := fun a => T a + 1)
     (.of_le_linear 1 1 fun _ => by omega)).trans hT)
