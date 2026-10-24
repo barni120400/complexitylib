@@ -59,16 +59,11 @@ compile what is missing, and the bootstrap never claims that all requested artif
 available.
 
 `scripts/worktree.sh create` and `scripts/worktree.sh seed` run `scripts/cache/ensure.sh` in the
-worktree and link `.lake/packages` by default to a read-only, pin-keyed shared directory
-(`.worktrees/.shared/packages-cslib-<rev>-<state>` or `.worktrees/.shared/packages-cslib-<rev>`,
-with both files and directories made read-only, or an existing `.shared/packages-cslib-...`
-alongside the worktree) rather than copying dependency build outputs into every worktree. When any
-dependency pin in `lake-manifest.json` or `lean-toolchain` moves, `scripts/worktree.sh` creates a
-new shared directory and never updates an existing shared directory in place. It never points a
-worktree at the primary checkout, refuses targets or symlinks that do, and materializes any
-package symlink whose target is absolute or escapes the package directory. Pass `--copy-cslib` for
-a writable copy of `cslib` (with other packages still shared) or `--copy-packages` for writable
-copies of all packages.
+worktree after seeding `.lake` caches. The helper never points a worktree at the primary checkout,
+refuses targets or destination cache symlinks that do, isolates dependency `.git` directories and
+`gitdir:` pointer files so Git operations in a worktree cannot modify the primary checkout's `HEAD`
+or `index`, and dereferences any package symlink whose target is absolute or escapes the package
+directory. Pass `--copy-cslib` or `--copy-packages` when package sources must change.
 
 ## Trust and privacy
 

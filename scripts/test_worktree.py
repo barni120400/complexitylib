@@ -1,9 +1,7 @@
-"""Temporary-repository tests for worktree branch selection, shared pin-keyed package caches,
-primary-checkout protection, and cache bootstrap."""
+"""Temporary-repository tests for worktree branch selection, cache bootstrap, and isolation."""
 
 from __future__ import annotations
 
-import json
 import os
 import pathlib
 import shutil
@@ -12,8 +10,7 @@ import subprocess
 import tempfile
 import unittest
 
-REPO = pathlib.Path(__file__).resolve().parent.parent
-SCRIPT = REPO / "scripts/worktree.sh"
+SCRIPT = pathlib.Path(__file__).resolve().parent / "worktree.sh"
 
 GIT_ENV = {
     **os.environ,
@@ -23,6 +20,7 @@ GIT_ENV = {
     "GIT_COMMITTER_EMAIL": "test@example.com",
     "GIT_CONFIG_GLOBAL": os.devnull,
     "GIT_CONFIG_NOSYSTEM": "1",
+    "COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP": "1",
 }
 
 
@@ -36,30 +34,12 @@ def git(cwd: pathlib.Path, *args: str) -> str:
     ).stdout.strip()
 
 
-def make_tree_writable(root: pathlib.Path) -> None:
-    if not root.exists():
-        return
-    for dirpath, _dirnames, filenames in os.walk(root):
-        try:
-            os.chmod(dirpath, stat.S_IMODE(os.lstat(dirpath).st_mode) | 0o700)
-        except OSError:
-            pass
-        for name in filenames:
-            path = os.path.join(dirpath, name)
-            if not os.path.islink(path):
-                try:
-                    os.chmod(path, stat.S_IMODE(os.lstat(path).st_mode) | 0o600)
-                except OSError:
-                    pass
-
-
 @unittest.skipUnless(shutil.which("git"), "git is required")
 class WorktreeCreateTests(unittest.TestCase):
     def setUp(self) -> None:
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.tmp = pathlib.Path(tmp.name)
-        self.addCleanup(make_tree_writable, self.tmp)
         self.origin = self.tmp / "origin.git"
         subprocess.run(
             ["git", "init", "--quiet", "--bare", "-b", "main", str(self.origin)],
@@ -98,14 +78,14 @@ class WorktreeCreateTests(unittest.TestCase):
         git(self.other, "switch", "--quiet", "main")
         return sha
 
-    def create(self, *args: str, **extra_env: str) -> subprocess.CompletedProcess[str]:
+    def create(self, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["bash", str(self.work / "scripts/worktree.sh"), "create", *args],
             cwd=self.work,
             capture_output=True,
             text=True,
             check=False,
-            env={**GIT_ENV, **extra_env},
+            env=env or GIT_ENV,
         )
 
     def upstream(self, wt: pathlib.Path) -> str | None:
@@ -153,265 +133,35 @@ class WorktreeCreateTests(unittest.TestCase):
         self.assertIn("mutually exclusive", proc.stderr)
         self.assertFalse((self.work / ".worktrees/fresh").exists())
 
-    def test_create_shares_readonly_pin_keyed_packages_and_never_updates_in_place(self) -> None:
-        cslib_repo = self.work / ".lake/packages/cslib"
-        cslib_repo.mkdir(parents=True)
-        git(cslib_repo, "init", "--quiet", "-b", "main")
-        (cslib_repo / "Cslib.lean").write_text("-- cslib v1\n", encoding="utf-8")
-        git(cslib_repo, "add", "Cslib.lean")
-        git(cslib_repo, "commit", "--quiet", "-m", "cslib v1")
-        rev_v1 = git(cslib_repo, "rev-parse", "HEAD")
-
-        manifest_v1 = {"packages": [{"name": "cslib", "rev": rev_v1}]}
-        (self.other / "lake-manifest.json").write_text(json.dumps(manifest_v1), encoding="utf-8")
-        git(self.other, "add", "lake-manifest.json")
-        git(self.other, "commit", "--quiet", "-m", "pin v1")
-        git(self.other, "push", "--quiet", "origin", "main")
-        git(self.work, "fetch", "--quiet", "origin", "main")
-        git(self.work, "reset", "--quiet", "--hard", "origin/main")
-
+    def test_create_isolates_seeded_dependency_caches(self) -> None:
         paths = [pathlib.Path(".lake/packages/cslib/.lake") / part
                  for part in ("build/trace", "config/lakefile.olean")]
         for path in paths:
             cache = self.work / path
             cache.parent.mkdir(parents=True, exist_ok=True)
-            cache.write_bytes(b"v1 cache\n")
-
-        first = self.create("feature/one", "one")
-        self.assertEqual(first.returncode, 0, first.stderr)
-        wt_one = self.work / ".worktrees/one"
-        pkg_link_one = wt_one / ".lake/packages"
-        self.assertTrue(pkg_link_one.is_symlink())
-        shared_v1 = pkg_link_one.resolve()
-        self.assertEqual(shared_v1.parent, (self.work / ".worktrees/.shared").resolve())
-        self.assertEqual(shared_v1.name, f"packages-cslib-{rev_v1[:8]}")
-
-        replacement_probe = self.tmp / "atomic-replace-probe"
-        replacement_probe.write_bytes(b"replaced via os.replace\n")
+            cache.write_bytes(b"root cache\n")
+        result = self.create("feature/fresh", "fresh")
+        self.assertEqual(result.returncode, 0, result.stderr)
         for path in paths:
-            root_file = self.work / path
-            worker_file = wt_one / path
-            self.assertFalse(os.path.samefile(root_file, worker_file))
-            self.assertEqual(stat.S_IMODE(worker_file.stat().st_mode) & 0o222, 0)
-            self.assertEqual(stat.S_IMODE(worker_file.parent.stat().st_mode) & 0o222, 0)
-            with self.assertRaises(PermissionError):
-                worker_file.write_bytes(b"cannot mutate shared cache\n")
-            with self.assertRaises(PermissionError):
-                os.replace(replacement_probe, worker_file)
-            self.assertEqual(worker_file.read_bytes(), b"v1 cache\n")
-            self.assertEqual(root_file.read_bytes(), b"v1 cache\n")
+            root, worker = self.work / path, self.work / ".worktrees/fresh" / path
+            self.assertFalse(os.path.samefile(root, worker))
+            worker.write_bytes(b"worker cache\n")
+            self.assertEqual(root.read_bytes(), b"root cache\n")
 
-        # Mutate the primary checkout's .lake/packages and verify a second worktree at the same pin
-        # reuses the existing shared directory without updating it in place.
-        for path in paths:
-            (self.work / path).write_bytes(b"mutated root cache\n")
-        second = self.create("feature/two", "two")
-        self.assertEqual(second.returncode, 0, second.stderr)
-        wt_two = self.work / ".worktrees/two"
-        self.assertEqual((wt_two / ".lake/packages").resolve(), shared_v1)
-        for path in paths:
-            self.assertEqual((wt_two / path).read_bytes(), b"v1 cache\n")
-            self.assertTrue(os.path.samefile(wt_one / path, wt_two / path))
-
-        # Advance the cslib pin on a new branch and verify a new shared directory is created
-        # while the v1 shared directory remains untouched.
-        (cslib_repo / "Cslib.lean").write_text("-- cslib v2\n", encoding="utf-8")
-        git(cslib_repo, "add", "Cslib.lean")
-        git(cslib_repo, "commit", "--quiet", "-m", "cslib v2")
-        rev_v2 = git(cslib_repo, "rev-parse", "HEAD")
-
-        manifest_v2 = {"packages": [{"name": "cslib", "rev": rev_v2}]}
-        git(self.other, "switch", "--quiet", "-c", "feature/pin-v2", "origin/main")
-        (self.other / "lake-manifest.json").write_text(json.dumps(manifest_v2), encoding="utf-8")
-        git(self.other, "add", "lake-manifest.json")
-        git(self.other, "commit", "--quiet", "-m", "pin v2")
-        git(self.other, "push", "--quiet", "origin", "feature/pin-v2")
-        git(self.other, "switch", "--quiet", "main")
-
-        for path in paths:
-            (self.work / path).write_bytes(b"v2 cache\n")
-        third = self.create("feature/pin-v2", "pin-v2")
-        self.assertEqual(third.returncode, 0, third.stderr)
-        wt_three = self.work / ".worktrees/pin-v2"
-        shared_v2 = (wt_three / ".lake/packages").resolve()
-        self.assertEqual(shared_v2.parent, (self.work / ".worktrees/.shared").resolve())
-        self.assertEqual(shared_v2.name, f"packages-cslib-{rev_v2[:8]}")
-        self.assertNotEqual(shared_v2, shared_v1)
-        for path in paths:
-            self.assertEqual((wt_three / path).read_bytes(), b"v2 cache\n")
-            self.assertEqual((wt_one / path).read_bytes(), b"v1 cache\n")
-
-    def test_secondary_dependency_or_toolchain_change_uses_distinct_shared_pool(self) -> None:
-        cslib_repo = self.work / ".lake/packages/cslib"
-        cslib_repo.mkdir(parents=True)
-        git(cslib_repo, "init", "--quiet", "-b", "main")
-        (cslib_repo / "Cslib.lean").write_text("-- cslib\n", encoding="utf-8")
-        git(cslib_repo, "add", "Cslib.lean")
-        git(cslib_repo, "commit", "--quiet", "-m", "cslib")
-        cslib_rev = git(cslib_repo, "rev-parse", "HEAD")
-        cslib_olean = self.work / ".lake/packages/cslib/.lake/build/lib/Lean/Cslib.olean"
-        cslib_olean.parent.mkdir(parents=True, exist_ok=True)
-        cslib_olean.write_bytes(b"cslib\n")
-
-        mathlib_repo = self.work / ".lake/packages/mathlib"
-        mathlib_repo.mkdir(parents=True)
-        git(mathlib_repo, "init", "--quiet", "-b", "main")
-        (mathlib_repo / "Mathlib.lean").write_text("-- mathlib A\n", encoding="utf-8")
-        git(mathlib_repo, "add", "Mathlib.lean")
-        git(mathlib_repo, "commit", "--quiet", "-m", "mathlib A")
-        mathlib_rev_a = git(mathlib_repo, "rev-parse", "HEAD")
-
-        mathlib_olean = self.work / ".lake/packages/mathlib/.lake/build/lib/Lean/Mathlib.olean"
-        mathlib_olean.parent.mkdir(parents=True, exist_ok=True)
-        mathlib_olean.write_bytes(b"mathlib A\n")
-
-        manifest_a = {
-            "packages": [
-                {"name": "cslib", "rev": cslib_rev},
-                {"name": "mathlib", "rev": mathlib_rev_a},
-            ]
-        }
-        (self.other / "lake-manifest.json").write_text(json.dumps(manifest_a), encoding="utf-8")
-        (self.other / "lean-toolchain").write_text("leanprover/lean4:v4.29.0-rc8\n", encoding="utf-8")
-        git(self.other, "add", "lake-manifest.json", "lean-toolchain")
-        git(self.other, "commit", "--quiet", "-m", "mathlib A manifest")
-        git(self.other, "push", "--quiet", "origin", "main")
-        git(self.work, "fetch", "--quiet", "origin", "main")
-        git(self.work, "reset", "--quiet", "--hard", "origin/main")
-
-        first = self.create("feature/mathlib-a", "mathlib-a")
-        self.assertEqual(first.returncode, 0, first.stderr)
-        wt_a = self.work / ".worktrees/mathlib-a"
-        shared_a = (wt_a / ".lake/packages").resolve()
-        self.assertEqual(
-            (wt_a / ".lake/packages/mathlib/.lake/build/lib/Lean/Mathlib.olean").read_bytes(),
-            b"mathlib A\n",
-        )
-
-        # Create a second commit in mathlib_repo to get mathlib_rev_b, then reset mathlib_repo back
-        # to mathlib_rev_a first to verify mismatch detection when cslib is unchanged.
-        (mathlib_repo / "Mathlib.lean").write_text("-- mathlib B\n", encoding="utf-8")
-        git(mathlib_repo, "add", "Mathlib.lean")
-        git(mathlib_repo, "commit", "--quiet", "-m", "mathlib B")
-        mathlib_rev_b = git(mathlib_repo, "rev-parse", "HEAD")
-        git(mathlib_repo, "reset", "--quiet", "--hard", mathlib_rev_a)
-
-        manifest_b = {
-            "packages": [
-                {"name": "cslib", "rev": cslib_rev},
-                {"name": "mathlib", "rev": mathlib_rev_b},
-            ]
-        }
-        git(self.other, "switch", "--quiet", "-c", "feature/mathlib-b", "origin/main")
-        (self.other / "lake-manifest.json").write_text(json.dumps(manifest_b), encoding="utf-8")
-        git(self.other, "add", "lake-manifest.json")
-        git(self.other, "commit", "--quiet", "-m", "mathlib B manifest")
-        git(self.other, "push", "--quiet", "origin", "feature/mathlib-b")
-        git(self.other, "switch", "--quiet", "main")
-
-        # Root's mathlib checkout is still at mathlib_rev_a, so creating feature/mathlib-b must
-        # refuse to seed stale mathlib A into the new pool and must not reuse shared_a.
-        mismatch = self.create("feature/mathlib-b", "mathlib-b-mismatch")
-        self.assertEqual(mismatch.returncode, 0, mismatch.stderr)
-        self.assertIn("does not match manifest pin", mismatch.stderr)
-        wt_mismatch = self.work / ".worktrees/mathlib-b-mismatch"
-        self.assertFalse((wt_mismatch / ".lake/packages").exists())
-
-        # Now advance root's mathlib checkout to mathlib_rev_b and update its artifact to mathlib B.
-        git(mathlib_repo, "reset", "--quiet", "--hard", mathlib_rev_b)
-        mathlib_olean.write_bytes(b"mathlib B\n")
-        git(self.other, "switch", "--quiet", "-c", "feature/mathlib-b-seeded", "origin/feature/mathlib-b")
-        git(self.other, "push", "--quiet", "origin", "feature/mathlib-b-seeded")
-        git(self.other, "switch", "--quiet", "main")
-
-        second = self.create("feature/mathlib-b-seeded", "mathlib-b-seeded")
-        self.assertEqual(second.returncode, 0, second.stderr)
-        wt_b = self.work / ".worktrees/mathlib-b-seeded"
-        shared_b = (wt_b / ".lake/packages").resolve()
-        self.assertNotEqual(shared_a, shared_b)
-        self.assertEqual(
-            (wt_b / ".lake/packages/mathlib/.lake/build/lib/Lean/Mathlib.olean").read_bytes(),
-            b"mathlib B\n",
-        )
-        self.assertEqual(
-            (wt_a / ".lake/packages/mathlib/.lake/build/lib/Lean/Mathlib.olean").read_bytes(),
-            b"mathlib A\n",
-        )
-
-    def test_create_runs_cache_bootstrap_in_fresh_worktree(self) -> None:
-        log_file = self.tmp / "bootstrap.jsonl"
-        cache_dir = self.other / "scripts/cache"
-        cache_dir.mkdir(parents=True)
-        shutil.copy(REPO / "scripts/cache/ensure.sh", cache_dir / "ensure.sh")
-        (cache_dir / "ensure.sh").chmod(0o755)
-        get_sh = cache_dir / "get.sh"
-        get_sh.write_text(
-            "#!/usr/bin/env python3\n"
-            "import json, os\n"
-            "with open(os.environ['TEST_BOOTSTRAP_LOG'], 'a') as f:\n"
-            "    f.write(json.dumps({'cwd': os.getcwd()}) + '\\n')\n",
+    def test_create_runs_cache_bootstrap_when_present(self) -> None:
+        ensure = self.work / "scripts/cache/ensure.sh"
+        ensure.parent.mkdir(parents=True, exist_ok=True)
+        ensure.write_text(
+            "#!/usr/bin/env bash\nprintf 'bootstrapped %s\\n' \"$PWD\" > .cache-bootstrapped\n",
             encoding="utf-8",
         )
-        get_sh.chmod(0o755)
-        (self.other / "lean-toolchain").write_text("leanprover/lean4:v4.36.0-rc1\n")
-        (self.other / "lake-manifest.json").write_text('{"packages": []}\n')
-        (self.other / "lakefile.toml").write_text('name = "fixture"\n')
-        git(self.other, "add", ".")
-        git(self.other, "commit", "--quiet", "-m", "add cache scripts")
-        git(self.other, "push", "--quiet", "origin", "main")
-        git(self.work, "fetch", "--quiet", "origin", "main")
-        git(self.work, "reset", "--quiet", "--hard", "origin/main")
-        shutil.copy(SCRIPT, self.work / "scripts/worktree.sh")
-
-        proc = self.create("feature/bootstrapped", "bootstrapped", TEST_BOOTSTRAP_LOG=str(log_file))
-        self.assertEqual(proc.returncode, 0, proc.stderr)
-        wt = self.work / ".worktrees/bootstrapped"
-        self.assertTrue((wt / ".lake/cache-bootstrap/attempt.json").is_file())
-        events = [json.loads(line) for line in log_file.read_text().splitlines()]
-        self.assertEqual(len(events), 1)
-        self.assertEqual(pathlib.Path(events[0]["cwd"]).resolve(), wt.resolve())
-
-        # Opt-out skips automatic cache bootstrap on worktree creation.
-        proc_skip = self.create(
-            "feature/optout",
-            "optout",
-            TEST_BOOTSTRAP_LOG=str(log_file),
-            COMPLEXITYLIB_CACHE_AUTO="0",
-        )
-        self.assertEqual(proc_skip.returncode, 0, proc_skip.stderr)
-        wt_skip = self.work / ".worktrees/optout"
-        self.assertFalse((wt_skip / ".lake/cache-bootstrap/attempt.json").exists())
-        self.assertEqual(len(log_file.read_text().splitlines()), 1)
-
-    def test_mismatched_root_cslib_git_revision_is_not_copied_into_new_pin(self) -> None:
-        cslib_repo = self.work / ".lake/packages/cslib"
-        cslib_repo.mkdir(parents=True)
-        git(cslib_repo, "init", "--quiet", "-b", "main")
-        (cslib_repo / "Cslib.lean").write_text("-- old cslib\n", encoding="utf-8")
-        git(cslib_repo, "add", "Cslib.lean")
-        git(cslib_repo, "commit", "--quiet", "-m", "old cslib")
-        old_rev = git(cslib_repo, "rev-parse", "HEAD")
-        new_rev = "f" * 40 if not old_rev.startswith("ffffffff") else "e" * 40
-
-        (self.other / "lake-manifest.json").write_text(
-            json.dumps({"packages": [{"name": "cslib", "rev": new_rev}]}),
-            encoding="utf-8",
-        )
-        git(self.other, "add", "lake-manifest.json")
-        git(self.other, "commit", "--quiet", "-m", "new cslib pin")
-        git(self.other, "push", "--quiet", "origin", "main")
-        git(self.work, "fetch", "--quiet", "origin", "main")
-        git(self.work, "reset", "--quiet", "--hard", "origin/main")
-
-        proc = self.create("feature/mismatch", "mismatch")
-        self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("does not match manifest pin", proc.stderr)
-        wt = self.work / ".worktrees/mismatch"
-        self.assertFalse((wt / ".lake/packages").exists())
-        self.assertEqual(
-            list((self.work / ".worktrees/.shared").glob(f"packages-cslib-{new_rev[:8]}*")),
-            [],
-        )
+        ensure.chmod(0o755)
+        env = {**GIT_ENV, "COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP": "0"}
+        result = self.create("feature/bootstrap", "bootstrap", env=env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        marker = self.work / ".worktrees/bootstrap/.cache-bootstrapped"
+        self.assertTrue(marker.is_file())
+        self.assertIn(".worktrees/bootstrap", marker.read_text(encoding="utf-8"))
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required")
@@ -420,126 +170,64 @@ class WorktreeSeedTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.tmp = pathlib.Path(tmp.name)
-        self.addCleanup(make_tree_writable, self.tmp)
         self.root = self.tmp / "root"
         self.root.mkdir()
         git(self.root, "init", "--quiet")
         (self.root / "scripts").mkdir()
         shutil.copy(SCRIPT, self.root / "scripts/worktree.sh")
-        self.pkg_cache_paths = []
+        self.cache_paths = []
         for package in ("cslib", "mathlib"):
             source = self.root / ".lake/packages" / package / "Source.lean"
             source.parent.mkdir(parents=True)
             source.write_text("immutable source\n", encoding="utf-8")
             source.with_name("SourceLink.lean").symlink_to("Source.lean")
-            self.pkg_cache_paths += [pathlib.Path("packages") / package / ".lake" / path
-                                     for path in ("build/lib/Lean/Dependency.trace",
-                                                  "config/lakefile.olean")]
-        self.root_cache_paths = [pathlib.Path("build/lib/Lean/Root.trace"),
-                                 pathlib.Path("config/lakefile.olean")]
-        self.cache_paths = self.pkg_cache_paths + self.root_cache_paths
+            self.cache_paths += [pathlib.Path("packages") / package / ".lake" / path
+                                 for path in ("build/lib/Lean/Dependency.trace",
+                                              "config/lakefile.olean")]
+        self.cache_paths += [pathlib.Path("build/lib/Lean/Root.trace"),
+                             pathlib.Path("config/lakefile.olean")]
         for path in self.cache_paths:
             cache = self.root / ".lake" / path
             cache.parent.mkdir(parents=True, exist_ok=True)
             cache.write_text(f"root cache {path}\n", encoding="utf-8")
             cache.chmod(0o640)
-            os.utime(cache, ns=(1_700_000_000_000_000_000, 1_700_000_000_000_000))
+            os.utime(cache, ns=(1_700_000_000_000_000_000, 1_700_000_000_000_000_000))
 
-    def seed(self, target: pathlib.Path, *flags: str, **extra_env: str) -> subprocess.CompletedProcess[str]:
+    def seed(self, target: pathlib.Path, *flags: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["bash", str(self.root / "scripts/worktree.sh"), "seed", str(target), *flags],
-            capture_output=True, text=True, check=False, env={**GIT_ENV, **extra_env},
+            capture_output=True, text=True, check=False, env=GIT_ENV,
         )
 
-    def assert_cache_isolated(self, target: pathlib.Path, flag: str | None) -> None:
-        replace_probe = self.tmp / "replace-probe"
+    def assert_cache_isolated(self, target: pathlib.Path) -> None:
         for path in self.cache_paths:
             original = self.root / ".lake" / path
             seeded = target / ".lake" / path
             before = original.read_bytes()
             self.assertEqual(seeded.read_bytes(), before)
             self.assertNotEqual(original.stat().st_ino, seeded.stat().st_ino, str(path))
+            self.assertEqual(stat.S_IMODE(seeded.stat().st_mode), 0o640)
             self.assertEqual(seeded.stat().st_mtime_ns, original.stat().st_mtime_ns)
-            is_writable_copy = (
-                path in self.root_cache_paths
-                or flag == "--copy-packages"
-                or (flag == "--copy-cslib" and path.parts[:2] == ("packages", "cslib"))
-            )
-            if is_writable_copy:
-                self.assertEqual(stat.S_IMODE(seeded.stat().st_mode), 0o640)
-                seeded.write_bytes(b"worker updated cache\n")
-                replace_probe.write_bytes(b"worker atomic replace\n")
-                os.replace(replace_probe, seeded)
-                self.assertEqual(seeded.read_bytes(), b"worker atomic replace\n")
-                self.assertEqual(original.read_bytes(), before, str(path))
-            else:
-                self.assertEqual(stat.S_IMODE(seeded.stat().st_mode) & 0o222, 0)
-                self.assertEqual(stat.S_IMODE(seeded.parent.stat().st_mode) & 0o222, 0)
-                with self.assertRaises(PermissionError):
-                    seeded.write_bytes(b"cannot mutate shared package cache\n")
-                replace_probe.write_bytes(b"cannot atomic replace shared package cache\n")
-                with self.assertRaises(PermissionError):
-                    os.replace(replace_probe, seeded)
-                self.assertEqual(seeded.read_bytes(), before, str(path))
-                self.assertEqual(original.read_bytes(), before, str(path))
+            seeded.write_bytes(b"worker updated cache\n")
+            self.assertEqual(original.read_bytes(), before, str(path))
 
-    def test_all_copy_modes_isolate_from_primary_checkout_and_respect_sharing(self) -> None:
-        shared_dir: pathlib.Path | None = None
+    def test_all_copy_modes_isolate_root_and_dependency_caches(self) -> None:
         for flag in (None, "--copy-cslib", "--copy-packages"):
             with self.subTest(flag=flag):
                 target = self.tmp / str(flag)
                 result = self.seed(target, *([flag] if flag else []))
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assert_cache_isolated(target, flag)
-                if flag is None:
-                    self.assertTrue((target / ".lake/packages").is_symlink())
-                    shared_dir = (target / ".lake/packages").resolve()
-                    self.assertEqual(shared_dir.parent, (self.root / ".worktrees/.shared").resolve())
-                    self.assertEqual(shared_dir.name, "packages-cslib-default")
-                else:
-                    self.assertFalse((target / ".lake/packages").is_symlink())
-                assert shared_dir is not None
+                self.assert_cache_isolated(target)
                 for package in ("cslib", "mathlib"):
                     source = self.root / ".lake/packages" / package / "Source.lean"
                     seeded = target / ".lake/packages" / package / "Source.lean"
-                    # Never hard-link any worktree package file to the primary checkout.
-                    self.assertNotEqual(source.stat().st_ino, seeded.stat().st_ino)
-                    uses_shared = flag is None or (flag == "--copy-cslib" and package != "cslib")
-                    shared_source = shared_dir / package / "Source.lean"
-                    self.assertEqual(seeded.stat().st_ino == shared_source.stat().st_ino, uses_shared)
+                    shared = flag != "--copy-packages" and not (
+                        flag == "--copy-cslib" and package == "cslib")
+                    self.assertEqual(source.stat().st_ino == seeded.stat().st_ino, shared)
                     link = seeded.with_name("SourceLink.lean")
                     self.assertTrue(link.is_symlink())
                     self.assertEqual(os.readlink(link), "Source.lean")
                     self.assertEqual(link.read_bytes(), source.read_bytes())
-
-    def test_package_source_symlinks_to_primary_or_outside_package_are_materialized(self) -> None:
-        cslib_source = self.root / ".lake/packages/cslib/Source.lean"
-        mathlib_source = self.root / ".lake/packages/mathlib/Source.lean"
-        # An absolute symlink pointing directly back to the primary checkout's package source.
-        (self.root / ".lake/packages/cslib/AbsoluteLink.lean").symlink_to(cslib_source.resolve())
-        # A relative symlink escaping the cslib package directory into mathlib.
-        (self.root / ".lake/packages/cslib/EscapingLink.lean").symlink_to("../mathlib/Source.lean")
-
-        for flag in (None, "--copy-cslib", "--copy-packages"):
-            with self.subTest(flag=flag):
-                target = self.tmp / f"src-links-{flag}"
-                result = self.seed(target, *([flag] if flag else []))
-                self.assertEqual(result.returncode, 0, result.stderr)
-                for link_name, orig_source in (
-                    ("AbsoluteLink.lean", cslib_source),
-                    ("EscapingLink.lean", mathlib_source),
-                ):
-                    seeded_file = target / ".lake/packages/cslib" / link_name
-                    self.assertFalse(seeded_file.is_symlink(), f"{link_name} should be materialized")
-                    self.assertNotEqual(seeded_file.stat().st_ino, orig_source.stat().st_ino)
-                    self.assertEqual(seeded_file.read_text(encoding="utf-8"), "immutable source\n")
-                    if flag in ("--copy-cslib", "--copy-packages"):
-                        seeded_file.write_text("worker modified local copy\n", encoding="utf-8")
-                        self.assertEqual(orig_source.read_text(encoding="utf-8"), "immutable source\n")
-                    else:
-                        with self.assertRaises(PermissionError):
-                            seeded_file.write_text("cannot mutate shared pool\n", encoding="utf-8")
-                        self.assertEqual(orig_source.read_text(encoding="utf-8"), "immutable source\n")
 
     def test_cache_symlinks_are_copied_without_sharing_their_targets(self) -> None:
         # Cover an internal cache link, the entire cache directory, and a package directory.
@@ -560,280 +248,84 @@ class WorktreeSeedTests(unittest.TestCase):
                 target = self.tmp / str(flag)
                 result = self.seed(target, *([flag] if flag else []))
                 self.assertEqual(result.returncode, 0, result.stderr)
-                self.assert_cache_isolated(target, flag)
-                self.assertFalse((target / ".lake/build/lib/Lean/Root.trace").is_symlink())
-                self.assertFalse((target / ".lake/packages/cslib/.lake").is_symlink())
-                if flag == "--copy-cslib":
-                    # In --copy-cslib mode, mathlib is a symlink to the shared copy, not to
-                    # external_package.
-                    self.assertTrue((target / ".lake/packages/mathlib").is_symlink())
-                    self.assertNotEqual(
-                        (target / ".lake/packages/mathlib").resolve(),
-                        external_package.resolve(),
-                    )
-                else:
-                    self.assertFalse((target / ".lake/packages/mathlib").is_symlink())
+                self.assert_cache_isolated(target)
+                for path in ("build/lib/Lean/Root.trace", "packages/cslib/.lake",
+                             "packages/mathlib"):
+                    self.assertFalse((target / ".lake" / path).is_symlink())
 
     def test_existing_cache_is_preserved_on_repeated_seed(self) -> None:
         target = self.tmp / "worker"
         self.assertEqual(self.seed(target).returncode, 0)
-        cache = target / ".lake" / self.root_cache_paths[0]
+        cache = target / ".lake" / self.cache_paths[0]
         cache.write_text("worker state\n", encoding="utf-8")
         self.assertEqual(self.seed(target, "--copy-packages").returncode, 0)
         self.assertEqual(cache.read_text(), "worker state\n")
 
     def test_destination_cache_symlinks_are_refused_before_writing(self) -> None:
-        for path in (".lake", ".lake/packages", ".lake/build", ".lake/config"):
+        for path in (".lake", ".lake/packages", ".lake/build", ".lake/config",
+                     ".lake/packages/cslib"):
             with self.subTest(path=path):
                 target = self.tmp / path.replace("/", "-")
                 external = self.tmp / (target.name + "-external")
                 external.mkdir()
                 link = target / path
-                link.parent.mkdir(parents=True)
+                link.parent.mkdir(parents=True, exist_ok=True)
                 link.symlink_to(external, target_is_directory=True)
                 result = self.seed(target)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn("symlink", result.stderr)
                 self.assertEqual(list(external.iterdir()), [])
 
-    def test_primary_checkout_and_symlinks_into_primary_checkout_are_refused(self) -> None:
-        # Refuses seeding the primary checkout directly.
+    def test_refuses_seeding_primary_checkout_directly_or_via_symlink(self) -> None:
         direct = self.seed(self.root)
         self.assertNotEqual(direct.returncode, 0)
         self.assertIn("primary checkout", direct.stderr)
 
-        # Refuses seeding through a worktree symlink to the primary checkout.
-        wt_link = self.tmp / "link-to-root"
-        wt_link.symlink_to(self.root, target_is_directory=True)
-        via_link = self.seed(wt_link)
+        link_to_root = self.tmp / "root-link"
+        link_to_root.symlink_to(self.root, target_is_directory=True)
+        via_link = self.seed(link_to_root)
         self.assertNotEqual(via_link.returncode, 0)
         self.assertIn("primary checkout", via_link.stderr)
 
-        # Refuses any cache/package symlink inside a worktree that points into the primary checkout.
-        for rel, target_in_root in (
-            (".lake", self.root / ".lake"),
-            (".lake/packages", self.root / ".lake/packages"),
-            (".lake/build", self.root / ".lake/build"),
-            (".lake/config", self.root / ".lake/config"),
-            (".lake/packages/cslib", self.root / ".lake/packages/cslib"),
-        ):
-            with self.subTest(rel=rel):
-                wt = self.tmp / ("bad-" + rel.replace("/", "-"))
-                link = wt / rel
-                link.parent.mkdir(parents=True, exist_ok=True)
-                link.symlink_to(target_in_root, target_is_directory=True)
-                res = self.seed(wt)
-                self.assertNotEqual(res.returncode, 0)
-                self.assertIn("primary checkout", res.stderr)
+        inside_lake = self.seed(self.root / ".lake")
+        self.assertNotEqual(inside_lake.returncode, 0)
+        self.assertIn("primary checkout", inside_lake.stderr)
 
-        # Refuses a shared packages root inside the primary checkout.
-        wt_env = self.tmp / "bad-env-wt"
-        res_env = self.seed(wt_env, COMPLEXITYLIB_SHARED_PACKAGES_ROOT=str(self.root / ".lake"))
-        self.assertNotEqual(res_env.returncode, 0)
-        self.assertIn("primary checkout", res_env.stderr)
+    def test_source_symlinks_to_primary_checkout_are_dereferenced(self) -> None:
+        primary_file = self.root / "PrimarySecret.lean"
+        primary_file.write_text("primary content\n", encoding="utf-8")
+        primary_dir = self.root / "PrimaryDir"
+        primary_dir.mkdir()
+        (primary_dir / "Inside.lean").write_text("primary dir content\n", encoding="utf-8")
 
-    def test_legacy_unhardened_pool_is_not_adopted_and_left_untouched(self) -> None:
-        # Simulate an active legacy pool (writable directories, unmaterialized escaping symlink,
-        # no .pool-provenance.json) at both packages-cslib-default and packages-cslib-<rev>.
-        cslib_source = self.root / ".lake/packages/cslib/Source.lean"
-        (self.root / ".lake/packages/cslib/Absolute.lean").symlink_to(cslib_source.resolve())
+        cslib = self.root / ".lake/packages/cslib"
+        (cslib / "AbsFileLink.lean").symlink_to(primary_file)
+        (cslib / "RelEscapeLink.lean").symlink_to("../../../PrimarySecret.lean")
+        (cslib / "DirEscapeLink").symlink_to(primary_dir, target_is_directory=True)
 
-        legacy_pool = self.root / ".worktrees/.shared/packages-cslib-default"
-        for pkg in ("cslib", "mathlib"):
-            shutil.copytree(
-                self.root / ".lake/packages" / pkg,
-                legacy_pool / pkg,
-                symlinks=True,
-            )
-        legacy_artifact = legacy_pool / "cslib/.lake/build/lib/Lean/Dependency.trace"
-        self.assertTrue((legacy_pool / "cslib/Absolute.lean").is_symlink())
-        self.assertNotEqual(stat.S_IMODE(legacy_artifact.parent.stat().st_mode) & 0o222, 0)
-
-        new_worker = self.tmp / "new-worker"
-        res = self.seed(new_worker)
-        self.assertEqual(res.returncode, 0, res.stderr)
-        new_pool = (new_worker / ".lake/packages").resolve()
-        self.assertNotEqual(new_pool, legacy_pool.resolve())
-        self.assertEqual(new_pool.name, "packages-cslib-default-v2")
-
-        # The active legacy pool remains untouched while the new worker's pool is hardened.
-        self.assertTrue((legacy_pool / "cslib/Absolute.lean").is_symlink())
-        self.assertNotEqual(stat.S_IMODE(legacy_artifact.parent.stat().st_mode) & 0o222, 0)
-
-        new_link = new_worker / ".lake/packages/cslib/Absolute.lean"
-        self.assertFalse(new_link.is_symlink())
-        with self.assertRaises(PermissionError):
-            new_link.write_text("cannot mutate hardened pool\n", encoding="utf-8")
-        self.assertEqual(cslib_source.read_text(encoding="utf-8"), "immutable source\n")
-
-        probe = self.tmp / "replace-legacy-probe"
-        probe.write_text("cannot replace\n", encoding="utf-8")
-        with self.assertRaises(PermissionError):
-            os.replace(
-                probe,
-                new_worker / ".lake/packages/cslib/.lake/build/lib/Lean/Dependency.trace",
-            )
-
-    def test_unverifiable_or_dirty_seed_sources_fail_closed(self) -> None:
-        revs = {}
-        for pkg in ("cslib", "mathlib"):
-            pkg_dir = self.root / ".lake/packages" / pkg
-            git(pkg_dir, "init", "--quiet", "-b", "main")
-            git(pkg_dir, "add", "Source.lean")
-            git(pkg_dir, "commit", "--quiet", "-m", f"init {pkg}")
-            revs[pkg] = git(pkg_dir, "rev-parse", "HEAD")
-
-        manifest = {"packages": [{"name": k, "rev": v} for k, v in revs.items()]}
-        (self.root / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        (self.root / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-
-        # 1. Dirty tracked source in root mathlib at matching HEAD must fail closed.
-        mathlib_src = self.root / ".lake/packages/mathlib/Source.lean"
-        mathlib_src.write_text("UNCOMMITTED mutation\n", encoding="utf-8")
-        dirty_wt = self.tmp / "dirty-wt"
-        dirty_wt.mkdir()
-        (dirty_wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        (dirty_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-        res_dirty = self.seed(dirty_wt)
-        self.assertEqual(res_dirty.returncode, 0, res_dirty.stderr)
-        self.assertIn("uncommitted tracked changes", res_dirty.stderr)
-        self.assertFalse((dirty_wt / ".lake/packages").exists())
-        mathlib_src.write_text("immutable source\n", encoding="utf-8")
-
-        # 2. Missing target toolchain or manifest when root has both must fail closed.
-        missing_tc_wt = self.tmp / "missing-tc-wt"
-        missing_tc_wt.mkdir()
-        (missing_tc_wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        res_mtc = self.seed(missing_tc_wt)
-        self.assertEqual(res_mtc.returncode, 0, res_mtc.stderr)
-        self.assertIn("lean-toolchain", res_mtc.stderr)
-        self.assertFalse((missing_tc_wt / ".lake/packages").exists())
-
-        missing_man_wt = self.tmp / "missing-man-wt"
-        missing_man_wt.mkdir()
-        (missing_man_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-        res_mman = self.seed(missing_man_wt)
-        self.assertEqual(res_mman.returncode, 0, res_mman.stderr)
-        self.assertIn("lake-manifest.json", res_mman.stderr)
-        self.assertFalse((missing_man_wt / ".lake/packages").exists())
-
-        # 3. Missing .git in root mathlib when manifest pins mathlib B must fail closed and not
-        # poison the B pool after root is repaired.
-        mathlib_git = self.root / ".lake/packages/mathlib/.git"
-        mathlib_git_bak = self.tmp / "mathlib-git-bak"
-        mathlib_git.rename(mathlib_git_bak)
-        want_b = "b" * 40
-        manifest_b = {
-            "packages": [
-                {"name": "cslib", "rev": revs["cslib"]},
-                {"name": "mathlib", "rev": want_b},
-            ]
-        }
-        no_git_wt = self.tmp / "no-git-wt"
-        no_git_wt.mkdir()
-        (no_git_wt / "lake-manifest.json").write_text(json.dumps(manifest_b), encoding="utf-8")
-        (no_git_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-        res_nogit = self.seed(no_git_wt)
-        self.assertEqual(res_nogit.returncode, 0, res_nogit.stderr)
-        self.assertIn("no .git metadata", res_nogit.stderr)
-        self.assertFalse((no_git_wt / ".lake/packages").exists())
-
-        # Invalid .git file must also fail closed.
-        mathlib_git.write_text("INVALID GIT\n", encoding="utf-8")
-        inv_git_wt = self.tmp / "inv-git-wt"
-        inv_git_wt.mkdir()
-        (inv_git_wt / "lake-manifest.json").write_text(json.dumps(manifest_b), encoding="utf-8")
-        (inv_git_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-        res_invgit = self.seed(inv_git_wt)
-        self.assertEqual(res_invgit.returncode, 0, res_invgit.stderr)
-        self.assertIn("invalid .git metadata", res_invgit.stderr)
-        self.assertFalse((inv_git_wt / ".lake/packages").exists())
-        mathlib_git.unlink()
-        mathlib_git_bak.rename(mathlib_git)
-
-    def test_cold_dependency_missing_build_falls_back_to_writable_copy_and_builds(self) -> None:
-        # Remove compiled build output from mathlib in root; seed must not publish an incomplete
-        # read-only pool and must instead provide an isolated writable package directory.
-        shutil.rmtree(self.root / ".lake/packages/mathlib/.lake/build")
-        cold_wt = self.tmp / "cold-wt"
-        res = self.seed(cold_wt)
-        self.assertEqual(res.returncode, 0, res.stderr)
-        self.assertTrue((cold_wt / ".lake/packages").is_dir())
-        self.assertFalse((cold_wt / ".lake/packages").is_symlink())
-        dep_build = cold_wt / ".lake/packages/mathlib/.lake/build/lib/lean"
-        dep_build.mkdir(parents=True, exist_ok=True)
-        (dep_build / "Generated.olean").write_bytes(b"compiled in worker\n")
-        self.assertFalse((self.root / ".lake/packages/mathlib/.lake/build").exists())
-
-        # Also run an actual minimal Lake cold-dependency build when the pinned toolchain exists.
-        tc_file = REPO / "lean-toolchain"
-        if not tc_file.is_file():
-            return
-        tc = tc_file.read_text(encoding="utf-8").strip()
-        tc_slug = tc.replace("/", "--").replace(":", "---")
-        bindir = pathlib.Path.home() / ".elan/toolchains" / tc_slug / "bin"
-        if not (bindir / "lake").is_file():
-            return
-
-        lake_env = {
-            **GIT_ENV,
-            "GIT_ALLOW_PROTOCOL": "file",
-            "COMPLEXITYLIB_CACHE_AUTO": "0",
-            "LAKE_CACHE_DIR": str(self.tmp / "lake-cache"),
-            "PATH": str(bindir) + os.pathsep + os.environ.get("PATH", ""),
-        }
-        dep = self.tmp / "local-dep"
-        dep.mkdir()
-        (dep / "lakefile.toml").write_text(
-            'name = "dep"\nversion = "0.1.0"\n[[lean_lib]]\nname = "Dep"\n',
-            encoding="utf-8",
-        )
-        (dep / "lean-toolchain").write_text(tc + "\n", encoding="utf-8")
-        (dep / "Dep.lean").write_text("namespace Dep\ndef value : Nat := 7\nend Dep\n", encoding="utf-8")
-        git(dep, "init", "--quiet", "-b", "main")
-        git(dep, "add", ".")
-        git(dep, "commit", "--quiet", "-m", "dep")
-        dep_rev = git(dep, "rev-parse", "HEAD")
-
-        proj = self.tmp / "toy-proj"
-        proj.mkdir()
-        (proj / "lean-toolchain").write_text(tc + "\n", encoding="utf-8")
-        (proj / "lakefile.toml").write_text(
-            'name = "toy"\nversion = "0.1.0"\ndefaultTargets = ["Toy"]\n'
-            '[[lean_lib]]\nname = "Toy"\n[[require]]\nname = "dep"\n'
-            f'git = {json.dumps(dep.as_uri())}\nrev = {json.dumps(dep_rev)}\n',
-            encoding="utf-8",
-        )
-        (proj / "Toy.lean").write_text("import Dep\nexample : Dep.value = 7 := rfl\n", encoding="utf-8")
-        (proj / ".gitignore").write_text(".lake/\n.worktrees/\n", encoding="utf-8")
-        for rel in ("scripts/worktree.sh", "scripts/build.sh", "scripts/cache/ensure.sh"):
-            dst = proj / rel
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy(REPO / rel, dst)
-            dst.chmod(0o755)
-        git(proj, "init", "--quiet", "-b", "main")
-        git(proj, "add", ".")
-        git(proj, "commit", "--quiet", "-m", "toy")
-        subprocess.run([str(bindir / "lake"), "build"], cwd=proj, env=lake_env, check=True,
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        shutil.rmtree(proj / ".lake/packages/dep/.lake/build")
-
-        worker = self.tmp / "toy-worker"
-        git(proj, "worktree", "add", "--quiet", "-b", "worker", str(worker), "main")
-        seed_res = subprocess.run(
-            ["bash", str(proj / "scripts/worktree.sh"), "seed", str(worker)],
-            cwd=proj, env=lake_env, capture_output=True, text=True, check=False,
-        )
-        self.assertEqual(seed_res.returncode, 0, seed_res.stderr)
-        build_res = subprocess.run(
-            [str(worker / "scripts/build.sh"), "+Dep"],
-            cwd=worker, env=lake_env, capture_output=True, text=True, check=False,
-        )
-        self.assertEqual(build_res.returncode, 0, build_res.stdout + build_res.stderr)
-        self.assertTrue((worker / ".lake/packages/dep/.lake/build/lib/lean/Dep.olean").is_file())
+        for flag in (None, "--copy-cslib", "--copy-packages"):
+            with self.subTest(flag=flag):
+                target = self.tmp / f"escape-{flag}"
+                result = self.seed(target, *([flag] if flag else []))
+                self.assertEqual(result.returncode, 0, result.stderr)
+                seeded_cslib = target / ".lake/packages/cslib"
+                for name in ("AbsFileLink.lean", "RelEscapeLink.lean", "DirEscapeLink"):
+                    seeded_path = seeded_cslib / name
+                    self.assertFalse(seeded_path.is_symlink(), name)
+                (seeded_cslib / "AbsFileLink.lean").write_text("mutated\n", encoding="utf-8")
+                (seeded_cslib / "RelEscapeLink.lean").write_text("mutated\n", encoding="utf-8")
+                (seeded_cslib / "DirEscapeLink/Inside.lean").write_text(
+                    "mutated dir\n", encoding="utf-8"
+                )
+                self.assertEqual(
+                    primary_file.read_text(encoding="utf-8"), "primary content\n"
+                )
+                self.assertEqual(
+                    (primary_dir / "Inside.lean").read_text(encoding="utf-8"),
+                    "primary dir content\n",
+                )
 
     def test_gitfile_dependency_control_metadata_isolated(self) -> None:
-        # Replace cslib in root with a linked Git worktree whose .git is a pointer file.
         origin = self.tmp / "dep-origin"
         origin.mkdir()
         git(origin, "init", "--quiet", "-b", "main")
@@ -846,126 +338,41 @@ class WorktreeSeedTests(unittest.TestCase):
         pkg = self.root / ".lake/packages/cslib"
         shutil.rmtree(pkg)
         git(origin, "worktree", "add", "--quiet", "--detach", str(pkg), cslib_rev)
-        artifact = pkg / ".lake/build/lib/Lean/Dependency.trace"
-        artifact.parent.mkdir(parents=True, exist_ok=True)
-        artifact.write_bytes(b"compiled cslib\n")
+        (pkg / "SourceLink.lean").symlink_to("Source.lean")
+        for path in ("build/lib/Lean/Dependency.trace", "config/lakefile.olean"):
+            cache = pkg / ".lake" / path
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text("root cache\n", encoding="utf-8")
         self.assertTrue((pkg / ".git").is_file())
-
-        mathlib_dir = self.root / ".lake/packages/mathlib"
-        git(mathlib_dir, "init", "--quiet", "-b", "main")
-        git(mathlib_dir, "add", "Source.lean")
-        git(mathlib_dir, "commit", "--quiet", "-m", "init mathlib")
-        mathlib_rev = git(mathlib_dir, "rev-parse", "HEAD")
-        manifest = {
-            "packages": [
-                {"name": "cslib", "rev": cslib_rev},
-                {"name": "mathlib", "rev": mathlib_rev},
-            ]
-        }
-        (self.root / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        (self.root / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
 
         primary_gitdir = git(pkg, "rev-parse", "--absolute-git-dir")
         before_index = git(pkg, "ls-files", "-v", "--", "Source.lean")
         before_head = (pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8")
 
         for idx, flags in enumerate(((), ("--copy-cslib",), ("--copy-packages",))):
-            wt = self.tmp / f"gitfile-wt-{idx}"
-            wt.mkdir()
-            (wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-            (wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-            res = self.seed(wt, *flags)
-            self.assertEqual(res.returncode, 0, res.stderr)
-            copied = wt / ".lake/packages/cslib"
-            self.assertTrue((copied / ".git").is_dir())
-            copy_gitdir = git(copied, "rev-parse", "--absolute-git-dir")
-            self.assertNotEqual(primary_gitdir, copy_gitdir)
-            subprocess.run(
-                ["git", "-C", str(copied), "update-index", "--assume-unchanged", "Source.lean"],
-                env=GIT_ENV, capture_output=True, text=True, check=False,
-            )
-            subprocess.run(
-                ["git", "-C", str(copied), "symbolic-ref", "HEAD", "refs/heads/copy-branch"],
-                env=GIT_ENV, capture_output=True, text=True, check=False,
-            )
-            self.assertEqual(git(pkg, "ls-files", "-v", "--", "Source.lean"), before_index)
-            self.assertEqual((pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8"), before_head)
-
-    def test_occupied_invalid_v2_fallback_selects_v3(self) -> None:
-        # When both the base pool name and -v2 are occupied by unhardened/unvalidated directories,
-        # seed must reject both without mutating them and create -v3.
-        pkg = self.root / ".lake/packages/cslib"
-        (pkg / "Absolute.lean").symlink_to(pkg / "Source.lean")
-        shared = self.root / ".worktrees/.shared"
-        for name in ("packages-cslib-default", "packages-cslib-default-v2"):
-            pool = shared / name
-            for p_name in ("cslib", "mathlib"):
-                shutil.copytree(self.root / ".lake/packages" / p_name, pool / p_name, symlinks=True)
-
-        wt = self.tmp / "v3-worker"
-        res = self.seed(wt)
-        self.assertEqual(res.returncode, 0, res.stderr)
-        chosen = (wt / ".lake/packages").resolve()
-        self.assertEqual(chosen, (shared / "packages-cslib-default-v3").resolve())
-        self.assertTrue((chosen / ".pool-provenance.json").is_file())
-        self.assertFalse((chosen / "cslib/Absolute.lean").is_symlink())
-        self.assertTrue((shared / "packages-cslib-default-v2/cslib/Absolute.lean").is_symlink())
-
-    def test_full_revision_mismatch_after_eight_chars_rejected(self) -> None:
-        revs = {}
-        for pkg in ("cslib", "mathlib"):
-            pkg_dir = self.root / ".lake/packages" / pkg
-            git(pkg_dir, "init", "--quiet", "-b", "main")
-            git(pkg_dir, "add", "Source.lean")
-            git(pkg_dir, "commit", "--quiet", "-m", f"init {pkg}")
-            revs[pkg] = git(pkg_dir, "rev-parse", "HEAD")
-        cslib_rev = revs["cslib"]
-        mathlib_rev = revs["mathlib"]
-        bad_tail_rev = mathlib_rev[:8] + ("0" if mathlib_rev[8] != "0" else "1") * (len(mathlib_rev) - 8)
-        manifest = {
-            "packages": [
-                {"name": "cslib", "rev": cslib_rev},
-                {"name": "mathlib", "rev": bad_tail_rev},
-            ]
-        }
-        (self.root / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        (self.root / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-        wt = self.tmp / "tail-mismatch-wt"
-        wt.mkdir()
-        (wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
-        (wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
-        res = self.seed(wt)
-        self.assertEqual(res.returncode, 0, res.stderr)
-        self.assertIn("does not match manifest pin", res.stderr)
-        self.assertFalse((wt / ".lake/packages").exists())
-
-    def test_partial_olean_and_missing_module_fallback_to_writable_copy(self) -> None:
-        # 1) Partial build: a .trace/.ilean exists without its corresponding .olean.
-        mathlib_lib = self.root / ".lake/packages/mathlib/.lake/build/lib/lean"
-        mathlib_lib.mkdir(parents=True, exist_ok=True)
-        (mathlib_lib / "Broken.trace").write_text("{}", encoding="utf-8")
-        partial_wt = self.tmp / "partial-wt"
-        res = self.seed(partial_wt)
-        self.assertEqual(res.returncode, 0, res.stderr)
-        self.assertTrue((partial_wt / ".lake/packages").is_dir())
-        self.assertFalse((partial_wt / ".lake/packages").is_symlink())
-
-        # 2) Missing module under a Lake library root: Source.lean is compiled to Source.olean, but
-        # Source/Extra.lean has no Source/Extra.olean.
-        (mathlib_lib / "Broken.trace").unlink()
-        mathlib_pkg = self.root / ".lake/packages/mathlib"
-        (mathlib_pkg / "lakefile.toml").write_text(
-            'name = "mathlib"\n[[lean_lib]]\nname = "Source"\n',
-            encoding="utf-8",
-        )
-        (mathlib_lib / "Source.olean").write_bytes(b"source olean\n")
-        (mathlib_pkg / "Source").mkdir(exist_ok=True)
-        (mathlib_pkg / "Source/Extra.lean").write_text("def extra := 1\n", encoding="utf-8")
-        missing_mod_wt = self.tmp / "missing-mod-wt"
-        res2 = self.seed(missing_mod_wt)
-        self.assertEqual(res2.returncode, 0, res2.stderr)
-        self.assertTrue((missing_mod_wt / ".lake/packages").is_dir())
-        self.assertFalse((missing_mod_wt / ".lake/packages").is_symlink())
+            with self.subTest(flags=flags):
+                wt = self.tmp / f"gitfile-wt-{idx}"
+                res = self.seed(wt, *flags)
+                self.assertEqual(res.returncode, 0, res.stderr)
+                copied = wt / ".lake/packages/cslib"
+                self.assertTrue((copied / ".git").is_dir())
+                self.assertFalse((copied / ".git").is_symlink())
+                self.assertFalse((copied / ".git/objects").is_symlink())
+                copy_gitdir = git(copied, "rev-parse", "--absolute-git-dir")
+                self.assertNotEqual(primary_gitdir, copy_gitdir)
+                subprocess.run(
+                    ["git", "-C", str(copied), "update-index", "--assume-unchanged", "Source.lean"],
+                    env=GIT_ENV, capture_output=True, text=True, check=False,
+                )
+                subprocess.run(
+                    ["git", "-C", str(copied), "symbolic-ref", "HEAD", "refs/heads/copy-branch"],
+                    env=GIT_ENV, capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(git(pkg, "ls-files", "-v", "--", "Source.lean"), before_index)
+                self.assertEqual(
+                    (pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8"),
+                    before_head,
+                )
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required")
@@ -997,10 +404,10 @@ class WorktreePruneTests(unittest.TestCase):
         cache.write_bytes(b"keep this cache\n")
         return cache
 
-    def prune(self, *flags: str, env=None) -> subprocess.CompletedProcess[str]:
+    def prune(self, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            ["bash", str(self.root / "scripts/worktree.sh"), "prune-merged", "main", *flags],
-            capture_output=True, text=True, check=False, env=GIT_ENV if env is None else env,
+            ["bash", str(self.root / "scripts/worktree.sh"), "prune-merged", "main", *args],
+            cwd=self.root, capture_output=True, text=True, check=False, env=env or GIT_ENV,
         )
 
     def test_unregistered_directory_retains_its_cache(self) -> None:
@@ -1022,8 +429,8 @@ class WorktreePruneTests(unittest.TestCase):
         self.assertFalse(removable.exists())
         self.assertIn(str(locked.resolve()), git(self.root, "worktree", "list", "--porcelain"))
 
-    def test_merged_registered_worktree_with_special_path_is_removed_by_git(self) -> None:
-        for name in ("merged worker", "merged\nworker"):
+    def test_merged_worktree_and_nested_git_cache_are_removed(self) -> None:
+        for name in ("merged", "merged worker", "merged\nworker"):
             with self.subTest(name=name):
                 target = self.root / ".worktrees" / name
                 self.registered(target)

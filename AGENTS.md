@@ -221,13 +221,13 @@ validation checkpoints. `scripts/build.sh [Lake build arguments]`, `scripts/chec
 `scripts/worktree.sh create` run the same bootstrap automatically. Bare `lake` and MCP commands do
 not invoke it. If MCP tools are unavailable, say so and use the smallest shell check.
 
-`scripts/worktree.sh` links `.lake/packages` to a read-only, pin-keyed shared directory
-(`.worktrees/.shared/packages-cslib-<rev>`, created on a pin change and never updated in place)
-instead of copying dependency builds per worktree, and never points a worktree at the primary
-checkout. Lake's local artifact cache then shares Complexitylib outputs between checkouts on the
-same machine with the same inputs. Proof-only edits do not rebuild dependents; statement and
-definition changes in widely imported modules do. [scripts/cache/README.md](scripts/cache/README.md)
-describes the caches and the deliberate opt-out for builds that must not download artifacts.
+`scripts/worktree.sh` never points a worktree at the primary checkout, refuses targets or cache
+symlinks that do, and isolates dependency Git control files and external symlinks so worktree
+operations cannot write into the primary checkout. Lake's local artifact cache then shares
+Complexitylib outputs between checkouts on the same machine with the same inputs. Proof-only edits
+do not rebuild dependents; statement and definition changes in widely imported modules do.
+[scripts/cache/README.md](scripts/cache/README.md) describes the caches and the deliberate opt-out
+for builds that must not download artifacts.
 
 ## Validation sequence
 
