@@ -46,7 +46,7 @@ private theorem le_mul_succ {u A B C n : ℕ} (h : u ≤ A * (n + 1) + B) (hC : 
 machine-level composition of tidy machines. -/
 theorem comp {f : β → γ} {g : α → β} {T₁ S₁ : α → ℕ} {T₂ S₂ : β → ℕ}
     (hf : ComputableInO f encMid encOut T₂ S₂) (hg : ComputableInO g encIn encMid T₁ S₁) :
-    ComputableInO (fun a => f (g a)) encIn encOut (fun a => T₁ a + T₂ (g a))
+    ComputableInO (f ∘ g) encIn encOut (fun a => T₁ a + T₂ (g a))
       (fun a => S₁ a + S₂ (g a)) := by
   obtain ⟨c₁, ⟨k₁, Q₁, _, tm₁, h₁⟩, l₁⟩ := Internal.NormalForm.inO hg
   obtain ⟨c₂, ⟨k₂, Q₂, _, tm₂, h₂⟩, l₂⟩ := Internal.NormalForm.inO hf

@@ -34,7 +34,7 @@ is no longer than the time of the inner machine. -/
 theorem comp {f : β → γ} {g : α → β} {d₁ e₁ d₂ e₂ : ℕ}
     (hf : ComputableInDegree f encMid encOut d₂ e₂)
     (hg : ComputableInDegree g encIn encMid d₁ e₁) :
-    ComputableInDegree (fun a => f (g a)) encIn encOut (max d₁ (e₁ * d₂)) (e₁ * e₂) := by
+    ComputableInDegree (f ∘ g) encIn encOut (max d₁ (e₁ * d₂)) (e₁ * e₂) := by
   have hl₁ := hg.2
   have hl₂ := hf.2
   obtain ⟨t₁, s₁, ht₁, hs₁, k₁, Q₁, _, tm₁, h₁⟩ := Internal.NormalForm.degree hg
