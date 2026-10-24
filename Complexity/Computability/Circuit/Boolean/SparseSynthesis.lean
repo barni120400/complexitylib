@@ -681,18 +681,16 @@ theorem shatters_circuitSets (ε : ℝ) (hε : 0 < ε) :
   obtain ⟨c, hc, hsize⟩ := exists_computesOn_size_eq_complexityOn (I := interpretation)
     (S := (D : Set (BitString (2 * p)))) (f := single fun x => decide (x ∈ t))
   let u : Finset (BitString (2 * p)) := {x | c.eval interpretation x 0 = true}
-  refine ⟨u, mem_circuitSets.2 ⟨c, fun x => ?_, Nat.le_floor (hsize ▸ hp₀ p hp D hD _)⟩, ?_⟩
-  · funext j
-    rw [Fin.fin_one_eq_zero j]
-    simp [u]
-  · ext x
-    simp only [mem_inter, u, mem_filter, mem_univ, true_and]
-    constructor
-    · rintro ⟨hx, hcx⟩
-      simpa [hc (mem_coe.mpr hx)] using hcx
-    · intro hx
-      refine ⟨ht hx, ?_⟩
-      simpa [hc (mem_coe.mpr (ht hx))] using hx
+  refine ⟨u, mem_circuitSets.2 ⟨c, Circuit.computes_single_iff.2 fun x => by simp [u],
+    Nat.le_floor (hsize ▸ hp₀ p hp D hD _)⟩, ?_⟩
+  ext x
+  simp only [mem_inter, u, mem_filter, mem_univ, true_and]
+  constructor
+  · rintro ⟨hx, hcx⟩
+    simpa [Circuit.computesOn_single_iff.1 hc x (mem_coe.mpr hx)] using hcx
+  · intro hx
+    refine ⟨ht hx, ?_⟩
+    simpa [Circuit.computesOn_single_iff.1 hc x (mem_coe.mpr (ht hx))] using hx
 
 /-- **The VC dimension of small circuits.** For every `ε > 0` and all large `p`, circuits with
 `(1 + ε) 2 ^ p / p` gates on `2 p` inputs have VC dimension at least `2 ^ p`. -/

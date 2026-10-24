@@ -57,7 +57,7 @@ variable {Q : PromiseProblem (List Bool)} {C : ∀ n, Circuit signature n 1} {L 
 /-- A family of circuits computing the slices of `L` accepts exactly the words of `L`. -/
 private theorem eval_eq_true_iff (hC : ∀ n, (C n).Computes interpretation (single (L.slice n)))
     (w : List Bool) : (C w.length).eval interpretation (w[·]) 0 = true ↔ w ∈ L := by
-  rw [hC, single_apply, Language.slice_eq_true_iff]
+  rw [Circuit.computes_single_iff.1 (hC w.length), Language.slice_eq_true_iff]
   simp only [Fin.getElem_fin, List.ofFn_getElem]
 
 /-- A family of circuits computing the slices of a completion of `Q` solves `Q`. -/
@@ -72,9 +72,9 @@ private def familyLanguage (C : ∀ n, Circuit signature n 1) : Language Bool :=
   Language.ofSlices fun n x => (C n).eval interpretation x 0
 
 private theorem computes_familyLanguage (n : ℕ) :
-    (C n).Computes interpretation (single ((familyLanguage C).slice n)) := fun x => by
-  funext i
-  rw [Subsingleton.elim i 0, familyLanguage, Language.slice_ofSlices, single_apply]
+    (C n).Computes interpretation (single ((familyLanguage C).slice n)) :=
+  Circuit.computes_single_iff.2 fun _ => by
+    rw [familyLanguage, Language.slice_ofSlices]
 
 /-- A family of circuits that solves `Q` accepts a completion of `Q`. -/
 private theorem familyLanguage_separates
