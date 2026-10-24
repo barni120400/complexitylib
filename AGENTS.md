@@ -253,7 +253,7 @@ ambiguous change/import analysis fall back to all six gates. Run the default com
 submitting a PR; quick success does not satisfy that requirement.
 
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
-`ComplexityTests/` and must be imported from `ComplexityTests.lean`.
+`ComplexityTests/`; the test library is built from a Lake glob, so there is no aggregator to update.
 
 ## File rules
 
@@ -393,10 +393,10 @@ and [API review with explicit nonblocking nits](https://github.com/leanprover/cs
 
 `abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
 `*Abstract.lean` and `*Bridge.lean` under `abstracts/ComplexityAbstracts/`, imported by the
-dedicated `ComplexityAbstracts` library. `ComplexityTests.lean` imports that library and its
-regression tests. Existing declaration namespaces remain stable across the source relocation.
-The Lean definitions and statements are the source of truth; PDFs are generated from them, with
-proof bodies omitted. There is no separately maintained paper/TeX index.
+dedicated `ComplexityAbstracts` library. `ComplexityTests/Abstracts/All.lean` imports that library,
+and its regression tests sit beside it. Existing declaration namespaces remain stable across the
+source relocation. The Lean definitions and statements are the source of truth; PDFs are generated
+from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
 endpoint with conventional, inspectable semantics, hypotheses that are satisfiable or are standard

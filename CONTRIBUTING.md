@@ -179,10 +179,10 @@ Keep incomplete endpoints in `ROADMAP.md` and credit mathematical and formalizat
 
 Every AI-authored PR must assess its final Lean changes against the selection. Update affected
 abstracts and scope notes, or explain why the catalogue is unaffected. Proof-only changes with
-unchanged statements and scope can record that assessment without rewriting the abstract. Follow
-the repository's `lean-abstract` skill, import new abstracts in `ComplexityTests.lean`, and run their
-`#check_abstract` audits. Allow only narrow, explained foundational models; do not allowlist the
-result's class definitions or construction to evade a self-contained statement.
+unchanged statements and scope can record that assessment without rewriting the abstract. Follow the
+repository's `lean-abstract` skill, import new abstracts in `ComplexityTests/Abstracts/All.lean`,
+and run their `#check_abstract` audits. Allow only narrow, explained foundational models; do not
+allowlist the result's class definitions or construction to evade a self-contained statement.
 
 Arrange independent API, correctness and abstract reviews against the final source revision.
 Reviewers must check quantifiers, semantics, encodings, bounds, nonvacuity and readability. Record
