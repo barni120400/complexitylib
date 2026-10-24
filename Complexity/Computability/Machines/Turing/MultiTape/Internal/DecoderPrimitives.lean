@@ -10,6 +10,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Primitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.FrameMachines
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.ResourceFacts
 
 /-! # Direct certificates for total decoder leaves
 
@@ -60,5 +62,39 @@ theorem empty_degree : ComputableInDegree List.isEmpty encBits encBool 1 1 := by
     k, Q, hfin, tm, fun w => (htm w).computesInTimeAndSpace⟩,
     ⟨c, fun w => ?_⟩⟩
   simpa using (htm w).length_output_le
+
+/-- Read the initial frame on every word, including incomplete frames. -/
+theorem unframe_degree : ComputableInDegree unframe encBits encBits 1 1 := by
+  let τ := Internal.FrameMachines.readFrameT true
+  have htm (w : List Bool) := τ.computesInTimeAndSpace_toTM w
+  refine ⟨⟨fun w => 2 * w.length + 3, fun _ => 0,
+    ⟨3, fun _ => by simp only [pow_one, encBits, Function.Embedding.refl_apply]; omega⟩,
+    DegreeBounded.const 0, 0, _, inferInstance, τ.toTM, fun w => ?_⟩,
+    ⟨3, fun w => ?_⟩⟩
+  · simpa only [τ, show (Internal.FrameMachines.readFrameT true).q₀ = .marker from rfl,
+      Internal.FrameMachines.readFrameT_run_true,
+      encBits, Function.Embedding.refl_apply] using htm w
+  · have hlen := (htm w).length_output_le
+    simpa only [τ, show (Internal.FrameMachines.readFrameT true).q₀ = .marker from rfl,
+      Internal.FrameMachines.readFrameT_run_true,
+      encBits, Function.Embedding.refl_apply, pow_one] using hlen.trans
+        (by omega : 2 * w.length + 3 ≤ 3 * (w.length + 1))
+
+/-- Read what follows the initial frame on every word, including incomplete frames. -/
+theorem dropFrame_degree : ComputableInDegree dropFrame encBits encBits 1 1 := by
+  let τ := Internal.FrameMachines.readFrameT false
+  have htm (w : List Bool) := τ.computesInTimeAndSpace_toTM w
+  refine ⟨⟨fun w => 2 * w.length + 3, fun _ => 0,
+    ⟨3, fun _ => by simp only [pow_one, encBits, Function.Embedding.refl_apply]; omega⟩,
+    DegreeBounded.const 0, 0, _, inferInstance, τ.toTM, fun w => ?_⟩,
+    ⟨3, fun w => ?_⟩⟩
+  · simpa only [τ, show (Internal.FrameMachines.readFrameT false).q₀ = .marker from rfl,
+      Internal.FrameMachines.readFrameT_run_false,
+      encBits, Function.Embedding.refl_apply] using htm w
+  · have hlen := (htm w).length_output_le
+    simpa only [τ, show (Internal.FrameMachines.readFrameT false).q₀ = .marker from rfl,
+      Internal.FrameMachines.readFrameT_run_false,
+      encBits, Function.Embedding.refl_apply, pow_one] using hlen.trans
+        (by omega : 2 * w.length + 3 ≤ 3 * (w.length + 1))
 
 end Turing.MultiTapeTM.Internal.DecoderWords

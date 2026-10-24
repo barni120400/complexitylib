@@ -245,21 +245,6 @@ def nat : Decoder encNat where
       fun_prop
     exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
 
-/-- Pairs are decoded from the framed first component and what follows it. -/
-def pair {β₁ β₂ : Type} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool} (D₁ : Decoder enc₁)
-    (D₂ : Decoder enc₂) : Decoder (encPair enc₁ enc₂) where
-  decode w := (D₁.decode (unframe w), D₂.decode (dropFrame w))
-  decode_enc p := by
-    simp [unframe_frame_append, dropFrame_frame_append, D₁.decode_enc, D₂.decode_enc]
-  computable := by
-    obtain ⟨d₁, e₁, h₁⟩ := D₁.computable
-    obtain ⟨d₂, e₂, h₂⟩ := D₂.computable
-    have hu : ComputableTidilyInDegree unframe encBits encBits 1 1 :=
-      .of_linear (.of_unframe fun _ => rfl)
-    have hd : ComputableTidilyInDegree dropFrame encBits encBits 1 1 :=
-      .of_linear (.of_dropFrame fun _ => rfl)
-    exact ⟨_, _, (h₁.comp hu).prod (h₂.comp hd)⟩
-
 /-- Lists are decoded element by element from the framed words of a word. -/
 def list (D : Decoder enc) : Decoder (encList enc) where
   decode w := (frames w).map D.decode

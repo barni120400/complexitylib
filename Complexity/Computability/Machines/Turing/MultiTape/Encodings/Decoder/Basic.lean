@@ -11,6 +11,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degr
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeClosure
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeComposition
 
 /-!
 # Total decoders with plain degree certificates
@@ -71,6 +73,18 @@ def option (D : Decoder enc) : Decoder (encOption enc) where
     exact (ComputableInPolyTime.ite (encC := encBool)
       Internal.DecoderWords.empty_degree.computableInPolyTime
       (ComputableInDegree.const none).computableInPolyTime hsome).exists_degree
+
+/-- Pairs are decoded from the framed first component and what follows it. -/
+def pair {β₁ β₂ : Type} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool} (D₁ : Decoder enc₁)
+    (D₂ : Decoder enc₂) : Decoder (encPair enc₁ enc₂) where
+  decode w := (D₁.decode (unframe w), D₂.decode (dropFrame w))
+  decode_enc p := by
+    simp [unframe_frame_append, dropFrame_frame_append, D₁.decode_enc, D₂.decode_enc]
+  computable := by
+    obtain ⟨d₁, e₁, h₁⟩ := D₁.computable
+    obtain ⟨d₂, e₂, h₂⟩ := D₂.computable
+    exact ⟨_, _, (h₁.comp Internal.DecoderWords.unframe_degree).prod
+      (h₂.comp Internal.DecoderWords.dropFrame_degree)⟩
 
 /-- Transport a decoder along an encoding equality and a right inverse. -/
 def map (D : Decoder enc) (f : α → β) (g : β → α) (hfg : ∀ b, f (g b) = b)

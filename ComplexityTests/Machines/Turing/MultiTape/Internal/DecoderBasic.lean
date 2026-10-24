@@ -45,3 +45,13 @@ example (b : Bool) : (Decoder.option Decoder.bool).decode (encOption encBool (so
 example {α : Type} (a : α ↪ List Bool) (D : Decoder a) :
     ComputableInPolyTime (Decoder.option D).decode encBits (encOption a) :=
   (Decoder.option D).computableInPolyTime
+
+example : (Decoder.pair Decoder.bool Decoder.bool).decode [] = (false, false) := rfl
+example : (Decoder.pair Decoder.bool Decoder.bool).decode [true] = (false, false) := rfl
+example {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool)
+    (D₁ : Decoder a) (D₂ : Decoder b) (x : α × β) :
+    (Decoder.pair D₁ D₂).decode (encPair a b x) = x := (Decoder.pair D₁ D₂).decode_enc x
+example {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool)
+    (D₁ : Decoder a) (D₂ : Decoder b) :
+    ComputableInPolyTime (Decoder.pair D₁ D₂).decode encBits (encPair a b) :=
+  (Decoder.pair D₁ D₂).computableInPolyTime
