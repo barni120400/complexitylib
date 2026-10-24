@@ -135,6 +135,12 @@ private theorem foldlReverse (word acc : List Bool) :
   | nil => simp
   | cons bit word ih => simp [ih, List.reverse_cons, List.append_assoc]
 
+private theorem foldlMap {α β : Type} (f : α → β) (list : List α) (acc : List β) :
+    list.foldl (fun mapped value => mapped ++ [f value]) acc = acc ++ list.map f := by
+  induction list generalizing acc with
+  | nil => simp
+  | cons a list ih => simp [ih, List.append_assoc]
+
 namespace ComputableInPolyTime
 
 /-- Unary successor is a direct finite-state transduction, including the empty word for zero. -/
@@ -251,6 +257,42 @@ theorem allConst {γ : Type} {encIn : γ ↪ List Bool} {ι : Type*} (l : List �
   | cons a l ih =>
     exact bool_and.comp ((htest a (List.mem_cons_self ..)).prod
       (ih fun b hb => htest b (List.mem_cons_of_mem _ hb)))
+
+/-- Mapping a uniform encoded function over a runtime framed list is polynomial-time. The
+callback's output bound follows from its actual machine, rather than an extra list premise. -/
+@[fun_prop]
+theorem map {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {f : α → β}
+    (hf : ComputableInPolyTime f encA encB) :
+    ComputableInPolyTime (List.map f) (encList encA) (encList encB) := by
+  obtain ⟨c, d, hfsize⟩ := hf.polyBounded_length.exists_le
+  let bound := fun n : ℕ => n * (2 * (c * (n + 1) ^ d) + 1)
+  have hb : PolynomiallyBounded bound := by dsimp [bound]; fun_prop
+  have hstep : ComputableInPolyTime (fun p : List β × α => p.1 ++ [f p.2])
+      (encPair (encList encB) encA) (encList encB) :=
+    (snoc encB).comp ((fst (encList encB) encA).prod (hf.comp (snd (encList encB) encA)))
+  have hfold := foldl' (encA := encA) (encL := encList encA) (encB := encList encB)
+    (list := id) (init := fun _ => []) (step := fun mapped value => mapped ++ [f value])
+    id' (const []) hstep
+    (PolyBounded.of_polynomiallyBounded (fun list : List α => (encList encA list).length) hb)
+    (by
+      intro list i _
+      simp only [foldlMap, List.nil_append, id_eq]
+      let n := (encList encA list).length
+      have heach : ∀ b ∈ (list.take i).map f, (encB b).length ≤ c * (n + 1) ^ d := by
+        intro b hb
+        obtain ⟨a, ha, rfl⟩ := List.mem_map.mp hb
+        have hain := (List.take_sublist i list).subset ha
+        have haBound := SizedListEncoding.length_elem_le
+          (encA := encA) (encL := encList encA) list a hain
+        exact (hfsize a).trans (Nat.mul_le_mul_left c
+          (Nat.pow_le_pow_left (Nat.add_le_add_right haBound 1) d))
+      apply (length_encList_le encB _ heach).trans
+      dsimp [bound]
+      apply Nat.mul_le_mul_right
+      simp only [List.length_map, List.length_take]
+      exact (Nat.min_le_right i list.length).trans
+        (SizedListEncoding.length_le (encA := encA) (encL := encList encA) list))
+  simpa only [foldlMap, List.nil_append, id_eq] using hfold
 
 end ComputableInPolyTime
 end Turing.MultiTapeTM
