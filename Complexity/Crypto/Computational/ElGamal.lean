@@ -358,7 +358,8 @@ theorem isPPTOn_elGamalToDDHDistinguisher {adversary : Encryption.Adversary}
     refine ComputableTidilyInPolyTime.prod (by fun_prop) ?_
     exact (ComputableTidilyInPolyTime.encode (encPair encBits encBits)).comp (by fun_prop)
   unfold elGamalToDDHDistinguisher
-  exact (hchoose.preprocess (by fun_prop) hpk).bind_with (hguess.preprocess hct)
+  exact (hchoose.preprocess (by fun_prop) hpk).bind_with
+    (hguess.preprocess hct.computableInPolyTime)
 
 /-- **ElGamal bit encryption is IND-CPA secure under the DDH assumption**
 ([BonehShoup2023], Exercise 11.5(a)). -/
