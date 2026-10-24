@@ -244,7 +244,13 @@ private meta def rawTransitionPremise (type : Expr) : MetaM Bool := do
   let inspect : StateRefT Bool MetaM Unit := do
     discard <| Meta.transform type (pre := fun e => do
       if ← get then return .done e
-      let reduced ← if ← isProp e then whnfR e else pure e
+      -- Inspect propositions and proposition-valued callbacks, not the implementations of
+      -- data arguments such as program denotations. Partial predicate aliases still normalize;
+      -- the telescope also keeps quantified predicate families in scope.
+      let propositionValued ← forallTelescopeReducing (← inferType e) fun _ result =>
+        pure (result == mkSort .zero)
+      unless propositionValued do return .done e
+      let reduced ← whnfR e
       if let .const name _ := reduced.getAppFn then
         if rawName name then
           set true

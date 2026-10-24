@@ -372,6 +372,22 @@ example (routine : List Bool → List Bool) (hc : RoutineContract routine)
   fail_if_success (clear hc; polytime)
   polytime
 
+/-- A reducible quantifier may receive a partially applied predicate alias as a callback. -/
+abbrev EveryCertificate (predicate : ℕ → Prop) : Prop := ∀ index, predicate index
+
+example (h : EveryCertificate (fun index => RawAliasFull (indexedRawOnly index) encBits encBits) →
+    ComputableInPolyTime localImplicationResult encBits encBits) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success polytime
+  exact h (fun index => indexedRawOnly_tidy index)
+
+example (h : EveryCertificate (fun index => RawAliasFull (indexedRawOnly index) encBits encBits) →
+    ComputableInPolyTime localImplicationResult encBits encBits)
+    (hf : EveryCertificate (fun index => RawAliasFull (indexedRawOnly index) encBits encBits)) :
+    ComputableInPolyTime localImplicationResult encBits encBits := by
+  fail_if_success (clear hf; polytime)
+  polytime
+
 end ComplexityTests.PolyTimePlainSource
 
 -- A specialized raw Boolean fold does not block the generic direct captured-fold recipe.
