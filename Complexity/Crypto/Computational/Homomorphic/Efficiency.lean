@@ -118,15 +118,14 @@ theorem isPPTOn_refreshNand
   apply hsecond'.bind_with
   have hparameter := hn.comp
     ((ComputableTidilyInPolyTime.fst (encPair input (encList encBits)) (encList encBits)).fst')
-  have haug := (computableTidilyInPolyTime_augmentNand.comp hD).comp hparameter
-  exact hevaluate.preprocess (ComputableInPolyTime.of_tidy
-      (show ComputableTidilyInPolyTime
-      (fun p : (α × List (List Bool)) × List (List Bool) =>
-        (n p.1.1, pk p.1.1, ⟨_, augmentNand (D.circuit (n p.1.1))⟩,
-          (encryptedKey p.1.1 ++ p.1.2) ++ (encryptedKey p.1.1 ++ p.2)))
-      (encPair (encPair input (encList encBits)) (encList encBits))
-      (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) by
-      exact hparameter.prod ((hpk.comp
-        ((ComputableTidilyInPolyTime.fst _ _).fst')).prod (haug.prod (by fun_prop)))))
+  have haug := (computableInPolyTime_augmentNand.tidy.comp hD).comp hparameter
+  exact hevaluate.preprocess (ComputableInPolyTime.of_tidy (show ComputableTidilyInPolyTime
+    (fun p : (α × List (List Bool)) × List (List Bool) =>
+      (n p.1.1, pk p.1.1, ⟨_, augmentNand (D.circuit (n p.1.1))⟩,
+        (encryptedKey p.1.1 ++ p.1.2) ++ (encryptedKey p.1.1 ++ p.2)))
+    (encPair (encPair input (encList encBits)) (encList encBits))
+    (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))) by
+    exact hparameter.prod ((hpk.comp
+      ((ComputableTidilyInPolyTime.fst _ _).fst')).prod (haug.prod (by fun_prop)))))
 
 end Cslib.Crypto.Homomorphic.Scheme
