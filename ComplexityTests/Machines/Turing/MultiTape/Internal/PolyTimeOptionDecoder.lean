@@ -27,3 +27,7 @@ run_cmd do
       `Turing.MultiTapeTM.ComputableTidilyInBigO] do
     if (← getEnv).contains name then
       throwError "A higher tidy calculus was imported: {name}"
+
+example :
+    ComputableInPolyTime (Decoder.option Decoder.nat).decode encBits (encOption encNat) := by
+  fun_prop

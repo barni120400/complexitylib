@@ -18,3 +18,7 @@ example {α β : Type} {a : α ↪ List Bool} {b : β ↪ List Bool}
     (hvalue : ComputableInPolyTime value a (encOption b))
     (hfallback : ComputableInPolyTime fallback a b) :
     ComputableInPolyTime (fun x => (value x).getD (fallback x)) a b := by fun_prop
+
+example :
+    ComputableInPolyTime (Decoder.option Decoder.nat).decode encBits (encOption encNat) := by
+  fun_prop
