@@ -151,6 +151,7 @@ import ComplexityTests.ExpanderFamily
 import ComplexityTests.ExpanderHitting
 import ComplexityTests.ExplicitExpanders
 import ComplexityTests.ExponentialPadding
+import ComplexityTests.Extractor
 import ComplexityTests.FOLogSpace
 import ComplexityTests.FOLogSpaceReduction
 import ComplexityTests.Fagin
