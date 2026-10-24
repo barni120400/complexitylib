@@ -34,7 +34,9 @@ an occurrence of its variable and a polarity. A step guesses a clause and one of
 for a unit clause, is the negation of the current literal, which is the arc from the current
 literal to `ℓ'` of the implication graph, and moves to `ℓ'`. Variables are compared digit by
 digit through their positions (`Cslib.Complexity.TwoSAT.cmpVarCode`), so only positions,
-counters and flags are stored, all at most the length of the input.
+counters and flags are stored, all at most the length of the input. The strategy, guessing the
+two paths, is that of [Papadimitriou, Theorem 16.3][Papadimitriou94]; the program, its register
+layout and the positional comparison of variables are this library's own.
 
 ## Main definitions
 

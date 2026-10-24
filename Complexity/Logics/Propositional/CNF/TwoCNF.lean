@@ -24,7 +24,8 @@ without such a pair of paths is satisfiable
 (`Cslib.Logic.PL.CNF.not_satisfiable_iff_of_width_le_two`) [Aspvall, Plass and
 Tarjan][AspvallPlassTarjan1979]. The proof picks a literal `ℓ` with no path to `¬ℓ`, makes every
 literal reachable from `ℓ` true, which is consistent and satisfies every clause it touches, and
-continues with the remaining clauses, which mention fewer variables.
+continues with the remaining clauses, which mention fewer variables. The empty clause, which has
+no arcs, is excluded separately; this proof is the library's own.
 
 ## Main definitions
 
