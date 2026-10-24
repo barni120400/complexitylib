@@ -3,6 +3,7 @@ import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.All
 import ComplexityTests.Abstracts.CheckTests
 import ComplexityTests.Abstracts.CommunicationTests
+import ComplexityTests.Abstracts.ImmermanSzelepcsenyiTests
 import ComplexityTests.Abstracts.InputLayouts
 import ComplexityTests.Abstracts.SipserLautemannTests
 import ComplexityTests.AdaptivePPT

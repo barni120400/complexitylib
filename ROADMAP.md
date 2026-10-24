@@ -1596,7 +1596,8 @@ space bounds. Further class-level work needs resource certificates for the actua
   reduction remain;
 * Native [NL = coNL](Complexity/Computability/Complexity/Classes/LogSpace/Complement.lean) is
   proved by streaming inductive counting, including complement deciders for recognizers with
-  looping branches. Directed `s`–`t` connectivity on adjacency matrices is
+  looping branches, and has a
+  [formal abstract](abstracts/ComplexityAbstracts/ImmermanSzelepcsenyiAbstract.lean). Directed `s`–`t` connectivity on adjacency matrices is
   [NL-complete](Complexity/Computability/Complexity/Problems/STCON/Completeness.lean) under
   logspace reductions, and so is its complement; 2SAT and `NSPACE(s) = coNSPACE(s)` remain (#885).
   `PH ⊆ PSPACE` is also proved by evaluating quantified predicates in
