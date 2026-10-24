@@ -82,7 +82,7 @@ theorem isSensitiveCoord_not {f : BooleanFunction n} {x : BitString n} {i : Fin 
   simp [IsSensitiveCoord]
 
 /-- Negation preserves the sensitivity at an input. -/
-theorem sensitivityAt_not (f : BooleanFunction n) (x : BitString n) :
+private theorem sensitivityAt_not (f : BooleanFunction n) (x : BitString n) :
     sensitivityAt (fun y => !f y) x = sensitivityAt f x := by
   unfold sensitivityAt sensitiveCoords
   congr 1
@@ -148,7 +148,7 @@ theorem isCertificate_not {S : Finset (Fin n)} :
   simp [IsCertificate]
 
 /-- Negation preserves the block sensitivity at an input. -/
-theorem blockSensitivityAt_not (f : BooleanFunction n) (x : BitString n) :
+private theorem blockSensitivityAt_not (f : BooleanFunction n) (x : BitString n) :
     blockSensitivityAt (fun y => !f y) x = blockSensitivityAt f x := by
   have : sensitiveFamilies (fun y => !f y) x = sensitiveFamilies f x := by
     ext F
@@ -156,7 +156,7 @@ theorem blockSensitivityAt_not (f : BooleanFunction n) (x : BitString n) :
   rw [blockSensitivityAt, blockSensitivityAt, this]
 
 /-- Negation preserves the certificate complexity at an input. -/
-theorem certificateComplexityAt_not (f : BooleanFunction n) (x : BitString n) :
+private theorem certificateComplexityAt_not (f : BooleanFunction n) (x : BitString n) :
     certificateComplexityAt (fun y => !f y) x = certificateComplexityAt f x := by
   obtain ⟨S, hS, hSc⟩ := exists_isCertificate_card_eq f x
   obtain ⟨T, hT, hTc⟩ := exists_isCertificate_card_eq (fun y => !f y) x

@@ -157,13 +157,14 @@ private theorem ite_nonneg' {p : Prop} {_ : Decidable p} : (0 : ℝ) ≤ if p th
 private theorem ite_le_one' {p : Prop} {_ : Decidable p} : (if p then 0 else 1 : ℝ) ≤ 1 := by
   split_ifs <;> norm_num
 
-theorem errorProb_nonneg : 0 ≤ μ.errorProb f x :=
+private theorem errorProb_nonneg : 0 ≤ μ.errorProb f x :=
   Finset.sum_nonneg fun t _ => mul_nonneg (μ.weights_nonneg t) ite_nonneg'
 
-theorem errorProb_le_one : μ.errorProb f x ≤ 1 :=
+private theorem errorProb_le_one : μ.errorProb f x ≤ 1 :=
   StdSimplex.sum_mul_le_of_forall_le fun _ _ => ite_le_one'
 
-theorem errorProb_eq_zero_iff : μ.errorProb f x = 0 ↔ ∀ t ∈ μ.weights.support, t.eval x = f x := by
+private theorem errorProb_eq_zero_iff :
+    μ.errorProb f x = 0 ↔ ∀ t ∈ μ.weights.support, t.eval x = f x := by
   classical
   rw [errorProb, Finsupp.sum, Finset.sum_eq_zero_iff_of_nonneg fun t _ =>
     mul_nonneg (μ.weights_nonneg t) ite_nonneg']
@@ -171,11 +172,11 @@ theorem errorProb_eq_zero_iff : μ.errorProb f x = 0 ↔ ∀ t ∈ μ.weights.su
   rw [mul_eq_zero, or_iff_right (Finsupp.mem_support_iff.mp ht)]
   split_ifs with h <;> simp [h]
 
-theorem errorProb_single_of_eq (h : t.eval x = f x) :
+private theorem errorProb_single_of_eq (h : t.eval x = f x) :
     errorProb (StdSimplex.single t : RandomizedDecisionTree ι β) f x = 0 := by
   simp [errorProb, h]
 
-theorem errorProb_single_of_ne (h : t.eval x ≠ f x) :
+private theorem errorProb_single_of_ne (h : t.eval x ≠ f x) :
     errorProb (StdSimplex.single t : RandomizedDecisionTree ι β) f x = 1 := by
   simp [errorProb, h]
 
@@ -187,13 +188,13 @@ theorem Computes.nonneg (h : μ.Computes ε f) : 0 ≤ ε :=
   errorProb_nonneg.trans (h fun _ => false)
 
 /-- A deterministic decision tree computing `f` computes it with any nonnegative error. -/
-theorem computes_single (ht : t.Computes f) (hε : 0 ≤ ε) :
+private theorem computes_single (ht : t.Computes f) (hε : 0 ≤ ε) :
     Computes (StdSimplex.single t : RandomizedDecisionTree ι β) ε f :=
   fun x => (errorProb_single_of_eq (ht x)).trans_le hε
 
 /-- A randomized decision tree computes `f` with error `0` exactly when every tree it can draw
 computes `f`. -/
-theorem computes_zero_iff : μ.Computes 0 f ↔ ∀ t ∈ μ.weights.support, t.Computes f :=
+private theorem computes_zero_iff : μ.Computes 0 f ↔ ∀ t ∈ μ.weights.support, t.Computes f :=
   ⟨fun h t ht x => errorProb_eq_zero_iff.mp ((h x).antisymm errorProb_nonneg) t ht,
     fun h x => (errorProb_eq_zero_iff.mpr fun t ht => h t ht x).le⟩
 
@@ -250,14 +251,14 @@ theorem exists_computes_depth_eq_randomizedComplexity (hε : 0 ≤ ε) (f : (ι 
     μ.Computes ε f ∧ μ.depth ≤ d}) ⟨_, _, computes_single ht hε, le_rfl⟩
   exact ⟨μ, hμ, le_antisymm hd (randomizedComplexity_le_depth hμ)⟩
 
-theorem randomizedComplexity_le_iff (hε : 0 ≤ ε) :
+private theorem randomizedComplexity_le_iff (hε : 0 ≤ ε) :
     randomizedComplexity ε f ≤ d ↔ ∃ μ : RandomizedDecisionTree ι β, μ.Computes ε f ∧ μ.depth ≤ d :=
   ⟨fun h => (exists_computes_depth_eq_randomizedComplexity hε f).imp fun _ ⟨hμ, hd⟩ =>
     ⟨hμ, hd.trans_le h⟩, fun ⟨_, hμ, hd⟩ => (randomizedComplexity_le_depth hμ).trans hd⟩
 
 /-- Lower bounds on `R_ε(f)` are lower bounds on the depth of every randomized decision tree
 computing `f` with error `ε`. -/
-theorem le_randomizedComplexity_iff (hε : 0 ≤ ε) :
+private theorem le_randomizedComplexity_iff (hε : 0 ≤ ε) :
     d ≤ randomizedComplexity ε f ↔ ∀ μ : RandomizedDecisionTree ι β, μ.Computes ε f → d ≤ μ.depth :=
   ⟨fun h _ hμ => h.trans (randomizedComplexity_le_depth hμ), fun h =>
     let ⟨_, hμ, hd⟩ := exists_computes_depth_eq_randomizedComplexity hε f
@@ -316,7 +317,7 @@ theorem randomizedComplexity_le_complexity {ι β : Type*} [Finite ι] {ε : ℝ
     QueryComplexity.randomizedComplexity_antitone le_rfl hε
 
 /-- `R_ε(f)` is at most the number of variables for `ε ≥ 0`. -/
-theorem randomizedComplexity_le_card {ι β : Type*} [Fintype ι] {ε : ℝ} (hε : 0 ≤ ε)
+private theorem randomizedComplexity_le_card {ι β : Type*} [Fintype ι] {ε : ℝ} (hε : 0 ≤ ε)
     (f : (ι → Bool) → β) : QueryComplexity.randomizedComplexity ε f ≤ Fintype.card ι :=
   (randomizedComplexity_le_complexity hε f).trans (complexity_le_card f)
 

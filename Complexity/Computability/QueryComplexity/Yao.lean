@@ -80,7 +80,7 @@ theorem distributionalComplexity_le_depth (h : t.distributionalError ν f ≤ ε
   Nat.sInf_le ⟨t, h, le_rfl⟩
 
 /-- `D^ν_ε(f) = 0` for `ε < 0`, where no decision tree qualifies. -/
-theorem distributionalComplexity_of_neg (hε : ε < 0) : distributionalComplexity ε ν f = 0 :=
+private theorem distributionalComplexity_of_neg (hε : ε < 0) : distributionalComplexity ε ν f = 0 :=
   Nat.sInf_eq_zero.mpr <| Or.inr <| Set.eq_empty_of_forall_notMem fun _ ⟨_, h, _⟩ =>
     (not_le.mpr hε) (DecisionTree.distributionalError_nonneg.trans h)
 
@@ -148,7 +148,7 @@ theorem exists_computes_of_forall_exists_distributionalError_le
     exact htree_depth S
 
 /-- `R_ε(f) ≤ d` exactly when `D^ν_ε(f) ≤ d` for every distribution `ν` on the inputs. -/
-theorem randomizedComplexity_le_iff_forall_distributionalComplexity_le :
+private theorem randomizedComplexity_le_iff_forall_distributionalComplexity_le :
     randomizedComplexity ε f ≤ d ↔
       ∀ ν : StdSimplex ℝ (ι → Bool), distributionalComplexity ε ν f ≤ d := by
   refine ⟨fun h ν => (distributionalComplexity_le_randomizedComplexity ε ν f).trans h,

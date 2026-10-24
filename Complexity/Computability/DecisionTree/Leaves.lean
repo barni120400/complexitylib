@@ -159,7 +159,7 @@ def rank : DecisionTree ι β → ℕ
 theorem rank_leaf (b : β) : (leaf b : DecisionTree ι β).rank = 0 :=
   rfl
 
-theorem rank_node (i : ι) (left right : DecisionTree ι β) :
+private theorem rank_node (i : ι) (left right : DecisionTree ι β) :
     (node i left right).rank =
       if left.rank = right.rank then left.rank + 1 else max left.rank right.rank :=
   rfl
@@ -182,7 +182,7 @@ theorem rank_le_depth (t : DecisionTree ι β) : t.rank ≤ t.depth := by
 
 /-- A decision tree of rank at most `r` and depth at most `d` has at most
 `∑ j ∈ Finset.range (r + 1), d.choose j` structural leaves. -/
-theorem leafCount_le_sum_choose_of_rank_le (t : DecisionTree ι β) {r d : ℕ}
+private theorem leafCount_le_sum_choose_of_rank_le (t : DecisionTree ι β) {r d : ℕ}
     (hr : t.rank ≤ r) (hd : t.depth ≤ d) :
     t.leafCount ≤ ∑ j ∈ Finset.range (r + 1), d.choose j := by
   induction t generalizing r d with
@@ -225,7 +225,7 @@ theorem leafCount_le_depth_add_one_of_rank_le_one (t : DecisionTree ι β) (hr :
   omega
 
 /-- A decision tree of rank at most `1` has at most `depth` internal nodes. -/
-theorem nodeCount_le_depth_of_rank_le_one (t : DecisionTree ι β) (hr : t.rank ≤ 1) :
+private theorem nodeCount_le_depth_of_rank_le_one (t : DecisionTree ι β) (hr : t.rank ≤ 1) :
     t.nodeCount ≤ t.depth := by
   have h := t.leafCount_le_depth_add_one_of_rank_le_one hr
   have hleaf := t.leafCount_eq_nodeCount_add_one
@@ -239,7 +239,7 @@ def IsDecisionList : DecisionTree ι β → Prop
     (left.leafCount = 1 ∧ right.IsDecisionList) ∨ (right.leafCount = 1 ∧ left.IsDecisionList)
 
 /-- A tree with a single structural leaf has rank zero. -/
-theorem rank_eq_zero_of_leafCount_eq_one {t : DecisionTree ι β} (h : t.leafCount = 1) :
+private theorem rank_eq_zero_of_leafCount_eq_one {t : DecisionTree ι β} (h : t.leafCount = 1) :
     t.rank = 0 := by
   cases t with
   | leaf => rfl
@@ -265,12 +265,12 @@ theorem IsDecisionList.rank_le_one {t : DecisionTree ι β} (h : t.IsDecisionLis
       split_ifs <;> omega
 
 /-- A decision list has at most `depth + 1` structural leaves. -/
-theorem IsDecisionList.leafCount_le_depth_add_one {t : DecisionTree ι β} (h : t.IsDecisionList) :
-    t.leafCount ≤ t.depth + 1 :=
+private theorem IsDecisionList.leafCount_le_depth_add_one {t : DecisionTree ι β}
+    (h : t.IsDecisionList) : t.leafCount ≤ t.depth + 1 :=
   t.leafCount_le_depth_add_one_of_rank_le_one h.rank_le_one
 
 /-- A decision list has at most `depth` internal nodes. -/
-theorem IsDecisionList.nodeCount_le_depth {t : DecisionTree ι β} (h : t.IsDecisionList) :
+private theorem IsDecisionList.nodeCount_le_depth {t : DecisionTree ι β} (h : t.IsDecisionList) :
     t.nodeCount ≤ t.depth :=
   t.nodeCount_le_depth_of_rank_le_one h.rank_le_one
 
@@ -294,7 +294,7 @@ def energy : DecisionTree ι β → ℕ
 theorem energy_leaf (b : β) : (leaf b : DecisionTree ι β).energy = 0 :=
   rfl
 
-theorem energy_node (i : ι) (left right : DecisionTree ι β) :
+private theorem energy_node (i : ι) (left right : DecisionTree ι β) :
     (node i left right).energy = max left.energy (right.energy + 1) :=
   rfl
 
@@ -316,7 +316,7 @@ theorem energy_le_depth (t : DecisionTree ι β) : t.energy ≤ t.depth := by
 
 /-- A decision tree of energy at most `e` and depth at most `d` has at most
 `∑ j ∈ Finset.range (e + 1), d.choose j` structural leaves. -/
-theorem leafCount_le_sum_choose_of_energy_le (t : DecisionTree ι β) {e d : ℕ}
+private theorem leafCount_le_sum_choose_of_energy_le (t : DecisionTree ι β) {e d : ℕ}
     (he : t.energy ≤ e) (hd : t.depth ≤ d) :
     t.leafCount ≤ ∑ j ∈ Finset.range (e + 1), d.choose j := by
   induction t generalizing e d with
