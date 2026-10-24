@@ -76,4 +76,10 @@ def nat : Decoder encNat where
     exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
 
 end Decoder
+
+/-- Decode every little-endian bit word, including noncanonical trailing false symbols. -/
+@[fun_prop]
+theorem ComputableInPolyTime.bitsToNat : ComputableInPolyTime ofBits encBits encNat :=
+  Decoder.nat.computableInPolyTime
+
 end Turing.MultiTapeTM
