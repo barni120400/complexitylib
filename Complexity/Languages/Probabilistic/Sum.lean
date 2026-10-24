@@ -37,8 +37,8 @@ an embedded program uses only the corresponding handler (`interpret_sumHandler_l
 
 ## References
 
-* See [VCVio](https://github.com/Verified-zkEVM/VCVio) for the oracle-interface sum combinators
-  `⊕ₒ` and `sumHandler`.
+* For the underlying oracle-program design, see the
+  [VCVio](https://github.com/Verified-zkEVM/VCVio) credit in `Languages.Probabilistic.Basic`.
 -/
 
 @[expose] public section

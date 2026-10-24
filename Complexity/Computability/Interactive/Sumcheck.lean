@@ -40,10 +40,11 @@ development.
   relation.
 * `Sumcheck.roundPoly`, `Sumcheck.roundSpec`, `Sumcheck.accepts`, `Sumcheck.round`: honest round
   polynomial, one-round protocol specification, verifier polynomial check, and one-round reduction
-  from `rel P i` to `rel P (i + 1)`.
+  from `rel P i` to `rel P (i + 1)`. Each round sends one univariate polynomial, samples one
+  uniform field challenge and appends it to the point.
 * `Sumcheck.finalCheck`: final reduction for an `n`-variate polynomial `P` from `rel P n` to
   acceptance by evaluating `P` without interaction.
-* `Sumcheck.proof`: iterated sumcheck rounds followed by `finalCheck`.
+* `Sumcheck.proof`: rounds zero through `n - 1`, by `Reduction.iterate`, followed by `finalCheck`.
 
 ## Main results
 
