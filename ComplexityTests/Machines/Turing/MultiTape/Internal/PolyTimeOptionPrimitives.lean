@@ -33,6 +33,49 @@ example {α : Type} (a : α ↪ List Bool) (e : Empty ↪ List Bool)
     {value : α → Option Empty} (hvalue : ComputableInPolyTime value a (encOption e)) :
     ComputableInPolyTime (fun x => (value x).isSome) a encBool := by fun_prop
 
+example {α β : Type} {a : α ↪ List Bool} {b : β ↪ List Bool}
+    {value : α → Option β} {fallback : α → β}
+    (hvalue : ComputableInPolyTime value a (encOption b))
+    (hfallback : ComputableInPolyTime fallback a b) :
+    ComputableInPolyTime (fun x => (value x).getD (fallback x)) a b := by fun_prop
+
+example {α β γ : Type} {a : α ↪ List Bool} {b : β ↪ List Bool} {c : γ ↪ List Bool}
+    {value : α → Option β} {fallback : α → γ} {body : α → β → γ}
+    (hvalue : ComputableInPolyTime value a (encOption b))
+    (hfallback : ComputableInPolyTime fallback a c)
+    (hbody : ComputableInPolyTime (fun p : α × β => body p.1 p.2) (encPair a b) c) :
+    ComputableInPolyTime (fun x => (value x).elim (fallback x) (body x)) a c := by fun_prop
+
+-- The body uses both its captured original input and the fetched optional value.
+example {α β : Type} {a : α ↪ List Bool} {b : β ↪ List Bool} {value : α → Option β}
+    {fallback : α → α × β} (hvalue : ComputableInPolyTime value a (encOption b))
+    (hfallback : ComputableInPolyTime fallback a (encPair a b)) :
+    ComputableInPolyTime (fun x => (value x).elim (fallback x) (fun y => (x, y)))
+      a (encPair a b) := by fun_prop
+
+example {α γ : Type} {a : α ↪ List Bool} {e : Empty ↪ List Bool} {c : γ ↪ List Bool}
+    {value : α → Option Empty} {fallback : α → γ} {body : α → Empty → γ}
+    (hvalue : ComputableInPolyTime value a (encOption e))
+    (hfallback : ComputableInPolyTime fallback a c)
+    (hbody : ComputableInPolyTime (fun p : α × Empty => body p.1 p.2) (encPair a e) c) :
+    ComputableInPolyTime (fun x => (value x).elim (fallback x) (body x)) a c := by fun_prop
+
+example {α β : Type} {_a : α ↪ List Bool} {_b : β ↪ List Bool}
+    {_value : α → Option β} {_fallback : α → β}
+    (_hvalue : ComputableInPolyTime _value _a (encOption _b)) : True := by
+  fail_if_success
+    have : ComputableInPolyTime (fun x => (_value x).getD (_fallback x)) _a _b := by fun_prop
+  trivial
+
+example {α β γ : Type} {_a : α ↪ List Bool} {_b : β ↪ List Bool} {_c : γ ↪ List Bool}
+    {_value : α → Option β} {_fallback : α → γ} {_body : α → β → γ}
+    (_hvalue : ComputableInPolyTime _value _a (encOption _b))
+    (_hfallback : ComputableInPolyTime _fallback _a _c) : True := by
+  fail_if_success
+    have : ComputableInPolyTime (fun x => (_value x).elim (_fallback x) (_body x)) _a _c := by
+      fun_prop
+  trivial
+
 open Lean Elab Command in
 run_cmd do
   for name in #[`Turing.MultiTapeTM.ComputableTidilyInPolyTime,
