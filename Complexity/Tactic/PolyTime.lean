@@ -511,8 +511,19 @@ private meta def polytimeRawFromPlain : TacticM Unit :=
     let rawNamed := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD key #[]
     let rawFunctions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1
       ``ComputableTidilyInPolyTime
-    unless rawNamed.isEmpty && rawFunctions.isEmpty do
-      throwError "an existing raw certificate family already handles this program"
+    -- Sharing a program head does not make a specialized raw rule applicable: for example,
+    -- Boolean-state word folds cannot handle a generic captured fold. Probe only application,
+    -- without solving any premise, and restore all metavariables before trying the plain rules.
+    let applicable (origin : Mathlib.Meta.FunProp.Origin) : TacticM Bool := do
+      let saved ← saveState
+      try
+        discard <| goal.apply (← origin.getValue)
+        return true
+      catch _ => return false
+      finally saved.restore
+    if (← rawNamed.anyM fun (name, _) => applicable (.decl name)) ||
+        (← rawFunctions.anyM fun rule => applicable rule.thmOrigin) then
+      throwError "an applicable raw certificate family already handles this program"
     replaceMainGoal (← goal.applyConst ``ComputableInPolyTime.tidy)
     evalTactic (← `(tactic| solve |
       aesop (config := { terminal := true, assumptionTransparency := .reducible })
