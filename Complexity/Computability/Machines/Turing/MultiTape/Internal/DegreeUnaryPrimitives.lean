@@ -93,7 +93,7 @@ theorem unary_isZero :
       Internal.WordPredicates.nonemptyT.computesInTimeAndSpace_toTM (encUnary n)
   have hnot := (of_finite (encIn := encBool) (encMid := encBool) Bool.not).comp hn
   have hz : ComputableInDegree (fun n => decide (n = 0)) encUnary encBool 1 0 := by
-    convert hnot using 1 <;> simp
+    convert hnot using 1 <;> simp [Function.comp_def]
   exact ⟨hz.1, hz.2.mono_deg (by decide)⟩
 
 end ComputableInDegree
