@@ -6,6 +6,7 @@ Authors: Samuel Schlesinger
 module
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Basic
 import Lean.Elab.Command
+import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 
 /-! Plain-field total decoder clients, preserving malformed-word and independent-degree scope. -/
 open Turing.MultiTapeTM
@@ -55,3 +56,13 @@ example {α β : Type} (a : α ↪ List Bool) (b : β ↪ List Bool)
     (D₁ : Decoder a) (D₂ : Decoder b) :
     ComputableInPolyTime (Decoder.pair D₁ D₂).decode encBits (encPair a b) :=
   (Decoder.pair D₁ D₂).computableInPolyTime
+
+-- An inhabited total decoder with actual zero cost/output degrees, on unbounded runtime words.
+example : ∃ (a : Unit ↪ List Bool) (D : Decoder a),
+    ComputableInDegree D.decode encBits a 0 0 := by
+  let a : Unit ↪ List Bool := ⟨fun _ => [], fun x y _ => Subsingleton.elim x y⟩
+  obtain ⟨c, h⟩ := computableInTimeAndSpace_of_const (encIn := encBits) (encOut := a) ()
+  have hd : ComputableInDegree (fun _ : List Bool => ()) encBits a 0 0 :=
+    ⟨⟨fun _ => c, fun _ => 0, DegreeBounded.const c, DegreeBounded.const 0, h⟩,
+      DegreeBounded.const 0⟩
+  exact ⟨a, ⟨fun _ => (), fun x => Subsingleton.elim _ x, 0, 0, hd⟩, hd⟩
