@@ -197,6 +197,22 @@ class CacheBootstrapTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2)
         self.assertEqual(self.events(), [])
 
+    def test_ensure_checkout_flag_targets_external_worktree_without_local_scripts(self):
+        external = self.temp / "external-worktree"
+        external.mkdir()
+        subprocess.check_call(["git", "init", "-q"], cwd=external, env=self.env)
+        for name in ("lean-toolchain", "lake-manifest.json", "lakefile.toml"):
+            shutil.copy(self.root / name, external / name)
+        subprocess.check_call(["git", "add", "."], cwd=external, env=self.env)
+        subprocess.check_call(["git", "commit", "-qm", "ext"], cwd=external, env=self.env)
+        self.assert_success(self.run_script("cache/ensure.sh", "--checkout", str(external)))
+        events = self.events()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["kind"], "fetch")
+        self.assertEqual(Path(events[0]["cwd"]).resolve(), external.resolve())
+        self.assertTrue((external / ".lake/cache-bootstrap/attempt.json").is_file())
+        self.assertFalse(self.stamp.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

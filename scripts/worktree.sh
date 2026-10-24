@@ -55,7 +55,7 @@ PY
 isolate_git_dir() {
   local source_git="$1" dest_git="$2"
   python3 - "$source_git" "$dest_git" <<'PY'
-import os, pathlib, shutil, sys
+import os, pathlib, shutil, subprocess, sys
 
 src = pathlib.Path(sys.argv[1])
 dst = pathlib.Path(sys.argv[2])
@@ -93,6 +93,16 @@ for name in ("config", "packed-refs", "shallow", "index"):
     if cand.is_file():
         shutil.copy2(cand, dst / name)
 
+if (dst / "config").is_file():
+    subprocess.run(
+        ["git", "config", "--file", str(dst / "config"), "--unset-all", "core.worktree"],
+        check=False,
+    )
+    subprocess.run(
+        ["git", "config", "--file", str(dst / "config"), "core.bare", "false"],
+        check=False,
+    )
+
 for dirname in ("refs", "info"):
     cand = gitdir / dirname if (gitdir / dirname).is_dir() else commondir / dirname
     if cand.is_dir():
@@ -113,6 +123,30 @@ if objects_src.is_dir():
     )
 else:
     (dst / "objects").mkdir(parents=True, exist_ok=True)
+
+pkg_root = dst.parent.resolve()
+dst_real = dst.resolve()
+top = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pkg_root), "rev-parse", "--show-toplevel"], text=True
+    ).strip()
+).resolve()
+abs_gitdir = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pkg_root), "rev-parse", "--absolute-git-dir"], text=True
+    ).strip()
+).resolve()
+common_gitdir = pathlib.Path(
+    subprocess.check_output(
+        ["git", "-C", str(pkg_root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        text=True,
+    ).strip()
+).resolve()
+if top != pkg_root or abs_gitdir != dst_real or common_gitdir != dst_real:
+    raise SystemExit(
+        f"Isolated git directory validation failed for {pkg_root}: "
+        f"toplevel={top}, gitdir={abs_gitdir}, commondir={common_gitdir}"
+    )
 PY
 }
 
@@ -182,13 +216,15 @@ seed_package() (
 
 bootstrap_worktree_cache() {
   local wt_path="$1"
+  local wt_real
+  wt_real="$(resolve_path "$wt_path")"
   if [ "${COMPLEXITYLIB_WORKTREE_SKIP_CACHE_BOOTSTRAP:-0}" = "1" ]; then
     return 0
   fi
   if [ -x "$wt_path/scripts/cache/ensure.sh" ]; then
-    (cd "$wt_path" && ./scripts/cache/ensure.sh) || true
+    (cd "$wt_path" && COMPLEXITYLIB_CACHE_CHECKOUT="$wt_real" ./scripts/cache/ensure.sh) || true
   elif [ -x "$ROOT/scripts/cache/ensure.sh" ]; then
-    (cd "$wt_path" && "$ROOT/scripts/cache/ensure.sh") || true
+    (cd "$wt_path" && COMPLEXITYLIB_CACHE_CHECKOUT="$wt_real" "$ROOT/scripts/cache/ensure.sh" --checkout "$wt_real") || true
   fi
 }
 
@@ -206,6 +242,19 @@ refuse_primary_or_symlink_target() {
     "$root_real/.lake"|"$root_real/.lake/"*)
       echo "Refusing to seed inside primary checkout .lake: $wt_path" >&2
       return 1
+      ;;
+    "$root_real"/*)
+      local wt_top=""
+      if [ -d "$wt_real" ] && [ -e "$wt_real/.git" ]; then
+        wt_top="$(git -C "$wt_real" rev-parse --show-toplevel 2>/dev/null || true)"
+        if [ -n "$wt_top" ]; then
+          wt_top="$(resolve_path "$wt_top")"
+        fi
+      fi
+      if [ "$wt_top" != "$wt_real" ]; then
+        echo "Refusing to seed inside primary checkout subdirectory: $wt_path" >&2
+        return 1
+      fi
       ;;
   esac
   local path
@@ -314,7 +363,6 @@ case "$cmd" in
       dir_name="${branch//\//-}"
     fi
     wt_path="$ROOT/.worktrees/$dir_name"
-    refuse_primary_or_symlink_target "$wt_path"
     if git show-ref --verify --quiet "refs/heads/$branch"; then
       if [ "$force_reset" = "true" ]; then
         effective_base="${base_ref:-origin/main}"
