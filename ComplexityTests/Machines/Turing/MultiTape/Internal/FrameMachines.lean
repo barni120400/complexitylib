@@ -37,3 +37,8 @@ run_cmd do
       `Turing.MultiTapeTM.ComputableTidilyInLinearTimeAndSpace] do
     if (← getEnv).contains name then
       throwError "A higher tidy calculus was imported: {name}"
+
+example (w : List Bool) : Encodings.frameT.toTM.ComputesInTimeAndSpace w (frame w)
+    (2 * w.length + 3) 0 := by
+  simpa only [show Encodings.frameT.q₀ = () from rfl, Encodings.frameT_run] using
+    Encodings.frameT.computesInTimeAndSpace_toTM w

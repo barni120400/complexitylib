@@ -43,19 +43,6 @@ namespace Encodings
 
 open Internal.FrameMachines
 
--- vendored: expose `frameT` and `frameT_run` for `computableInLogSpace_frame`; private upstream.
-/-- Frames its input. -/
-@[expose, simps q₀ step final]
-public def frameT : Transducer Bool Unit where
-  q₀ := ()
-  step _ b := ((), [true, b])
-  final _ := [false]
-  length_step_le _ _ := by simp
-  length_final_le _ := by simp
-
-public lemma frameT_run (v : List Bool) : frameT.run () v = frame v := by
-  induction v <;> simp [*]
-
 /-- Emits a word determined by its input's first symbol, if any, and by `drop`: `[true]` followed by
 the input (`drop = none`), the input without its first symbol (`drop = some false`), or just the
 first symbol (`drop = some true`). -/
