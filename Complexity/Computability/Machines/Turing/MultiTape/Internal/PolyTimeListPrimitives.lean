@@ -8,6 +8,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeLoops
 import Complexity.Computability.Machines.Turing.MultiTape.Internal.UnaryMachines
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append
 
 /-!
 # Direct plain list primitives
@@ -31,6 +32,22 @@ private theorem ofTransducer {Q : Type} [Finite Q] (τ : Transducer Bool Q)
     0, _, inferInstance, τ.toTM, fun a => ?_⟩
   rw [hf a]
   exact τ.computesInTimeAndSpace_toTM (input a)
+
+private theorem appendEncoded {γ α β δ : Type*} {input : γ ↪ List Bool}
+    {encA : α ↪ List Bool} {encB : β ↪ List Bool} {output : δ ↪ List Bool}
+    {left : γ → α} {right : γ → β} {result : γ → δ}
+    (hleft : ComputableInPolyTime left input encA)
+    (hright : ComputableInPolyTime right input encB)
+    (hout : ∀ x, output (result x) = encA (left x) ++ encB (right x)) :
+    ComputableInPolyTime result input output := by
+  obtain ⟨c₁, d₁, k₁, S₁, _, tm₁, h₁⟩ := Internal.NormalForm.polyTime hleft
+  obtain ⟨c₂, d₂, k₂, S₂, _, tm₂, h₂⟩ := Internal.NormalForm.polyTime hright
+  let bound := fun n => c₁ * (n + 1) ^ d₁ + c₂ * (n + 1) ^ d₂ + 2 * max k₁ k₂
+  have hb : PolynomiallyBounded bound := by dsimp [bound]; fun_prop
+  refine ⟨bound, bound, hb, hb, max k₁ k₂, S₁ ⊕ S₂, inferInstance,
+    appendTM tm₁ tm₂, fun x => ?_⟩
+  rw [hout x]
+  exact (((h₁ x).append (h₂ x)).mono (Nat.le_add_right _ _) le_rfl).computesInTimeAndSpace
 
 private def snocTransducer : Transducer Bool (Option Bool) where
   q₀ := none
@@ -112,6 +129,12 @@ private theorem foldlAll {α : Type} (test : α → Bool) (list : List α) (init
   | nil => simp
   | cons a list ih => simp [ih, Bool.and_assoc]
 
+private theorem foldlReverse (word acc : List Bool) :
+    word.foldl (fun reversed bit => bit :: reversed) acc = word.reverse ++ acc := by
+  induction word generalizing acc with
+  | nil => simp
+  | cons bit word ih => simp [ih, List.reverse_cons, List.append_assoc]
+
 namespace ComputableInPolyTime
 
 /-- Unary successor is a direct finite-state transduction, including the empty word for zero. -/
@@ -138,6 +161,31 @@ theorem snoc {α : Type} (enc : α ↪ List Bool) :
     p.1.flatMap (frame ∘ enc) ++ frame (enc p.2)
   simp only [List.flatMap_append, List.flatMap_cons, List.flatMap_nil,
     Function.comp_apply, List.append_nil]
+
+/-- Prepend a computed bit to a computed word, retaining both input certificates. -/
+@[fun_prop]
+theorem bitsCons {γ : Type} {input : γ ↪ List Bool} {head : γ → Bool}
+    {tail : γ → List Bool} (hhead : ComputableInPolyTime head input encBool)
+    (htail : ComputableInPolyTime tail input encBits) :
+    ComputableInPolyTime (fun x => head x :: tail x) input encBits :=
+  appendEncoded hhead htail fun _ => rfl
+
+/-- Reverse arbitrary bit strings with the direct prefix-bounded fold. -/
+@[fun_prop]
+theorem bitsReverse : ComputableInPolyTime List.reverse encBits encBits := by
+  have hfold := foldl' (encA := encBool) (encL := encBits) (encB := encBits)
+    (list := id) (init := fun _ => []) (step := fun reversed bit => bit :: reversed)
+    id' (const []) (bitsCons (snd encBits encBool) (fst encBits encBool))
+    (B := fun word => word.length) (by
+      apply PolyBounded.of_forall_le 1 1
+      intro word
+      simp) (by
+      intro word i _
+      rw [foldlReverse]
+      simp only [encBits_apply, List.length_append, List.length_reverse,
+        List.length_take, List.length_nil, Nat.add_zero]
+      exact Nat.min_le_right _ _)
+  simpa only [foldlReverse, List.append_nil, id_eq] using hfold
 
 private theorem rangeStepCertificate :
     ComputableInPolyTime (fun p : RangeState × Bool => rangeStep p.1 p.2)
