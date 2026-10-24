@@ -1956,6 +1956,8 @@ public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
+public import Complexity.Probability.Extractor.Basic
+public import Complexity.Probability.Extractor.LeftoverHash
 public import Complexity.Probability.Forking
 public import Complexity.Probability.Guessing
 public import Complexity.Probability.HashFamily
