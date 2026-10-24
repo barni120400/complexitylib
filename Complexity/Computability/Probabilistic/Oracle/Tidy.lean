@@ -11,6 +11,7 @@ public import Complexity.Computability.Probabilistic.Oracle
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Tidy
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyNormalForm
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Foundations.Data.List.Fold
 import Mathlib.Data.Fintype.Basic
@@ -184,8 +185,7 @@ theorem pair {program : α → WordOracleComp Operation γ} {f : α → β}
     IsTidyOraclePPTOn input (encPair middle output)
       (fun a => (fun b => (f a, b)) <$> program a) := by
   have := hprogram.1
-  have hframe : ComputableInPolyTime (fun b => frame (middle b)) middle encBits :=
-    ComputableInPolyTime.of_tidy (.of_linear (.of_frame fun _ => rfl))
+  have hframe := ComputableInPolyTime.bitsFrame middle
   obtain ⟨kp, Prepare, hfiniteP, prepare, cp, dp, hprepare⟩ :=
     exists_computesTidily_pure (Operation := Operation) (hframe.comp hf)
   obtain ⟨hops, k, Control, hfinite, source, c, d, hsource⟩ := hprogram
