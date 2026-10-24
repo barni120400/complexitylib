@@ -1240,6 +1240,19 @@ Jukna coverage below is an additional target beyond the V1 port:
   Open (see #640): computational Schnorr signatures under discrete log for strict PPT forgers,
   and security against eavesdropping in the strict-PPT model, where simulating transcripts needs
   approximately uniform `ZMod q` samples and hence an explicit statistical-distance term.
+* **Diffie–Hellman assumptions and ElGamal encryption (#640, track C, #873).** Boneh–Shoup
+  Section 10.5 and Exercise 11.5. Over a `PrimeOrderGroupFamily`,
+  [Computational and Decisional Diffie–Hellman](Complexity/Crypto/Computational/DiffieHellman.lean)
+  (`cdhGame`, `CDH`, `ddhRealGame`, `ddhIdealGame`, `DDH`) are formalized with the reductions
+  `DDH ⇒ CDH ⇒ DiscreteLog` (`CDH.discreteLog`, `DDH.cdh`, `DDH.discreteLog`) and the distributional
+  DDH rerandomisation lemma (`ddhRerandomizeLaw_real`, `ddhRerandomizeLaw_ideal`, Exercises 10.8–10.9).
+  [ElGamal public-key encryption](Complexity/Crypto/Computational/ElGamal.lean) (`elGamalEncrypt`,
+  `elGamalDecrypt`, polynomial-time encoded decryption `decodeElGamal`, and bit encryption
+  `elGamalCPAGame`) is proved IND-CPA secure for one-bit messages under DDH
+  (`advantage_elGamalCPAGame_le`, `DDH.elGamalINDCPA`, Boneh–Shoup Exercise 11.5(a)). Open:
+  group-element messages and efficient honest key generation/encryption, the efficient DDH random
+  self-reduction (Exercise 10.10), hashed ElGamal, Cramer–Shoup CCA
+  security, and Pedersen commitments over `PrimeOrderGroupFamily`.
 * **Lattice identification and signatures (#640, track B).** The short-integer-solution
   hypothesis, exact box rejection sampling and Lyubashevsky identification are in review (#660).
   Open: Fiat–Shamir with aborts and signatures from SIS [Lyubashevsky 2009, 2012]; efficiency
