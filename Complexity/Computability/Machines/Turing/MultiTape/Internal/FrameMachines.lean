@@ -59,3 +59,20 @@ lemma readFrameT_run_false : ∀ v, (readFrameT false).run .marker v = dropFrame
   | true :: b :: v => by simp [dropFrame, readFrameT_run_false v]
 
 end Turing.MultiTapeTM.Internal.FrameMachines
+
+namespace Turing.MultiTapeTM.Encodings
+
+-- vendored: expose `frameT` and `frameT_run` for `computableInLogSpace_frame`; private upstream.
+/-- Frames its input. -/
+@[simps q₀ step final]
+public def frameT : Transducer Bool Unit where
+  q₀ := ()
+  step _ b := ((), [true, b])
+  final _ := [false]
+  length_step_le _ _ := by simp
+  length_final_le _ := by simp
+
+public lemma frameT_run (v : List Bool) : frameT.run () v = frame v := by
+  induction v <;> simp [*]
+
+end Turing.MultiTapeTM.Encodings
