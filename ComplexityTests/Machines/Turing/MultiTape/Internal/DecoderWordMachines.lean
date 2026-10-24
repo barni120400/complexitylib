@@ -11,7 +11,8 @@ import Lean.Elab.Command
 open Turing.MultiTapeTM Internal.DecoderWords
 example (w : List Bool) : unaryLengthT.toTM.ComputesInTimeAndSpace w
     (List.replicate w.length true) (2 * w.length + 3) 0 := by
-  simpa only [show unaryLengthT.q₀ = () from rfl, unaryLengthT_run] using unaryLengthT.computesInTimeAndSpace_toTM w
+  simpa only [show unaryLengthT.q₀ = () from rfl, unaryLengthT_run] using
+    unaryLengthT.computesInTimeAndSpace_toTM w
 example (w : List Bool) (d : Bool) : (headDefaultT d).toTM.ComputesInTimeAndSpace w
     [w.headD d] (2 * w.length + 3) 0 := by
   simpa only [show (headDefaultT d).q₀ = false from rfl, headDefaultT_run] using
