@@ -129,7 +129,7 @@ private theorem foldlAll {α : Type} (test : α → Bool) (list : List α) (init
   | nil => simp
   | cons a list ih => simp [ih, Bool.and_assoc]
 
-private theorem foldlReverse (word acc : List Bool) :
+private theorem foldlReverse {α : Type} (word acc : List α) :
     word.foldl (fun reversed bit => bit :: reversed) acc = word.reverse ++ acc := by
   induction word generalizing acc with
   | nil => simp
@@ -308,6 +308,59 @@ theorem map {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {
       exact (Nat.min_le_right i list.length).trans
         (SizedListEncoding.length_le (encA := encA) (encL := encList encA) list))
   simpa only [foldlMap, List.nil_append, id_eq] using hfold
+
+/-- Reverse a computed word, fixing its raw intermediate encoding before proof search.
+The input certificate may itself convert from another representation. -/
+@[fun_prop]
+theorem bitsReverseWithInput {γ : Type} {encIn : γ ↪ List Bool} {word : γ → List Bool}
+    (hword : ComputableInPolyTime word encIn encBits) :
+    ComputableInPolyTime (fun a => (word a).reverse) encIn encBits :=
+  bitsReverse.comp hword
+
+/-- Prepend computed data. The result encoding determines the element encoding before
+`fun_prop` searches for the two component certificates. -/
+@[fun_prop]
+theorem cons' {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
+    {head : γ → α} {tail : γ → List α}
+    (hhead : ComputableInPolyTime head encIn encA)
+    (htail : ComputableInPolyTime tail encIn (encList encA)) :
+    ComputableInPolyTime (fun x => head x :: tail x) encIn (encList encA) := by
+  have hframe : ComputableInPolyTime (fun a : α => a) encA (encFramed encA) :=
+    ofTransducer Encodings.frameT fun a => (Encodings.frameT_run (encA a)).symm
+  exact appendEncoded (hframe.comp hhead) htail fun _ => rfl
+
+/-- Concatenate computed lists, inferring their shared encoding from the result. -/
+@[fun_prop]
+theorem listAppend' {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
+    {left right : γ → List α}
+    (hleft : ComputableInPolyTime left encIn (encList encA))
+    (hright : ComputableInPolyTime right encIn (encList encA)) :
+    ComputableInPolyTime (fun x => left x ++ right x) encIn (encList encA) := by
+  apply appendEncoded hleft hright
+  intro x
+  change ((left x ++ right x).flatMap (frame ∘ encA)) =
+    (left x).flatMap (frame ∘ encA) ++ (right x).flatMap (frame ∘ encA)
+  exact List.flatMap_append
+
+/-- Reverse a computed framed list, inferring its element encoding from the result. -/
+@[fun_prop]
+theorem listReverseWithInput {γ α : Type} {encIn : γ ↪ List Bool} {encA : α ↪ List Bool}
+    {list : γ → List α} (hlist : ComputableInPolyTime list encIn (encList encA)) :
+    ComputableInPolyTime (fun a => (list a).reverse) encIn (encList encA) := by
+  have hreverse : ComputableInPolyTime List.reverse (encList encA) (encList encA) := by
+    have hfold := foldl' (encA := encA) (encL := encList encA)
+      (step := fun reversed value => value :: reversed) (init := fun _ => []) id' (const [])
+      (cons' (snd (encList encA) encA) (fst (encList encA) encA))
+      (B := fun l => (encList encA l).length) .self (fun l i _ => by
+        rw [foldlReverse]
+        simp only [List.append_nil]
+        have hp := (List.reverse_perm (l.take i)).flatMap_right (frame ∘ encA)
+        change (((l.take i).reverse).flatMap (frame ∘ encA)).length ≤
+          (l.flatMap (frame ∘ encA)).length
+        rw [hp.length_eq]
+        exact ((List.take_sublist i l).flatMap (frame ∘ encA)).length_le)
+    simpa only [foldlReverse, List.append_nil, id_eq] using hfold
+  exact hreverse.comp hlist
 
 end ComputableInPolyTime
 end Turing.MultiTapeTM
