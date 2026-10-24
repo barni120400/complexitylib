@@ -185,7 +185,8 @@ theorem bitsReverse : ComputableInPolyTime List.reverse encBits encBits := by
     (B := fun word => word.length) (by
       apply PolyBounded.of_forall_le 1 1
       intro word
-      simp) (by
+      simp only [encBits_apply, Nat.pow_one, Nat.one_mul]
+      omega) (by
       intro word i _
       rw [foldlReverse]
       simp only [encBits_apply, List.length_append, List.length_reverse,
