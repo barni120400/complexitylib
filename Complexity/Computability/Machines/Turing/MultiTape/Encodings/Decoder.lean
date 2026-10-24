@@ -46,7 +46,7 @@ elements.
 
 * `Turing.MultiTapeTM.frames_encList`: the framed words of an encoded list are its encoded
   elements.
-* `Turing.MultiTapeTM.computableTidilyInDegree_frames`: splitting into framed words is linear.
+* `Turing.MultiTapeTM.computableInDegree_frames`: splitting into framed words is linear.
 * `Turing.MultiTapeTM.bits_ofBits`: the binary digits of a word read as a number are the word up
   to its last `true`.
 -/
@@ -156,9 +156,19 @@ theorem framesT_run (w : List Bool) :
           unframe, dropFrame, frame_cons, List.cons_append, encBits, Function.Embedding.refl_apply]
 
 /-- **Splitting a word into framed words is linear.** -/
-theorem computableTidilyInDegree_frames :
-    ComputableTidilyInDegree frames encBits (encList encBits) 1 1 :=
-  .of_linear (framesT.computableTidilyInLinearTimeAndSpace fun w => (framesT_run w).symm)
+theorem computableInDegree_frames :
+    ComputableInDegree frames encBits (encList encBits) 1 1 := by
+  have htm (w : List Bool) := framesT.computesInTimeAndSpace_toTM w
+  refine ⟨⟨fun w => 2 * w.length + 3, fun _ => 0,
+    ⟨3, fun _ => by simp only [pow_one, encBits, Function.Embedding.refl_apply]; omega⟩,
+    DegreeBounded.const 0, 0, _, inferInstance, framesT.toTM, fun w => ?_⟩,
+    ⟨3, fun w => ?_⟩⟩
+  · simpa only [show framesT.q₀ = .between from rfl, framesT_run, encBits,
+      Function.Embedding.refl_apply] using htm w
+  · have hlen := (htm w).length_output_le
+    simpa only [show framesT.q₀ = .between from rfl, framesT_run, encBits,
+      Function.Embedding.refl_apply, pow_one] using hlen.trans
+        (by omega : 2 * w.length + 3 ≤ 3 * (w.length + 1))
 
 /-! ### Binary digits -/
 
@@ -234,19 +244,6 @@ def nat : Decoder encNat where
         encBits encBits := by
       fun_prop
     exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
-
-/-- Options are decoded as `none` from the empty word, and otherwise from the tail. -/
-def option (D : Decoder enc) : Decoder (encOption enc) where
-  decode w := if w.isEmpty then none else some (D.decode w.tail)
-  decode_enc o := by cases o <;> simp [encOption, D.decode_enc]
-  computable := by
-    obtain ⟨d, e, hD⟩ := D.computable
-    have hsome := (ComputableTidilyInDegree.optionSome (enc₁ := enc)
-      (enc := encOption enc)).comp (hD.comp (ComputableTidilyInDegree.tail
-        (enc₁ := encBool) (enc := encBits)))
-    exact ⟨_, _, ComputableTidilyInDegree.ite (encC := encBool)
-      (ComputableTidilyInDegree.isEmpty (enc₁ := encBool) (enc := encBits))
-      ((ComputableTidilyInDegree.const none).restrict _) (hsome.restrict _)⟩
 
 /-- Pairs are decoded from the framed first component and what follows it. -/
 def pair {β₁ β₂ : Type} {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool} (D₁ : Decoder enc₁)

@@ -45,4 +45,20 @@ theorem bool_degree : ComputableInDegree (fun w : List Bool => w.headD false)
     encBool_apply, encBits, Function.Embedding.refl_apply] using
     (headDefaultT false).computesInTimeAndSpace_toTM w
 
+/-- The existing bit-list codec machine drops one symbol, including on empty input. -/
+theorem tail_degree : ComputableInDegree List.tail encBits encBits 1 1 := by
+  obtain ⟨c, k, Q, hfin, tm, htm⟩ := ListEncoding.tail (enc₁ := encBool) (enc := encBits)
+  refine ⟨⟨_, _, ⟨c, fun _ => by simp⟩, ⟨c, fun _ => by simp⟩,
+    k, Q, hfin, tm, fun w => (htm w).computesInTimeAndSpace⟩,
+    ⟨c, fun w => ?_⟩⟩
+  simpa using (htm w).length_output_le
+
+/-- The existing bit-list codec machine tests whether the complete input is empty. -/
+theorem empty_degree : ComputableInDegree List.isEmpty encBits encBool 1 1 := by
+  obtain ⟨c, k, Q, hfin, tm, htm⟩ := ListEncoding.isEmpty (enc₁ := encBool) (enc := encBits)
+  refine ⟨⟨_, _, ⟨c, fun _ => by simp⟩, ⟨c, fun _ => by simp⟩,
+    k, Q, hfin, tm, fun w => (htm w).computesInTimeAndSpace⟩,
+    ⟨c, fun w => ?_⟩⟩
+  simpa using (htm w).length_output_le
+
 end Turing.MultiTapeTM.Internal.DecoderWords

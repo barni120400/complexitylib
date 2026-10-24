@@ -8,6 +8,9 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DecoderPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 
 /-!
 # Total decoders with plain degree certificates
@@ -55,6 +58,19 @@ def bool : Decoder encBool where
   decode w := w.headD false
   decode_enc _ := rfl
   computable := ⟨1, 1, Internal.DecoderWords.bool_degree⟩
+
+/-- Options are decoded as `none` from the empty word, and otherwise from the tail. -/
+def option (D : Decoder enc) : Decoder (encOption enc) where
+  decode w := if w.isEmpty then none else some (D.decode w.tail)
+  decode_enc o := by cases o <;> simp [encOption, D.decode_enc]
+  computable := by
+    obtain ⟨d, e, hD⟩ := D.computable
+    have hsome := (ComputableInDegree.optionSome (enc₁ := enc)
+      (enc := encOption enc)).computableInPolyTime.comp
+      (hD.computableInPolyTime.comp Internal.DecoderWords.tail_degree.computableInPolyTime)
+    exact (ComputableInPolyTime.ite (encC := encBool)
+      Internal.DecoderWords.empty_degree.computableInPolyTime
+      (ComputableInDegree.const none).computableInPolyTime hsome).exists_degree
 
 /-- Transport a decoder along an encoding equality and a right inverse. -/
 def map (D : Decoder enc) (f : α → β) (g : β → α) (hfg : ∀ b, f (g b) = b)

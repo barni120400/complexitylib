@@ -36,3 +36,12 @@ run_cmd do
 example {α : Type} (a : α ↪ List Bool) (decode : List Bool → α)
     (hround : ∀ x, decode (a x) = x) (h : ComputableInDegree decode encBits a 0 0) :
     Decoder a := ⟨decode, hround, 0, 0, h⟩
+
+example : (Decoder.option Decoder.bool).decode [] = none := rfl
+example : (Decoder.option Decoder.bool).decode [false] = some false := rfl
+example : (Decoder.option Decoder.bool).decode [true] = some false := rfl
+example (b : Bool) : (Decoder.option Decoder.bool).decode (encOption encBool (some b)) = some b :=
+  (Decoder.option Decoder.bool).decode_enc (some b)
+example {α : Type} (a : α ↪ List Bool) (D : Decoder a) :
+    ComputableInPolyTime (Decoder.option D).decode encBits (encOption a) :=
+  (Decoder.option D).computableInPolyTime
