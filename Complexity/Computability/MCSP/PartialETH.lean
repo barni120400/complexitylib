@@ -79,8 +79,8 @@ subexponential time $2^{o(m \log m)} = N^{o(\log \log N)}$ (`¬DecidableInSubexp
 
 ## Main definitions
 
-* `Cslib.PartialMCSP.MonotoneReadOnce`, `Cslib.PartialMonotoneReadOnceMCSP`: partial-function MCSP
-  restricted to read-once positive formulas.
+* `Cslib.PartialMCSP.MonotoneReadOnce`: partial-function MCSP restricted to read-once positive
+  formulas.
 * `Cslib.PartialMCSP.ilangoGamma`, `Cslib.PartialMCSP.ilangoInstance`: Ilango's partial Boolean
   function $\gamma_G$ on $6n$ bits and the `PartialMCSP` instance $(\gamma_G, 6n - 1)$.
 * `Cslib.PartialMCSP.ilangoReduction`: total reduction from `BipartitePermutationGraph` to
@@ -130,10 +130,6 @@ read-once positive Boolean formula `F : PosFormula x.arity` with at most `x.thre
 gates. -/
 def MonotoneReadOnce : Set Instance :=
   {x | ∃ F : PosFormula x.arity, F.IsReadOnce ∧ F.size ≤ x.threshold ∧ x.AgreesWith F.eval}
-
-/-- Top-level alias for `PartialMCSP.MonotoneReadOnce`. -/
-abbrev _root_.Cslib.PartialMonotoneReadOnceMCSP : Set Instance :=
-  PartialMCSP.MonotoneReadOnce
 
 theorem mem_monotoneReadOnce_iff {x : Instance} :
     x ∈ MonotoneReadOnce ↔
@@ -633,7 +629,7 @@ theorem disjoint_xSet_ySet (n : ℕ) : Disjoint (xSet n) (ySet n) := by
 /-- **Claim 14** [ECCC TR20-183, Section 3, p. 25]: any read-once positive formula `F` on $6n$
 variables with `F.leafSize = 6 * n` agreeing with Clause (3) has `4 * n ≤ F.numOr + 1` and
 `F.numAnd ≤ 2 * n`. -/
-theorem numAnd_le_two_mul_of_clause3 {F : PosFormula (6 * n)} (hro : F.IsReadOnce)
+private theorem numAnd_le_two_mul_of_clause3 {F : PosFormula (6 * n)} (hro : F.IsReadOnce)
     (hleaf : F.leafSize = 6 * n)
     (hC3 : ∀ x y : BitString (2 * n),
       F.eval (packXYZ x y ones2n) = decide (∃ i, x i = true ∨ y i = true)) :
@@ -712,7 +708,7 @@ private theorem exists_flip_with_zVar_true {F : PosFormula (6 * n)}
 
 /-- **Claim 15 (left)** [ECCC TR20-183, Section 3, p. 25]: no `zVar i` leaf is the left child of an
 `or` subformula of `F`. -/
-theorem not_isSubformula_or_var_zVar_left {F : PosFormula (6 * n)} (hro : F.IsReadOnce)
+private theorem not_isSubformula_or_var_zVar_left {F : PosFormula (6 * n)} (hro : F.IsReadOnce)
     (hC1 : ∀ y z : BitString (2 * n),
       F.eval (packXYZ zeros2n y z) = decide (∃ j, y j = true ∧ z j = true))
     (hC3 : ∀ x y : BitString (2 * n),
@@ -742,7 +738,7 @@ theorem not_isSubformula_or_var_zVar_left {F : PosFormula (6 * n)} (hro : F.IsRe
 
 /-- **Claim 15 (right)** [ECCC TR20-183, Section 3, p. 25]: no `zVar i` leaf is the right child of
 an `or` subformula of `F`. -/
-theorem not_isSubformula_or_var_zVar_right {F : PosFormula (6 * n)} (hro : F.IsReadOnce)
+private theorem not_isSubformula_or_var_zVar_right {F : PosFormula (6 * n)} (hro : F.IsReadOnce)
     (hC1 : ∀ y z : BitString (2 * n),
       F.eval (packXYZ zeros2n y z) = decide (∃ j, y j = true ∧ z j = true))
     (hC3 : ∀ x y : BitString (2 * n),
@@ -772,7 +768,7 @@ theorem not_isSubformula_or_var_zVar_right {F : PosFormula (6 * n)} (hro : F.IsR
 
 /-- **Claim 16 (left)** [ECCC TR20-183, Section 3, p. 25]: if `.and (.var (zVar i)) A` is a
 subformula of `F`, then `A` reads no `z`-variable (`∀ j, zVar j ∉ A.leafSupport`). -/
-theorem not_mem_leafSupport_zVar_of_isSubformula_and_left {F : PosFormula (6 * n)}
+private theorem not_mem_leafSupport_zVar_of_isSubformula_and_left {F : PosFormula (6 * n)}
     (hro : F.IsReadOnce)
     (hC1 : ∀ y z : BitString (2 * n),
       F.eval (packXYZ zeros2n y z) = decide (∃ j, y j = true ∧ z j = true))
@@ -806,7 +802,7 @@ theorem not_mem_leafSupport_zVar_of_isSubformula_and_left {F : PosFormula (6 * n
 
 /-- **Claim 16 (right)** [ECCC TR20-183, Section 3, p. 25]: if `.and A (.var (zVar i))` is a
 subformula of `F`, then `A` reads no `z`-variable (`∀ j, zVar j ∉ A.leafSupport`). -/
-theorem not_mem_leafSupport_zVar_of_isSubformula_and_right {F : PosFormula (6 * n)}
+private theorem not_mem_leafSupport_zVar_of_isSubformula_and_right {F : PosFormula (6 * n)}
     (hro : F.IsReadOnce)
     (hC1 : ∀ y z : BitString (2 * n),
       F.eval (packXYZ zeros2n y z) = decide (∃ j, y j = true ∧ z j = true))
@@ -852,7 +848,8 @@ def NotZLeaf (S : PosFormula (6 * n)) : Prop :=
     Finset.inter_eq_left.mpr (Finset.singleton_subset_iff.mpr (zVar_mem_zSet i))
   simp [zCount, this]
 
-theorem zCount_var_of_notZLeaf {v : Fin (6 * n)} (h : NotZLeaf (.var v : PosFormula (6 * n))) :
+private theorem zCount_var_of_notZLeaf {v : Fin (6 * n)}
+    (h : NotZLeaf (.var v : PosFormula (6 * n))) :
     zCount (.var v) = 0 := by
   have hv : v ∉ zSet n := by
     rw [mem_zSet]
@@ -862,25 +859,25 @@ theorem zCount_var_of_notZLeaf {v : Fin (6 * n)} (h : NotZLeaf (.var v : PosForm
     Finset.singleton_inter_of_notMem hv
   simp [zCount, this]
 
-theorem zCount_union_of_disjoint {L R : PosFormula (6 * n)}
+private theorem zCount_union_of_disjoint {L R : PosFormula (6 * n)}
     (hdisj : Disjoint L.leafSupport R.leafSupport) :
     ((L.leafSupport ∪ R.leafSupport) ∩ zSet n).card = zCount L + zCount R := by
   rw [Finset.union_inter_distrib_right, Finset.card_union_of_disjoint]
   · rfl
   · exact hdisj.mono Finset.inter_subset_left Finset.inter_subset_left
 
-theorem zCount_and_of_isReadOnce {L R : PosFormula (6 * n)}
+private theorem zCount_and_of_isReadOnce {L R : PosFormula (6 * n)}
     (hro : (PosFormula.and L R).IsReadOnce) :
     zCount (.and L R) = zCount L + zCount R :=
   zCount_union_of_disjoint hro.2.2
 
-theorem zCount_or_of_isReadOnce {L R : PosFormula (6 * n)}
+private theorem zCount_or_of_isReadOnce {L R : PosFormula (6 * n)}
     (hro : (PosFormula.or L R).IsReadOnce) :
     zCount (.or L R) = zCount L + zCount R :=
   zCount_union_of_disjoint hro.2.2
 
 /-- Every subformula `S` of `F` that is not a single `z`-leaf satisfies `zCount S ≤ S.numAnd`. -/
-theorem zCount_le_numAnd_of_notZLeaf {F S : PosFormula (6 * n)} (hro : F.IsReadOnce)
+private theorem zCount_le_numAnd_of_notZLeaf {F S : PosFormula (6 * n)} (hro : F.IsReadOnce)
     (hC1 : ∀ y z : BitString (2 * n),
       F.eval (packXYZ zeros2n y z) = decide (∃ j, y j = true ∧ z j = true))
     (hC3 : ∀ x y : BitString (2 * n),
@@ -946,14 +943,7 @@ def zPartnerVars (i : Fin (2 * n)) : PosFormula (6 * n) → Finset (Fin (6 * n))
     else if R = .var (zVar i) then L.leafSupport
     else ∅
 
-theorem topOrVars_subset_leafSupport (S : PosFormula (6 * n)) :
-    topOrVars S ⊆ S.leafSupport := by
-  induction S with
-  | var v => exact Finset.Subset.refl _
-  | or L R ihL ihR => exact Finset.union_subset_union ihL ihR
-  | and _ _ => exact Finset.empty_subset _
-
-theorem zPartnerVars_subset_leafSupport (i : Fin (2 * n)) (S : PosFormula (6 * n)) :
+private theorem zPartnerVars_subset_leafSupport (i : Fin (2 * n)) (S : PosFormula (6 * n)) :
     zPartnerVars i S ⊆ S.leafSupport := by
   induction S with
   | var _ => exact Finset.empty_subset _
@@ -967,7 +957,7 @@ theorem zPartnerVars_subset_leafSupport (i : Fin (2 * n)) (S : PosFormula (6 * n
 
 /-- Structural decomposition of any subformula `S` of `F` satisfying `NotZLeaf S` and
 `zCount S = S.numAnd` [ECCC TR20-183, Section 3, pp. 25–26]. -/
-theorem structure_of_zCount_eq_numAnd {F S : PosFormula (6 * n)} (hro : F.IsReadOnce)
+private theorem structure_of_zCount_eq_numAnd {F S : PosFormula (6 * n)} (hro : F.IsReadOnce)
     (hC1 : ∀ y z : BitString (2 * n),
       F.eval (packXYZ zeros2n y z) = decide (∃ j, y j = true ∧ z j = true))
     (hC3 : ∀ x y : BitString (2 * n),
@@ -1855,38 +1845,7 @@ theorem ilangoRawFromFuel_eq (G : BipartitePermutationGraph) :
     simp only [hG, decide_false, Bool.false_eq_true, ↓reduceIte, Prod.mk.injEq]
     exact ⟨(ofFn_ilangoInstance_table G).symm, rfl⟩
 
-open ComputableInPolyTime in
-@[local fun_prop] private theorem unary_range' {α : Type} {input : α ↪ List Bool} {n : α → ℕ}
-    (hn : ComputableInPolyTime n input encUnary) :
-    ComputableInPolyTime (fun a => List.range (n a)) input (encList encUnary) :=
-  (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.range).comp hn
-
-open ComputableInPolyTime in
-@[local fun_prop] private theorem unary_lt' {α : Type} {input : α ↪ List Bool}
-    {left right : α → ℕ}
-    (hleft : ComputableInPolyTime left input encUnary)
-    (hright : ComputableInPolyTime right input encUnary) :
-    ComputableInPolyTime (fun a => decide (left a < right a)) input encBool :=
-  (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_lt).comp (hleft.prod hright)
-
-open ComputableInPolyTime in
-@[local fun_prop] private theorem unary_le' {α : Type} {input : α ↪ List Bool}
-    {left right : α → ℕ}
-    (hleft : ComputableInPolyTime left input encUnary)
-    (hright : ComputableInPolyTime right input encUnary) :
-    ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool :=
-  (ComputableInPolyTime.of_tidy ComputableTidilyInPolyTime.unary_le).comp (hleft.prod hright)
-
-open ComputableInPolyTime in
-@[local fun_prop] private theorem unary_testBit' {α : Type} {input : α ↪ List Bool} {n i : α → ℕ}
-    (hn : ComputableInPolyTime n input encUnary)
-    (hi : ComputableInPolyTime i input encUnary) :
-    ComputableInPolyTime (fun a => (n a).testBit (i a)) input encBool :=
-  (ComputableInPolyTime.of_tidy
-    (ComputableTidilyInPolyTime.binary_testBit
-      (ComputableTidilyInPolyTime.unary_to_binary.comp
-        (ComputableTidilyInPolyTime.fst encUnary encUnary))
-      (ComputableTidilyInPolyTime.snd encUnary encUnary))).comp (hn.prod hi)
+attribute [local fun_prop] ComputableInPolyTime.unary_range'
 
 open ComputableInPolyTime in
 @[local fun_prop] private theorem computableInPolyTime_decideSmallBPIS :

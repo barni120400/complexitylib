@@ -76,12 +76,12 @@ variable {n g : ℕ}
 namespace Boolean
 
 private theorem bool_and_le_and {a₁ a₂ b₁ b₂ : Bool} (ha : a₁ ≤ a₂) (hb : b₁ ≤ b₂) :
-    (a₁ && b₁) ≤ (a₂ && b₂) := by
-  cases a₁ <;> cases a₂ <;> cases b₁ <;> cases b₂ <;> revert ha hb <;> decide
+    (a₁ && b₁) ≤ (a₂ && b₂) :=
+  Bool.le_and (fun h => ha (Bool.and_le_left _ _ h)) (fun h => hb (Bool.and_le_right _ _ h))
 
 private theorem bool_or_le_or {a₁ a₂ b₁ b₂ : Bool} (ha : a₁ ≤ a₂) (hb : b₁ ≤ b₂) :
-    (a₁ || b₁) ≤ (a₂ || b₂) := by
-  cases a₁ <;> cases a₂ <;> cases b₁ <;> cases b₂ <;> revert ha hb <;> decide
+    (a₁ || b₁) ≤ (a₂ || b₂) :=
+  Bool.or_le (fun h => Bool.left_le_or _ _ (ha h)) (fun h => Bool.right_le_or _ _ (hb h))
 
 /-! ### Constant-free positive (monotone) Boolean formulas -/
 
