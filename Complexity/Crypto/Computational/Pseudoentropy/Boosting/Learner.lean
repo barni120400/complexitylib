@@ -363,8 +363,16 @@ theorem isPPTOn_signedTest {Param : Type} {input : Param ↪ List Bool}
     (htest : IsPPTOn (encPair input encBits) encBool
       (fun pair => test pair.1 pair.2)) (hcode : ComputableTidilyInPolyTime code input encBits) :
     IsPPTOn input encBool (fun a => signedTest (test a) (code a)) := by
+  have hhead : ComputableInPolyTime (fun a => (code a).headD false) input encBool := by
+    apply ComputableInPolyTime.of_tidy
+    fun_prop
   unfold signedTest
-  ppt
+  apply IsPPTOn.map_with
+  · ppt
+  · apply ComputableInPolyTime.ite' (encC := encBool)
+    · exact hhead.comp (ComputableInPolyTime.fst input encBool)
+    · exact ComputableInPolyTime.bool_not.comp (ComputableInPolyTime.snd input encBool)
+    · exact ComputableInPolyTime.snd input encBool
 
 attribute [program_certificate] isPPTOn_signedTest
 
