@@ -42,7 +42,9 @@ encoding of undirected connectivity (`Cslib.Complexity.encUSTCON`), which is def
 ## Main results
 
 * `Cslib.Complexity.STCONInstance.getD_encode_n`, `.getD_encode_s`, `.getD_encode_t`,
-  `.getD_encode_matrix`: the bits of the header and of the matrix in the encoding.
+  `.getD_encode_matrix`: the bits of the header and of the matrix in the encoding;
+  `.getElem?_encode_n`, `.getElem?_encode_s`, `.getElem?_encode_t`, `.getElem?_encode_matrix`:
+  the same bits, read by position.
 * `Cslib.Complexity.STCONInstance.length_encode`: the length of the encoding.
 * `Cslib.Complexity.STCONInstance.matrix_eq_flatMap`: the matrix as the concatenation of its rows.
 * `Cslib.Complexity.STCONInstance.encode_injective`: the encoding is injective.
@@ -202,6 +204,33 @@ theorem getD_encode_matrix (a b : Fin I.n) :
       I.n + 1 + (I.s + 1 + (I.t + 1 + (a * I.n + b))) by omega,
     getD_replicate_append_false_add, getD_replicate_append_false_add,
     getD_replicate_append_false_add, getD_matrix]
+
+/-- A bit of the encoding, read by position. -/
+private theorem getElem?_encode {i : ℕ} (h : i < I.encode.length) :
+    I.encode[i]? = some (I.encode.getD i false) := by
+  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h]
+  rfl
+
+/-- The header of the number of vertices, read by position. -/
+theorem getElem?_encode_n {i : ℕ} (h : i ≤ I.n) : I.encode[i]? = some (decide (i < I.n)) := by
+  rw [I.getElem?_encode (by rw [I.length_encode]; omega), I.getD_encode_n h]
+
+/-- The header of the source, read by position. -/
+theorem getElem?_encode_s {i : ℕ} (h : i ≤ I.s) :
+    I.encode[I.n + 1 + i]? = some (decide (i < I.s)) := by
+  rw [I.getElem?_encode (by rw [I.length_encode]; omega), I.getD_encode_s h]
+
+/-- The header of the target, read by position. -/
+theorem getElem?_encode_t {i : ℕ} (h : i ≤ I.t) :
+    I.encode[I.n + 1 + I.s + 1 + i]? = some (decide (i < I.t)) := by
+  rw [I.getElem?_encode (by rw [I.length_encode]; omega), I.getD_encode_t h]
+
+/-- The entries of the matrix, read by position. -/
+theorem getElem?_encode_matrix {a b : ℕ} (ha : a < I.n) (hb : b < I.n) :
+    I.encode[I.n + I.s + I.t + 3 + (a * I.n + b)]? = some (I.adj ⟨a, ha⟩ ⟨b, hb⟩) := by
+  have := I.mul_add_lt ⟨a, ha⟩ ⟨b, hb⟩
+  rw [I.getElem?_encode (by rw [I.length_encode]; simp only at this; omega)]
+  exact congrArg some (I.getD_encode_matrix ⟨a, ha⟩ ⟨b, hb⟩)
 
 /-- **The encoding is injective.** -/
 theorem encode_injective : Function.Injective encode := by

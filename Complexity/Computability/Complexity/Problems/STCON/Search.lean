@@ -192,31 +192,6 @@ def progress (cfg : Config) : ℕ :=
 /-- **The rank**: the budget left. -/
 def rank (cfg : Config) : ℕ := budget I - progress I cfg
 
-/-! ### Reading the input -/
-
-private theorem getElem?_encode {i : ℕ} (h : i < I.encode.length) :
-    I.encode[i]? = some (I.encode.getD i false) := by
-  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h]
-  rfl
-
-private theorem read_n {i : ℕ} (h : i ≤ I.n) : I.encode[i]? = some (decide (i < I.n)) := by
-  rw [getElem?_encode I (by rw [I.length_encode]; omega), I.getD_encode_n h]
-
-private theorem read_s {i : ℕ} (h : i ≤ I.s) :
-    I.encode[I.n + 1 + i]? = some (decide (i < I.s)) := by
-  rw [getElem?_encode I (by rw [I.length_encode]; omega), I.getD_encode_s h]
-
-private theorem read_t {i : ℕ} (h : i ≤ I.t) :
-    I.encode[I.n + 1 + I.s + 1 + i]? = some (decide (i < I.t)) := by
-  rw [getElem?_encode I (by rw [I.length_encode]; omega), I.getD_encode_t h]
-
-private theorem read_adj {cur v : ℕ} (hc : cur < I.n) (hv : v < I.n) :
-    I.encode[I.n + I.s + I.t + 3 + (cur * I.n + v)]? =
-      some (I.adj ⟨cur, hc⟩ ⟨v, hv⟩) := by
-  have := I.mul_add_lt ⟨cur, hc⟩ ⟨v, hv⟩
-  rw [getElem?_encode I (by rw [I.length_encode]; simp only at this; omega)]
-  exact congrArg some (I.getD_encode_matrix ⟨cur, hc⟩ ⟨v, hv⟩)
-
 /-! ### Every branch -/
 
 private theorem reach_source : Reach I I.s := ⟨I.s.isLt, .refl⟩
@@ -257,7 +232,7 @@ private theorem inv_step (cfg : Config) (hinv : Inv I cfg) (hrun : searchProgram
   case «0» =>
     obtain ⟨hnI, rfl, rfl, rfl, rfl, rfl⟩ := hP
     search_step
-    rw [read_n I hnI]
+    rw [I.getElem?_encode_n hnI]
     by_cases h : n < I.n
     · simp only [h, decide_true]
       search_finish []
@@ -272,7 +247,7 @@ private theorem inv_step (cfg : Config) (hinv : Inv I cfg) (hrun : searchProgram
   case «2» =>
     obtain ⟨rfl, hsI', rfl, rfl, rfl, rfl⟩ := hP
     search_step
-    rw [read_s I hsI']
+    rw [I.getElem?_encode_s hsI']
     by_cases h : s < I.s
     · simp only [h, decide_true]
       search_finish []
@@ -287,7 +262,7 @@ private theorem inv_step (cfg : Config) (hinv : Inv I cfg) (hrun : searchProgram
   case «4» =>
     obtain ⟨rfl, rfl, htI', rfl, rfl, rfl⟩ := hP
     search_step
-    rw [read_t I htI']
+    rw [I.getElem?_encode_t htI']
     by_cases h : t < I.t
     · simp only [h, decide_true]
       search_finish []
@@ -361,7 +336,7 @@ private theorem inv_step (cfg : Config) (hinv : Inv I cfg) (hrun : searchProgram
   case «14» =>
     obtain ⟨rfl, rfl, rfl, ⟨hR, hst, hvn⟩, hlt⟩ := hP
     search_step
-    rw [read_adj I hR.1 hvn]
+    rw [I.getElem?_encode_matrix hR.1 hvn]
     cases hadj : I.adj ⟨cur, hR.1⟩ ⟨v, hvn⟩
     · search_finish []
     · have hA : ∃ (hc : cur < I.n) (hv : v < I.n), I.Adj ⟨cur, hc⟩ ⟨v, hv⟩ := ⟨hR.1, hvn, hadj⟩
@@ -434,13 +409,13 @@ private theorem branches_count_n : ∀ j ≤ I.n, ∀ c, Branches (P := searchPr
     have : j = I.n := by omega
     subst this
     search_head false
-    rw [read_n I le_rfl]
+    rw [I.getElem?_encode_n le_rfl]
     simp only [lt_irrefl, decide_false]
     exact Branches.refl _
   | succ k ih =>
     intro c
     search_head false
-    rw [read_n I hj]
+    rw [I.getElem?_encode_n hj]
     simp only [show j < I.n by omega, decide_true]
     search_head false
     exact ih (j + 1) (by omega) (by omega) 0
@@ -455,13 +430,13 @@ private theorem branches_count_s : ∀ j ≤ (I.s : ℕ), ∀ c,
     have : j = I.s := by omega
     subst this
     search_head false
-    rw [read_s I le_rfl]
+    rw [I.getElem?_encode_s le_rfl]
     simp only [lt_irrefl, decide_false]
     exact Branches.refl _
   | succ k ih =>
     intro c
     search_head false
-    rw [read_s I hj]
+    rw [I.getElem?_encode_s hj]
     simp only [show j < I.s by omega, decide_true]
     search_head false
     exact ih (j + 1) (by omega) (by omega) 0
@@ -476,13 +451,13 @@ private theorem branches_count_t : ∀ j ≤ (I.t : ℕ), ∀ c,
     have : j = I.t := by omega
     subst this
     search_head false
-    rw [read_t I le_rfl]
+    rw [I.getElem?_encode_t le_rfl]
     simp only [lt_irrefl, decide_false]
     exact Branches.refl _
   | succ k ih =>
     intro c
     search_head false
-    rw [read_t I hj]
+    rw [I.getElem?_encode_t hj]
     simp only [show j < I.t by omega, decide_true]
     search_head false
     exact ih (j + 1) (by omega) (by omega) 0
@@ -548,7 +523,7 @@ private theorem branches_walk : ∀ (m cur steps c v : ℕ) (hc : cur < I.n),
       search_head (decide (0 < next))
       refine (branches_guess I cur steps next hnext 0 (Nat.zero_le _)).trans ?_
       search_head false
-      rw [read_adj I hc hnext]
+      rw [I.getElem?_encode_matrix hc hnext]
       simp only [show I.adj ⟨cur, hc⟩ ⟨next, hnext⟩ = true from hadj]
       search_head false
       search_head false
