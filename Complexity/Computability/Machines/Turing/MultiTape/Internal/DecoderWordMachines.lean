@@ -62,3 +62,30 @@ theorem headDefaultT_run (default : Bool) (w : List Bool) :
     rw [headDefaultT_run_true, List.append_nil]
 
 end Turing.MultiTapeTM.Internal.DecoderWords
+
+namespace Turing.MultiTapeTM
+
+/-- Drops the `false`s at the start of a word. -/
+def dropFalsesT : Transducer Bool Bool where
+  q₀ := false
+  step
+    | false, false => (false, [])
+    | _, b => (true, [b])
+  final _ := []
+  length_step_le q b := by cases q <;> cases b <;> simp
+  length_final_le _ := by simp
+
+theorem dropFalsesT_run_true (w : List Bool) : dropFalsesT.run true w = w := by
+  induction w with
+  | nil => rfl
+  | cons b w ih => exact congrArg (b :: ·) ih
+
+theorem dropFalsesT_run (w : List Bool) : dropFalsesT.run false w = w.dropWhile (!·) := by
+  induction w with
+  | nil => rfl
+  | cons b w ih =>
+    cases b
+    · exact ih
+    · exact congrArg (true :: ·) (dropFalsesT_run_true w)
+
+end Turing.MultiTapeTM
