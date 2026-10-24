@@ -116,6 +116,12 @@ theorem constZero (b : β) :
   · simp only [zero_add, mul_one]
     omega
 
+/-- A fixed output fits the input-length charged workspace bound. -/
+theorem const (b : β) :
+    ComputableInO (fun _ : α => b) encIn encMid (fun a => (encIn a).length)
+      (fun a => (encIn a).length) :=
+  (constZero b).mono_le (fun _ => le_rfl) (fun _ => Nat.zero_le _)
+
 /-- Standard framed pairing, with the sum of the original time and charged workspace bounds. -/
 theorem prod {α β₁ β₂ : Type u} {encIn : α ↪ List Bool}
     {enc₁ : β₁ ↪ List Bool} {enc₂ : β₂ ↪ List Bool}
