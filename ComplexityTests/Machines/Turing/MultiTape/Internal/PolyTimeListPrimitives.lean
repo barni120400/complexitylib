@@ -72,6 +72,47 @@ example (_test : List Bool → ℕ → Bool) : True := by
       fun_prop
   trivial
 
+example {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {f : α → β}
+    (hf : ComputableInPolyTime f encA encB) :
+    ComputableInPolyTime (List.map f) (encList encA) (encList encB) := by
+  fun_prop
+
+-- The complete frames/map/decode shape, with the actual total-provider contracts.
+example {α : Type} {enc : α ↪ List Bool} {decode : List Bool → α}
+    {frames : List Bool → List (List Bool)}
+    (hdecode : ComputableInPolyTime decode encBits enc)
+    (hframes : ComputableInPolyTime frames encBits (encList encBits)) :
+    ComputableInPolyTime (fun word => (frames word).map decode) encBits (encList enc) := by
+  fun_prop
+
+-- Both the list and its natural-number elements vary at runtime.
+example : ComputableInPolyTime (List.map (fun n : ℕ => n + 1))
+    (encList encUnary) (encList encUnary) := by
+  exact ComputableInPolyTime.map ComputableInPolyTime.unary_succ
+
+example :
+    let enc : Empty ↪ List Bool := ⟨Empty.elim, fun x => x.elim⟩
+    ComputableInPolyTime (List.map (id : Empty → Empty)) (encList enc) (encList enc) := by
+  exact ComputableInPolyTime.map ComputableInPolyTime.id'
+
+example (_f : ℕ → ℕ) : True := by
+  fail_if_success
+    have : ComputableInPolyTime (List.map _f) (encList encUnary) (encList encUnary) := by
+      fun_prop
+  trivial
+
+example : ComputableInPolyTime List.tail encBits encBits := by fun_prop
+example : ComputableInPolyTime List.isEmpty encBits encBool := by fun_prop
+
+-- The condition's Boolean encoding and the tail/reverse branch are inferred from real rules.
+example : ComputableInPolyTime
+    (fun word : List Bool => if word.isEmpty then [] else word.tail.reverse) encBits encBits := by
+  fun_prop
+
+example : ([] : List Bool).tail = [] := by decide
+example : ([] : List Bool).isEmpty = true := by decide
+example : ([false] : List Bool).isEmpty = false := by decide
+
 example : List.range 0 = [] := by decide
 example : (encList encUnary (List.range 4)).length = 16 := by decide
 

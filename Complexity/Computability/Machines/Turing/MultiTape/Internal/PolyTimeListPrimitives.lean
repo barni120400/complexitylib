@@ -193,6 +193,20 @@ theorem bitsReverse : ComputableInPolyTime List.reverse encBits encBits := by
       exact Nat.min_le_right _ _)
   simpa only [foldlReverse, List.append_nil, id_eq] using hfold
 
+/-- Drop one symbol of an arbitrary word, reusing the existing word-codec machine. -/
+@[fun_prop]
+theorem bitsTail : ComputableInPolyTime List.tail encBits encBits := by
+  obtain ⟨c, k, Q, hfinite, tm, htm⟩ := ListEncoding.tail (enc₁ := encBool) (enc := encBits)
+  exact ⟨fun n => c * (n + 1), fun n => c * (n + 1), by fun_prop, by fun_prop,
+    k, Q, hfinite, tm, fun word => (htm word).computesInTimeAndSpace⟩
+
+/-- Test whether the complete raw word is empty, with the Boolean result encoding fixed. -/
+@[fun_prop]
+theorem bitsIsEmpty : ComputableInPolyTime List.isEmpty encBits encBool := by
+  obtain ⟨c, k, Q, hfinite, tm, htm⟩ := ListEncoding.isEmpty (enc₁ := encBool) (enc := encBits)
+  exact ⟨fun n => c * (n + 1), fun n => c * (n + 1), by fun_prop, by fun_prop,
+    k, Q, hfinite, tm, fun word => (htm word).computesInTimeAndSpace⟩
+
 private theorem rangeStepCertificate :
     ComputableInPolyTime (fun p : RangeState × Bool => rangeStep p.1 p.2)
       (encPair rangeEncoding encBool) rangeEncoding := by
