@@ -838,36 +838,6 @@ theorem not_mem_leafSupport_zVar_of_isSubformula_and_right {F : PosFormula (6 * 
     exact ⟨j, by simp [y₀], by simp⟩
   exact Bool.false_ne_true (hf₀.symm.trans (heq.trans hf₁))
 
-theorem _root_.Cslib.Circuits.Boolean.PosFormula.IsSubformula.trans
-    {N : ℕ} {A B C : PosFormula N} (hAB : PosFormula.IsSubformula A B)
-    (hBC : PosFormula.IsSubformula B C) : PosFormula.IsSubformula A C := by
-  induction hBC with
-  | refl => exact hAB
-  | or_left _ ih => exact .or_left ih
-  | or_right _ ih => exact .or_right ih
-  | and_left _ ih => exact .and_left ih
-  | and_right _ ih => exact .and_right ih
-
-theorem _root_.Cslib.Circuits.Boolean.PosFormula.IsSubformula.of_or_left
-    {N : ℕ} {L R F : PosFormula N} (h : PosFormula.IsSubformula (L.or R) F) :
-    PosFormula.IsSubformula L F :=
-  (PosFormula.IsSubformula.or_left (.refl L)).trans h
-
-theorem _root_.Cslib.Circuits.Boolean.PosFormula.IsSubformula.of_or_right
-    {N : ℕ} {L R F : PosFormula N} (h : PosFormula.IsSubformula (L.or R) F) :
-    PosFormula.IsSubformula R F :=
-  (PosFormula.IsSubformula.or_right (.refl R)).trans h
-
-theorem _root_.Cslib.Circuits.Boolean.PosFormula.IsSubformula.of_and_left
-    {N : ℕ} {L R F : PosFormula N} (h : PosFormula.IsSubformula (L.and R) F) :
-    PosFormula.IsSubformula L F :=
-  (PosFormula.IsSubformula.and_left (.refl L)).trans h
-
-theorem _root_.Cslib.Circuits.Boolean.PosFormula.IsSubformula.of_and_right
-    {N : ℕ} {L R F : PosFormula N} (h : PosFormula.IsSubformula (L.and R) F) :
-    PosFormula.IsSubformula R F :=
-  (PosFormula.IsSubformula.and_right (.refl R)).trans h
-
 /-- Number of `z`-variables in `S.leafSupport`. -/
 def zCount (S : PosFormula (6 * n)) : ℕ :=
   (S.leafSupport ∩ zSet n).card
@@ -1295,54 +1265,6 @@ theorem _root_.Cslib.Circuits.Boolean.PosFormula.exists_perm_of_agreesWith_ilang
 
 /-! ## Section 5: Ilango's Theorem 11 (Exact Equivalence for $n \ge 2$) -/
 
-/-- Right-nested disjunction of `m` positive formulas (`m > 0`). -/
-def orFin {N : ℕ} : (m : ℕ) → 0 < m → (Fin m → PosFormula N) → PosFormula N
-  | 0, h, _ => absurd h (Nat.lt_irrefl 0)
-  | 1, _, f => f ⟨0, Nat.zero_lt_one⟩
-  | m + 2, _, f =>
-    .or (f ⟨0, Nat.zero_lt_succ _⟩)
-      (orFin (m + 1) (Nat.succ_pos m) (fun i => f i.succ))
-
-theorem eval_orFin {N : ℕ} :
-    ∀ (m : ℕ) (hm : 0 < m) (f : Fin m → PosFormula N) (w : BitString N),
-    (orFin m hm f).eval w = decide (∃ i : Fin m, (f i).eval w = true)
-  | 0, hm, _, _ => absurd hm (Nat.lt_irrefl 0)
-  | 1, _, f, w => by
-    dsimp [orFin]
-    rw [← Bool.decide_coe ((f 0).eval w), decide_eq_decide]
-    exact ⟨fun h => ⟨0, h⟩,
-      fun ⟨i, hi⟩ => by rcases Fin.eq_zero i with rfl; exact hi⟩
-  | m + 2, _, f, w => by
-    dsimp [orFin, PosFormula.eval]
-    rw [eval_orFin (m + 1) (Nat.succ_pos m),
-      ← Bool.decide_coe ((f 0).eval w), ← Bool.decide_or, decide_eq_decide]
-    exact (Fin.exists_fin_succ (P := fun i => (f i).eval w = true)).symm
-
-theorem leafSize_orFin_of_eq {N : ℕ} :
-    ∀ (m : ℕ) (hm : 0 < m) (f : Fin m → PosFormula N) (k : ℕ),
-    (∀ i, (f i).leafSize = k) → (orFin m hm f).leafSize = m * k
-  | 0, hm, _, _, _ => absurd hm (Nat.lt_irrefl 0)
-  | 1, _, f, k, hk => by
-    dsimp [orFin]
-    rw [hk, Nat.one_mul]
-  | m + 2, _, f, k, hk => by
-    dsimp [orFin, PosFormula.leafSize]
-    rw [hk, leafSize_orFin_of_eq (m + 1) (Nat.succ_pos m) _ k (fun i => hk i.succ)]
-    ring
-
-theorem mem_leafSupport_orFin {N : ℕ} :
-    ∀ (m : ℕ) (hm : 0 < m) (f : Fin m → PosFormula N) (v : Fin N),
-    v ∈ (orFin m hm f).leafSupport ↔ ∃ i : Fin m, v ∈ (f i).leafSupport
-  | 0, hm, _, _ => absurd hm (Nat.lt_irrefl 0)
-  | 1, _, f, v => by
-    dsimp [orFin]
-    exact ⟨fun h => ⟨0, h⟩,
-      fun ⟨i, hi⟩ => by rcases Fin.eq_zero i with rfl; exact hi⟩
-  | m + 2, _, f, v => by
-    dsimp [orFin, PosFormula.leafSupport]
-    rw [Finset.mem_union, mem_leafSupport_orFin (m + 1) (Nat.succ_pos m)]
-    exact (Fin.exists_fin_succ (P := fun i => v ∈ (f i).leafSupport)).symm
-
 /-- The $i$-th summand $(x_{\pi(i)} \vee y_i) \wedge z_i$ in Ilango's target formula
 [ECCC TR20-183, Section 3, p. 22]. -/
 def ilangoTerm (π : Equiv.Perm (Fin (2 * n))) (i : Fin (2 * n)) : PosFormula (6 * n) :=
@@ -1352,7 +1274,7 @@ def ilangoTerm (π : Equiv.Perm (Fin (2 * n))) (i : Fin (2 * n)) : PosFormula (6
 gate size $6n - 1$ corresponding to a permutation $\pi \in S_{2n}$ [ECCC TR20-183, Section 3,
 p. 22]. -/
 def ilangoPosFormula (hn : 0 < n) (π : Equiv.Perm (Fin (2 * n))) : PosFormula (6 * n) :=
-  orFin (2 * n) (by omega) (ilangoTerm π)
+  PosFormula.orFin (2 * n) (by omega) (ilangoTerm π)
 
 @[simp] theorem eval_ilangoTerm (π : Equiv.Perm (Fin (2 * n))) (i : Fin (2 * n))
     (w : BitString (6 * n)) :
@@ -1365,12 +1287,12 @@ theorem eval_ilangoPosFormula (hn : 0 < n) (π : Equiv.Perm (Fin (2 * n)))
     (x y z : BitString (2 * n)) :
     (ilangoPosFormula hn π).eval (packXYZ x y z) =
       decide (∃ i : Fin (2 * n), (x (π i) || y i) && z i) := by
-  rw [ilangoPosFormula, eval_orFin]
+  rw [ilangoPosFormula, PosFormula.eval_orFin]
   simp
 
 theorem leafSize_ilangoPosFormula (hn : 0 < n) (π : Equiv.Perm (Fin (2 * n))) :
     (ilangoPosFormula hn π).leafSize = 6 * n := by
-  rw [ilangoPosFormula, leafSize_orFin_of_eq (2 * n) (by omega) (ilangoTerm π) 3
+  rw [ilangoPosFormula, PosFormula.leafSize_orFin_of_eq (2 * n) (by omega) (ilangoTerm π) 3
     (leafSize_ilangoTerm π)]
   omega
 
@@ -1383,7 +1305,7 @@ theorem size_ilangoPosFormula (hn : 0 < n) (π : Equiv.Perm (Fin (2 * n))) :
 theorem leafSupport_ilangoPosFormula (hn : 0 < n) (π : Equiv.Perm (Fin (2 * n))) :
     (ilangoPosFormula hn π).leafSupport = Finset.univ := by
   ext v
-  simp only [Finset.mem_univ, iff_true, ilangoPosFormula, mem_leafSupport_orFin]
+  simp only [Finset.mem_univ, iff_true, ilangoPosFormula, PosFormula.mem_leafSupport_orFin]
   rcases eq_xVar_or_yVar_or_zVar v with ⟨k, rfl⟩ | ⟨i, rfl⟩ | ⟨i, rfl⟩
   · refine ⟨π.symm k, ?_⟩
     simp [ilangoTerm]
