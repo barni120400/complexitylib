@@ -67,6 +67,51 @@ private theorem snocRun (left right : List Bool) :
     rw [ih]
     rfl
 
+private abbrev RangeState := ℕ × List ℕ
+
+private abbrev rangeEncoding : RangeState ↪ List Bool :=
+  encPair encUnary (encList encUnary)
+
+private def rangeStep (state : RangeState) (_ : Bool) : RangeState :=
+  (state.1 + 1, state.2 ++ [state.1])
+
+private theorem rangeFold (n : ℕ) :
+    (List.replicate n true).foldl rangeStep (0, []) = (n, List.range n) := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.replicate_succ', List.foldl_append, ih]
+    simp only [List.foldl_cons, List.foldl_nil, rangeStep, List.range_succ]
+
+private theorem rangeEncodingSize (n : ℕ) :
+    (encList encUnary (List.range n)).length = n * n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    rw [List.range_succ]
+    change ((List.range n ++ [n]).flatMap (frame ∘ encUnary)).length = (n + 1) * (n + 1)
+    rw [List.flatMap_append, List.length_append]
+    simp only [List.flatMap_cons, List.flatMap_nil, Function.comp_apply, List.append_nil]
+    change (encList encUnary (List.range n)).length + (frame (encUnary n)).length =
+      (n + 1) * (n + 1)
+    rw [ih, length_frame]
+    simp only [encUnary_apply, List.length_replicate]
+    nlinarith
+
+private theorem rangeStateSize (n : ℕ) :
+    (rangeEncoding (n, List.range n)).length = 2 * n + 1 + n * n := by
+  change (encPair encUnary (encList encUnary) (n, List.range n)).length = _
+  rw [length_encPair]
+  simp only [encUnary_apply, List.length_replicate, rangeEncodingSize]
+
+private def rangeOutputBound (n : ℕ) : ℕ := n * (2 * n + 1)
+
+private theorem foldlAll {α : Type} (test : α → Bool) (list : List α) (init : Bool) :
+    list.foldl (fun state value => state && test value) init = (init && list.all test) := by
+  induction list generalizing init with
+  | nil => simp
+  | cons a list ih => simp [ih, Bool.and_assoc]
+
 namespace ComputableInPolyTime
 
 /-- Unary successor is a direct finite-state transduction, including the empty word for zero. -/
@@ -93,6 +138,71 @@ theorem snoc {α : Type} (enc : α ↪ List Bool) :
     p.1.flatMap (frame ∘ enc) ++ frame (enc p.2)
   simp only [List.flatMap_append, List.flatMap_cons, List.flatMap_nil,
     Function.comp_apply, List.append_nil]
+
+private theorem rangeStepCertificate :
+    ComputableInPolyTime (fun p : RangeState × Bool => rangeStep p.1 p.2)
+      (encPair rangeEncoding encBool) rangeEncoding := by
+  have hstate := fst rangeEncoding encBool
+  exact (unary_succ.comp hstate.fst').prod
+    ((snoc encUnary).comp (hstate.snd'.prod hstate.fst'))
+
+/-- Enumerate all naturals below a unary bound. Both the bound and each list element remain
+unary; the reachable framed output has quadratic length. -/
+@[fun_prop]
+theorem range : ComputableInPolyTime List.range encUnary (encList encUnary) := by
+  have hlist : ComputableInPolyTime (fun n : ℕ => List.replicate n true) encUnary encBits :=
+    of_eq fun _ => rfl
+  have hbound : PolyBounded (fun n => (encUnary n).length)
+      (fun n => 2 * n + 1 + rangeOutputBound n) := by
+    apply PolyBounded.of_forall_le 8 2
+    intro n
+    simp only [encUnary_apply, List.length_replicate]
+    dsimp [rangeOutputBound]
+    nlinarith
+  have hfold := foldl' (encA := encBool) (encL := encBits) (encB := rangeEncoding)
+    (list := fun n : ℕ => List.replicate n true) (init := fun _ => (0, [])) (step := rangeStep)
+    hlist (const (0, [])) rangeStepCertificate hbound (by
+      intro n i _
+      rw [List.take_replicate, rangeFold, rangeStateSize]
+      have hk := Nat.min_le_right i n
+      have hsq := Nat.mul_le_mul hk hk
+      dsimp [rangeOutputBound]
+      nlinarith)
+  simpa only [Function.comp_def, rangeFold] using (snd encUnary (encList encUnary)).comp hfold
+
+/-- Test all elements of a computed framed list with the full original input captured by the
+uniform callback machine. No finite-element assumption is needed. -/
+@[fun_prop]
+theorem allWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun x => (list x).all (test x)) encIn encBool := by
+  have houter := fst (encPair encIn encBool) encA
+  have hvalue := snd (encPair encIn encBool) encA
+  have hstep : ComputableInPolyTime
+      (fun q : (γ × Bool) × α => q.1.2 && test q.1.1 q.2)
+      (encPair (encPair encIn encBool) encA) encBool :=
+    bool_and.comp (houter.snd'.prod (htest.comp (houter.fst'.prod hvalue)))
+  have hfold := foldlWith (encA := encA) (encL := encList encA) (encP := encIn)
+    (encB := encBool) (par := id) (list := list) (init := fun _ => true)
+    (step := fun par state value => state && test par value)
+    id' hlist (const true) hstep (PolyBounded.const 1) (by simp)
+  simpa only [foldlAll, Bool.true_and, id_eq] using hfold
+
+/-- For a fixed list, only its members need callback certificates. The index type may live in
+any universe and needs neither an encoding nor a finite-type instance. -/
+@[fun_prop]
+theorem allConst {γ : Type} {encIn : γ ↪ List Bool} {ι : Type*} (l : List ι)
+    {test : γ → ι → Bool}
+    (htest : ∀ i ∈ l, ComputableInPolyTime (fun x => test x i) encIn encBool) :
+    ComputableInPolyTime (fun x => l.all (test x)) encIn encBool := by
+  induction l with
+  | nil => exact const true
+  | cons a l ih =>
+    exact bool_and.comp ((htest a (List.mem_cons_self ..)).prod
+      (ih fun b hb => htest b (List.mem_cons_of_mem _ hb)))
 
 end ComputableInPolyTime
 end Turing.MultiTapeTM
