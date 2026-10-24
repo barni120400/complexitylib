@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
@@ -216,41 +217,9 @@ theorem dropFalsesT_run (w : List Bool) : dropFalsesT.run false w = w.dropWhile 
 
 /-! ### Decoders -/
 
-/-- A **total decoder** for the encoding `enc`: a function on all words that inverts `enc` and is
-tidily computable within time, space and output length of fixed degrees in the length of the
-word. -/
-structure Decoder {α : Type} (enc : α ↪ List Bool) where
-  /-- The decoded value of any word. -/
-  decode : List Bool → α
-  /-- Decoding inverts the encoding. -/
-  decode_enc (a : α) : decode (enc a) = a
-  /-- Decoding is tidily computable within bounds of fixed degrees. -/
-  computable : ∃ d e, ComputableTidilyInDegree decode encBits enc d e
-
 namespace Decoder
 
 variable {α β : Type} {enc : α ↪ List Bool} {enc' : β ↪ List Bool}
-
-/-- Every total decoder has a native polynomial-time certificate. -/
-@[fun_prop]
-theorem computableTidilyInPolyTime (D : Decoder enc) :
-    ComputableTidilyInPolyTime D.decode encBits enc := by
-  obtain ⟨_, _, h⟩ := D.computable
-  exact h.computableTidilyInPolyTime
-
-/-- Bit strings are their own encoding. -/
-def bits : Decoder encBits where
-  decode := id
-  decode_enc _ := rfl
-  computable := ⟨1, 1, .of_eq fun _ => rfl⟩
-
-/-- Unary numbers are decoded by the length of the word. -/
-def unary : Decoder encUnary where
-  decode w := w.length
-  decode_enc n := by simp
-  computable := ⟨1, 1, .of_linear (Transducer.computableTidilyInLinearTimeAndSpace
-    (τ := ⟨(), fun _ _ => ((), [true]), fun _ => [], fun _ _ => by simp, fun _ => by simp⟩)
-    fun w => by induction w <;> simp_all [List.replicate_succ])⟩
 
 /-- Binary numbers are decoded from their digits up to the last `true`. -/
 def nat : Decoder encNat where
@@ -265,12 +234,6 @@ def nat : Decoder encNat where
         encBits encBits := by
       fun_prop
     exact (h.of_enc_eq fun w => by rw [encNat_apply, bits_ofBits]; rfl).exists_degree
-
-/-- Booleans are decoded from the first symbol. -/
-def bool : Decoder encBool where
-  decode w := w.headD false
-  decode_enc _ := rfl
-  computable := ⟨1, 1, ComputableTidilyInDegree.headD (enc₁ := encBool) (enc := encBits) false⟩
 
 /-- Options are decoded as `none` from the empty word, and otherwise from the tail. -/
 def option (D : Decoder enc) : Decoder (encOption enc) where
@@ -315,17 +278,6 @@ def list (D : Decoder enc) : Decoder (encList enc) where
       ((ComputableTidilyInDegree.const false).mono le_rfl (Nat.zero_le 1))
       computableTidilyInDegree_frames⟩
 
-/-- Transport a decoder to an encoding `enc'` agreeing with `enc` along `f`, where `g` is a right
-inverse of `f`. -/
-def map (D : Decoder enc) (f : α → β) (g : β → α) (hfg : ∀ b, f (g b) = b)
-    (henc : ∀ a, enc' (f a) = enc a) : Decoder enc' where
-  decode w := f (D.decode w)
-  decode_enc b := by
-    conv_lhs => rw [← hfg b, henc, D.decode_enc]
-    exact hfg b
-  computable :=
-    let ⟨d, e, h⟩ := D.computable
-    ⟨d, e, h.of_enc_eq fun w => henc _⟩
 
 end Decoder
 
