@@ -20,6 +20,8 @@ The encoding and the carry, borrow and normalization word folds are independent 
 certificates. Their original definitions and arithmetic correctness proofs are retained here.
 -/
 
+public section
+
 namespace Turing.MultiTapeTM
 
 /-- Natural numbers encoded by their binary digits, least significant first. -/
@@ -49,11 +51,12 @@ public lemma bits_succ (n : ℕ) : (n + 1).bits = incr true n.bits := by
         ih m (by omega), incr]
 
 /-- One round: add the carry to the digit `b`, append the resulting digit and keep the carry. -/
-public def succStep (p : Bool × List Bool) (b : Bool) : Bool × List Bool :=
+@[expose] public def succStep (p : Bool × List Bool) (b : Bool) : Bool × List Bool :=
   (p.1 && b, p.2 ++ [p.1 ^^ b])
 
 /-- Appends the final carry digit. -/
-public def succFinish (p : Bool × List Bool) : List Bool := if p.1 then p.2 ++ [true] else p.2
+@[expose] public def succFinish (p : Bool × List Bool) : List Bool :=
+  if p.1 then p.2 ++ [true] else p.2
 
 public lemma succFinish_foldl (l : List Bool) (c : Bool) (out : List Bool) :
     succFinish (l.foldl succStep (c, out)) = out ++ incr c l := by
