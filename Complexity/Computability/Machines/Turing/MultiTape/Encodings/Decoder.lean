@@ -178,11 +178,8 @@ def list (D : Decoder enc) : Decoder (encList enc) where
     exact List.map_congr_left fun a _ => D.decode_enc a
   computable := by
     obtain ⟨d, e, h⟩ := D.computable
-    exact ⟨_, _, ComputableTidilyInDegree.mapWith (encP := encBool) (par := fun _ => false)
-      (f := fun p : Bool × List Bool => D.decode p.2)
-      (h.comp (ComputableTidilyInDegree.snd encBool encBits))
-      ((ComputableTidilyInDegree.const false).mono le_rfl (Nat.zero_le 1))
-      computableTidilyInDegree_frames⟩
+    exact ((ComputableInPolyTime.map h.computableInPolyTime).comp
+      computableInDegree_frames.computableInPolyTime).exists_degree
 
 
 end Decoder
