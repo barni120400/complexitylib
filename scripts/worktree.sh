@@ -127,6 +127,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import stat
 import subprocess
 import sys
 
@@ -144,7 +145,7 @@ def git_head(repo: Path) -> str | None:
         return None
     try:
         rev = subprocess.check_output(
-            ["git", "-C", str(repo), "rev-parse", "HEAD"],
+            ["git", "-C", str(repo), "rev-parse", "--verify", "HEAD"],
             text=True,
             stderr=subprocess.DEVNULL,
         ).strip()
@@ -158,31 +159,68 @@ def revs_match(a: str, b: str) -> bool:
     return n > 0 and a[:n] == b[:n]
 
 
-manifest = wt_path / "lake-manifest.json"
-if not manifest.is_file():
-    manifest = root / "lake-manifest.json"
+def package_has_complete_build(pkg_dir: Path) -> bool:
+    build_dir = pkg_dir / ".lake/build"
+    if not build_dir.is_dir():
+        return False
+    return any(p.is_file() for p in build_dir.rglob("*"))
 
-toolchain_file = wt_path / "lean-toolchain"
-if not toolchain_file.is_file():
-    toolchain_file = root / "lean-toolchain"
-toolchain = (
-    toolchain_file.read_text(encoding="utf-8").strip()
-    if toolchain_file.is_file()
-    else None
-)
 
-manifest_pkgs: dict[str, str] = {}
-if manifest.is_file():
+def load_manifest_pkgs(path: Path) -> dict[str, str] | None:
+    if not path.is_file():
+        return None
     try:
-        data = json.loads(manifest.read_text(encoding="utf-8"))
-        for pkg in data.get("packages", []):
-            if isinstance(pkg, dict):
-                name = pkg.get("name")
-                rev = pkg.get("rev")
-                if isinstance(name, str) and name and isinstance(rev, str) and rev:
-                    manifest_pkgs[name] = rev
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return None
+        pkgs = data.get("packages")
+        if not isinstance(pkgs, list):
+            return None
+        out: dict[str, str] = {}
+        for pkg in pkgs:
+            if not isinstance(pkg, dict):
+                return None
+            name = pkg.get("name")
+            rev = pkg.get("rev")
+            if not isinstance(name, str) or not name or not isinstance(rev, str) or not rev:
+                return None
+            out[name] = rev
+        return out
     except (OSError, ValueError, TypeError):
-        pass
+        return None
+
+
+wt_tc = wt_path / "lean-toolchain"
+root_tc = root / "lean-toolchain"
+wt_manifest = wt_path / "lake-manifest.json"
+root_manifest = root / "lake-manifest.json"
+wt_has_own_metadata = (wt_path / ".git").exists() or wt_manifest.is_file() or wt_tc.is_file()
+
+spec_ok = True
+if wt_has_own_metadata:
+    if wt_tc.is_file() != root_tc.is_file():
+        spec_ok = False
+    if wt_manifest.is_file() != root_manifest.is_file():
+        spec_ok = False
+    eff_tc_file = wt_tc
+    eff_manifest_file = wt_manifest
+else:
+    eff_tc_file = root_tc
+    eff_manifest_file = root_manifest
+
+toolchain: str | None = None
+if eff_tc_file.is_file():
+    toolchain = eff_tc_file.read_text(encoding="utf-8").strip()
+    if not toolchain:
+        spec_ok = False
+
+manifest_present = eff_manifest_file.is_file()
+loaded_pkgs = load_manifest_pkgs(eff_manifest_file) if manifest_present else {}
+if loaded_pkgs is None:
+    spec_ok = False
+    manifest_pkgs: dict[str, str] = {}
+else:
+    manifest_pkgs = loaded_pkgs
 
 git_heads: dict[str, str] = {}
 pkgs_dir = root / ".lake/packages"
@@ -193,43 +231,108 @@ if pkgs_dir.is_dir():
             if h:
                 git_heads[child.name] = h
 
-cslib_rev = manifest_pkgs.get("cslib") or git_heads.get("cslib") or ""
+cslib_rev = manifest_pkgs.get("cslib") or (git_heads.get("cslib") if not manifest_present else "") or ""
 cslib_short = cslib_rev[:8] if cslib_rev else None
 
-# Build a full dependency/toolchain state fingerprint whenever anything beyond a single cslib entry
-# is present (e.g. mathlib or other package pins, lean-toolchain, or package git checkouts).
 other_manifest_pkgs = {k: v for k, v in manifest_pkgs.items() if k != "cslib"}
-other_git_heads = {k: v for k, v in git_heads.items() if k != "cslib" and k not in manifest_pkgs}
+other_git_heads = (
+    {k: v for k, v in git_heads.items() if k != "cslib"}
+    if not manifest_present
+    else {}
+)
 
 if cslib_short:
     if not other_manifest_pkgs and not other_git_heads and toolchain is None:
-        pin_name = f"packages-cslib-{cslib_short}"
+        base_pin_name = f"packages-cslib-{cslib_short}"
     else:
-        merged_pkgs = dict(git_heads)
-        merged_pkgs.update(manifest_pkgs)
-        state = {"packages": sorted(merged_pkgs.items()), "toolchain": toolchain}
+        pkg_items = manifest_pkgs if manifest_present else git_heads
+        state = {"packages": sorted(pkg_items.items()), "toolchain": toolchain}
         digest = hashlib.sha256(json.dumps(state, sort_keys=True).encode()).hexdigest()[:8]
-        pin_name = f"packages-cslib-{cslib_short}-{digest}"
-elif manifest.is_file() or toolchain is not None or git_heads:
-    raw = manifest.read_bytes() if manifest.is_file() else b""
-    state_bytes = raw + b"\0" + json.dumps({"git": sorted(git_heads.items()), "tc": toolchain}, sort_keys=True).encode()
+        base_pin_name = f"packages-cslib-{cslib_short}-{digest}"
+elif manifest_present or toolchain is not None or git_heads:
+    raw = eff_manifest_file.read_bytes() if manifest_present and eff_manifest_file.is_file() else b""
+    pkg_items = manifest_pkgs if manifest_present else git_heads
+    state_bytes = raw + b"\0" + json.dumps({"pkgs": sorted(pkg_items.items()), "tc": toolchain}, sort_keys=True).encode()
     digest = hashlib.sha256(state_bytes).hexdigest()[:8]
-    pin_name = f"packages-manifest-{digest}"
+    base_pin_name = f"packages-manifest-{digest}"
 else:
-    pin_name = "packages-cslib-default"
+    base_pin_name = "packages-cslib-default"
 
 
-def legacy_dir_matches_manifest(cand: Path) -> bool:
-    if not cand.is_dir() or not manifest_pkgs:
+def pool_is_valid_and_hardened(cand: Path) -> bool:
+    if not spec_ok or not cand.is_dir():
         return False
-    for name, want_rev in manifest_pkgs.items():
-        pkg_dir = cand / name
-        if not pkg_dir.is_dir():
+    try:
+        cand_real = cand.resolve()
+    except OSError:
+        return False
+    if in_primary_checkout(cand_real):
+        return False
+    prov_file = cand / ".pool-provenance.json"
+    if not prov_file.is_file() or prov_file.is_symlink():
+        return False
+    try:
+        prov = json.loads(prov_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False
+    if not isinstance(prov, dict) or prov.get("schema") != 2 or prov.get("clean") is not True:
+        return False
+    if prov.get("manifest_present") != manifest_present:
+        return False
+    if prov.get("toolchain") != toolchain:
+        return False
+    cand_pkg_dirs = {d.name: d for d in cand.iterdir() if d.is_dir()}
+    if not cand_pkg_dirs:
+        return False
+    if manifest_present:
+        prov_pkgs = prov.get("packages")
+        if not isinstance(prov_pkgs, dict):
             return False
-        actual = git_head(pkg_dir)
-        if not actual or not revs_match(actual, want_rev):
+        if set(prov_pkgs.keys()) != set(manifest_pkgs.keys()) or set(cand_pkg_dirs.keys()) != set(manifest_pkgs.keys()):
             return False
+        for name, want_rev in manifest_pkgs.items():
+            rec_rev = prov_pkgs.get(name, "")
+            if not isinstance(rec_rev, str) or not revs_match(rec_rev, want_rev):
+                return False
+            actual_rev = git_head(cand_pkg_dirs[name])
+            if not actual_rev or not revs_match(actual_rev, want_rev):
+                return False
+    for pkg_dir in cand_pkg_dirs.values():
+        if not package_has_complete_build(pkg_dir):
+            return False
+    try:
+        if stat.S_IMODE(cand.stat().st_mode) & 0o222 != 0:
+            return False
+        for dirpath, dirnames, filenames in os.walk(cand_real, followlinks=False):
+            dp = Path(dirpath)
+            if stat.S_IMODE(dp.stat().st_mode) & 0o222 != 0:
+                return False
+            for name in list(dirnames) + list(filenames):
+                p = dp / name
+                if p.is_symlink():
+                    raw = Path(os.readlink(p))
+                    if raw.is_absolute():
+                        return False
+                    rel_parts = p.relative_to(cand_real).parts
+                    if len(rel_parts) < 2:
+                        return False
+                    pkg_root = (cand_real / rel_parts[0]).resolve()
+                    resolved = (p.parent / raw).resolve()
+                    if not resolved.exists() or not resolved.is_relative_to(pkg_root):
+                        return False
+                else:
+                    if stat.S_IMODE(p.stat().st_mode) & 0o222 != 0:
+                        return False
+    except OSError:
+        return False
     return True
+
+
+def select_candidate_in_root(sroot: Path) -> Path:
+    c1 = sroot / base_pin_name
+    if not c1.exists() or pool_is_valid_and_hardened(c1):
+        return c1
+    return sroot / f"{base_pin_name}-v2"
 
 
 env_shared = os.environ.get("COMPLEXITYLIB_SHARED_PACKAGES_ROOT", "")
@@ -241,7 +344,7 @@ if env_shared:
             file=sys.stderr,
         )
         raise SystemExit(1)
-    print(shared_root / pin_name)
+    print(select_candidate_in_root(shared_root))
     raise SystemExit(0)
 
 shared_roots = []
@@ -255,22 +358,13 @@ shared_roots.append(worktrees_root / ".shared")
 shared_roots.append(Path(f"{root}-wt") / ".shared")
 
 for sroot in shared_roots:
-    cand = sroot / pin_name
-    if cand.is_dir() and not in_primary_checkout(cand.resolve()):
-        print(cand)
-        raise SystemExit(0)
-    if cslib_short:
-        legacy = sroot / f"packages-cslib-{cslib_short}"
-        if (
-            legacy != cand
-            and legacy.is_dir()
-            and not in_primary_checkout(legacy.resolve())
-            and legacy_dir_matches_manifest(legacy)
-        ):
-            print(legacy)
+    for cname in (base_pin_name, f"{base_pin_name}-v2"):
+        cand = sroot / cname
+        if cand.is_dir() and pool_is_valid_and_hardened(cand):
+            print(cand)
             raise SystemExit(0)
 
-print(worktrees_root / ".shared" / pin_name)
+print(select_candidate_in_root(worktrees_root / ".shared"))
 PY
 }
 
@@ -359,11 +453,13 @@ elif pkg_link.is_dir():
 PY
 }
 
-# root_packages_match_manifest <worktree_path>: return 0 unless the target manifest/toolchain
-# disagrees with $ROOT's manifest/toolchain or any package git checkout under $ROOT/.lake/packages.
+# root_packages_match_manifest <worktree_path> [provenance_out]: return 0 iff the target
+# manifest/toolchain and every package git checkout under $ROOT/.lake/packages are verifiable,
+# clean, and match; optionally write .pool-provenance.json to [provenance_out].
 root_packages_match_manifest() {
   local wt_path="$1"
-  python3 - "$ROOT" "$wt_path" <<'PY'
+  local prov_out="${2:-}"
+  python3 - "$ROOT" "$wt_path" "$prov_out" <<'PY'
 import json
 from pathlib import Path
 import subprocess
@@ -371,6 +467,7 @@ import sys
 
 root = Path(sys.argv[1]).resolve()
 wt_path = Path(sys.argv[2])
+prov_out = Path(sys.argv[3]) if sys.argv[3] else None
 
 
 def revs_match(a: str, b: str) -> bool:
@@ -378,61 +475,204 @@ def revs_match(a: str, b: str) -> bool:
     return n > 0 and a[:n] == b[:n]
 
 
-def load_pkgs(path: Path) -> dict[str, str]:
+def git_head(repo: Path) -> str | None:
+    if not (repo / ".git").exists():
+        return None
+    try:
+        rev = subprocess.check_output(
+            ["git", "-C", str(repo), "rev-parse", "--verify", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        return rev or None
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def git_is_clean(repo: Path) -> bool:
+    try:
+        status = subprocess.check_output(
+            ["git", "-C", str(repo), "status", "--porcelain", "--untracked-files=no"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        return status == ""
+    except (OSError, subprocess.CalledProcessError):
+        return False
+
+
+def load_pkgs(path: Path) -> dict[str, str] | None:
     if not path.is_file():
-        return {}
+        return None
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return None
+        pkgs = data.get("packages")
+        if not isinstance(pkgs, list):
+            return None
         out: dict[str, str] = {}
-        for pkg in data.get("packages", []):
-            if isinstance(pkg, dict):
-                name = pkg.get("name")
-                rev = pkg.get("rev")
-                if isinstance(name, str) and name and isinstance(rev, str) and rev:
-                    out[name] = rev
+        for pkg in pkgs:
+            if not isinstance(pkg, dict):
+                return None
+            name = pkg.get("name")
+            rev = pkg.get("rev")
+            if not isinstance(name, str) or not name or not isinstance(rev, str) or not rev:
+                return None
+            out[name] = rev
         return out
     except (OSError, ValueError, TypeError):
-        return {}
+        return None
 
 
 wt_tc = wt_path / "lean-toolchain"
 root_tc = root / "lean-toolchain"
+wt_manifest = wt_path / "lake-manifest.json"
+root_manifest = root / "lake-manifest.json"
+wt_has_own_metadata = (wt_path / ".git").exists() or wt_manifest.is_file() or wt_tc.is_file()
+
+if wt_has_own_metadata:
+    if wt_tc.is_file() != root_tc.is_file():
+        print(
+            "Root and worktree lean-toolchain presence do not match; skipping unverifiable package seed.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+    if wt_manifest.is_file() != root_manifest.is_file():
+        print(
+            "Root and worktree lake-manifest.json presence do not match; skipping unverifiable package seed.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
 if wt_tc.is_file() and root_tc.is_file():
-    if wt_tc.read_text(encoding="utf-8").strip() != root_tc.read_text(encoding="utf-8").strip():
+    wt_tc_val = wt_tc.read_text(encoding="utf-8").strip()
+    root_tc_val = root_tc.read_text(encoding="utf-8").strip()
+    if not wt_tc_val or wt_tc_val != root_tc_val:
         print(
             "Root lean-toolchain does not match worktree lean-toolchain; skipping mismatched package seed.",
             file=sys.stderr,
         )
         raise SystemExit(1)
+    toolchain: str | None = wt_tc_val
+elif root_tc.is_file():
+    toolchain = root_tc.read_text(encoding="utf-8").strip() or None
+    if toolchain is None:
+        print("Root lean-toolchain is empty; skipping unverifiable package seed.", file=sys.stderr)
+        raise SystemExit(1)
+else:
+    toolchain = None
 
-wt_manifest = wt_path / "lake-manifest.json"
-root_manifest = root / "lake-manifest.json"
-target_pkgs = load_pkgs(wt_manifest if wt_manifest.is_file() else root_manifest)
-root_pkgs = load_pkgs(root_manifest)
+eff_manifest = wt_manifest if wt_has_own_metadata else root_manifest
+manifest_present = eff_manifest.is_file()
+target_pkgs = load_pkgs(eff_manifest) if manifest_present else {}
+if target_pkgs is None or (root_manifest.is_file() and load_pkgs(root_manifest) is None):
+    print("Invalid lake-manifest.json; skipping unverifiable package seed.", file=sys.stderr)
+    raise SystemExit(1)
 
-for name, want_rev in target_pkgs.items():
-    pkg_git = root / ".lake/packages" / name / ".git"
-    if pkg_git.exists():
-        try:
-            actual_rev = subprocess.check_output(
-                ["git", "-C", str(pkg_git.parent), "rev-parse", "HEAD"],
-                text=True,
-                stderr=subprocess.DEVNULL,
-            ).strip()
-            if actual_rev and not revs_match(actual_rev, want_rev):
+pkgs_dir = root / ".lake/packages"
+verified_pkgs: dict[str, str] = {}
+
+if manifest_present:
+    if not pkgs_dir.is_dir() and target_pkgs:
+        print("Root .lake/packages is missing; skipping package seed.", file=sys.stderr)
+        raise SystemExit(1)
+    for name, want_rev in target_pkgs.items():
+        pkg_dir = pkgs_dir / name
+        if not pkg_dir.is_dir():
+            print(
+                f"Root .lake/packages/{name} is missing; skipping incomplete package seed.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        if not (pkg_dir / ".git").exists():
+            print(
+                f"Root .lake/packages/{name} has no .git metadata; skipping unverifiable package seed.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        actual_rev = git_head(pkg_dir)
+        if not actual_rev:
+            print(
+                f"Root .lake/packages/{name} has invalid .git metadata; skipping unverifiable package seed.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        if not revs_match(actual_rev, want_rev):
+            print(
+                f"Root .lake/packages/{name} ({actual_rev[:8]}) does not match manifest pin ({want_rev[:8]}); skipping mismatched package seed.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        if not git_is_clean(pkg_dir):
+            print(
+                f"Root .lake/packages/{name} has uncommitted tracked changes; skipping dirty package seed.",
+                file=sys.stderr,
+            )
+            raise SystemExit(1)
+        verified_pkgs[name] = actual_rev
+    if pkgs_dir.is_dir():
+        for child in pkgs_dir.iterdir():
+            if child.is_dir() and child.name not in target_pkgs:
                 print(
-                    f"Root .lake/packages/{name} ({actual_rev[:8]}) does not match manifest pin ({want_rev[:8]}); skipping mismatched package seed.",
+                    f"Root .lake/packages/{child.name} is not listed in lake-manifest.json; skipping package seed.",
                     file=sys.stderr,
                 )
                 raise SystemExit(1)
-        except (OSError, subprocess.CalledProcessError):
-            pass
+else:
+    if pkgs_dir.is_dir():
+        for child in sorted(pkgs_dir.iterdir()):
+            if child.is_dir() and (child / ".git").exists():
+                actual_rev = git_head(child)
+                if not actual_rev or not git_is_clean(child):
+                    print(
+                        f"Root .lake/packages/{child.name} has invalid or dirty .git state; skipping package seed.",
+                        file=sys.stderr,
+                    )
+                    raise SystemExit(1)
+                verified_pkgs[child.name] = actual_rev
+
+if prov_out is not None:
+    prov_data = {
+        "schema": 2,
+        "clean": True,
+        "manifest_present": manifest_present,
+        "packages": verified_pkgs,
+        "toolchain": toolchain,
+    }
+    prov_out.write_text(json.dumps(prov_data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+}
+
+# root_packages_have_complete_builds: return 0 iff every package under $ROOT/.lake/packages has a
+# non-empty .lake/build directory with compiled (.olean or .trace) artifacts.
+root_packages_have_complete_builds() {
+  python3 - "$ROOT" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1]).resolve()
+pkgs_dir = root / ".lake/packages"
+if not pkgs_dir.is_dir():
+    raise SystemExit(1)
+pkg_dirs = [d for d in pkgs_dir.iterdir() if d.is_dir()]
+if not pkg_dirs:
+    raise SystemExit(1)
+for pkg_dir in pkg_dirs:
+    build_dir = pkg_dir / ".lake/build"
+    if not build_dir.is_dir():
+        raise SystemExit(1)
+    if not any(p.is_file() for p in build_dir.rglob("*")):
+        raise SystemExit(1)
 PY
 }
 
 # ensure_shared_packages <worktree_path> <shared_pkg_dir>: create <shared_pkg_dir> once as an
 # isolated read-only copy of $ROOT/.lake/packages (protecting both files and directories against
 # modification or atomic replacement) when not already present; never update in place.
+# Returns 0 on success (or when skipping due to manifest mismatch), 2 when $ROOT/.lake/packages
+# matches the manifest but lacks complete build artifacts (signalling writable-copy fallback), and
+# 1 on error.
 ensure_shared_packages() {
   local wt_path="$1"
   local shared_pkg_dir="$2"
@@ -442,12 +682,20 @@ ensure_shared_packages() {
   if [ ! -d "$ROOT/.lake/packages" ]; then
     return 0
   fi
-  if ! root_packages_match_manifest "$wt_path"; then
+  local prov_tmp
+  prov_tmp="$(mktemp "${TMPDIR:-/tmp}/.prov-XXXXXX")"
+  if ! root_packages_match_manifest "$wt_path" "$prov_tmp"; then
+    rm -f "$prov_tmp"
     return 0
+  fi
+  if ! root_packages_have_complete_builds; then
+    rm -f "$prov_tmp"
+    return 2
   fi
   mkdir -p "$(dirname "$shared_pkg_dir")"
   local staging
   staging="$(mktemp -d "$(dirname "$shared_pkg_dir")/.staging-$(basename "$shared_pkg_dir").XXXXXX")"
+  mv "$prov_tmp" "$staging/.pool-provenance.json"
   local pkg name
   for pkg in "$ROOT"/.lake/packages/*; do
     [ -d "$pkg" ] || continue
@@ -529,12 +777,27 @@ seed_lake() {
   mkdir -p "$wt_path/.lake"
   if [ ! -e "$wt_path/.lake/packages" ] && [ ! -L "$wt_path/.lake/packages" ]; then
     if [ "$copy_mode" = "none" ]; then
-      ensure_shared_packages "$wt_path" "$shared_pkg_dir"
-      if [ -d "$shared_pkg_dir" ]; then
+      local rc=0
+      ensure_shared_packages "$wt_path" "$shared_pkg_dir" || rc=$?
+      if [ "$rc" -eq 0 ] && [ -d "$shared_pkg_dir" ]; then
         ln -s "$shared_pkg_dir" "$wt_path/.lake/packages"
+      elif [ "$rc" -eq 2 ]; then
+        mkdir -p "$wt_path/.lake/packages"
+        local pkg name
+        for pkg in "$ROOT"/.lake/packages/*; do
+          [ -d "$pkg" ] || continue
+          name="$(basename "$pkg")"
+          seed_package "$pkg" "$wt_path/.lake/packages/$name" "true"
+        done
+      elif [ "$rc" -ne 0 ]; then
+        return "$rc"
       fi
     elif [ "$copy_mode" = "cslib" ]; then
-      ensure_shared_packages "$wt_path" "$shared_pkg_dir"
+      local rc=0
+      ensure_shared_packages "$wt_path" "$shared_pkg_dir" || rc=$?
+      if [ "$rc" -ne 0 ] && [ "$rc" -ne 2 ]; then
+        return "$rc"
+      fi
       if [ -d "$shared_pkg_dir" ] || [ -d "$ROOT/.lake/packages" ]; then
         mkdir -p "$wt_path/.lake/packages"
         if [ -d "$ROOT/.lake/packages/cslib" ] && root_packages_match_manifest "$wt_path"; then
@@ -543,13 +806,21 @@ seed_lake() {
           seed_package "$shared_pkg_dir/cslib" "$wt_path/.lake/packages/cslib" "true"
           chmod -R u+w "$wt_path/.lake/packages/cslib"
         fi
-        if [ -d "$shared_pkg_dir" ]; then
+        if [ "$rc" -eq 0 ] && [ -d "$shared_pkg_dir" ]; then
           local pkg name
           for pkg in "$shared_pkg_dir"/*; do
             [ -d "$pkg" ] || continue
             name="$(basename "$pkg")"
             [ "$name" = "cslib" ] && continue
             ln -s "$pkg" "$wt_path/.lake/packages/$name"
+          done
+        elif [ "$rc" -eq 2 ]; then
+          local pkg name
+          for pkg in "$ROOT"/.lake/packages/*; do
+            [ -d "$pkg" ] || continue
+            name="$(basename "$pkg")"
+            [ "$name" = "cslib" ] && continue
+            seed_package "$pkg" "$wt_path/.lake/packages/$name" "true"
           done
         fi
       fi

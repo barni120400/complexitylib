@@ -154,7 +154,15 @@ class WorktreeCreateTests(unittest.TestCase):
         self.assertFalse((self.work / ".worktrees/fresh").exists())
 
     def test_create_shares_readonly_pin_keyed_packages_and_never_updates_in_place(self) -> None:
-        manifest_v1 = {"packages": [{"name": "cslib", "rev": "11111111aaaa22223333"}]}
+        cslib_repo = self.work / ".lake/packages/cslib"
+        cslib_repo.mkdir(parents=True)
+        git(cslib_repo, "init", "--quiet", "-b", "main")
+        (cslib_repo / "Cslib.lean").write_text("-- cslib v1\n", encoding="utf-8")
+        git(cslib_repo, "add", "Cslib.lean")
+        git(cslib_repo, "commit", "--quiet", "-m", "cslib v1")
+        rev_v1 = git(cslib_repo, "rev-parse", "HEAD")
+
+        manifest_v1 = {"packages": [{"name": "cslib", "rev": rev_v1}]}
         (self.other / "lake-manifest.json").write_text(json.dumps(manifest_v1), encoding="utf-8")
         git(self.other, "add", "lake-manifest.json")
         git(self.other, "commit", "--quiet", "-m", "pin v1")
@@ -176,7 +184,7 @@ class WorktreeCreateTests(unittest.TestCase):
         self.assertTrue(pkg_link_one.is_symlink())
         shared_v1 = pkg_link_one.resolve()
         self.assertEqual(shared_v1.parent, (self.work / ".worktrees/.shared").resolve())
-        self.assertEqual(shared_v1.name, "packages-cslib-11111111")
+        self.assertEqual(shared_v1.name, f"packages-cslib-{rev_v1[:8]}")
 
         replacement_probe = self.tmp / "atomic-replace-probe"
         replacement_probe.write_bytes(b"replaced via os.replace\n")
@@ -207,7 +215,12 @@ class WorktreeCreateTests(unittest.TestCase):
 
         # Advance the cslib pin on a new branch and verify a new shared directory is created
         # while the v1 shared directory remains untouched.
-        manifest_v2 = {"packages": [{"name": "cslib", "rev": "22222222bbbb33334444"}]}
+        (cslib_repo / "Cslib.lean").write_text("-- cslib v2\n", encoding="utf-8")
+        git(cslib_repo, "add", "Cslib.lean")
+        git(cslib_repo, "commit", "--quiet", "-m", "cslib v2")
+        rev_v2 = git(cslib_repo, "rev-parse", "HEAD")
+
+        manifest_v2 = {"packages": [{"name": "cslib", "rev": rev_v2}]}
         git(self.other, "switch", "--quiet", "-c", "feature/pin-v2", "origin/main")
         (self.other / "lake-manifest.json").write_text(json.dumps(manifest_v2), encoding="utf-8")
         git(self.other, "add", "lake-manifest.json")
@@ -222,14 +235,24 @@ class WorktreeCreateTests(unittest.TestCase):
         wt_three = self.work / ".worktrees/pin-v2"
         shared_v2 = (wt_three / ".lake/packages").resolve()
         self.assertEqual(shared_v2.parent, (self.work / ".worktrees/.shared").resolve())
-        self.assertEqual(shared_v2.name, "packages-cslib-22222222")
+        self.assertEqual(shared_v2.name, f"packages-cslib-{rev_v2[:8]}")
         self.assertNotEqual(shared_v2, shared_v1)
         for path in paths:
             self.assertEqual((wt_three / path).read_bytes(), b"v2 cache\n")
             self.assertEqual((wt_one / path).read_bytes(), b"v1 cache\n")
 
     def test_secondary_dependency_or_toolchain_change_uses_distinct_shared_pool(self) -> None:
-        cslib_rev = "425b4714a12419eb0a58376f4078ef07bd08da42"
+        cslib_repo = self.work / ".lake/packages/cslib"
+        cslib_repo.mkdir(parents=True)
+        git(cslib_repo, "init", "--quiet", "-b", "main")
+        (cslib_repo / "Cslib.lean").write_text("-- cslib\n", encoding="utf-8")
+        git(cslib_repo, "add", "Cslib.lean")
+        git(cslib_repo, "commit", "--quiet", "-m", "cslib")
+        cslib_rev = git(cslib_repo, "rev-parse", "HEAD")
+        cslib_olean = self.work / ".lake/packages/cslib/.lake/build/lib/Lean/Cslib.olean"
+        cslib_olean.parent.mkdir(parents=True, exist_ok=True)
+        cslib_olean.write_bytes(b"cslib\n")
+
         mathlib_repo = self.work / ".lake/packages/mathlib"
         mathlib_repo.mkdir(parents=True)
         git(mathlib_repo, "init", "--quiet", "-b", "main")
@@ -608,6 +631,206 @@ class WorktreeSeedTests(unittest.TestCase):
         res_env = self.seed(wt_env, COMPLEXITYLIB_SHARED_PACKAGES_ROOT=str(self.root / ".lake"))
         self.assertNotEqual(res_env.returncode, 0)
         self.assertIn("primary checkout", res_env.stderr)
+
+    def test_legacy_unhardened_pool_is_not_adopted_and_left_untouched(self) -> None:
+        # Simulate an active legacy pool (writable directories, unmaterialized escaping symlink,
+        # no .pool-provenance.json) at both packages-cslib-default and packages-cslib-<rev>.
+        cslib_source = self.root / ".lake/packages/cslib/Source.lean"
+        (self.root / ".lake/packages/cslib/Absolute.lean").symlink_to(cslib_source.resolve())
+
+        legacy_pool = self.root / ".worktrees/.shared/packages-cslib-default"
+        for pkg in ("cslib", "mathlib"):
+            shutil.copytree(
+                self.root / ".lake/packages" / pkg,
+                legacy_pool / pkg,
+                symlinks=True,
+            )
+        legacy_artifact = legacy_pool / "cslib/.lake/build/lib/Lean/Dependency.trace"
+        self.assertTrue((legacy_pool / "cslib/Absolute.lean").is_symlink())
+        self.assertNotEqual(stat.S_IMODE(legacy_artifact.parent.stat().st_mode) & 0o222, 0)
+
+        new_worker = self.tmp / "new-worker"
+        res = self.seed(new_worker)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        new_pool = (new_worker / ".lake/packages").resolve()
+        self.assertNotEqual(new_pool, legacy_pool.resolve())
+        self.assertEqual(new_pool.name, "packages-cslib-default-v2")
+
+        # The active legacy pool remains untouched while the new worker's pool is hardened.
+        self.assertTrue((legacy_pool / "cslib/Absolute.lean").is_symlink())
+        self.assertNotEqual(stat.S_IMODE(legacy_artifact.parent.stat().st_mode) & 0o222, 0)
+
+        new_link = new_worker / ".lake/packages/cslib/Absolute.lean"
+        self.assertFalse(new_link.is_symlink())
+        with self.assertRaises(PermissionError):
+            new_link.write_text("cannot mutate hardened pool\n", encoding="utf-8")
+        self.assertEqual(cslib_source.read_text(encoding="utf-8"), "immutable source\n")
+
+        probe = self.tmp / "replace-legacy-probe"
+        probe.write_text("cannot replace\n", encoding="utf-8")
+        with self.assertRaises(PermissionError):
+            os.replace(
+                probe,
+                new_worker / ".lake/packages/cslib/.lake/build/lib/Lean/Dependency.trace",
+            )
+
+    def test_unverifiable_or_dirty_seed_sources_fail_closed(self) -> None:
+        revs = {}
+        for pkg in ("cslib", "mathlib"):
+            pkg_dir = self.root / ".lake/packages" / pkg
+            git(pkg_dir, "init", "--quiet", "-b", "main")
+            git(pkg_dir, "add", "Source.lean")
+            git(pkg_dir, "commit", "--quiet", "-m", f"init {pkg}")
+            revs[pkg] = git(pkg_dir, "rev-parse", "HEAD")
+
+        manifest = {"packages": [{"name": k, "rev": v} for k, v in revs.items()]}
+        (self.root / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (self.root / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+
+        # 1. Dirty tracked source in root mathlib at matching HEAD must fail closed.
+        mathlib_src = self.root / ".lake/packages/mathlib/Source.lean"
+        mathlib_src.write_text("UNCOMMITTED mutation\n", encoding="utf-8")
+        dirty_wt = self.tmp / "dirty-wt"
+        dirty_wt.mkdir()
+        (dirty_wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (dirty_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+        res_dirty = self.seed(dirty_wt)
+        self.assertEqual(res_dirty.returncode, 0, res_dirty.stderr)
+        self.assertIn("uncommitted tracked changes", res_dirty.stderr)
+        self.assertFalse((dirty_wt / ".lake/packages").exists())
+        mathlib_src.write_text("immutable source\n", encoding="utf-8")
+
+        # 2. Missing target toolchain or manifest when root has both must fail closed.
+        missing_tc_wt = self.tmp / "missing-tc-wt"
+        missing_tc_wt.mkdir()
+        (missing_tc_wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        res_mtc = self.seed(missing_tc_wt)
+        self.assertEqual(res_mtc.returncode, 0, res_mtc.stderr)
+        self.assertIn("lean-toolchain", res_mtc.stderr)
+        self.assertFalse((missing_tc_wt / ".lake/packages").exists())
+
+        missing_man_wt = self.tmp / "missing-man-wt"
+        missing_man_wt.mkdir()
+        (missing_man_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+        res_mman = self.seed(missing_man_wt)
+        self.assertEqual(res_mman.returncode, 0, res_mman.stderr)
+        self.assertIn("lake-manifest.json", res_mman.stderr)
+        self.assertFalse((missing_man_wt / ".lake/packages").exists())
+
+        # 3. Missing .git in root mathlib when manifest pins mathlib B must fail closed and not
+        # poison the B pool after root is repaired.
+        mathlib_git = self.root / ".lake/packages/mathlib/.git"
+        mathlib_git_bak = self.tmp / "mathlib-git-bak"
+        mathlib_git.rename(mathlib_git_bak)
+        want_b = "b" * 40
+        manifest_b = {
+            "packages": [
+                {"name": "cslib", "rev": revs["cslib"]},
+                {"name": "mathlib", "rev": want_b},
+            ]
+        }
+        no_git_wt = self.tmp / "no-git-wt"
+        no_git_wt.mkdir()
+        (no_git_wt / "lake-manifest.json").write_text(json.dumps(manifest_b), encoding="utf-8")
+        (no_git_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+        res_nogit = self.seed(no_git_wt)
+        self.assertEqual(res_nogit.returncode, 0, res_nogit.stderr)
+        self.assertIn("no .git metadata", res_nogit.stderr)
+        self.assertFalse((no_git_wt / ".lake/packages").exists())
+
+        # Invalid .git file must also fail closed.
+        mathlib_git.write_text("INVALID GIT\n", encoding="utf-8")
+        inv_git_wt = self.tmp / "inv-git-wt"
+        inv_git_wt.mkdir()
+        (inv_git_wt / "lake-manifest.json").write_text(json.dumps(manifest_b), encoding="utf-8")
+        (inv_git_wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+        res_invgit = self.seed(inv_git_wt)
+        self.assertEqual(res_invgit.returncode, 0, res_invgit.stderr)
+        self.assertIn("invalid .git metadata", res_invgit.stderr)
+        self.assertFalse((inv_git_wt / ".lake/packages").exists())
+        mathlib_git.unlink()
+        mathlib_git_bak.rename(mathlib_git)
+
+    def test_cold_dependency_missing_build_falls_back_to_writable_copy_and_builds(self) -> None:
+        # Remove compiled build output from mathlib in root; seed must not publish an incomplete
+        # read-only pool and must instead provide an isolated writable package directory.
+        shutil.rmtree(self.root / ".lake/packages/mathlib/.lake/build")
+        cold_wt = self.tmp / "cold-wt"
+        res = self.seed(cold_wt)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertTrue((cold_wt / ".lake/packages").is_dir())
+        self.assertFalse((cold_wt / ".lake/packages").is_symlink())
+        dep_build = cold_wt / ".lake/packages/mathlib/.lake/build/lib/lean"
+        dep_build.mkdir(parents=True, exist_ok=True)
+        (dep_build / "Generated.olean").write_bytes(b"compiled in worker\n")
+        self.assertFalse((self.root / ".lake/packages/mathlib/.lake/build").exists())
+
+        # Also run an actual minimal Lake cold-dependency build when the pinned toolchain exists.
+        tc_file = REPO / "lean-toolchain"
+        if not tc_file.is_file():
+            return
+        tc = tc_file.read_text(encoding="utf-8").strip()
+        tc_slug = tc.replace("/", "--").replace(":", "---")
+        bindir = pathlib.Path.home() / ".elan/toolchains" / tc_slug / "bin"
+        if not (bindir / "lake").is_file():
+            return
+
+        lake_env = {
+            **GIT_ENV,
+            "GIT_ALLOW_PROTOCOL": "file",
+            "COMPLEXITYLIB_CACHE_AUTO": "0",
+            "LAKE_CACHE_DIR": str(self.tmp / "lake-cache"),
+            "PATH": str(bindir) + os.pathsep + os.environ.get("PATH", ""),
+        }
+        dep = self.tmp / "local-dep"
+        dep.mkdir()
+        (dep / "lakefile.toml").write_text(
+            'name = "dep"\nversion = "0.1.0"\n[[lean_lib]]\nname = "Dep"\n',
+            encoding="utf-8",
+        )
+        (dep / "lean-toolchain").write_text(tc + "\n", encoding="utf-8")
+        (dep / "Dep.lean").write_text("namespace Dep\ndef value : Nat := 7\nend Dep\n", encoding="utf-8")
+        git(dep, "init", "--quiet", "-b", "main")
+        git(dep, "add", ".")
+        git(dep, "commit", "--quiet", "-m", "dep")
+        dep_rev = git(dep, "rev-parse", "HEAD")
+
+        proj = self.tmp / "toy-proj"
+        proj.mkdir()
+        (proj / "lean-toolchain").write_text(tc + "\n", encoding="utf-8")
+        (proj / "lakefile.toml").write_text(
+            'name = "toy"\nversion = "0.1.0"\ndefaultTargets = ["Toy"]\n'
+            '[[lean_lib]]\nname = "Toy"\n[[require]]\nname = "dep"\n'
+            f'git = {json.dumps(dep.as_uri())}\nrev = {json.dumps(dep_rev)}\n',
+            encoding="utf-8",
+        )
+        (proj / "Toy.lean").write_text("import Dep\nexample : Dep.value = 7 := rfl\n", encoding="utf-8")
+        (proj / ".gitignore").write_text(".lake/\n.worktrees/\n", encoding="utf-8")
+        for rel in ("scripts/worktree.sh", "scripts/build.sh", "scripts/cache/ensure.sh"):
+            dst = proj / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(REPO / rel, dst)
+            dst.chmod(0o755)
+        git(proj, "init", "--quiet", "-b", "main")
+        git(proj, "add", ".")
+        git(proj, "commit", "--quiet", "-m", "toy")
+        subprocess.run([str(bindir / "lake"), "build"], cwd=proj, env=lake_env, check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        shutil.rmtree(proj / ".lake/packages/dep/.lake/build")
+
+        worker = self.tmp / "toy-worker"
+        git(proj, "worktree", "add", "--quiet", "-b", "worker", str(worker), "main")
+        seed_res = subprocess.run(
+            ["bash", str(proj / "scripts/worktree.sh"), "seed", str(worker)],
+            cwd=proj, env=lake_env, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(seed_res.returncode, 0, seed_res.stderr)
+        build_res = subprocess.run(
+            [str(worker / "scripts/build.sh"), "+Dep"],
+            cwd=worker, env=lake_env, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(build_res.returncode, 0, build_res.stdout + build_res.stderr)
+        self.assertTrue((worker / ".lake/packages/dep/.lake/build/lib/lean/Dep.olean").is_file())
 
 
 @unittest.skipUnless(shutil.which("git"), "git is required")
