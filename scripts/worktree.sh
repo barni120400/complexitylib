@@ -68,6 +68,7 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import subprocess
 import sys
 
 src_root = Path(sys.argv[1])
@@ -114,6 +115,64 @@ for dirpath, dirnames, filenames in os.walk(dst_root, followlinks=False):
         if candidate.is_dir():
             for sub_dir, _, _ in os.walk(candidate, followlinks=False):
                 Path(sub_dir).chmod(stat.S_IMODE(Path(sub_dir).stat().st_mode) | 0o700)
+
+dst_git = dst_root / ".git"
+if dst_git.exists() and not dst_git.is_dir():
+    try:
+        git_dir = Path(
+            subprocess.check_output(
+                ["git", "-C", str(src_root), "rev-parse", "--path-format=absolute", "--git-dir"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+        )
+        common_dir = Path(
+            subprocess.check_output(
+                [
+                    "git",
+                    "-C",
+                    str(src_root),
+                    "rev-parse",
+                    "--path-format=absolute",
+                    "--git-common-dir",
+                ],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+        )
+        head_rev = subprocess.check_output(
+            ["git", "-C", str(src_root), "rev-parse", "--verify", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        print(f"Refusing package with unreadable .git pointer: {src_root}: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+    dst_git.unlink()
+    dst_git.mkdir(mode=0o755)
+    for item in ("objects", "refs", "info", "packed-refs", "config", "description"):
+        src_item = common_dir / item
+        dst_item = dst_git / item
+        if src_item.is_dir():
+            shutil.copytree(src_item, dst_item, symlinks=False)
+        elif src_item.is_file():
+            shutil.copy2(src_item, dst_item, follow_symlinks=True)
+    src_index = git_dir / "index"
+    if src_index.is_file():
+        shutil.copy2(src_index, dst_git / "index", follow_symlinks=True)
+    (dst_git / "HEAD").write_text(f"{head_rev}\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "-C", str(dst_root), "config", "--unset", "core.worktree"],
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    for sub_dir, _, sub_files in os.walk(dst_git, followlinks=False):
+        sp = Path(sub_dir)
+        sp.chmod(stat.S_IMODE(sp.stat().st_mode) | 0o700)
+        for sf in sub_files:
+            fp = sp / sf
+            if not fp.is_symlink():
+                fp.chmod(stat.S_IMODE(fp.stat().st_mode) | 0o600)
 PY
 )
 
@@ -155,15 +214,64 @@ def git_head(repo: Path) -> str | None:
 
 
 def revs_match(a: str, b: str) -> bool:
-    n = min(len(a), len(b), 8)
-    return n > 0 and a[:n] == b[:n]
+    return bool(a) and bool(b) and a == b
 
 
 def package_has_complete_build(pkg_dir: Path) -> bool:
     build_dir = pkg_dir / ".lake/build"
     if not build_dir.is_dir():
         return False
-    return any(p.is_file() for p in build_dir.rglob("*"))
+    if not any(p.is_file() for p in build_dir.rglob("*")):
+        return False
+    lib_lean = build_dir / "lib/lean"
+    if lib_lean.is_dir():
+        for p in lib_lean.rglob("*"):
+            if not p.is_file():
+                continue
+            name = p.name
+            if name.endswith((".olean.hash", ".ilean.hash")):
+                stem_path = p.with_name(name[:-5]).with_suffix(".olean")
+                if not stem_path.is_file():
+                    return False
+            elif p.suffix in (".trace", ".ilean"):
+                if not p.with_suffix(".olean").is_file():
+                    return False
+    ir_dir = build_dir / "ir"
+    if ir_dir.is_dir():
+        for p in ir_dir.rglob("*"):
+            if not p.is_file():
+                continue
+            rel = p.relative_to(ir_dir)
+            name = rel.name
+            if name.endswith(".c.hash"):
+                olean_rel = rel.with_name(name[:-7] + ".olean")
+            elif name.endswith(".setup.json"):
+                olean_rel = rel.with_name(name[:-11] + ".olean")
+            elif rel.suffix == ".c":
+                olean_rel = rel.with_suffix(".olean")
+            else:
+                continue
+            if not (lib_lean / olean_rel).is_file():
+                return False
+    has_lakefile = (pkg_dir / "lakefile.toml").is_file() or (pkg_dir / "lakefile.lean").is_file()
+    if has_lakefile:
+        if not lib_lean.is_dir() or not any(lib_lean.rglob("*.olean")):
+            return False
+        for top_lean in pkg_dir.glob("*.lean"):
+            if top_lean.name == "lakefile.lean":
+                continue
+            root_name = top_lean.stem
+            if not (lib_lean / f"{root_name}.olean").is_file():
+                continue
+            root_dir = pkg_dir / root_name
+            if root_dir.is_dir():
+                sub_leans = list(root_dir.rglob("*.lean"))
+                if len(sub_leans) <= 32:
+                    for sl in sub_leans:
+                        rel = sl.relative_to(pkg_dir).with_suffix(".olean")
+                        if not (lib_lean / rel).is_file():
+                            return False
+    return True
 
 
 def load_manifest_pkgs(path: Path) -> dict[str, str] | None:
@@ -294,10 +402,16 @@ def pool_is_valid_and_hardened(cand: Path) -> bool:
             rec_rev = prov_pkgs.get(name, "")
             if not isinstance(rec_rev, str) or not revs_match(rec_rev, want_rev):
                 return False
+            pkg_git = cand_pkg_dirs[name] / ".git"
+            if not pkg_git.is_dir() or pkg_git.is_symlink():
+                return False
             actual_rev = git_head(cand_pkg_dirs[name])
             if not actual_rev or not revs_match(actual_rev, want_rev):
                 return False
     for pkg_dir in cand_pkg_dirs.values():
+        pkg_git = pkg_dir / ".git"
+        if pkg_git.exists() and (not pkg_git.is_dir() or pkg_git.is_symlink()):
+            return False
         if not package_has_complete_build(pkg_dir):
             return False
     try:
@@ -328,11 +442,16 @@ def pool_is_valid_and_hardened(cand: Path) -> bool:
     return True
 
 
+def candidate_names() -> list[str]:
+    return [base_pin_name] + [f"{base_pin_name}-v{i}" for i in range(2, 64)]
+
+
 def select_candidate_in_root(sroot: Path) -> Path:
-    c1 = sroot / base_pin_name
-    if not c1.exists() or pool_is_valid_and_hardened(c1):
-        return c1
-    return sroot / f"{base_pin_name}-v2"
+    for cname in candidate_names():
+        cand = sroot / cname
+        if not cand.exists() or pool_is_valid_and_hardened(cand):
+            return cand
+    raise SystemExit(f"Exhausted shared package candidate names under {sroot}")
 
 
 env_shared = os.environ.get("COMPLEXITYLIB_SHARED_PACKAGES_ROOT", "")
@@ -358,7 +477,7 @@ shared_roots.append(worktrees_root / ".shared")
 shared_roots.append(Path(f"{root}-wt") / ".shared")
 
 for sroot in shared_roots:
-    for cname in (base_pin_name, f"{base_pin_name}-v2"):
+    for cname in candidate_names():
         cand = sroot / cname
         if cand.is_dir() and pool_is_valid_and_hardened(cand):
             print(cand)
@@ -471,8 +590,7 @@ prov_out = Path(sys.argv[3]) if sys.argv[3] else None
 
 
 def revs_match(a: str, b: str) -> bool:
-    n = min(len(a), len(b), 8)
-    return n > 0 and a[:n] == b[:n]
+    return bool(a) and bool(b) and a == b
 
 
 def git_head(repo: Path) -> str | None:
@@ -658,11 +776,67 @@ if not pkgs_dir.is_dir():
 pkg_dirs = [d for d in pkgs_dir.iterdir() if d.is_dir()]
 if not pkg_dirs:
     raise SystemExit(1)
-for pkg_dir in pkg_dirs:
+
+
+def package_has_complete_build(pkg_dir: Path) -> bool:
     build_dir = pkg_dir / ".lake/build"
     if not build_dir.is_dir():
-        raise SystemExit(1)
+        return False
     if not any(p.is_file() for p in build_dir.rglob("*")):
+        return False
+    lib_lean = build_dir / "lib/lean"
+    if lib_lean.is_dir():
+        for p in lib_lean.rglob("*"):
+            if not p.is_file():
+                continue
+            name = p.name
+            if name.endswith((".olean.hash", ".ilean.hash")):
+                stem_path = p.with_name(name[:-5]).with_suffix(".olean")
+                if not stem_path.is_file():
+                    return False
+            elif p.suffix in (".trace", ".ilean"):
+                if not p.with_suffix(".olean").is_file():
+                    return False
+    ir_dir = build_dir / "ir"
+    if ir_dir.is_dir():
+        for p in ir_dir.rglob("*"):
+            if not p.is_file():
+                continue
+            rel = p.relative_to(ir_dir)
+            name = rel.name
+            if name.endswith(".c.hash"):
+                olean_rel = rel.with_name(name[:-7] + ".olean")
+            elif name.endswith(".setup.json"):
+                olean_rel = rel.with_name(name[:-11] + ".olean")
+            elif rel.suffix == ".c":
+                olean_rel = rel.with_suffix(".olean")
+            else:
+                continue
+            if not (lib_lean / olean_rel).is_file():
+                return False
+    has_lakefile = (pkg_dir / "lakefile.toml").is_file() or (pkg_dir / "lakefile.lean").is_file()
+    if has_lakefile:
+        if not lib_lean.is_dir() or not any(lib_lean.rglob("*.olean")):
+            return False
+        for top_lean in pkg_dir.glob("*.lean"):
+            if top_lean.name == "lakefile.lean":
+                continue
+            root_name = top_lean.stem
+            if not (lib_lean / f"{root_name}.olean").is_file():
+                continue
+            root_dir = pkg_dir / root_name
+            if root_dir.is_dir():
+                sub_leans = list(root_dir.rglob("*.lean"))
+                if len(sub_leans) <= 32:
+                    for sl in sub_leans:
+                        rel = sl.relative_to(pkg_dir).with_suffix(".olean")
+                        if not (lib_lean / rel).is_file():
+                            return False
+    return True
+
+
+for pkg_dir in pkg_dirs:
+    if not package_has_complete_build(pkg_dir):
         raise SystemExit(1)
 PY
 }

@@ -832,6 +832,141 @@ class WorktreeSeedTests(unittest.TestCase):
         self.assertEqual(build_res.returncode, 0, build_res.stdout + build_res.stderr)
         self.assertTrue((worker / ".lake/packages/dep/.lake/build/lib/lean/Dep.olean").is_file())
 
+    def test_gitfile_dependency_control_metadata_isolated(self) -> None:
+        # Replace cslib in root with a linked Git worktree whose .git is a pointer file.
+        origin = self.tmp / "dep-origin"
+        origin.mkdir()
+        git(origin, "init", "--quiet", "-b", "main")
+        (origin / "Source.lean").write_bytes(b"tracked cslib\n")
+        (origin / ".gitignore").write_text(".lake/\n", encoding="utf-8")
+        git(origin, "add", "Source.lean", ".gitignore")
+        git(origin, "commit", "--quiet", "-m", "dep")
+        cslib_rev = git(origin, "rev-parse", "HEAD")
+
+        pkg = self.root / ".lake/packages/cslib"
+        shutil.rmtree(pkg)
+        git(origin, "worktree", "add", "--quiet", "--detach", str(pkg), cslib_rev)
+        artifact = pkg / ".lake/build/lib/Lean/Dependency.trace"
+        artifact.parent.mkdir(parents=True, exist_ok=True)
+        artifact.write_bytes(b"compiled cslib\n")
+        self.assertTrue((pkg / ".git").is_file())
+
+        mathlib_dir = self.root / ".lake/packages/mathlib"
+        git(mathlib_dir, "init", "--quiet", "-b", "main")
+        git(mathlib_dir, "add", "Source.lean")
+        git(mathlib_dir, "commit", "--quiet", "-m", "init mathlib")
+        mathlib_rev = git(mathlib_dir, "rev-parse", "HEAD")
+        manifest = {
+            "packages": [
+                {"name": "cslib", "rev": cslib_rev},
+                {"name": "mathlib", "rev": mathlib_rev},
+            ]
+        }
+        (self.root / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (self.root / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+
+        primary_gitdir = git(pkg, "rev-parse", "--absolute-git-dir")
+        before_index = git(pkg, "ls-files", "-v", "--", "Source.lean")
+        before_head = (pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8")
+
+        for idx, flags in enumerate(((), ("--copy-cslib",), ("--copy-packages",))):
+            wt = self.tmp / f"gitfile-wt-{idx}"
+            wt.mkdir()
+            (wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            (wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+            res = self.seed(wt, *flags)
+            self.assertEqual(res.returncode, 0, res.stderr)
+            copied = wt / ".lake/packages/cslib"
+            self.assertTrue((copied / ".git").is_dir())
+            copy_gitdir = git(copied, "rev-parse", "--absolute-git-dir")
+            self.assertNotEqual(primary_gitdir, copy_gitdir)
+            subprocess.run(
+                ["git", "-C", str(copied), "update-index", "--assume-unchanged", "Source.lean"],
+                env=GIT_ENV, capture_output=True, text=True, check=False,
+            )
+            subprocess.run(
+                ["git", "-C", str(copied), "symbolic-ref", "HEAD", "refs/heads/copy-branch"],
+                env=GIT_ENV, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(git(pkg, "ls-files", "-v", "--", "Source.lean"), before_index)
+            self.assertEqual((pathlib.Path(primary_gitdir) / "HEAD").read_text(encoding="utf-8"), before_head)
+
+    def test_occupied_invalid_v2_fallback_selects_v3(self) -> None:
+        # When both the base pool name and -v2 are occupied by unhardened/unvalidated directories,
+        # seed must reject both without mutating them and create -v3.
+        pkg = self.root / ".lake/packages/cslib"
+        (pkg / "Absolute.lean").symlink_to(pkg / "Source.lean")
+        shared = self.root / ".worktrees/.shared"
+        for name in ("packages-cslib-default", "packages-cslib-default-v2"):
+            pool = shared / name
+            for p_name in ("cslib", "mathlib"):
+                shutil.copytree(self.root / ".lake/packages" / p_name, pool / p_name, symlinks=True)
+
+        wt = self.tmp / "v3-worker"
+        res = self.seed(wt)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        chosen = (wt / ".lake/packages").resolve()
+        self.assertEqual(chosen, (shared / "packages-cslib-default-v3").resolve())
+        self.assertTrue((chosen / ".pool-provenance.json").is_file())
+        self.assertFalse((chosen / "cslib/Absolute.lean").is_symlink())
+        self.assertTrue((shared / "packages-cslib-default-v2/cslib/Absolute.lean").is_symlink())
+
+    def test_full_revision_mismatch_after_eight_chars_rejected(self) -> None:
+        revs = {}
+        for pkg in ("cslib", "mathlib"):
+            pkg_dir = self.root / ".lake/packages" / pkg
+            git(pkg_dir, "init", "--quiet", "-b", "main")
+            git(pkg_dir, "add", "Source.lean")
+            git(pkg_dir, "commit", "--quiet", "-m", f"init {pkg}")
+            revs[pkg] = git(pkg_dir, "rev-parse", "HEAD")
+        cslib_rev = revs["cslib"]
+        mathlib_rev = revs["mathlib"]
+        bad_tail_rev = mathlib_rev[:8] + ("0" if mathlib_rev[8] != "0" else "1") * (len(mathlib_rev) - 8)
+        manifest = {
+            "packages": [
+                {"name": "cslib", "rev": cslib_rev},
+                {"name": "mathlib", "rev": bad_tail_rev},
+            ]
+        }
+        (self.root / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (self.root / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+        wt = self.tmp / "tail-mismatch-wt"
+        wt.mkdir()
+        (wt / "lake-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (wt / "lean-toolchain").write_text("toolchain-A\n", encoding="utf-8")
+        res = self.seed(wt)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertIn("does not match manifest pin", res.stderr)
+        self.assertFalse((wt / ".lake/packages").exists())
+
+    def test_partial_olean_and_missing_module_fallback_to_writable_copy(self) -> None:
+        # 1) Partial build: a .trace/.ilean exists without its corresponding .olean.
+        mathlib_lib = self.root / ".lake/packages/mathlib/.lake/build/lib/lean"
+        mathlib_lib.mkdir(parents=True, exist_ok=True)
+        (mathlib_lib / "Broken.trace").write_text("{}", encoding="utf-8")
+        partial_wt = self.tmp / "partial-wt"
+        res = self.seed(partial_wt)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        self.assertTrue((partial_wt / ".lake/packages").is_dir())
+        self.assertFalse((partial_wt / ".lake/packages").is_symlink())
+
+        # 2) Missing module under a Lake library root: Source.lean is compiled to Source.olean, but
+        # Source/Extra.lean has no Source/Extra.olean.
+        (mathlib_lib / "Broken.trace").unlink()
+        mathlib_pkg = self.root / ".lake/packages/mathlib"
+        (mathlib_pkg / "lakefile.toml").write_text(
+            'name = "mathlib"\n[[lean_lib]]\nname = "Source"\n',
+            encoding="utf-8",
+        )
+        (mathlib_lib / "Source.olean").write_bytes(b"source olean\n")
+        (mathlib_pkg / "Source").mkdir(exist_ok=True)
+        (mathlib_pkg / "Source/Extra.lean").write_text("def extra := 1\n", encoding="utf-8")
+        missing_mod_wt = self.tmp / "missing-mod-wt"
+        res2 = self.seed(missing_mod_wt)
+        self.assertEqual(res2.returncode, 0, res2.stderr)
+        self.assertTrue((missing_mod_wt / ".lake/packages").is_dir())
+        self.assertFalse((missing_mod_wt / ".lake/packages").is_symlink())
+
 
 @unittest.skipUnless(shutil.which("git"), "git is required")
 class WorktreePruneTests(unittest.TestCase):
