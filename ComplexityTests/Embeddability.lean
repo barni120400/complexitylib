@@ -27,16 +27,19 @@ example (P₀ : PMF (Bool × Bool)) (KS : Bool → PMF Bool) (KT : Bool → PMF 
       (P₀.bind fun xy => (KS xy.1).bind fun s => (KT xy.2).map fun t => (xy, (s, t))) 0 :=
   isEmbeddable_bind_prod P₀ KS KT
 
--- Lemma 8 applies to every joint law.
-example (J : PMF ((Bool × Bool) × Bool)) :
-    IsEmbeddable (J.map Prod.fst) (J.map fun z => (z.1, (z.2, z.2)))
-      (2 * dist J (withKernel (J.map Prod.fst) fun xy => condX J xy.1) +
-        2 * dist J (withKernel (J.map Prod.fst) fun xy => condY J xy.2)) :=
-  isEmbeddable_diag J
-
-/-- A perfectly correlated pair of bits `((b, b), b)`. -/
+/-- A perfectly correlated triple of bits `((b, b), b)`. -/
 noncomputable def correlatedTriple : PMF ((Bool × Bool) × Bool) :=
   (Cslib.Probability.PMF.uniformOfFintype Bool).map fun b => ((b, b), b)
+
+-- Lemma 8 instantiated on `correlatedTriple`.
+example :
+    IsEmbeddable (correlatedTriple.map Prod.fst)
+      (correlatedTriple.map fun z => (z.1, (z.2, z.2)))
+      (2 * dist correlatedTriple
+          (withKernel (correlatedTriple.map Prod.fst) fun xy => condX correlatedTriple xy.1) +
+        2 * dist correlatedTriple
+          (withKernel (correlatedTriple.map Prod.fst) fun xy => condY correlatedTriple xy.2)) :=
+  isEmbeddable_diag correlatedTriple
 
 -- A perfectly correlated pair embeds its marginal in `((b, b), (b, b))` with error `0`.
 example :
@@ -59,8 +62,8 @@ noncomputable def aliceInput : PMF (Bool × Unit) :=
 noncomputable def bobGuessesAlice : PMF ((Bool × Unit) × (Unit × Bool)) :=
   aliceInput.bind fun xy => (PMF.pure ((), xy.1)).map (xy, ·)
 
--- Without communication, Bob cannot match a uniform bit held only by Alice within `1 / 4`.
-example : ¬ IsEmbeddable aliceInput bobGuessesAlice (1 / 4) := by
+-- Without communication, Bob cannot match a uniform bit held only by Alice below error `1 / 2`.
+example {ε : ℝ} (hε : ε < 1 / 2) : ¬ IsEmbeddable aliceInput bobGuessesAlice ε := by
   rintro ⟨R, ρ, fA, fB, h⟩
   set q : PMF (Unit × Bool) := ρ.map fun r => ((), fB () r)
   have hmap : (aliceInput.bind fun xy => ρ.map fun r => (xy, (fA xy.1 r, fB xy.2 r))) =
