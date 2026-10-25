@@ -21,7 +21,8 @@ declaration are outside its scope, as are the test modules themselves.
 
 The named `#guard_msgs` checks below record the exact axioms of results that are meant to depend
 on fewer axioms than the standard three, for example choice-free results. The global audit
-already covers the standard set, so a named guard is added only for such a result.
+already covers the standard set, so a named guard is added only for such a result, in the
+epic's own test module rather than here.
 -/
 
 namespace ComplexityTests.Axioms
