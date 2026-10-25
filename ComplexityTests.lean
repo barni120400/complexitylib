@@ -338,6 +338,7 @@ import ComplexityTests.PCPVerifierProbability
 import ComplexityTests.PHClosure
 import ComplexityTests.PPT
 import ComplexityTests.PPTComposition
+import ComplexityTests.PPTMemoScope
 import ComplexityTests.PPTTactic
 import ComplexityTests.PPTruthTable
 import ComplexityTests.PRGStretch
