@@ -878,10 +878,10 @@ info: 'Cslib.PolynomiallyBounded.polynomial_eval' depends on axioms: [propext, C
 #print axioms Cslib.PolynomiallyBounded.polynomial_eval
 
 /--
-info: 'Cslib.Circuits.Boolean.PPoly.of_mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.P_subset_PPolyOn' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_mem_P
+#print axioms Cslib.Circuits.Boolean.P_subset_PPolyOn
 
 /--
 info: 'Cslib.Circuits.Boolean.PPoly.exists_not_mem' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -896,10 +896,10 @@ info: 'Cslib.Complexity.SAT.toIndependentSet_mem_iff' depends on axioms: [propex
 #print axioms Cslib.Complexity.SAT.toIndependentSet_mem_iff
 
 /--
-info: 'Cslib.Circuits.Boolean.PPoly.exists_of_mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.PPolyOn.compl' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly.exists_of_mem_P
+#print axioms Cslib.Circuits.Boolean.PPolyOn.compl
 
 /--
 info: 'Cslib.Circuits.Boolean.MachineSimulation.acceptedWithin_mem_PPoly' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -920,10 +920,10 @@ info: 'Cslib.Circuits.Boolean.PPoly.of_boundedError' depends on axioms: [propext
 #print axioms Cslib.Circuits.Boolean.PPoly.of_boundedError
 
 /--
-info: 'Cslib.Circuits.Boolean.PPoly.of_mem_BPP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.BPP_subset_PPolyOn' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_mem_BPP
+#print axioms Cslib.Circuits.Boolean.BPP_subset_PPolyOn
 
 /--
 info: 'Cslib.card_filter_card_filter_le_le' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -938,10 +938,10 @@ info: 'Cslib.Circuits.Boolean.PPoly.of_oneSidedError' depends on axioms: [propex
 #print axioms Cslib.Circuits.Boolean.PPoly.of_oneSidedError
 
 /--
-info: 'Cslib.Circuits.Boolean.PPoly.of_mem_RP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.RP_subset_PPolyOn' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_mem_RP
+#print axioms Cslib.Circuits.Boolean.RP_subset_PPolyOn
 
 /--
 info: 'Cslib.Complexity.RP_subset_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -968,10 +968,10 @@ info: 'Cslib.Circuits.Boolean.complexity_le_of_oneSidedError' depends on axioms:
 #print axioms Cslib.Circuits.Boolean.complexity_le_of_oneSidedError
 
 /--
-info: 'Cslib.Circuits.Boolean.PPoly.of_mem_coRP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.coRP_subset_PPolyOn' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_mem_coRP
+#print axioms Cslib.Circuits.Boolean.coRP_subset_PPolyOn
 
 /--
 info: 'Cslib.containsSunflower_of_forall_card_le' depends on axioms: [propext, Classical.choice, Quot.sound]
@@ -1010,16 +1010,10 @@ info: 'Cslib.Circuits.Circuit.essential_le_size' depends on axioms: [propext, Cl
 #print axioms Cslib.Circuits.Circuit.essential_le_size
 
 /--
-info: 'Cslib.Circuits.Boolean.PPoly.exists_of_mem_BPP' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: 'Cslib.Circuits.Boolean.mem_PPolyOn_encBits_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.PPoly.exists_of_mem_BPP
-
-/--
-info: 'Cslib.Circuits.Boolean.PPoly.exists_of_mem_RP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.PPoly.exists_of_mem_RP
+#print axioms Cslib.Circuits.Boolean.mem_PPolyOn_encBits_iff
 
 /--
 info: 'Cslib.Circuits.Boolean.SIZE_ssubset' depends on axioms: [propext, Classical.choice, Quot.sound]
