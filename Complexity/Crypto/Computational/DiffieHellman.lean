@@ -7,7 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Probabilistic.UniformNat
 public import Complexity.Crypto.Computational.DiscreteLog
+public import Complexity.Crypto.Game.Statistical
 public import Complexity.Languages.Probabilistic.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -31,15 +33,15 @@ real tuple `(d, encode (α • g), encode (β • g), encode ((α * β) • g))`
 
 We prove the implications `DDH ⇒ CDH ⇒ DiscreteLog` between the assumptions, the distributional
 rerandomisation lemma underlying the random self-reducibility of DDH ([BonehShoup2023],
-Exercises 10.8–10.9; `ddhRerandomizeLaw_real` and `ddhRerandomizeLaw_ideal`), and the efficient
-worst-case-to-average-case DDH random self-reduction ([BonehShoup2023], Exercise 10.10):
-`encodeDDHRerandomize` evaluates the tuple re-randomization on encoded group elements in polynomial
-time (`computableInPolyTime_encodeDDHRerandomize`), `ddhSelfReduceDistinguisher` and
-`ddhSampleSelfReduce` are uniform strict PPT (`isPPTOn_ddhSelfReduceDistinguisher`,
-`isPPTOn_ddhSampleSelfReduce`), and `ddhRerandomizeGame` reduces any worst-case real DDH tuple
-family and non-DDH tuple family directly to `ddhRealGame` and `ddhIdealGame`
-(`ddhRerandomizeGame_real`, `ddhRerandomizeGame_ideal`, `DDH.ddhRerandomizeGame`). The
-Diffie–Hellman assumptions are hypotheses, not theorems.
+Section 10.5, Exercises 10.8–10.9, pp. 425–426; `ddhRerandomizeLaw_real` and
+`ddhRerandomizeLaw_ideal`), its word-level and game-level consequences
+(`encodeDDHRerandomize`, `ddhRerandomizeGame`, `ddhRerandomizeGame_real`,
+`ddhRerandomizeGame_ideal`, `advantage_ddhRerandomizeGame_eq`, `DDH.ddhRerandomizeGame`), and an
+original single-invocation worst-case-to-average-case DDH distinguishing reduction using
+`ProbComp.sampleModNat` (`ddhSampleModExponents`, `ddhSelfReduceDistinguisher`,
+`ddhWorstCaseGame`, `advantage_ddhRerandomizeGame_ddhWorstCaseGame_le`,
+`advantage_ddhRealGame_le_ddhWorstCaseGame`, `ddh_of_worstCase`). The Diffie–Hellman assumptions
+are hypotheses, not theorems.
 
 ## Main definitions
 
@@ -54,12 +56,13 @@ Diffie–Hellman assumptions are hypotheses, not theorems.
 * `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomize`,
   `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw`,
   `Cslib.Crypto.PrimeOrderGroupFamily.encodeDDHRerandomize`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddhSampleOrderBitExponents`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddhSampleSelfReduce`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeGame`: algebraic, word-level, and game-level
+  DDH rerandomisation ([BonehShoup2023], Exercises 10.8–10.9, pp. 425–426).
+* `Cslib.Crypto.PrimeOrderGroupFamily.ddhSampleModExponents`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.sampleModZModLaw`,
   `Cslib.Crypto.PrimeOrderGroupFamily.ddhSelfReduceDistinguisher`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddhWorstCaseGame`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeGame`: algebraic and word-level DDH
-  rerandomisation and worst-case-to-average-case self-reduction.
+  `Cslib.Crypto.PrimeOrderGroupFamily.ddhWorstCaseGame`: original single-invocation
+  worst-case-to-average-case DDH distinguishing reduction.
 
 ## Main results
 
@@ -71,25 +74,28 @@ Diffie–Hellman assumptions are hypotheses, not theorems.
   when `1 / q` is negligible.
 * `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw_real`,
   `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeLaw_ideal`: the distributional rerandomisation
-  lemma for DDH tuples.
+  lemma for DDH tuples ([BonehShoup2023], Exercises 10.8–10.9, pp. 425–426).
 * `Cslib.Crypto.PrimeOrderGroupFamily.encodeDDHRerandomize_encode`,
   `Cslib.Crypto.PrimeOrderGroupFamily.encodeDDHRerandomize_val`,
   `Cslib.Crypto.PrimeOrderGroupFamily.computableInPolyTime_encodeDDHRerandomize`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_ddhSampleOrderBitExponents`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_ddhSampleSelfReduce`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_ddhSelfReduceDistinguisher`,
   `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeGame_real`,
   `Cslib.Crypto.PrimeOrderGroupFamily.ddhRerandomizeGame_ideal`,
   `Cslib.Crypto.PrimeOrderGroupFamily.advantage_ddhRerandomizeGame_eq`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.DDH.ddhRerandomizeGame`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.DDH.ddhRerandomizeGame`: word-level and game-level
+  consequences of Exercises 10.8–10.9 (pp. 425–426).
+* `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_ddhSampleModExponents`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.dist_sampleModZModLaw_le`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.isPPTOn_ddhSelfReduceDistinguisher`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.advantage_ddhRerandomizeGame_ddhWorstCaseGame_le`,
   `Cslib.Crypto.PrimeOrderGroupFamily.advantage_ddhRealGame_le_ddhWorstCaseGame`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.ddh_of_worstCase`: the efficient DDH random
-  self-reduction ([BonehShoup2023], Exercise 10.10).
+  `Cslib.Crypto.PrimeOrderGroupFamily.ddh_of_worstCase`: original single-invocation
+  worst-case-to-average-case DDH distinguishing reduction.
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 10.5 (Attack Games 10.5–10.6, Exercises 10.7–10.10).
+  Version 0.6][BonehShoup2023], Section 10.5 (Attack Games 10.5–10.6, Exercises 10.7–10.9,
+  pp. 424–426).
 -/
 
 @[expose] public section
@@ -97,7 +103,7 @@ Diffie–Hellman assumptions are hypotheses, not theorems.
 namespace Cslib.Crypto.PrimeOrderGroupFamily
 
 open Probability Turing.MultiTapeTM
-open scoped ENNReal NNReal
+open scoped ENNReal NNReal Cslib.Probability.PMF
 
 variable (F : PrimeOrderGroupFamily)
 
@@ -491,9 +497,10 @@ theorem ddhRerandomizeLaw_ideal (d : F.Desc) {α β γ : ZMod (F.order d)} (hγ 
 
 /-! ### Efficient word-level DDH random self-reduction -/
 
-/-- Word-level DDH tuple re-randomization ([BonehShoup2023], Exercise 10.10): given
-`(d, (u, v, w), r, s₁, s₂)` on encoded group elements `u, v, w : List Bool` and natural-number
-exponents `r, s₁, s₂ : ℕ`, evaluate the encoded tuple corresponding to `ddhRerandomize`. -/
+/-- Word-level DDH tuple re-randomization ([BonehShoup2023], Exercises 10.8–10.9, pp. 425–426):
+given `(d, (u, v, w), r, s₁, s₂)` on encoded group elements `u, v, w : List Bool` and
+natural-number exponents `r, s₁, s₂ : ℕ`, evaluate the encoded tuple corresponding to
+`ddhRerandomize`. -/
 def encodeDDHRerandomize
     (input : F.Desc × (List Bool × List Bool × List Bool) × ℕ × ℕ × ℕ) :
     List Bool × List Bool × List Bool :=
@@ -576,71 +583,89 @@ theorem computableInPolyTime_encodeDDHRerandomize :
   have hc₃ := F.computableInPolyTime_add.comp (hd.prod (hc₃₂.prod hs₁s₂g))
   exact hc₁.prod (hc₂.prod hc₃)
 
-/-- Sample three independent `(F.order d).size`-bit natural-number exponents for DDH
-re-randomization. -/
-noncomputable def ddhSampleOrderBitExponents (d : F.Desc) : ProbComp (ℕ × ℕ × ℕ) := do
-  let r ← Cslib.BitString.sampleList (F.order d).size
-  let s₁ ← Cslib.BitString.sampleList (F.order d).size
-  let s₂ ← Cslib.BitString.sampleList (F.order d).size
-  return (ofBits r, ofBits s₁, ofBits s₂)
+/-- Sample three independent nearly-uniform exponents modulo `F.order d` at statistical distance
+at most `1 / 2 ^ n` each using `ProbComp.sampleModNat ((F.order d).size + n) (F.order d)`
+(original). -/
+noncomputable def ddhSampleModExponents (n : ℕ) (d : F.Desc) : ProbComp (ℕ × ℕ × ℕ) := do
+  let r ← ProbComp.sampleModNat ((F.order d).size + n) (F.order d)
+  let s₁ ← ProbComp.sampleModNat ((F.order d).size + n) (F.order d)
+  let s₂ ← ProbComp.sampleModNat ((F.order d).size + n) (F.order d)
+  return (r, s₁, s₂)
 
-/-- `ddhSampleOrderBitExponents` is uniform strict PPT. -/
-theorem isPPTOn_ddhSampleOrderBitExponents :
-    IsPPTOn F.encDesc (encPair encNat (encPair encNat encNat)) F.ddhSampleOrderBitExponents := by
-  have horder := F.computableInPolyTime_order
-  have hlen : ComputableInPolyTime (fun d : F.Desc => (F.order d).size) F.encDesc encUnary :=
+/-- `ddhSampleModExponents` is uniform strict PPT (original). -/
+theorem isPPTOn_ddhSampleModExponents :
+    IsPPTOn (encPair encUnary F.encDesc) (encPair encNat (encPair encNat encNat))
+      (fun input => F.ddhSampleModExponents input.1 input.2) := by
+  let encIn := encPair encUnary F.encDesc
+  have hn : ComputableInPolyTime (fun input : ℕ × F.Desc => input.1) encIn encUnary := by
+    fun_prop
+  have hd : ComputableInPolyTime (fun input : ℕ × F.Desc => input.2) encIn F.encDesc := by
+    fun_prop
+  have horder : ComputableInPolyTime (fun input : ℕ × F.Desc => F.order input.2) encIn encNat :=
+    F.computableInPolyTime_order.comp hd
+  have hsize : ComputableInPolyTime
+      (fun input : ℕ × F.Desc => (F.order input.2).size) encIn encUnary :=
     ComputableInPolyTime.binary_size.comp horder
-  have hsample : IsPPTOn F.encDesc encBits
-      (fun d : F.Desc => Cslib.BitString.sampleList (F.order d).size) :=
-    isPPTOn_sampleList.preprocess hlen
-  unfold ddhSampleOrderBitExponents
+  have hsize_tidy := hsize.tidy
+  have hn_tidy := hn.tidy
+  have hbits : ComputableInPolyTime
+      (fun input : ℕ × F.Desc => (F.order input.2).size + input.1) encIn encUnary :=
+    ComputableInPolyTime.of_tidy (by fun_prop)
+  have hsample : IsPPTOn encIn encNat
+      (fun input : ℕ × F.Desc =>
+        ProbComp.sampleModNat ((F.order input.2).size + input.1) (F.order input.2)) :=
+    isPPTOn_sampleModNat hbits horder
+  unfold ddhSampleModExponents
   refine hsample.bind_with ?_
   refine (hsample.preprocess (prepare := Prod.fst) (by fun_prop)).bind_with ?_
   refine (hsample.preprocess
-    (prepare := fun p : (F.Desc × List Bool) × List Bool => p.1.1) (by fun_prop)).bind_with ?_
+    (prepare := fun p : ((ℕ × F.Desc) × ℕ) × ℕ => p.1.1) (by fun_prop)).bind_with ?_
   exact ComputableInPolyTime.isPPTOn (by fun_prop)
 
-/-- Efficient word-level DDH tuple self-reduction sampler: given `(d, u, v, w)`, sample three
-independent `(F.order d).size`-bit exponents and return the re-randomized encoded tuple
-`F.encodeDDHRerandomize (d, (u, v, w), r, s₁, s₂)`. -/
-noncomputable def ddhSampleSelfReduce (input : F.Desc × List Bool × List Bool × List Bool) :
-    ProbComp (List Bool × List Bool × List Bool) := do
-  let exps ← F.ddhSampleOrderBitExponents input.1
-  return F.encodeDDHRerandomize (input.1, input.2, exps)
+/-- Distribution of a single modular exponent sampled via `ProbComp.sampleModNat` at parameter `n`
+and group description `d`, projected to `ZMod (F.order d)` (original). -/
+noncomputable def sampleModZModLaw (n : ℕ) (d : F.Desc) : PMF (ZMod (F.order d)) :=
+  (ProbComp.eval (ProbComp.sampleModNat ((F.order d).size + n) (F.order d))).map Nat.cast
 
-/-- `ddhSampleSelfReduce` is uniform strict PPT. -/
-theorem isPPTOn_ddhSampleSelfReduce :
-    IsPPTOn (encPair F.encDesc (encPair encBits (encPair encBits encBits)))
-      (encPair encBits (encPair encBits encBits)) F.ddhSampleSelfReduce := by
-  have hsample := F.isPPTOn_ddhSampleOrderBitExponents
-  have hrerand := F.computableInPolyTime_encodeDDHRerandomize
-  unfold ddhSampleSelfReduce
-  refine (hsample.preprocess (prepare := Prod.fst) (by fun_prop)).bind_with ?_
-  exact ComputableInPolyTime.isPPTOn (by fun_prop)
+/-- Each modular exponent sampled by `ProbComp.sampleModNat ((F.order d).size + n) (F.order d)`
+is within statistical distance `1 / 2 ^ n` of `PMF.uniformOfFintype (ZMod (F.order d))`
+(original). -/
+theorem dist_sampleModZModLaw_le (n : ℕ) (d : F.Desc) :
+    dist (PMF.uniformOfFintype (ZMod (F.order d))) (F.sampleModZModLaw n d) ≤ 1 / 2 ^ n := by
+  have : NeZero (F.order d) := ⟨(F.prime_order d).ne_zero⟩
+  rw [dist_comm]
+  refine (ProbComp.dist_map_natCast_eval_sampleModNat_le
+    ((F.order d).size + n) (F.order d)).trans ?_
+  have hlt : (F.order d : ℝ) ≤ 2 ^ (F.order d).size := by
+    exact_mod_cast (Nat.lt_size_self (F.order d)).le
+  have hpos : (0 : ℝ) < 2 ^ (F.order d).size := by positivity
+  calc
+    (F.order d : ℝ) / 2 ^ ((F.order d).size + n)
+      ≤ 2 ^ (F.order d).size / (2 ^ (F.order d).size * 2 ^ n) := by
+        rw [pow_add]
+        gcongr
+    _ = 1 / 2 ^ n := by
+        rw [div_mul_eq_div_div, div_self hpos.ne']
 
-/-- The DDH random self-reduction distinguisher ([BonehShoup2023], Exercise 10.10): given a
-word-level exponent sampler `sampleExponents` and a DDH distinguisher `distinguisher`, re-randomize
-an input tuple `(d, u, v, w)` by sampling `(r, s₁, s₂) ← sampleExponents n d`, computing
+/-- The single-invocation DDH random self-reduction distinguisher (original): given a DDH
+distinguisher `distinguisher`, re-randomize an input tuple `(d, u, v, w)` by sampling
+`(r, s₁, s₂) ← F.ddhSampleModExponents n d`, computing
 `(u', v', w') = F.encodeDDHRerandomize (d, (u, v, w), r, s₁, s₂)`, and running `distinguisher` on
 `(d, u', v', w')`. -/
-def ddhSelfReduceDistinguisher (sampleExponents : ℕ → F.Desc → ProbComp (ℕ × ℕ × ℕ))
+noncomputable def ddhSelfReduceDistinguisher
     (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool)
     (n : ℕ) (input : F.Desc × List Bool × List Bool × List Bool) : ProbComp Bool := do
-  let exps ← sampleExponents n input.1
+  let exps ← F.ddhSampleModExponents n input.1
   distinguisher n (input.1, F.encodeDDHRerandomize (input.1, input.2, exps))
 
-/-- `ddhSelfReduceDistinguisher` is uniform strict PPT whenever `sampleExponents` and
-`distinguisher` are. -/
+/-- `ddhSelfReduceDistinguisher` is uniform strict PPT whenever `distinguisher` is (original). -/
 theorem isPPTOn_ddhSelfReduceDistinguisher
-    {sampleExponents : ℕ → F.Desc → ProbComp (ℕ × ℕ × ℕ)}
     {distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool}
-    (hsample : IsPPTOn (encPair encUnary F.encDesc) (encPair encNat (encPair encNat encNat))
-      (fun input => sampleExponents input.1 input.2))
     (hD : IsPPTOn (encPair encUnary (encPair F.encDesc (encPair encBits (encPair encBits encBits))))
       encBool (fun input => distinguisher input.1 input.2)) :
     IsPPTOn (encPair encUnary (encPair F.encDesc (encPair encBits (encPair encBits encBits))))
-      encBool (fun input =>
-        F.ddhSelfReduceDistinguisher sampleExponents distinguisher input.1 input.2) := by
+      encBool (fun input => F.ddhSelfReduceDistinguisher distinguisher input.1 input.2) := by
+  have hsample := F.isPPTOn_ddhSampleModExponents
   have hrerand := F.computableInPolyTime_encodeDDHRerandomize
   unfold ddhSelfReduceDistinguisher
   refine (hsample.preprocess
@@ -651,10 +676,9 @@ theorem isPPTOn_ddhSelfReduceDistinguisher
       (p.1.1, p.1.2.1, F.encodeDDHRerandomize (p.1.2.1, p.1.2.2, p.2)))
     (by fun_prop)
 
-/-- The worst-case-to-average-case DDH self-reduction experiment ([BonehShoup2023],
-Exercise 10.10): draw `d ← setup n` and independent uniform `r, s₁, s₂ : ZMod (F.order d)`,
-re-randomize the encoded worst-case tuple `tuple d` using `encodeDDHRerandomize`, and run
-`distinguisher`. -/
+/-- Game-level DDH tuple re-randomization experiment ([BonehShoup2023], Exercises 10.8–10.9,
+pp. 425–426): draw `d ← setup n` and independent uniform `r, s₁, s₂ : ZMod (F.order d)`,
+re-randomize the encoded tuple `tuple d` using `encodeDDHRerandomize`, and run `distinguisher`. -/
 noncomputable def ddhRerandomizeGame (setup : ℕ → PMF F.Desc)
     (tuple : ∀ d : F.Desc, F.Carrier d × F.Carrier d × F.Carrier d)
     (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool)
@@ -668,8 +692,9 @@ noncomputable def ddhRerandomizeGame (setup : ℕ → PMF F.Desc)
       (d, (F.encode d (tuple d).1, F.encode d (tuple d).2.1, F.encode d (tuple d).2.2),
         r.val, s₁.val, s₂.val)))
 
-/-- Re-randomizing any worst-case family of real DDH tuples `(α d • g, β d • g, (α d * β d) • g)`
-with `encodeDDHRerandomize` produces the exact average-case `ddhRealGame`. -/
+/-- Re-randomizing any family of real DDH tuples `(α d • g, β d • g, (α d * β d) • g)` with
+`encodeDDHRerandomize` produces the exact average-case `ddhRealGame`
+([BonehShoup2023], Exercises 10.8–10.9, pp. 425–426). -/
 @[simp] theorem ddhRerandomizeGame_real (setup : ℕ → PMF F.Desc)
     (α β : ∀ d : F.Desc, ZMod (F.order d))
     (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool) (n : ℕ) :
@@ -686,9 +711,9 @@ with `encodeDDHRerandomize` produces the exact average-case `ddhRealGame`. -/
   simpa only [ddhRerandomizeLaw, ddhRealTupleLaw, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure,
     PMF.bind_bind, PMF.pure_bind] using hlaw
 
-/-- Re-randomizing any worst-case family of non-DDH tuples `(α d • g, β d • g, γ d • g)` with
+/-- Re-randomizing any family of non-DDH tuples `(α d • g, β d • g, γ d • g)` with
 `γ d ≠ α d * β d` on the support of `setup n` using `encodeDDHRerandomize` produces the exact
-average-case `ddhIdealGame`. -/
+average-case `ddhIdealGame` ([BonehShoup2023], Exercises 10.8–10.9, pp. 425–426). -/
 theorem ddhRerandomizeGame_ideal (setup : ℕ → PMF F.Desc)
     (α β γ : ∀ d : F.Desc, ZMod (F.order d))
     (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool) (n : ℕ)
@@ -713,8 +738,8 @@ theorem ddhRerandomizeGame_ideal (setup : ℕ → PMF F.Desc)
   · have hd0 : setup n d = 0 := by rwa [PMF.mem_support_iff, not_not] at hd
     simp only [hd0, zero_mul]
 
-/-- **Worst-case-to-average-case DDH advantage preservation** ([BonehShoup2023], Exercise 10.10):
-for any worst-case real DDH tuple family `(α d, β d)` and any worst-case non-DDH tuple family
+/-- **DDH rerandomization advantage identity** ([BonehShoup2023], Exercises 10.8–10.9,
+pp. 425–426): for any real DDH tuple family `(α d, β d)` and any non-DDH tuple family
 `(α' d, β' d, γ' d)` with `γ' d ≠ α' d * β' d` on the support of `setup n`, the distinguishing
 advantage after `encodeDDHRerandomize` equals the average-case DDH advantage. -/
 theorem advantage_ddhRerandomizeGame_eq (setup : ℕ → PMF F.Desc)
@@ -732,10 +757,10 @@ theorem advantage_ddhRerandomizeGame_eq (setup : ℕ → PMF F.Desc)
         (F.ddhIdealGame setup distinguisher n) := by
   rw [F.ddhRerandomizeGame_real, F.ddhRerandomizeGame_ideal setup α' β' γ' distinguisher n hγ']
 
-/-- **Worst-case-to-average-case DDH security** ([BonehShoup2023], Exercise 10.10): under the
-average-case `DDH` assumption, no uniform strict PPT distinguisher can distinguish the
-re-randomization of any worst-case real DDH tuple family from the re-randomization of any
-worst-case non-DDH tuple family. -/
+/-- **DDH rerandomization indistinguishability** ([BonehShoup2023], Exercises 10.8–10.9,
+pp. 425–426): under the average-case `DDH` assumption, no uniform strict PPT distinguisher can
+distinguish the exact re-randomization of any real DDH tuple family from the exact re-randomization
+of any non-DDH tuple family. -/
 theorem DDH.ddhRerandomizeGame {F : PrimeOrderGroupFamily} {setup : ℕ → PMF F.Desc}
     (hDDH : F.DDH setup) (α β α' β' γ' : ∀ d : F.Desc, ZMod (F.order d))
     (hγ' : ∀ᶠ n in Filter.atTop, ∀ d ∈ (setup n).support, γ' d ≠ α' d * β' d) :
@@ -751,9 +776,9 @@ theorem DDH.ddhRerandomizeGame {F : PrimeOrderGroupFamily} {setup : ℕ → PMF 
   refine negligible_of_eventually_le (hDDH distinguisher hD) (hγ'.mono fun n hn => ?_)
   exact (F.advantage_ddhRerandomizeGame_eq setup α β α' β' γ' distinguisher n hn).le
 
-/-- The worst-case DDH experiment on a fixed tuple family `tuple`: draw `d ← setup n` and give the
-encoded tuple `(d, encode (tuple d).1, encode (tuple d).2.1, encode (tuple d).2.2)` directly to
-`distinguisher`. -/
+/-- The worst-case DDH experiment on a fixed tuple family `tuple` (original): draw `d ← setup n`
+and give the encoded tuple `(d, encode (tuple d).1, encode (tuple d).2.1, encode (tuple d).2.2)`
+directly to `distinguisher`. -/
 noncomputable def ddhWorstCaseGame (setup : ℕ → PMF F.Desc)
     (tuple : ∀ d : F.Desc, F.Carrier d × F.Carrier d × F.Carrier d)
     (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool)
@@ -762,57 +787,167 @@ noncomputable def ddhWorstCaseGame (setup : ℕ → PMF F.Desc)
   ProbComp.eval (distinguisher n
     (d, F.encode d (tuple d).1, F.encode d (tuple d).2.1, F.encode d (tuple d).2.2))
 
-/-- **Quantitative worst-case-to-average-case DDH reduction** ([BonehShoup2023], Exercise 10.10):
-the average-case DDH advantage of `distinguisher` is bounded by the worst-case DDH advantage of
-`ddhSelfReduceDistinguisher sampleExponents distinguisher` plus the two exponent-sampling
-approximation terms between `ddhRerandomizeGame` and `ddhWorstCaseGame`. -/
+private noncomputable def ddhRerandomizeStep
+    (tuple : ∀ d : F.Desc, F.Carrier d × F.Carrier d × F.Carrier d)
+    (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool)
+    (n : ℕ) (d : F.Desc) (r s₁ s₂ : ZMod (F.order d)) : Game :=
+  let t := F.ddhRerandomize d (tuple d).1 (tuple d).2.1 (tuple d).2.2 r s₁ s₂
+  ProbComp.eval (distinguisher n (d, F.encode d t.1, F.encode d t.2.1, F.encode d t.2.2))
+
+private theorem ddhRerandomizeGame_eq_bind_step (setup : ℕ → PMF F.Desc)
+    (tuple : ∀ d : F.Desc, F.Carrier d × F.Carrier d × F.Carrier d)
+    (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool) (n : ℕ) :
+    F.ddhRerandomizeGame setup tuple distinguisher n =
+      (setup n).bind fun d =>
+        (PMF.uniformOfFintype (ZMod (F.order d))).bind fun r =>
+          (PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₁ =>
+            (PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₂ =>
+              F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂ := by
+  simp only [ddhRerandomizeGame, ddhRerandomizeStep, encodeDDHRerandomize_val,
+    PMF.monad_bind_eq_bind]
+
+private theorem ddhWorstCaseGame_ddhSelfReduceDistinguisher_eq_bind_step (setup : ℕ → PMF F.Desc)
+    (tuple : ∀ d : F.Desc, F.Carrier d × F.Carrier d × F.Carrier d)
+    (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool) (n : ℕ) :
+    F.ddhWorstCaseGame setup tuple (F.ddhSelfReduceDistinguisher distinguisher) n =
+      (setup n).bind fun d =>
+        (F.sampleModZModLaw n d).bind fun r =>
+          (F.sampleModZModLaw n d).bind fun s₁ =>
+            (F.sampleModZModLaw n d).bind fun s₂ =>
+              F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂ := by
+  simp only [ddhWorstCaseGame, ddhSelfReduceDistinguisher, ddhSampleModExponents, sampleModZModLaw,
+    ddhRerandomizeStep, ProbComp.eval_bind, ProbComp.eval_pure, PMF.monad_bind_eq_bind,
+    PMF.bind_bind, PMF.pure_bind, PMF.bind_map, Function.comp_def, encodeDDHRerandomize_encode]
+
+/-- Combining `PMF.dist_bind_le` (different first-stage distributions on a finite type) with
+`Game.advantage_bind_le` (different kernels) bounds the Boolean advantage of two bound games by
+the first-stage statistical distance plus a uniform kernel advantage bound. -/
+private theorem advantage_bind_le_dist_add {α : Type*} [Fintype α] (p q : PMF α)
+    (f g : α → Game) {ε δ : ℝ} (hpq : dist p q ≤ ε)
+    (hfg : ∀ a, (Game.advantage (f a) (g a) : ℝ) ≤ δ) :
+    (Game.advantage (p.bind f) (q.bind g) : ℝ) ≤ ε + δ := by
+  have htri : (Game.advantage (p.bind f) (q.bind g) : ℝ) ≤
+      (Game.advantage (p.bind f) (q.bind f) : ℝ) +
+      (Game.advantage (q.bind f) (q.bind g) : ℝ) := by
+    exact_mod_cast Game.advantage_triangle (p.bind f) (q.bind f) (q.bind g)
+  have h1 : (Game.advantage (p.bind f) (q.bind f) : ℝ) ≤ ε := by
+    rw [Game.advantage_eq_nndist, coe_nndist]
+    exact (PMF.dist_bind_le p q f).trans hpq
+  have h2 : (Game.advantage (q.bind f) (q.bind g) : ℝ) ≤ δ :=
+    Game.advantage_bind_le q f g hfg
+  exact htri.trans (add_le_add h1 h2)
+
+/-- **Statistical distance bound for `ddhSelfReduceDistinguisher`** (original): replacing the three
+exact uniform `ZMod (F.order d)` exponents in `ddhRerandomizeGame` with
+`ddhSampleModExponents n d` changes the game output distribution by at most `3 / 2 ^ n`. -/
+theorem advantage_ddhRerandomizeGame_ddhWorstCaseGame_le (setup : ℕ → PMF F.Desc)
+    (tuple : ∀ d : F.Desc, F.Carrier d × F.Carrier d × F.Carrier d)
+    (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool) (n : ℕ) :
+    Game.advantage (F.ddhRerandomizeGame setup tuple distinguisher n)
+      (F.ddhWorstCaseGame setup tuple (F.ddhSelfReduceDistinguisher distinguisher) n) ≤
+      3 / 2 ^ n := by
+  apply NNReal.coe_le_coe.mp
+  rw [F.ddhRerandomizeGame_eq_bind_step, F.ddhWorstCaseGame_ddhSelfReduceDistinguisher_eq_bind_step]
+  have hd (d : F.Desc) :
+      (Game.advantage
+        ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun r =>
+          (PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₁ =>
+            (PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₂ =>
+              F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂)
+        ((F.sampleModZModLaw n d).bind fun r =>
+          (F.sampleModZModLaw n d).bind fun s₁ =>
+            (F.sampleModZModLaw n d).bind fun s₂ =>
+              F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂) : ℝ) ≤
+        (3 / 2 ^ n : ℝ) := by
+    have hstep := F.dist_sampleModZModLaw_le n d
+    have hs₂ (r s₁ : ZMod (F.order d)) :
+        (Game.advantage
+          ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₂ =>
+            F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂)
+          ((F.sampleModZModLaw n d).bind fun s₂ =>
+            F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂) : ℝ) ≤
+          1 / 2 ^ n + 0 :=
+      advantage_bind_le_dist_add _ _ _ _ hstep fun s₂ => by
+        simp only [Game.advantage_self, NNReal.coe_zero, le_rfl]
+    have hs₁ (r : ZMod (F.order d)) :
+        (Game.advantage
+          ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₁ =>
+            (PMF.uniformOfFintype (ZMod (F.order d))).bind fun s₂ =>
+              F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂)
+          ((F.sampleModZModLaw n d).bind fun s₁ =>
+            (F.sampleModZModLaw n d).bind fun s₂ =>
+              F.ddhRerandomizeStep tuple distinguisher n d r s₁ s₂) : ℝ) ≤
+          1 / 2 ^ n + (1 / 2 ^ n + 0) :=
+      advantage_bind_le_dist_add _ _ _ _ hstep fun s₁ => hs₂ r s₁
+    have hr := advantage_bind_le_dist_add _ _ _ _ hstep hs₁
+    exact hr.trans_eq (by ring)
+  have hsetup := Game.advantage_bind_le (setup n) _ _ hd
+  simpa only [NNReal.coe_div, NNReal.coe_ofNat, NNReal.coe_pow] using hsetup
+
+/-- **Quantitative single-invocation worst-case-to-average-case DDH reduction** (original): the
+average-case DDH advantage of `distinguisher` is at most the worst-case DDH advantage of
+`ddhSelfReduceDistinguisher distinguisher` plus `6 / 2 ^ n`. -/
 theorem advantage_ddhRealGame_le_ddhWorstCaseGame (setup : ℕ → PMF F.Desc)
     (α β α' β' γ' : ∀ d : F.Desc, ZMod (F.order d))
-    (sampleExponents : ℕ → F.Desc → ProbComp (ℕ × ℕ × ℕ))
     (distinguisher : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool) (n : ℕ)
     (hγ' : ∀ d ∈ (setup n).support, γ' d ≠ α' d * β' d) :
     let tuple₀ := fun d => (α d • F.generator d, β d • F.generator d, (α d * β d) • F.generator d)
     let tuple₁ := fun d => (α' d • F.generator d, β' d • F.generator d, γ' d • F.generator d)
     Game.advantage (F.ddhRealGame setup distinguisher n)
       (F.ddhIdealGame setup distinguisher n) ≤
-      Game.advantage (F.ddhRerandomizeGame setup tuple₀ distinguisher n)
-        (F.ddhWorstCaseGame setup tuple₀
-          (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n) +
       Game.advantage
         (F.ddhWorstCaseGame setup tuple₀
-          (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n)
+          (F.ddhSelfReduceDistinguisher distinguisher) n)
         (F.ddhWorstCaseGame setup tuple₁
-          (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n) +
-      Game.advantage
-        (F.ddhWorstCaseGame setup tuple₁
-          (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n)
-        (F.ddhRerandomizeGame setup tuple₁ distinguisher n) := by
+          (F.ddhSelfReduceDistinguisher distinguisher) n) +
+      6 / 2 ^ n := by
   intro tuple₀ tuple₁
   rw [← F.advantage_ddhRerandomizeGame_eq setup α β α' β' γ' distinguisher n hγ']
   have h1 := Game.advantage_triangle
     (F.ddhRerandomizeGame setup tuple₀ distinguisher n)
-    (F.ddhWorstCaseGame setup tuple₀
-      (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n)
+    (F.ddhWorstCaseGame setup tuple₀ (F.ddhSelfReduceDistinguisher distinguisher) n)
     (F.ddhRerandomizeGame setup tuple₁ distinguisher n)
   have h2 := Game.advantage_triangle
-    (F.ddhWorstCaseGame setup tuple₀
-      (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n)
-    (F.ddhWorstCaseGame setup tuple₁
-      (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n)
+    (F.ddhWorstCaseGame setup tuple₀ (F.ddhSelfReduceDistinguisher distinguisher) n)
+    (F.ddhWorstCaseGame setup tuple₁ (F.ddhSelfReduceDistinguisher distinguisher) n)
     (F.ddhRerandomizeGame setup tuple₁ distinguisher n)
-  simpa only [add_assoc] using h1.trans (add_le_add le_rfl h2)
+  have h0 := F.advantage_ddhRerandomizeGame_ddhWorstCaseGame_le setup tuple₀ distinguisher n
+  have h3 :
+      Game.advantage
+        (F.ddhWorstCaseGame setup tuple₁ (F.ddhSelfReduceDistinguisher distinguisher) n)
+        (F.ddhRerandomizeGame setup tuple₁ distinguisher n) ≤ 3 / 2 ^ n := by
+    rw [Game.advantage_comm]
+    exact F.advantage_ddhRerandomizeGame_ddhWorstCaseGame_le setup tuple₁ distinguisher n
+  calc
+    Game.advantage (F.ddhRerandomizeGame setup tuple₀ distinguisher n)
+        (F.ddhRerandomizeGame setup tuple₁ distinguisher n)
+      ≤ Game.advantage (F.ddhRerandomizeGame setup tuple₀ distinguisher n)
+          (F.ddhWorstCaseGame setup tuple₀ (F.ddhSelfReduceDistinguisher distinguisher) n) +
+        (Game.advantage
+          (F.ddhWorstCaseGame setup tuple₀ (F.ddhSelfReduceDistinguisher distinguisher) n)
+          (F.ddhWorstCaseGame setup tuple₁ (F.ddhSelfReduceDistinguisher distinguisher) n) +
+        Game.advantage
+          (F.ddhWorstCaseGame setup tuple₁ (F.ddhSelfReduceDistinguisher distinguisher) n)
+          (F.ddhRerandomizeGame setup tuple₁ distinguisher n)) :=
+      h1.trans (add_le_add le_rfl h2)
+    _ ≤ 3 / 2 ^ n +
+        (Game.advantage
+          (F.ddhWorstCaseGame setup tuple₀ (F.ddhSelfReduceDistinguisher distinguisher) n)
+          (F.ddhWorstCaseGame setup tuple₁ (F.ddhSelfReduceDistinguisher distinguisher) n) +
+        3 / 2 ^ n) :=
+      add_le_add h0 (add_le_add le_rfl h3)
+    _ = Game.advantage
+          (F.ddhWorstCaseGame setup tuple₀ (F.ddhSelfReduceDistinguisher distinguisher) n)
+          (F.ddhWorstCaseGame setup tuple₁ (F.ddhSelfReduceDistinguisher distinguisher) n) +
+        6 / 2 ^ n := by
+      ring
 
-/-- **Average-case DDH from worst-case DDH via `ddhSelfReduceDistinguisher`**
-([BonehShoup2023], Exercise 10.10): if `sampleExponents` is uniform strict PPT with negligible
-sampling-approximation loss against uniform `ZMod (F.order d)` exponents, and a worst-case real
-DDH tuple family is indistinguishable from a worst-case non-DDH tuple family for all uniform
-strict PPT distinguishers, then `F.DDH setup` holds. -/
+/-- **Average-case DDH from worst-case DDH via `ddhSelfReduceDistinguisher`** (original): if a
+worst-case real DDH tuple family is indistinguishable from a worst-case non-DDH tuple family for
+all uniform strict PPT distinguishers, then `F.DDH setup` holds. -/
 theorem ddh_of_worstCase {setup : ℕ → PMF F.Desc}
     (α β α' β' γ' : ∀ d : F.Desc, ZMod (F.order d))
     (hγ' : ∀ᶠ n in Filter.atTop, ∀ d ∈ (setup n).support, γ' d ≠ α' d * β' d)
-    {sampleExponents : ℕ → F.Desc → ProbComp (ℕ × ℕ × ℕ)}
-    (hsample : IsPPTOn (encPair encUnary F.encDesc) (encPair encNat (encPair encNat encNat))
-      (fun input => sampleExponents input.1 input.2))
     (hworst : Game.Indistinguishable
       (F.ddhWorstCaseGame setup
         (fun d => (α d • F.generator d, β d • F.generator d, (α d * β d) • F.generator d)))
@@ -820,38 +955,19 @@ theorem ddh_of_worstCase {setup : ℕ → PMF F.Desc}
         (fun d => (α' d • F.generator d, β' d • F.generator d, γ' d • F.generator d)))
       fun distinguisher =>
         IsPPTOn (encPair encUnary (encPair F.encDesc (encPair encBits (encPair encBits encBits))))
-          encBool (fun input => distinguisher input.1 input.2))
-    (happrox₀ : ∀ distinguisher,
-      IsPPTOn (encPair encUnary (encPair F.encDesc (encPair encBits (encPair encBits encBits))))
-        encBool (fun input => distinguisher input.1 input.2) →
-      Negligible fun n =>
-        Game.advantage
-          (F.ddhRerandomizeGame setup
-            (fun d => (α d • F.generator d, β d • F.generator d, (α d * β d) • F.generator d))
-            distinguisher n)
-          (F.ddhWorstCaseGame setup
-            (fun d => (α d • F.generator d, β d • F.generator d, (α d * β d) • F.generator d))
-            (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n))
-    (happrox₁ : ∀ distinguisher,
-      IsPPTOn (encPair encUnary (encPair F.encDesc (encPair encBits (encPair encBits encBits))))
-        encBool (fun input => distinguisher input.1 input.2) →
-      Negligible fun n =>
-        Game.advantage
-          (F.ddhWorstCaseGame setup
-            (fun d => (α' d • F.generator d, β' d • F.generator d, γ' d • F.generator d))
-            (F.ddhSelfReduceDistinguisher sampleExponents distinguisher) n)
-          (F.ddhRerandomizeGame setup
-            (fun d => (α' d • F.generator d, β' d • F.generator d, γ' d • F.generator d))
-            distinguisher n)) :
+          encBool (fun input => distinguisher input.1 input.2)) :
     F.DDH setup := by
   intro distinguisher hD
+  have hgeom : Negligible fun n => (6 / 2 ^ n : ℝ≥0) := by
+    refine negligible_of_le
+      ((negligible_geometric (ratio := 2⁻¹) (by norm_num)).polynomiallyBounded_mul
+        (p := fun _ => 6) (by fun_prop))
+      fun n => ?_
+    exact le_of_eq (by simp only [Nat.cast_ofNat, div_eq_mul_inv, inv_pow])
   refine negligible_of_eventually_le
-    (((happrox₀ distinguisher hD).add
-      (hworst (F.ddhSelfReduceDistinguisher sampleExponents distinguisher)
-        (F.isPPTOn_ddhSelfReduceDistinguisher hsample hD))).add
-      (happrox₁ distinguisher hD))
+    ((hworst (F.ddhSelfReduceDistinguisher distinguisher)
+      (F.isPPTOn_ddhSelfReduceDistinguisher hD)).add hgeom)
     (hγ'.mono fun n hn =>
-      F.advantage_ddhRealGame_le_ddhWorstCaseGame setup α β α' β' γ' sampleExponents
-        distinguisher n hn)
+      F.advantage_ddhRealGame_le_ddhWorstCaseGame setup α β α' β' γ' distinguisher n hn)
 
 end Cslib.Crypto.PrimeOrderGroupFamily

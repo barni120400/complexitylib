@@ -360,4 +360,20 @@ theorem indcpa_hybridEncrypt_idealEncaps_otpEncrypt :
     INDCPA toyKeyGen (hybridEncrypt idealEncaps otpEncrypt) :=
   kemINDCPA_idealEncaps.hybrid_otpEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
 
+/-- Every `n`-bit word encrypted under `otpWordEncrypt` decrypts back to the original message under
+`otpWordDecrypt`. -/
+example (n : ℕ) (k m : List Bool) (hm : m.length = n) :
+    otpWordDecrypt n k (BitString.listXor n [k, m]) = m :=
+  otpWordDecrypt_otpWordEncrypt k hm
+
+/-- The `n`-bit word one-time pad DEM is one-time IND-CPA secure. -/
+example : DEMOneTimeINDCPAOf encBits otpWordEncrypt :=
+  demOneTimeINDCPA_otpWordEncrypt
+
+/-- Instantiation of the word-message security reduction `KEMINDCPA.hybrid_otpWordEncrypt_indcpa`
+on `idealEncaps` and `otpWordEncrypt`. -/
+theorem indcpa_hybridEncrypt_idealEncaps_otpWordEncrypt :
+    WordINDCPA toyKeyGen (hybridEncrypt idealEncaps otpWordEncrypt) :=
+  kemINDCPA_idealEncaps.hybrid_otpWordEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
+
 end ComplexityTests.Crypto.HybridEncryption

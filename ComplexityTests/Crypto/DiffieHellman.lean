@@ -49,12 +49,14 @@ example :
       (d23, schnorrGroups.encodeElGamalPublicKey (d23, 3), Nat.bits 2, 5) =
       (Nat.bits 9, Nat.bits 9) := by decide
 
-/-- Word-level Hashed ElGamal encryption and decryption on `d23` with `(a = 3, b = 5)` and message
-`[true, false]` under hash `Prod.snd` round-trip to `[true, false]`. -/
+/-- Word-level Hashed ElGamal encryption and decryption on `d23` with `(a = 3, b = 5)` and 5-bit
+message `[true, false, true, false, true]` under `Prod.snd` round-trip to
+`[true, false, true, false, true]`. -/
 example :
     let pk := schnorrGroups.encodeElGamalPublicKey (d23, 3)
-    let ct := schnorrGroups.encodeHashedElGamalEncrypt Prod.snd (d23, pk, [true, false], 5)
-    schnorrGroups.decodeHashedElGamal Prod.snd (d23, 3, ct.1, ct.2) = [true, false] := by decide
+    let m := [true, false, true, false, true]
+    let ct := schnorrGroups.encodeHashedElGamalEncrypt Prod.snd (d23, pk, m, 5)
+    schnorrGroups.decodeHashedElGamal Prod.snd (d23, 3, ct.1, ct.2) = m := by decide
 
 /-- Word-level DDH re-randomization on `d23` with `(r, s₁, s₂) = (2, 1, 4)` evaluates
 `encodeDDHRerandomize` on encoded group elements. -/
@@ -63,11 +65,12 @@ example :
       (d23, (Nat.bits 8, Nat.bits 9, Nat.bits 16), 2, 1, 4) =
       (Nat.bits 13, Nat.bits 6, Nat.bits 3) := by decide
 
-/-- `ddhSampleSelfReduce` is uniform strict PPT on `schnorrGroups`. -/
+/-- `ddhSampleModExponents` is uniform strict PPT on `schnorrGroups`. -/
 example :
-    IsPPTOn (encPair schnorrGroups.encDesc (encPair encBits (encPair encBits encBits)))
-      (encPair encBits (encPair encBits encBits)) schnorrGroups.ddhSampleSelfReduce :=
-  schnorrGroups.isPPTOn_ddhSampleSelfReduce
+    IsPPTOn (encPair encUnary schnorrGroups.encDesc)
+      (encPair encNat (encPair encNat encNat))
+      (fun input => schnorrGroups.ddhSampleModExponents input.1 input.2) :=
+  schnorrGroups.isPPTOn_ddhSampleModExponents
 
 /-- A trivial IND-CPA adversary that chooses `(false, true)` with empty saved state and outputs
 `false`. -/
@@ -82,7 +85,7 @@ theorem trivialAdversary_isPPT : trivialAdversary.IsPPT where
 
 /-- A word-message IND-CPA adversary that chooses the encoded identity `Nat.bits 1` and generator
 `Nat.bits 2` of `d23` with empty saved state. -/
-noncomputable def groupWordAdversary : PrimeOrderGroupFamily.WordAdversary where
+noncomputable def groupWordAdversary : Encryption.WordAdversary where
   choose _ _ := pure ((Nat.bits 1, Nat.bits 2), [])
   guess _ _ _ := pure false
 
@@ -109,7 +112,7 @@ example (hDDH : schnorrGroups.DDH (fun _ => PMF.pure d23)) :
 
 /-- A word-message IND-CPA adversary that chooses 2-bit message words
 `([false, false], [true, true])` with empty saved state. -/
-noncomputable def hashedWordAdversary : PrimeOrderGroupFamily.WordAdversary where
+noncomputable def hashedWordAdversary : Encryption.WordAdversary where
   choose _ _ := pure (([false, false], [true, true]), [])
   guess _ _ _ := pure false
 
@@ -118,20 +121,38 @@ theorem hashedWordAdversary_isPPT : hashedWordAdversary.IsPPT where
   choose := ComputableTidilyInPolyTime.isPPTOn (ComputableTidilyInPolyTime.const _)
   guess := ComputableTidilyInPolyTime.isPPTOn (ComputableTidilyInPolyTime.const _)
 
-/-- Under DDH and `HashSmoothing` for `Prod.snd` with `msgLen = fun _ => 2`, `hashedWordAdversary`
-has negligible advantage in the Hashed ElGamal IND-CPA game. -/
-example (setup : ℕ → PMF schnorrGroups.Desc) (hDDH : schnorrGroups.DDH setup)
-    (hSmooth : schnorrGroups.HashSmoothing setup Prod.snd (fun _ => 2)) :
+/-- The 0-bit constant KDF `fun _ => []` satisfies `SecureKDF` unconditionally with advantage
+`0`. -/
+theorem secureKDF_nil (setup : ℕ → PMF schnorrGroups.Desc) :
+    schnorrGroups.SecureKDF setup (fun _ => []) (fun _ => 0) := by
+  intro distinguisher _
+  have heq : ∀ n, schnorrGroups.kdfRealGame setup (fun _ => []) distinguisher n =
+      schnorrGroups.kdfIdealGame setup (fun _ => 0) distinguisher n := by
+    intro n
+    simp only [PrimeOrderGroupFamily.kdfRealGame, PrimeOrderGroupFamily.kdfIdealGame,
+      BitString.uniformList_zero, PMF.monad_bind_eq_bind, PMF.pure_bind, PMF.bind_const]
+  simpa only [heq, Game.advantage_self] using negligible_zero
+
+/-- Unconditional KDF instantiation of `DDH.negligible_hashedElGamalCPAGame` using
+`secureKDF_nil`. -/
+example (setup : ℕ → PMF schnorrGroups.Desc) (hDDH : schnorrGroups.DDH setup) :
     Negligible fun n =>
       Game.advantage
-        (schnorrGroups.hashedElGamalCPAGame setup Prod.snd hashedWordAdversary false n)
-        (schnorrGroups.hashedElGamalCPAGame setup Prod.snd hashedWordAdversary true n) := by
-  refine hDDH.negligible_hashedElGamalCPAGame hSmooth (by fun_prop) hashedWordAdversary_isPPT
-    (Filter.Eventually.of_forall fun n _ _ _ choice hchoice => ?_)
-  have hch : choice = (([false, false], [true, true]), []) := by
-    simpa [hashedWordAdversary] using hchoice
-  subst hch
-  decide
+        (schnorrGroups.hashedElGamalCPAGame setup (fun _ => []) hashedWordAdversary false n)
+        (schnorrGroups.hashedElGamalCPAGame setup (fun _ => []) hashedWordAdversary true n) :=
+  hDDH.negligible_hashedElGamalCPAGame (secureKDF_nil setup) (by fun_prop) hashedWordAdversary_isPPT
+
+/-- Under DDH and `SecureKDF` for any polynomial-time KDF `H`, `hashedWordAdversary` has negligible
+advantage in the Hashed ElGamal IND-CPA game. -/
+example (setup : ℕ → PMF schnorrGroups.Desc) (H : schnorrGroups.Desc × List Bool → List Bool)
+    (msgLen : ℕ → ℕ) (hDDH : schnorrGroups.DDH setup)
+    (hKDF : schnorrGroups.SecureKDF setup H msgLen)
+    (hH : ComputableInPolyTime H (encPair schnorrGroups.encDesc encBits) encBits) :
+    Negligible fun n =>
+      Game.advantage
+        (schnorrGroups.hashedElGamalCPAGame setup H hashedWordAdversary false n)
+        (schnorrGroups.hashedElGamalCPAGame setup H hashedWordAdversary true n) :=
+  hDDH.negligible_hashedElGamalCPAGame hKDF hH hashedWordAdversary_isPPT
 
 /-- Under average-case DDH, the word-level re-randomization `ddhRerandomizeGame` of any real DDH
 tuple family and non-DDH tuple family is indistinguishable. -/
@@ -151,7 +172,8 @@ example (setup : ℕ → PMF schnorrGroups.Desc) (hDDH : schnorrGroups.DDH setup
       have : Fact (1 < schnorrGroups.order d) := ⟨(schnorrGroups.prime_order d).one_lt⟩
       simp)
 
-/-- Worst-case-to-average-case DDH via `ddh_of_worstCase` and `ddhSampleOrderBitExponents`. -/
+/-- Worst-case-to-average-case DDH via `ddh_of_worstCase`, with the modular exponent sampling
+error bounded internally by `advantage_ddhRerandomizeGame_ddhWorstCaseGame_le`. -/
 example (setup : ℕ → PMF schnorrGroups.Desc)
     (hworst : Game.Indistinguishable
       (schnorrGroups.ddhWorstCaseGame setup
@@ -166,51 +188,13 @@ example (setup : ℕ → PMF schnorrGroups.Desc)
         IsPPTOn
           (encPair encUnary
             (encPair schnorrGroups.encDesc (encPair encBits (encPair encBits encBits))))
-          encBool (fun input => distinguisher input.1 input.2))
-    (happrox₀ : ∀ distinguisher,
-      IsPPTOn
-        (encPair encUnary
-          (encPair schnorrGroups.encDesc (encPair encBits (encPair encBits encBits))))
-        encBool (fun input => distinguisher input.1 input.2) →
-      Negligible fun n =>
-        Game.advantage
-          (schnorrGroups.ddhRerandomizeGame setup
-            (fun d => ((0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              (0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              ((0 : ZMod (schnorrGroups.order d)) * 0) • schnorrGroups.generator d))
-            distinguisher n)
-          (schnorrGroups.ddhWorstCaseGame setup
-            (fun d => ((0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              (0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              ((0 : ZMod (schnorrGroups.order d)) * 0) • schnorrGroups.generator d))
-            (schnorrGroups.ddhSelfReduceDistinguisher
-              (fun _ => schnorrGroups.ddhSampleOrderBitExponents) distinguisher) n))
-    (happrox₁ : ∀ distinguisher,
-      IsPPTOn
-        (encPair encUnary
-          (encPair schnorrGroups.encDesc (encPair encBits (encPair encBits encBits))))
-        encBool (fun input => distinguisher input.1 input.2) →
-      Negligible fun n =>
-        Game.advantage
-          (schnorrGroups.ddhWorstCaseGame setup
-            (fun d => ((0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              (0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              (1 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d))
-            (schnorrGroups.ddhSelfReduceDistinguisher
-              (fun _ => schnorrGroups.ddhSampleOrderBitExponents) distinguisher) n)
-          (schnorrGroups.ddhRerandomizeGame setup
-            (fun d => ((0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              (0 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d,
-              (1 : ZMod (schnorrGroups.order d)) • schnorrGroups.generator d))
-            distinguisher n)) :
+          encBool (fun input => distinguisher input.1 input.2)) :
     schnorrGroups.DDH setup :=
   schnorrGroups.ddh_of_worstCase (fun _ => 0) (fun _ => 0) (fun _ => 0) (fun _ => 0) (fun _ => 1)
     (Filter.Eventually.of_forall fun _ d _ => by
       have : Fact (1 < schnorrGroups.order d) := ⟨(schnorrGroups.prime_order d).one_lt⟩
       simp)
-    (schnorrGroups.isPPTOn_ddhSampleOrderBitExponents.preprocess
-      (prepare := Prod.snd) (by fun_prop))
-    hworst happrox₀ happrox₁
+    hworst
 
 /-- `1 / 2 ^ n` is negligible. -/
 theorem negligible_inv_two_pow : Negligible fun n => (1 / (2 ^ n : ℕ) : ℝ≥0) := by
