@@ -17,7 +17,7 @@ Small fixes and API improvements can go directly to a pull request.
 Keep a pull request small enough to review as one mathematical or engineering change. Include a
 checked client for a new API and instances showing that bundled hypotheses can be met. Preserve
 the original authors and licenses when porting code; cite mathematical sources in module
-docstrings through [references.bib](references.bib).
+docstrings through [references.bib](references.bib), whose entries stay sorted by key.
 
 Develop against representative clients and state the public contract: model or encodings,
 mathematical behavior, and resource or security claim. Test automation on ordinary expressions,
@@ -134,8 +134,9 @@ observed concurrency and memory use. Keep mutable build outputs separate between
 (for example with `scripts/worktree.sh create <branch> [dir_name]`, which seeds `.lake/build` from
 the root checkout and, when `<branch>` exists only on `origin`, checks it out tracking
 `origin/<branch>`). Run `python3 scripts/check_hygiene.py` to audit `-- upstream:` markers,
-forbidden proof tokens, and `set_option` justifications (pass `--check-simp` to also run the
-heuristic check for non-terminal bare `simp` calls in candidate modules). After a build,
+forbidden proof tokens, `set_option` justifications and the key order of `references.bib`
+(pass `--check-simp` to also run the heuristic check for non-terminal bare `simp` calls in
+candidate modules). After a build,
 `python3 scripts/check_changed_files.py` checks the files your branch adds or changes: each name
 listed in a module docstring's "Main …" sections must exist, and a new test file must do more
 than restate signatures with `example … := name`. CI runs both.

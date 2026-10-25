@@ -313,7 +313,8 @@ submitting a PR; quick success does not satisfy that requirement.
    single bits with `^^`.
 7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
    (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). Add new entries in cslib's
-   format, keeping bibliography and project-documentation changes in focused commits.
+   format at their place in key order (`scripts/check_hygiene.py` checks it), keeping bibliography
+   and project-documentation changes in focused commits.
 
 ## Proof hygiene
 
