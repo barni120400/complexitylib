@@ -36,6 +36,8 @@ on malformed words. Correctness, native efficiency and security are separate obl
 
 * `Cslib.Crypto.Homomorphic.Leveled.keyPair`: serialize the public and private artifacts.
 * `Cslib.Crypto.Homomorphic.Leveled.evaluateCircuit`: pad and evaluate a raw circuit schedule.
+* `Cslib.Crypto.Homomorphic.Leveled.evaluateHop`: evaluate one depth-bounded hop starting at an
+  offset along the public key chain.
 * `Cslib.Crypto.Homomorphic.Leveled.scheme`: the actual depth-budgeted encryption scheme.
 
 ## References
@@ -88,6 +90,16 @@ def evaluateCircuit (n budget : ℕ) (publicKeys : List (List Bool))
   (fun row => compiled.2.map (row.getD · [])) <$>
     Scheme.evaluateLayers D n publicKeys links inputs layers
 
+/-- Strip tags, evaluate a step-bounded circuit starting at depth offset `offset` along the
+public key chain (`2 * offset` layer transitions into the public artifact), and tag the result
+with `true`. -/
+def evaluateHop (n offset step : ℕ) (pk : List Bool) (c : Σ m, Circuit signature m 1)
+    (inputs : List (List Bool)) : ProbComp (List Bool) :=
+  let artifact := publicKeyDecoder.decode pk
+  (fun row => true :: row.headD []) <$>
+    evaluateCircuit D n step (artifact.1.tail.drop (2 * offset)) (artifact.2.drop (2 * offset))
+      (inputs.map List.tail) c.1 c.2.code
+
 /-- Strip fresh tags, evaluate the padded circuit under the public chain, and tag the result
 for the final endpoint secret. The correctness contract takes fresh encryptions as inputs. -/
 def evaluate (n budget : ℕ) (pk : List Bool) (c : Σ m, Circuit signature m 1)
@@ -95,6 +107,13 @@ def evaluate (n budget : ℕ) (pk : List Bool) (c : Σ m, Circuit signature m 1)
   let artifact := publicKeyDecoder.decode pk
   (fun row => true :: row.headD []) <$>
     evaluateCircuit D n budget artifact.1.tail artifact.2 (inputs.map List.tail) c.1 c.2.code
+
+/-- At zero offset, hop evaluation coincides with the single-hop evaluator. -/
+@[simp]
+theorem evaluateHop_zero (n budget : ℕ) (pk : List Bool) (c : Σ m, Circuit signature m 1)
+    (inputs : List (List Bool)) :
+    evaluateHop D n 0 budget pk c inputs = evaluate D n budget pk c inputs :=
+  rfl
 
 /-- The depth-budgeted scheme. Efficiency of the budget family is a separate hypothesis for
 the uniform runtime certificates. No correctness or runtime conclusion is bundled as input. -/

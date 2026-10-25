@@ -34,6 +34,8 @@ generated circuit, so no separate runtime assumption on the base decryption func
 * `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_keyGen`: uniform generation in the parameter and budget.
 * `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_encrypt`: fresh tagged encryption.
 * `Cslib.Crypto.Homomorphic.Leveled.computableTidilyInPolyTime_decrypt`: total tagged decryption.
+* `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_evaluateHop`: uniform evaluation of one depth-bounded
+  hop.
 * `Cslib.Crypto.Homomorphic.Leveled.isPPTOn_evaluate`: uniform evaluation of the complete circuit.
 * `Cslib.Crypto.Homomorphic.Leveled.polynomiallyBounded_widths`: polynomial secret-key and
   ciphertext widths follow from the native decryption-circuit generator.
@@ -173,6 +175,41 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
   apply (isPPTOn_evaluateCircuit hencrypt D hD hevaluate hn hbudget
     ((ComputableTidilyInPolyTime.listTail encBits).comp hpublic.fst') hpublic.snd'
     (ComputableTidilyInPolyTime.bitsTail.map.comp hinputs) hparts.fst' hparts.snd').map
+  exact ComputableTidilyInPolyTime.bitsCons (by fun_prop)
+    (ComputableTidilyInPolyTime.headD [])
+
+include hencrypt hevaluate in
+/-- Hop evaluation is strict PPT uniformly in the security parameter, depth offset, step budget,
+public key, circuit, and input ciphertexts. -/
+@[fun_prop]
+theorem isPPTOn_evaluateHop
+    (hD : ComputableInPolyTime
+      (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
+      encUnary (Boolean.encCircuit 1))
+    {offset step : α → ℕ}
+    {c : α → Σ m, Circuit Boolean.signature m 1}
+    {inputs : α → List (List Bool)}
+    (hn : ComputableInPolyTime n input encUnary)
+    (hoffset : ComputableInPolyTime offset input encUnary)
+    (hstep : ComputableInPolyTime step input encUnary)
+    (hpk : ComputableInPolyTime pk input encBits)
+    (hc : ComputableInPolyTime c input (Boolean.encCircuit 1))
+    (hinputs : ComputableInPolyTime inputs input (encList encBits)) :
+    IsPPTOn input encBits
+      (fun a => evaluateHop D (n a) (offset a) (step a) (pk a) (c a) (inputs a)) := by
+  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk.tidy
+  have hview : ComputableTidilyInPolyTime
+      (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
+      (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
+  have hparts := hview.comp hc.tidy
+  have hdrop : ComputableTidilyInPolyTime (fun a => 2 * offset a) input encUnary := by
+    have := hoffset.tidy
+    fun_prop
+  have hpks := ComputableTidilyInPolyTime.listDropWithInput
+    ((ComputableTidilyInPolyTime.listTail encBits).comp hpublic.fst') hdrop
+  have hlinks := ComputableTidilyInPolyTime.listDropWithInput hpublic.snd' hdrop
+  apply (isPPTOn_evaluateCircuit hencrypt D hD.tidy hevaluate hn.tidy hstep.tidy hpks hlinks
+    (ComputableTidilyInPolyTime.bitsTail.map.comp hinputs.tidy) hparts.fst' hparts.snd').map
   exact ComputableTidilyInPolyTime.bitsCons (by fun_prop)
     (ComputableTidilyInPolyTime.headD [])
 
