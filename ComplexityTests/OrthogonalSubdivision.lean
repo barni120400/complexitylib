@@ -5,7 +5,7 @@ Authors: Erik Demaine
 -/
 
 import Complexity.Computability.Geometry.Orthogonal.Subdivision
-import Complexity.Foundations.Geometry.OrthogonalLayout
+import Complexity.Foundations.Geometry.Orthogonal.Layout
 
 /-! Regression instances for signed unit subdivision and continuous support preservation. -/
 

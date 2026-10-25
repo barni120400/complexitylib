@@ -7,12 +7,12 @@ Authors: Erik Demaine, Stefan Langerman, GPT 5.6
 module
 -- upstream: candidate
 
-public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayoutData
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutData
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.Nodup
 import Mathlib.Data.List.Zip
-import Mathlib.Tactic
+import Mathlib.Tactic.FinCases
 
 /-!
 # Finite certificates for the fixed orthogonal crossover
@@ -35,7 +35,10 @@ an access route. An external clause uses this access and the terminal's remainin
 
 ## References
 
-* The finite Figure 8(b) source credited in `Crossover`; the orthogonal certificates are original.
+* David Lichtenstein, *Planar Formulae and Their Uses*, Figs. 4–5 [Lichtenstein1982].
+* MIT–ULB CompGeom Group, *Undecidability of Tiling with a Tromino*, Fig. 8(b) [Tromino2025].
+
+The finite orthogonal certificates are original.
 -/
 
 @[expose] public section

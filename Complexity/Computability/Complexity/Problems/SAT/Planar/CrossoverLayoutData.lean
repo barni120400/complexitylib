@@ -32,8 +32,10 @@ consequences are in `CrossoverLayout`.
 
 ## References
 
-* The finite Figure 8(b) coordinates credited in `Crossover`; orthogonal paths and local splitting
-  are an original fixed construction based on that drawing.
+* David Lichtenstein, *Planar Formulae and Their Uses*, Figs. 4–5 [Lichtenstein1982].
+* MIT–ULB CompGeom Group, *Undecidability of Tiling with a Tromino*, Fig. 8(b) [Tromino2025].
+
+The fixed orthogonal routes and local splitting are original modifications of that grid drawing.
 -/
 
 @[expose] public section

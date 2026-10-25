@@ -16,9 +16,10 @@ import Mathlib.Data.Bool.Basic
 
 A binary implication cycle forces all its variables to have the same Boolean value. Each
 listed variable contributes exactly two literal occurrences, including the two occurrences in a
-singleton cycle. Repeated variables are counted with multiplicity.
+singleton cycle. Repeated variables are counted with multiplicity. These are the implication
+cycles used in [Papadimitriou, Proposition 9.3][Papadimitriou94].
 
-Adapted from the finite cycle construction in `lean-trominoes`, revision
+Adapted from the cycle construction in `lean-trominoes`, revision
 `6d5b36c15cec6cb18d30137b7f1c7fb92ea24332`,
 `LeanTrominoes/SAT/ThreeSAT/PeriodicThreeSATThree{,Correctness,ExactSize}.lean`.
 No periodic semantics is used here.
@@ -32,6 +33,10 @@ No periodic semantics is used here.
 * `Cslib.Logic.PL.CNF.eval_implicationCycle`: a cycle holds exactly when all listed values agree.
 * `Cslib.Logic.PL.CNF.length_implicationCycle`: one clause per listed variable.
 * `Cslib.Logic.PL.CNF.count_vars_implicationCycle`: two occurrences per listed variable.
+
+## References
+
+* [C. H. Papadimitriou, *Computational Complexity*, Proposition 9.3][Papadimitriou94]
 -/
 
 @[expose] public section

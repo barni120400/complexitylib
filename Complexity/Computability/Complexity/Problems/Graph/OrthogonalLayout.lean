@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph.Ports
-public import Complexity.Foundations.Geometry.OrthogonalLayout
+public import Complexity.Foundations.Geometry.Orthogonal.Layout
 import Mathlib.Data.List.GetD
 
 /-!

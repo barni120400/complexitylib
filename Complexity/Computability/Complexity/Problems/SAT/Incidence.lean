@@ -40,7 +40,7 @@ the number of vertices.
 
 ## References
 
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
+This finite-list incidence presentation and its native computation proof are original.
 -/
 
 @[expose] public section

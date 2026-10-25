@@ -10,7 +10,7 @@ module
 public import Complexity.Logics.Propositional.CNF.Planar.Crossover
 public import Mathlib.Data.Finset.Union
 public import Mathlib.Data.Fintype.Card
-import Mathlib.Tactic.FinCases
+import Complexity.Logics.Propositional.CNF.ImplicationCycle
 
 /-!
 # A fixed degree-three crossover
@@ -31,7 +31,10 @@ central variable retain their two occurrences. This is a fixed template, not a g
 
 ## References
 
-* The finite Figure 8(b) gadget credited in `Crossover`; local six-copy replacement is original.
+* David Lichtenstein, *Planar Formulae and Their Uses*, Figs. 4–5 [Lichtenstein1982].
+* MIT–ULB CompGeom Group, *Undecidability of Tiling with a Tromino*, Fig. 8(b) [Tromino2025].
+
+The fixed local six-copy replacement is original.
 -/
 
 @[expose] public section
@@ -174,24 +177,18 @@ theorem split_occurrences_le_three : ∀ v, splitFormula.occurrences v ≤ 3 := 
 theorem split_terminal_occurrences :
     ∀ i, splitFormula.occurrences (splitTerminal i) = 2 := by decide +kernel
 
-private theorem six_cycle_iff (a b c d e f : Bool) :
-    ((a == false || b == true) && (b == false || c == true) &&
-      (c == false || d == true) && (d == false || e == true) &&
-      (e == false || f == true) && (f == false || a == true)) = true ↔
-      b = a ∧ c = a ∧ d = a ∧ e = a ∧ f = a := by
-  cases a <;> cases b <;> cases c <;> cases d <;> cases e <;> cases f <;> decide
-
 /-- A local implication ring forces all six copies to agree. -/
 theorem eval_ring_iff (σ : SplitVariable → Bool) (v : Internal) :
     (ring v).eval σ = true ↔ ∀ i, σ (.copy v i) = σ (.copy v 0) := by
-  simp only [ring, CNF.eval, Clause.eval, Literal.eval, List.all_cons, List.all_nil,
-    List.any_cons, List.any_nil, Bool.or_false, Bool.and_true, ← Bool.and_assoc]
-  rw [six_cycle_iff]
+  have hr : ring v = CNF.implicationCycle (List.ofFn (SplitVariable.copy v)) := rfl
+  rw [hr, CNF.eval_implicationCycle]
   constructor
-  · rintro ⟨h1, h2, h3, h4, h5⟩ i
-    fin_cases i <;> first | rfl | assumption
-  · intro h
-    exact ⟨h 1, h 2, h 3, h 4, h 5⟩
+  · intro h i
+    exact h _ (List.mem_ofFn.mpr ⟨i, rfl⟩) _ (List.mem_ofFn.mpr ⟨0, rfl⟩)
+  · intro h x hx y hy
+    obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hx
+    obtain ⟨j, rfl⟩ := List.mem_ofFn.mp hy
+    exact (h i).trans (h j).symm
 
 /-- Every internal variable belongs to the fixed ordered list. -/
 theorem mem_internalList (v : Internal) : v ∈ internalList := by cases v <;> decide

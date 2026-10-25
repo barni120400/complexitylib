@@ -7,10 +7,12 @@ Authors: Erik Demaine, Stefan Langerman, GPT 5.6
 module
 -- upstream: candidate
 
-public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayoutChecks
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutChecks
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 import Mathlib.Data.List.Zip
-import Mathlib.Tactic
+import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
 
 /-!
 # Certified continuous orthogonal crossover
@@ -36,7 +38,10 @@ and continuous support semantics.
 
 ## References
 
-* The finite Figure 8(b) source credited in `Crossover`; the orthogonal layout is original.
+* David Lichtenstein, *Planar Formulae and Their Uses*, Figs. 4–5 [Lichtenstein1982].
+* MIT–ULB CompGeom Group, *Undecidability of Tiling with a Tromino*, Fig. 8(b) [Tromino2025].
+
+The continuous orthogonal layout proofs are original.
 -/
 
 @[expose] public section
