@@ -216,7 +216,7 @@ private theorem computableInPolyTime_thresholdValue (γ d c : ℕ) :
     .of_tidy (ComputableTidilyInPolyTime.unary_log_const 2)
   have hsub : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 - p.2)
       (encPair encUnary encUnary) encUnary :=
-    .of_tidy ComputableTidilyInPolyTime.unary_sub
+    ComputableInPolyTime.unary_sub
   have hid : ComputableInPolyTime (fun n : ℕ => n) encUnary encUnary := by fun_prop
   have hc (k : ℕ) : ComputableInPolyTime (fun _ : ℕ => k) encUnary encUnary := by fun_prop
   have hm := hsub.comp ((ComputableInPolyTime.unary_add.comp
