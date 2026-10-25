@@ -77,12 +77,6 @@ theorem repr_fieldOfBits (B : Basis (Fin n) (ZMod 2) F) (a : List Bool) (u : Fin
 theorem fieldOfBits_nil (B : Basis (Fin n) (ZMod 2) F) : fieldOfBits B [] = 0 := by
   simp [fieldOfBits]
 
-theorem bitEquiv_symm_foldl_xor (l : List Bool) :
-    bitEquiv.symm (l.foldl xor false) = (l.map bitEquiv.symm).sum := by
-  rw [← map_list_sum]
-  congr 1
-  simp [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false]
-
 /-- The coordinates of a sum: `listXor` adds coordinate words. -/
 theorem fieldOfBits_listXor (B : Basis (Fin n) (ZMod 2) F) (words : List (List Bool)) :
     fieldOfBits B (listXor n words) = (words.map (fieldOfBits B)).sum := by
