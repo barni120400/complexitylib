@@ -35,7 +35,7 @@ Verbatim from [BonehShoup2023], Section 12.5.1 (printed p. 485):
 > (v, w) \mapsto v^\sigma w^\tau. \quad (12.13)$$
 > The auxiliary information $h$ that defines $f$ on $L_u$ is
 > $$h := f(g, u) = g^\sigma u^\tau. \quad (12.14)$$
->
+> …
 > **Lemma 12.5.** Suppose $\sigma$ and $\tau$ are uniformly and independently distributed over
 > $\mathbb{Z}_q$. Then for all $u, v, w, h, z \in \mathbb{G}$, if $(u, v, w)$ is not a DH-triple,
 > then
@@ -52,7 +52,7 @@ Verbatim from [BonehShoup2023], Section 12.5.2 (printed pp. 487–488):
 > where $h_i$ is the auxiliary information that defines $f_{\sigma_i, \tau_i}$ on $L_u$; that is
 > $$h_i := f_{\sigma_i, \tau_i}(g, u) = g^{\sigma_i} u^{\tau_i}
 > \quad \text{for } i = 1, 2. \quad (12.17)$$
->
+> …
 > **Lemma 12.7.** Suppose $\sigma_1, \tau_1, \sigma_2, \tau_2$ are uniformly and independently
 > distributed over $\mathbb{Z}_q$. Then for all
 > $u, v, w, \hat{v}, \hat{w}, h_1, h_2, z, \hat{z} \in \mathbb{G}$ and all
@@ -62,21 +62,32 @@ Verbatim from [BonehShoup2023], Section 12.5.2 (printed pp. 487–488):
 > v^{\sigma_1 + \rho_1 \sigma_2} w^{\tau_1 + \rho_1 \tau_2} = z \land
 > \hat{v}^{\sigma_1 + \rho_2 \sigma_2} \hat{w}^{\tau_1 + \rho_2 \tau_2} = \hat{z}] =
 > \frac{1}{q^4}.$$
->
+> …
 > **Lemma 12.8.** In Attack Game 12.5, for any adversary $\mathcal{A}$ that outputs at most $Q$
 > tuples, the probability that it wins is at most $Q/q$.
+
+Attack Game 12.5 itself is not formalized as a standalone game here; instead, this module proves
+the explicit change-of-variables equivalences (`projHashFiberChangeEquiv`,
+`projHash2FiberChangeEquiv`), the single-tuple `1 / q` hit law (`uniform_projHash2_fiber_apply`),
+and the finite-list `Q / q` union bound (`uniform_projHash2_fiber_any_le`) on the `τ₂`-fiber given
+`δ₁ = σ₁ + α * τ₁`, `δ₂ = σ₂ + α * τ₂`, and `ξ = τ₁ + ρ * τ₂` (where `(h₁, h₂, z)` and all DH
+queries depend only on `(δ₁, δ₂, ξ)`). The adaptive decryption-oracle reduction for Cramer–Shoup
+using these ingredients is carried by `Complexity/Crypto/Computational/CramerShoup.lean` (PR 2).
 
 ## Main definitions
 
 * `Cslib.Crypto.ProjectiveHash.projHash`, `Cslib.Crypto.ProjectiveHash.projHashAux`: universal
   projective hash evaluation `(12.13)` and public projection `(12.14)`.
-* `Cslib.Crypto.ProjectiveHash.projHashEquiv`: explicit linear equivalence on `ZMod q × ZMod q`
-  underlying Lemma 12.5 when `γ ≠ α * β`.
+* `Cslib.Crypto.ProjectiveHash.projHashFiberChangeEquiv`,
+  `Cslib.Crypto.ProjectiveHash.projHashEquiv`: fiber change-of-variables `(δ, τ) ↦ (δ - α * τ, τ)`
+  and 2×2 linear equivalence on `ZMod q × ZMod q` underlying Lemma 12.5 when `γ ≠ α * β`.
 * `Cslib.Crypto.ProjectiveHash.projHash2`, `Cslib.Crypto.ProjectiveHash.projHash2Aux`:
   $\text{universal}_2$ projective hash evaluation `(12.16)` and public projection pair `(12.17)`.
-* `Cslib.Crypto.ProjectiveHash.projHash2Equiv`: explicit 4-tuple linear equivalence on
-  `(ZMod q × ZMod q) × (ZMod q × ZMod q)` underlying Lemma 12.7 when `γ ≠ α * β`, `γ' ≠ α * β'`, and
-  `ρ' ≠ ρ`.
+* `Cslib.Crypto.ProjectiveHash.projHash2FiberChangeEquiv`,
+  `Cslib.Crypto.ProjectiveHash.projHash2Equiv`: 4-tuple fiber change-of-variables
+  `((δ₁, δ₂), (ξ, τ₂)) ↦ ((δ₁ - α * (ξ - ρ * τ₂), ξ - ρ * τ₂), (δ₂ - α * τ₂, τ₂))` and 4×4 linear
+  equivalence on `(ZMod q × ZMod q) × (ZMod q × ZMod q)` underlying Lemma 12.7 when `γ ≠ α * β`,
+  `γ' ≠ α * β'`, and `ρ' ≠ ρ`.
 
 ## Main results
 
@@ -86,15 +97,18 @@ Verbatim from [BonehShoup2023], Section 12.5.2 (printed pp. 487–488):
 * `Cslib.Crypto.ProjectiveHash.projHash_bijective_of_ne`,
   `Cslib.Crypto.ProjectiveHash.uniform_projHash_apply_of_ne`,
   `Cslib.Crypto.ProjectiveHash.uniform_projHash_fiber`,
-  `Cslib.Crypto.ProjectiveHash.uniform_projHash_fiber_add`: Lemma 12.5 bijection, `1 / q ^ 2`
-  joint point mass, and conditional uniform masking on non-DH triples.
+  `Cslib.Crypto.ProjectiveHash.uniform_projHash_fiber_add`: Lemma 12.5 bijection and `1 / q ^ 2`
+  joint point mass, together with conditional uniform masking on non-DH triples as a consequence of
+  Lemma 12.5 under `projHashFiberChangeEquiv`.
 * `Cslib.Crypto.ProjectiveHash.projHash2_fiber_eq`,
   `Cslib.Crypto.ProjectiveHash.projHash2_bijective_of_ne`,
   `Cslib.Crypto.ProjectiveHash.uniform_projHash2_apply_of_ne`,
   `Cslib.Crypto.ProjectiveHash.projHash2_fiber_bijective_of_ne`,
-  `Cslib.Crypto.ProjectiveHash.uniform_projHash2_fiber_apply`: Lemma 12.7 4-tuple bijection and
-  `1 / q ^ 4` joint point mass, and Lemma 12.8 conditional `1 / q` hit probability on non-DH
-  triples with `ρ' ≠ ρ`.
+  `Cslib.Crypto.ProjectiveHash.uniform_projHash2_fiber_apply`,
+  `Cslib.Crypto.ProjectiveHash.uniform_projHash2_fiber_any_le`: Lemma 12.7 4-tuple bijection and
+  `1 / q ^ 4` joint point mass, and the single-tuple `1 / q` and `Q`-tuple `Q / q` union-bound
+  ingredients of Lemma 12.8 (via Lemma 12.7) on the `τ₂`-fiber of `projHash2FiberChangeEquiv` for
+  non-DH triples with `ρ' ≠ ρ`.
 
 ## References
 
@@ -154,12 +168,31 @@ theorem projHash_fiber_eq (d : F.Desc) (α β γ δ τ : ZMod (F.order d)) :
 
 /-- On the fiber `σ = δ - α * τ`, the auxiliary projection `projHashAux` is independent of `τ` and
 equals `δ • g`. -/
-@[simp]
 theorem projHashAux_fiber_eq (d : F.Desc) (α δ τ : ZMod (F.order d)) :
     projHashAux F d (δ - α * τ) τ (α • F.generator d) = δ • F.generator d := by
   rw [projHashAux_generator_smul]
   congr 1
   ring
+
+/-- The fiber change-of-variables `(δ, τ) ↦ (δ - α * τ, τ)` on `ZMod (F.order d) × ZMod (F.order d)`
+under which `projHashAux F d σ τ (α • g) = δ • g` depends only on `δ`. -/
+def projHashFiberChangeEquiv (d : F.Desc) (α : ZMod (F.order d)) :
+    ZMod (F.order d) × ZMod (F.order d) ≃ ZMod (F.order d) × ZMod (F.order d) where
+  toFun p := (p.1 - α * p.2, p.2)
+  invFun q := (q.1 + α * q.2, q.2)
+  left_inv p := by
+    ext
+    · dsimp only; ring
+    · rfl
+  right_inv q := by
+    ext
+    · dsimp only; ring
+    · rfl
+
+@[simp]
+theorem projHashFiberChangeEquiv_apply (d : F.Desc) (α δ τ : ZMod (F.order d)) :
+    projHashFiberChangeEquiv F d α (δ, τ) = (δ - α * τ, τ) :=
+  rfl
 
 /-- The affine bijection `τ ↦ β * δ + (γ - α * β) * τ` on `ZMod (F.order d)` when `γ ≠ α * β`. -/
 def projHashFiberEquiv (d : F.Desc) {α β γ : ZMod (F.order d)} (hγ : γ ≠ α * β)
@@ -172,9 +205,9 @@ theorem projHashFiberEquiv_apply (d : F.Desc) {α β γ : ZMod (F.order d)} (hγ
     projHashFiberEquiv F d hγ δ τ = β * δ + (γ - α * β) * τ := by
   simp [projHashFiberEquiv]
 
-/-- Explicit 2×2 linear equivalence `(σ, τ) ↦ (σ + α * τ, β * σ + γ * τ)` on
+/-- Explicit 2×2 linear equivalence `(σ, τ) ↦ (σ + α * τ, β * p.1 + γ * p.2)` on
 `ZMod (F.order d) × ZMod (F.order d)` when `γ ≠ α * β` ([BonehShoup2023], proof of Lemma 12.5,
-printed p. 485). -/
+printed pp. 485–486). -/
 def projHashEquiv (d : F.Desc) {α β γ : ZMod (F.order d)} (hγ : γ ≠ α * β) :
     ZMod (F.order d) × ZMod (F.order d) ≃ ZMod (F.order d) × ZMod (F.order d) where
   toFun p := (p.1 + α * p.2, β * p.1 + γ * p.2)
@@ -204,11 +237,6 @@ def projHashEquiv (d : F.Desc) {α β γ : ZMod (F.order d)} (hγ : γ ≠ α * 
       rw [hlin, mul_inv_cancel_left₀ hne]
       ring
 
-private theorem bijective_prodMap {α₁ α₂ β₁ β₂ : Type*} {f : α₁ → β₁} {g : α₂ → β₂}
-    (hf : Function.Bijective f) (hg : Function.Bijective g) :
-    Function.Bijective (Prod.map f g) :=
-  ((Equiv.ofBijective f hf).prodCongr (Equiv.ofBijective g hg)).bijective
-
 /-- **Lemma 12.5 bijection** ([BonehShoup2023], Section 12.5.1, printed p. 485): when `γ ≠ α * β`,
 the map `(σ, τ) ↦ (projHashAux F d σ τ (α • g), projHash F d σ τ (β • g) (γ • g))` is a bijection
 from `ZMod (F.order d) × ZMod (F.order d)` to `F.Carrier d × F.Carrier d`. -/
@@ -225,8 +253,8 @@ theorem projHash_bijective_of_ne (d : F.Desc) {α β γ : ZMod (F.order d)} (hγ
     funext p
     simp [projHashEquiv]
   rw [hcomp]
-  exact (bijective_prodMap (F.smul_generator_bijective d)
-    (F.smul_generator_bijective d)).comp (projHashEquiv F d hγ).bijective
+  exact ((F.smul_generator_bijective d).prodMap (F.smul_generator_bijective d)).comp
+    (projHashEquiv F d hγ).bijective
 
 /-- **Lemma 12.5 (`1 / q ^ 2` joint point mass)** ([BonehShoup2023], Section 12.5.1,
 printed p. 485): under uniform `(σ, τ) : ZMod (F.order d) × ZMod (F.order d)`, for any non-DH
@@ -244,7 +272,7 @@ theorem uniform_projHash_apply_of_ne (d : F.Desc) {α β γ : ZMod (F.order d)} 
   let encodePair : ZMod (F.order d) × ZMod (F.order d) → F.Carrier d × F.Carrier d :=
     Prod.map (fun x => x • F.generator d) (fun y => y • F.generator d)
   have hinj : Function.Injective encodePair :=
-    (bijective_prodMap (F.smul_generator_bijective d) (F.smul_generator_bijective d)).1
+    ((F.smul_generator_bijective d).prodMap (F.smul_generator_bijective d)).1
   have hmap :
       (PMF.uniformOfFintype (ZMod (F.order d) × ZMod (F.order d))).map (fun p =>
         (projHashAux F d p.1 p.2 (α • F.generator d),
@@ -265,9 +293,10 @@ theorem uniform_projHash_apply_of_ne (d : F.Desc) {α β γ : ZMod (F.order d)} 
   rw [hmap, PMF.map_apply]
   simp [hinj.eq_iff, PMF.uniformOfFintype_apply, sq]
 
-/-- **Conditional uniformity of `projHash` on a non-DH triple** ([BonehShoup2023], Lemma 12.5,
-printed p. 485): fixing `δ = σ + α * τ` (so `h = δ • g`), as `τ` varies uniformly over
-`ZMod (F.order d)`, `projHash F d (δ - α * τ) τ (β • g) (γ • g)` has the same distribution as
+/-- **Consequence of Lemma 12.5 (conditional uniformity on the `τ`-fiber)**
+([BonehShoup2023], Section 12.5.1, printed p. 485): under the change of variables
+`projHashFiberChangeEquiv` (`σ = δ - α * τ`, so `h = δ • g`), for any fixed `δ` and uniform
+`τ : ZMod (F.order d)`, `projHash F d (δ - α * τ) τ (β • g) (γ • g)` has the same distribution as
 `ζ • g` for a uniform `ζ : ZMod (F.order d)` whenever `γ ≠ α * β`. -/
 theorem uniform_projHash_fiber {α_out : Type*} (d : F.Desc) {α β γ : ZMod (F.order d)}
     (hγ : γ ≠ α * β) (δ : ZMod (F.order d)) (f : F.Carrier d → PMF α_out) :
@@ -347,7 +376,6 @@ theorem projHash2_fiber_eq (d : F.Desc) (α β γ δ₁ δ₂ τ₁ τ₂ ρ : Z
 
 /-- On a Diffie–Hellman triple `γ = α * β`, `projHash2` on the fiber `σ₁ = δ₁ - α * τ₁`,
 `σ₂ = δ₂ - α * τ₂` equals `(β * (δ₁ + ρ * δ₂)) • g`, independent of `(τ₁, τ₂)`. -/
-@[simp]
 theorem projHash2_fiber_dh (d : F.Desc) (α β δ₁ δ₂ τ₁ τ₂ ρ : ZMod (F.order d)) :
     projHash2 F d (δ₁ - α * τ₁) τ₁ (δ₂ - α * τ₂) τ₂ ρ
       (β • F.generator d) ((α * β) • F.generator d) =
@@ -361,9 +389,41 @@ theorem projHash2Aux_fiber_eq (d : F.Desc) (α δ₁ δ₂ τ₁ τ₂ : ZMod (F
       (δ₁ • F.generator d, δ₂ • F.generator d) := by
   simp only [projHash2Aux, projHashAux_fiber_eq]
 
+/-- The 4-tuple fiber change-of-variables
+`((δ₁, δ₂), (ξ, τ₂)) ↦ ((δ₁ - α * (ξ - ρ * τ₂), ξ - ρ * τ₂), (δ₂ - α * τ₂, τ₂))`
+on `(ZMod (F.order d) × ZMod (F.order d)) × (ZMod (F.order d) × ZMod (F.order d))`, under which
+`(h₁, h₂)`, the challenge tag on `(β • g, γ • g, ρ)`, and all Diffie–Hellman queries depend only
+on `(δ₁, δ₂, ξ)` and are independent of `τ₂`. -/
+def projHash2FiberChangeEquiv (d : F.Desc) (α ρ : ZMod (F.order d)) :
+    (ZMod (F.order d) × ZMod (F.order d)) × (ZMod (F.order d) × ZMod (F.order d)) ≃
+      (ZMod (F.order d) × ZMod (F.order d)) × (ZMod (F.order d) × ZMod (F.order d)) where
+  toFun p :=
+    ((p.1.1 - α * (p.2.1 - ρ * p.2.2), p.2.1 - ρ * p.2.2),
+      (p.1.2 - α * p.2.2, p.2.2))
+  invFun q :=
+    ((q.1.1 + α * q.1.2, q.2.1 + α * q.2.2),
+      (q.1.2 + ρ * q.2.2, q.2.2))
+  left_inv p := by
+    ext
+    · dsimp only; ring
+    · dsimp only; ring
+    · dsimp only; ring
+    · rfl
+  right_inv q := by
+    ext
+    · dsimp only; ring
+    · dsimp only; ring
+    · dsimp only; ring
+    · rfl
+
+@[simp]
+theorem projHash2FiberChangeEquiv_apply (d : F.Desc) (α ρ δ₁ δ₂ ξ τ₂ : ZMod (F.order d)) :
+    projHash2FiberChangeEquiv F d α ρ ((δ₁, δ₂), (ξ, τ₂)) =
+      ((δ₁ - α * (ξ - ρ * τ₂), ξ - ρ * τ₂), (δ₂ - α * τ₂, τ₂)) :=
+  rfl
+
 /-- Further conditioning on `ξ = τ₁ + ρ * τ₂` (so `τ₁ = ξ - ρ * τ₂`) makes the challenge tag on
 `(β • g, γ • g, ρ)` equal to `(β * (δ₁ + ρ * δ₂) + (γ - α * β) * ξ) • g`, independent of `τ₂`. -/
-@[simp]
 theorem projHash2_fiber_challenge_eq (d : F.Desc) (α β γ δ₁ δ₂ ξ τ₂ ρ : ZMod (F.order d)) :
     projHash2 F d (δ₁ - α * (ξ - ρ * τ₂)) (ξ - ρ * τ₂) (δ₂ - α * τ₂) τ₂ ρ
       (β • F.generator d) (γ • F.generator d) =
@@ -402,9 +462,9 @@ theorem projHash2QueryFiberEquiv_apply (d : F.Desc) {α β' γ' ρ ρ' : ZMod (F
   simp only [projHash2QueryFiberEquiv, Equiv.trans_apply, Equiv.mulLeft₀_apply,
     Equiv.coe_addLeft]
 
-/-- **Conditional bijection of a `projHash2` query given `(h₁, h₂)` and the challenge tag**
-([BonehShoup2023], Lemma 12.7 / Lemma 12.8, printed pp. 487–488): for any `γ' ≠ α * β'` and
-`ρ' ≠ ρ`, the map
+/-- **Single-tuple ingredient of Lemma 12.8 via Lemma 12.7 (bijection on the `τ₂`-fiber)**
+([BonehShoup2023], Section 12.5.2, printed pp. 487–488): under the change of variables
+`projHash2FiberChangeEquiv`, for any `γ' ≠ α * β'` and `ρ' ≠ ρ`, the map
 `τ₂ ↦ projHash2 F d (δ₁ - α * (ξ - ρ * τ₂)) (ξ - ρ * τ₂) (δ₂ - α * τ₂) τ₂ ρ' (β' • g) (γ' • g)`
 is a bijection from `ZMod (F.order d)` to `F.Carrier d`. -/
 theorem projHash2_fiber_bijective_of_ne (d : F.Desc) {α β' γ' ρ ρ' : ZMod (F.order d)}
@@ -423,10 +483,11 @@ theorem projHash2_fiber_bijective_of_ne (d : F.Desc) {α β' γ' ρ ρ' : ZMod (
   rw [hcomp]
   exact (F.smul_generator_bijective d).comp (projHash2QueryFiberEquiv F d hγ' hρ δ₁ δ₂ ξ).bijective
 
-/-- **Lemma 12.7 / Lemma 12.8 conditional single-query hit law** ([BonehShoup2023], Section 12.5.2,
-printed pp. 487–488): fixing the public projections via `σ₁ = δ₁ - α * τ₁` and `σ₂ = δ₂ - α * τ₂`
-and fixing the challenge tag exponent `ξ = τ₁ + ρ * τ₂`, as `τ₂` varies uniformly over
-`ZMod (F.order d)` with `τ₁ = ξ - ρ * τ₂`, the forged tag on `(β' • g, γ' • g, ρ')` hits any target
+/-- **Single-tuple ingredient of Lemma 12.8 via Lemma 12.7 (`1 / q` hit law on the `τ₂`-fiber)**
+([BonehShoup2023], Section 12.5.2, printed pp. 487–488): under `projHash2FiberChangeEquiv`, fixing
+`δ₁ = σ₁ + α * τ₁`, `δ₂ = σ₂ + α * τ₂`, and `ξ = τ₁ + ρ * τ₂` (which completely determine
+`(h₁, h₂)`, the challenge tag `z`, and all DH queries), as `τ₂` varies uniformly over
+`ZMod (F.order d)`, the tag on any non-DH query `(β' • g, γ' • g, ρ')` hits any target
 `z' : F.Carrier d` with probability `(F.order d : ℝ≥0∞)⁻¹` whenever `γ' ≠ α * β'` and `ρ' ≠ ρ`. -/
 theorem uniform_projHash2_fiber_apply (d : F.Desc) {α β' γ' ρ ρ' : ZMod (F.order d)}
     (hγ' : γ' ≠ α * β') (hρ : ρ' ≠ ρ) (δ₁ δ₂ ξ : ZMod (F.order d)) (z' : F.Carrier d) :
@@ -464,6 +525,58 @@ theorem uniform_projHash2_fiber_apply (d : F.Desc) {α β' γ' ρ ρ' : ZMod (F.
         fun h => hx ((F.smul_generator_injective d h).symm)
       simp [hx, hne]
   rw [hsingle, PMF.uniformOfFintype_apply, ZMod.card]
+
+/-- **Finite-list `Q / q` union-bound ingredient of Lemma 12.8 on the `τ₂`-fiber**
+([BonehShoup2023], Section 12.5.2, printed p. 488): for any list `queries` of candidate tuples
+`(β', γ', ρ', z')` all satisfying `γ' ≠ α * β'` and `ρ' ≠ ρ`, and any fixed `δ₁, δ₂, ξ : ZMod q`,
+the probability over uniform `τ₂ : ZMod (F.order d)` that at least one tuple in `queries` has tag
+`z'` is at most `(queries.length : ℝ≥0∞) / (F.order d : ℝ≥0∞)`. -/
+theorem uniform_projHash2_fiber_any_le (d : F.Desc) [DecidableEq (F.Carrier d)]
+    (α ρ δ₁ δ₂ ξ : ZMod (F.order d))
+    (queries : List (ZMod (F.order d) × ZMod (F.order d) × ZMod (F.order d) × F.Carrier d))
+    (hq : ∀ q ∈ queries, q.2.1 ≠ α * q.1 ∧ q.2.2.1 ≠ ρ) :
+    ((PMF.uniformOfFintype (ZMod (F.order d))).map (fun τ₂ =>
+      queries.any (fun q =>
+        decide (projHash2 F d (δ₁ - α * (ξ - ρ * τ₂)) (ξ - ρ * τ₂) (δ₂ - α * τ₂) τ₂ q.2.2.1
+          (q.1 • F.generator d) (q.2.1 • F.generator d) = q.2.2.2)))) true ≤
+      (queries.length : ℝ≥0∞) / (F.order d : ℝ≥0∞) := by
+  let μ := PMF.uniformOfFintype (ZMod (F.order d))
+  let hit (q : ZMod (F.order d) × ZMod (F.order d) × ZMod (F.order d) × F.Carrier d)
+      (τ₂ : ZMod (F.order d)) : Bool :=
+    decide (projHash2 F d (δ₁ - α * (ξ - ρ * τ₂)) (ξ - ρ * τ₂) (δ₂ - α * τ₂) τ₂ q.2.2.1
+      (q.1 • F.generator d) (q.2.1 • F.generator d) = q.2.2.2)
+  induction queries with
+  | nil =>
+    simp
+  | cons q qs ih =>
+    have hq_head : q.2.1 ≠ α * q.1 ∧ q.2.2.1 ≠ ρ := hq q List.mem_cons_self
+    have hq_tail : ∀ q' ∈ qs, q'.2.1 ≠ α * q'.1 ∧ q'.2.2.1 ≠ ρ :=
+      fun q' hmem => hq q' (List.mem_cons_of_mem q hmem)
+    have hor :
+        (μ.map (fun τ₂ => (q :: qs).any (fun q' => hit q' τ₂))) true ≤
+          (μ.map (hit q)) true + (μ.map (fun τ₂ => qs.any (fun q' => hit q' τ₂))) true := by
+      simp only [List.any_cons, PMF.map_apply, ← ENNReal.tsum_add]
+      refine ENNReal.tsum_le_tsum fun τ₂ => ?_
+      cases hit q τ₂ <;> cases qs.any (fun q' => hit q' τ₂) <;> simp
+    have hsingle : (μ.map (hit q)) true = (F.order d : ℝ≥0∞)⁻¹ := by
+      have heq :
+          (μ.map (hit q)) true =
+            (μ.map (fun τ₂ =>
+              projHash2 F d (δ₁ - α * (ξ - ρ * τ₂)) (ξ - ρ * τ₂) (δ₂ - α * τ₂) τ₂ q.2.2.1
+                (q.1 • F.generator d) (q.2.1 • F.generator d))) q.2.2.2 := by
+        rw [PMF.map_apply, PMF.map_apply]
+        refine tsum_congr fun τ₂ => ?_
+        dsimp only [hit]
+        split_ifs with h₁ h₂ h₂
+        · rfl
+        · exfalso; exact h₂ (decide_eq_true_iff.mp h₁.symm).symm
+        · exfalso; exact h₁ (decide_eq_true h₂.symm).symm
+        · rfl
+      rw [heq]
+      exact uniform_projHash2_fiber_apply F d hq_head.1 hq_head.2 δ₁ δ₂ ξ q.2.2.2
+    refine hor.trans ?_
+    rw [hsingle, List.length_cons, Nat.cast_add, Nat.cast_one, ENNReal.add_div, one_div, add_comm]
+    exact add_le_add_left (ih hq_tail) _
 
 /-- Explicit 4-tuple linear equivalence
 `(σ₁, τ₁, σ₂, τ₂) ↦ ((σ₁ + α * τ₁, σ₂ + α * τ₂), (z, z'))`
@@ -583,9 +696,8 @@ theorem projHash2_bijective_of_ne (d : F.Desc) {α β γ β' γ' ρ ρ' : ZMod (
     funext p
     simp [projHash2Equiv, projHash2Aux]
   rw [hcomp]
-  exact (bijective_prodMap
-    (bijective_prodMap (F.smul_generator_bijective d) (F.smul_generator_bijective d))
-    (bijective_prodMap (F.smul_generator_bijective d) (F.smul_generator_bijective d))).comp
+  exact (((F.smul_generator_bijective d).prodMap (F.smul_generator_bijective d)).prodMap
+    ((F.smul_generator_bijective d).prodMap (F.smul_generator_bijective d))).comp
     (projHash2Equiv F d hγ hγ' hρ).bijective
 
 /-- **Lemma 12.7 (`1 / q ^ 4` joint 4-tuple point mass)** ([BonehShoup2023], Section 12.5.2,
@@ -612,9 +724,8 @@ theorem uniform_projHash2_apply_of_ne (d : F.Desc) {α β γ β' γ' ρ ρ' : ZM
       (Prod.map (fun x => x • F.generator d) (fun y => y • F.generator d))
       (Prod.map (fun x => x • F.generator d) (fun y => y • F.generator d))
   have hinj : Function.Injective encodeQuad :=
-    (bijective_prodMap
-      (bijective_prodMap (F.smul_generator_bijective d) (F.smul_generator_bijective d))
-      (bijective_prodMap (F.smul_generator_bijective d) (F.smul_generator_bijective d))).1
+    (((F.smul_generator_bijective d).prodMap (F.smul_generator_bijective d)).prodMap
+      ((F.smul_generator_bijective d).prodMap (F.smul_generator_bijective d))).1
   have hmap :
       (PMF.uniformOfFintype Dom).map
         (fun p =>

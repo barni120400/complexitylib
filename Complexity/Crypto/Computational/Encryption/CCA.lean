@@ -52,6 +52,9 @@ Verbatim from [BonehShoup2023], Section 12.1 (printed pp. 467–468):
 > efficient adversaries $\mathcal{A}$, the value $\text{CCAadv}[\mathcal{A}, \mathcal{E}]$ is
 > negligible.
 >
+> Just as we did in the symmetric-key setting, we can consider a restricted attack game in which
+> the adversary makes only a single encryption query:
+>
 > **Definition 12.2 (1CCA security).** In Attack Game 12.1, if the adversary $\mathcal{A}$ is
 > restricted to making a single encryption query, we denote its advantage by
 > $\text{1CCAadv}[\mathcal{A}, \mathcal{E}]$. A public-key encryption scheme $\mathcal{E}$ is
@@ -76,30 +79,51 @@ And the two-phase decomposition of the 1CCA experiment (printed pp. 468–469):
 
 ## Scope and Specializations
 
-* **Single-challenge 1CCA (`Definition 12.2`)**: `CCA2AdversaryOf Msg`, `cca2Game`, and `INDCCA2Of`
-  formalize the single-challenge 1CCA experiment (Definition 12.2, printed p. 468). Because anyone
-  can encrypt under the public key `pk`, 1CCA is equivalent to multi-challenge CCA by a hybrid
-  argument ([BonehShoup2023], Theorem 12.1, printed p. 468); that multi-challenge equivalence is
-  not formalized here.
+* **Single-challenge 1CCA (`Definition 12.2`) vs. symmetric `SymmetricCipher.INDCCA`
+  (`Definition 9.5`)**:
+  `CCA2AdversaryOf Msg`, `cca2Game`, and `INDCCA2Of` formalize the single-challenge public-key
+  1CCA experiment (Definition 12.2, printed p. 468). Unlike `SymmetricCipher.INDCCA` and
+  `SymmetricCipher.CCAAdversary` in `Complexity/Crypto/Computational/Encryption/Authenticated.lean`
+  (which model multi-query symmetric-key CCA, Definition 9.5, using a single-stage adversary with a
+  two-channel encryption/decryption oracle `Operation = Bool`), a public-key 1CCA adversary receives
+  the public key `pk` directly and interacts with a single-channel decryption oracle
+  (`Operation = Unit`) across two stages (`choose` and `guess`) around one challenge encryption.
+  Because anyone can encrypt under `pk`, public-key 1CCA is equivalent to multi-challenge CCA by a
+  hybrid argument ([BonehShoup2023], Theorem 12.1, printed p. 468); that multi-challenge equivalence
+  is not formalized here.
+* **Phase 2 challenge-rejection convention**: in Phase 2, querying the challenge ciphertext
+  (`request.2 == ct`) returns `[] = encOption encOut none` (the encoding of decryption rejection
+  `none`) rather than syntactically restricting the oracle domain to `ĉ ≠ c`. Because the adversary
+  is given `ct` as input to `guess` and could simulate the constant `[]` reply on `ct` itself, this
+  convention is equivalent to forbidding `ĉ = c` and matches `SymmetricCipher.ccaOracle` in
+  `Complexity/Crypto/Computational/Encryption/Authenticated.lean`.
 * **No associated data ($\mathcal{D} = \mathrm{Unit}$)**: encryption and decryption queries carry no
   separate associated-data argument (corresponding to $\mathcal{D} = \mathrm{Unit}$ in schemes with
   associated data such as Exercise 12.27).
-* **Generic message and output types**: `CCA2AdversaryOf (Msg : Type)` is generic in the challenge
-  message type `Msg` (`CCA2Adversary` specializes to `Bool` and `WordCCA2Adversary` to `List Bool`).
+* **Generic message and output types with challenge-pair admissibility**:
+  `CCA2AdversaryOf (Msg : Type)` is generic in the challenge message type `Msg` (`CCA2Adversary`
+  specializes to `Bool`, and `WordCCA2Adversary` to `List Bool`). `cca2GameOn` and `INDCCA2On`
+  parameterize the experiment by a challenge-pair admissibility predicate
+  `valid : ℕ → List Bool → Msg → Msg → Bool` (returning `false` in both experiments when
+  `valid n pk m₀ m₁ = false`), while `cca2Game` and `INDCCA2Of` specialize to `fun _ _ _ _ => true`
+  for fixed-length message spaces (such as `Bool`) and `WordINDCCA2` specializes to Attack Game
+  12.1's equal-length rule `fun _ _ m₀ m₁ => m₀.length == m₁.length`.
 
 ## Main definitions
 
 * `Cslib.Crypto.Encryption.CCA2AdversaryOf`, `Cslib.Crypto.Encryption.CCA2Adversary`,
-  `Cslib.Crypto.Encryption.WordCCA2Adversary`: two-stage 1CCA adversaries with `WordOracleComp Unit`
-  decryption-oracle access in Phase 1 (`choose`) and Phase 2 (`guess`).
+  `Cslib.Crypto.Encryption.WordCCA2Adversary`: two-stage 1CCA adversaries with
+  `WordOracleComp Unit` decryption-oracle access in Phase 1 (`choose`) and Phase 2 (`guess`).
 * `Cslib.Crypto.Encryption.CCA2AdversaryOf.IsPPT`,
   `Cslib.Crypto.Encryption.CCA2AdversaryOf.IsQueryBounded`: uniform strict oracle PPT admissibility
   and per-stage decryption-query bounds.
 * `Cslib.Crypto.Encryption.cca2Phase1Oracle`, `Cslib.Crypto.Encryption.cca2Phase2Oracle`,
-  `Cslib.Crypto.Encryption.cca2Game`: Phase 1 and Phase 2 decryption oracles and the 1CCA
-  experiment.
-* `Cslib.Crypto.Encryption.INDCCA2Of`, `Cslib.Crypto.Encryption.INDCCA2`,
-  `Cslib.Crypto.Encryption.WordINDCCA2`: single-challenge 1CCA security (Definition 12.2).
+  `Cslib.Crypto.Encryption.cca2GameOn`, `Cslib.Crypto.Encryption.cca2Game`: Phase 1 and Phase 2
+  decryption oracles and the 1CCA experiment (with and without an explicit challenge-pair
+  admissibility guard).
+* `Cslib.Crypto.Encryption.INDCCA2On`, `Cslib.Crypto.Encryption.INDCCA2Of`,
+  `Cslib.Crypto.Encryption.INDCCA2`, `Cslib.Crypto.Encryption.WordINDCCA2`: single-challenge 1CCA
+  security (Definition 12.2).
 * `Cslib.Crypto.Encryption.CCA2Adversary.ofCPA`: embedding of a chosen-plaintext `Adversary` as a
   0-query `CCA2Adversary`.
 
@@ -109,6 +133,7 @@ And the two-phase decomposition of the 1CCA experiment (printed pp. 468–469):
   length bounds for every strict oracle PPT `CCA2AdversaryOf Msg`.
 * `Cslib.Crypto.Encryption.isPPTOn_run_cca2Phase1Oracle`,
   `Cslib.Crypto.Encryption.isPPTOn_run_cca2Phase2Oracle`,
+  `Cslib.Crypto.Encryption.isPPTOn_cca2GameOn`,
   `Cslib.Crypto.Encryption.isPPTOn_cca2Game`: closed strict PPT compilation of Phase 1, Phase 2,
   and the complete 1CCA experiment via `IsOraclePPTOn.run_interpret_preprocess`.
 * `Cslib.Crypto.Encryption.CCA2Adversary.isPPT_ofCPA`,
@@ -204,11 +229,10 @@ abbrev CCA2Adversary : Type := CCA2AdversaryOf Bool
 abbrev CCA2Adversary.IsPPT (adversary : CCA2Adversary) : Prop :=
   CCA2AdversaryOf.IsPPT encBool adversary
 
-/-- Bit-word 1CCA adversary (`Msg = List Bool`), used for encoded group-element or bit-string
-messages. -/
+/-- Bit-string 1CCA adversary (`Msg = List Bool`). -/
 abbrev WordCCA2Adversary : Type := CCA2AdversaryOf (List Bool)
 
-/-- Native uniform strict oracle PPT admissibility for a bit-word 1CCA adversary. -/
+/-- Native uniform strict oracle PPT admissibility for a bit-string 1CCA adversary. -/
 abbrev WordCCA2Adversary.IsPPT (adversary : WordCCA2Adversary) : Prop :=
   CCA2AdversaryOf.IsPPT encBits adversary
 
@@ -224,7 +248,10 @@ def cca2Phase1Oracle {Out : Type} (encOut : Out ↪ List Bool)
 /-- Phase 2 decryption oracle ([BonehShoup2023], Section 12.1, Attack Game 12.1 and Definition 12.2,
 printed pp. 467–468): reject the challenge ciphertext (`request.2 == ct`) with `[]`
 (`encOption encOut none`), and answer all other queries `request.2 ≠ ct` with
-`encOption encOut (decrypt n sk request.2)`. -/
+`encOption encOut (decrypt n sk request.2)`. Since the adversary receives `ct` as input to `guess`
+and can simulate the constant `[]` reply on `ct` itself, returning `[]` on `ct` is equivalent to
+forbidding the query `ĉ = c` (matching `SymmetricCipher.ccaOracle` in
+`Complexity/Crypto/Computational/Encryption/Authenticated.lean`). -/
 def cca2Phase2Oracle {Out : Type} (encOut : Out ↪ List Bool)
     (decrypt : ℕ → List Bool → List Bool → Option Out)
     (n : ℕ) (sk ct : List Bool) (request : Unit × List Bool) :
@@ -236,10 +263,14 @@ def cca2Phase2Oracle {Out : Type} (encOut : Out ↪ List Bool)
       pure (encOption encOut (decrypt n sk request.2), s)
 
 /-- Single-challenge 1CCA experiment ([BonehShoup2023], Section 12.1, Attack Game 12.1 and
-Definition 12.2, printed pp. 467–468): sample `(pk, sk) ← keyGen n`, run Phase 1 (`choose`)
-against `cca2Phase1Oracle`, encrypt the selected message `if bit then m₁ else m₀` to obtain `ct`,
-and run Phase 2 (`guess`) against `cca2Phase2Oracle` rejecting `ct`. -/
-noncomputable def cca2Game {Msg Out : Type} (encOut : Out ↪ List Bool)
+Definition 12.2, printed pp. 467–468) with challenge-pair admissibility predicate
+`valid : ℕ → List Bool → Msg → Msg → Bool`: sample `(pk, sk) ← keyGen n`, run Phase 1 (`choose`)
+against `cca2Phase1Oracle`, check `valid n pk m₀ m₁` (returning `false` in both experiments when
+invalid), encrypt `if bit then m₁ else m₀` to obtain `ct`, and run Phase 2 (`guess`) against
+`cca2Phase2Oracle` rejecting `ct`. -/
+noncomputable def cca2GameOn {Msg Out : Type}
+    (valid : ℕ → List Bool → Msg → Msg → Bool)
+    (encOut : Out ↪ List Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option Out)
@@ -250,23 +281,47 @@ noncomputable def cca2Game {Msg Out : Type} (encOut : Out ↪ List Bool)
       (cca2Phase1Oracle encOut decrypt n keys.2))
     (adversary.choose n keys.1)).run ()
   let choice := choiceOut.1
-  let ct ← encrypt n keys.1 (if bit then choice.1.2 else choice.1.1)
-  let guessOut ← (OracleComp.interpret
-    (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifFin m))
-      (cca2Phase2Oracle encOut decrypt n keys.2 ct))
-    (adversary.guess n choice.2 ct)).run ()
-  return guessOut.1
+  if valid n keys.1 choice.1.1 choice.1.2 then
+    let ct ← encrypt n keys.1 (if bit then choice.1.2 else choice.1.1)
+    let guessOut ← (OracleComp.interpret
+      (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifFin m))
+        (cca2Phase2Oracle encOut decrypt n keys.2 ct))
+      (adversary.guess n choice.2 ct)).run ()
+    return guessOut.1
+  else
+    return false
+
+/-- Unconditional single-challenge 1CCA experiment (`valid := fun _ _ _ _ => true`), for
+fixed-length message spaces `Msg` where every pair `(m₀, m₁) : Msg × Msg` is admissible. -/
+noncomputable abbrev cca2Game {Msg Out : Type} (encOut : Out ↪ List Bool)
+    (keyGen : ℕ → ProbComp (List Bool × List Bool))
+    (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
+    (decrypt : ℕ → List Bool → List Bool → Option Out)
+    (adversary : CCA2AdversaryOf Msg) (bit : Bool) (n : ℕ) : ProbComp Bool :=
+  cca2GameOn (fun _ _ _ _ => true) encOut keyGen encrypt decrypt adversary bit n
 
 /-- Single-challenge 1CCA security ([BonehShoup2023], Section 12.1, Definition 12.2, printed p. 468)
-over message encoding `encMsg` and decryption output encoding `encOut`. -/
-def INDCCA2Of {Msg Out : Type} (encMsg : Msg ↪ List Bool) (encOut : Out ↪ List Bool)
+with respect to challenge-pair admissibility predicate `valid`, message encoding `encMsg`, and
+decryption output encoding `encOut`. -/
+def INDCCA2On {Msg Out : Type} (valid : ℕ → List Bool → Msg → Msg → Bool)
+    (encMsg : Msg ↪ List Bool) (encOut : Out ↪ List Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option Out) : Prop :=
   Game.Indistinguishable
-    (fun adversary n => ProbComp.eval (cca2Game encOut keyGen encrypt decrypt adversary false n))
-    (fun adversary n => ProbComp.eval (cca2Game encOut keyGen encrypt decrypt adversary true n))
+    (fun adversary n =>
+      ProbComp.eval (cca2GameOn valid encOut keyGen encrypt decrypt adversary false n))
+    (fun adversary n =>
+      ProbComp.eval (cca2GameOn valid encOut keyGen encrypt decrypt adversary true n))
     (CCA2AdversaryOf.IsPPT encMsg)
+
+/-- Single-challenge 1CCA security ([BonehShoup2023], Section 12.1, Definition 12.2, printed p. 468)
+over a fixed-length message space `Msg` (`valid := fun _ _ _ _ => true`). -/
+abbrev INDCCA2Of {Msg Out : Type} (encMsg : Msg ↪ List Bool) (encOut : Out ↪ List Bool)
+    (keyGen : ℕ → ProbComp (List Bool × List Bool))
+    (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
+    (decrypt : ℕ → List Bool → List Bool → Option Out) : Prop :=
+  INDCCA2On (fun _ _ _ _ => true) encMsg encOut keyGen encrypt decrypt
 
 /-- Single-challenge 1CCA security for bit encryption (`Msg = Bool`, `Out = Bool`). -/
 abbrev INDCCA2 (keyGen : ℕ → ProbComp (List Bool × List Bool))
@@ -274,12 +329,12 @@ abbrev INDCCA2 (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option Bool) : Prop :=
   INDCCA2Of encBool encBool keyGen encrypt decrypt
 
-/-- Single-challenge 1CCA security for bit-word encryption (`Msg = List Bool`,
-`Out = List Bool`). -/
+/-- Single-challenge 1CCA security for bit-string encryption (`Msg = List Bool`, `Out = List Bool`)
+under Attack Game 12.1's equal-length challenge rule `m₀.length == m₁.length`. -/
 abbrev WordINDCCA2 (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool))
     (decrypt : ℕ → List Bool → List Bool → Option (List Bool)) : Prop :=
-  INDCCA2Of encBits encBits keyGen encrypt decrypt
+  INDCCA2On (fun _ _ m₀ m₁ => m₀.length == m₁.length) encBits encBits keyGen encrypt decrypt
 
 /-- Running Phase 1 (`adversary.choose`) against `cca2Phase1Oracle` is uniformly strict PPT in
 `(n, pk, sk)` whenever `decrypt` is computable in polynomial time. -/
@@ -414,14 +469,18 @@ theorem isPPTOn_run_cca2Phase2Oracle {Msg Out : Type} {encMsg : Msg ↪ List Boo
         subst hresEq
         exact ⟨trivial, le_rfl, Nat.le_add_right _ _⟩)
 
-/-- The complete `cca2Game` experiment is uniformly strict PPT on the unary security parameter
-whenever `keyGen`, `encrypt`, `decrypt`, and `adversary` are admissible. -/
+/-- The complete `cca2GameOn` experiment is uniformly strict PPT on the unary security parameter
+whenever `valid`, `keyGen`, `encrypt`, `decrypt`, and `adversary` are admissible. -/
 @[program_certificate]
-theorem isPPTOn_cca2Game {Msg Out : Type} {encMsg : Msg ↪ List Bool} {encOut : Out ↪ List Bool}
+theorem isPPTOn_cca2GameOn {Msg Out : Type} {encMsg : Msg ↪ List Bool} {encOut : Out ↪ List Bool}
+    {valid : ℕ → List Bool → Msg → Msg → Bool}
     {keyGen : ℕ → ProbComp (List Bool × List Bool)}
     {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
     {decrypt : ℕ → List Bool → List Bool → Option Out}
     {adversary : CCA2AdversaryOf Msg}
+    (hvalid : ComputableInPolyTime
+      (fun p : ℕ × List Bool × Msg × Msg => valid p.1 p.2.1 p.2.2.1 p.2.2.2)
+      (encPair encUnary (encPair encBits (encPair encMsg encMsg))) encBool)
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
     (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encMsg)) encBits
       (fun p => encrypt p.1 p.2.1 p.2.2))
@@ -429,7 +488,7 @@ theorem isPPTOn_cca2Game {Msg Out : Type} {encMsg : Msg ↪ List Bool} {encOut :
       (fun p : ℕ × List Bool × List Bool => decrypt p.1 p.2.1 p.2.2)
       (encPair encUnary (encPair encBits encBits)) (encOption encOut))
     (hA : adversary.IsPPT encMsg) (bit : Bool) :
-    IsPPTOn encUnary encBool (cca2Game encOut keyGen encrypt decrypt adversary bit) := by
+    IsPPTOn encUnary encBool (cca2GameOn valid encOut keyGen encrypt decrypt adversary bit) := by
   let E1 := encPair encUnary (encPair encBits encBits)
   let EChoice := encPair (encPair (encPair encMsg encMsg) encBits) (encFinite Unit)
   let E2 := encPair E1 EChoice
@@ -441,17 +500,37 @@ theorem isPPTOn_cca2Game {Msg Out : Type} {encMsg : Msg ↪ List Bool} {encOut :
             (cca2Phase1Oracle encOut decrypt p.1 p.2.2))
           (adversary.choose p.1 p.2.1)).run ()) :=
     isPPTOn_run_cca2Phase1Oracle hdecrypt hA
+  have hm0 : ComputableTidilyInPolyTime
+      (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) => p.2.1.1.1)
+      E2 encMsg :=
+    (ComputableTidilyInPolyTime.fst _ _).comp
+      ((ComputableTidilyInPolyTime.fst _ _).comp
+        ((ComputableTidilyInPolyTime.fst _ _).comp (ComputableTidilyInPolyTime.snd _ _)))
+  have hm1 : ComputableTidilyInPolyTime
+      (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) => p.2.1.1.2)
+      E2 encMsg :=
+    (ComputableTidilyInPolyTime.snd _ _).comp
+      ((ComputableTidilyInPolyTime.fst _ _).comp
+        ((ComputableTidilyInPolyTime.fst _ _).comp (ComputableTidilyInPolyTime.snd _ _)))
+  have hvalidArg : ComputableTidilyInPolyTime
+      (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) =>
+        (p.1.1, p.1.2.1, p.2.1.1.1, p.2.1.1.2))
+      E2 (encPair encUnary (encPair encBits (encPair encMsg encMsg))) :=
+    ComputableTidilyInPolyTime.prod (by fun_prop)
+      (ComputableTidilyInPolyTime.prod (by fun_prop)
+        (ComputableTidilyInPolyTime.prod hm0 hm1))
+  have hvalidStep : ComputableTidilyInPolyTime
+      (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) =>
+        valid p.1.1 p.1.2.1 p.2.1.1.1 p.2.1.1.2)
+      E2 encBool :=
+    hvalid.tidy.comp hvalidArg
   have hmsg : ComputableTidilyInPolyTime
       (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) =>
         if bit then p.2.1.1.2 else p.2.1.1.1)
       E2 encMsg := by
     cases bit
-    · exact (ComputableTidilyInPolyTime.fst _ _).comp
-        ((ComputableTidilyInPolyTime.fst _ _).comp
-          ((ComputableTidilyInPolyTime.fst _ _).comp (ComputableTidilyInPolyTime.snd _ _)))
-    · exact (ComputableTidilyInPolyTime.snd _ _).comp
-        ((ComputableTidilyInPolyTime.fst _ _).comp
-          ((ComputableTidilyInPolyTime.fst _ _).comp (ComputableTidilyInPolyTime.snd _ _)))
+    · exact hm0
+    · exact hm1
   have hencArg : ComputableInPolyTime
       (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) =>
         (p.1.1, p.1.2.1, if bit then p.2.1.1.2 else p.2.1.1.1))
@@ -481,7 +560,39 @@ theorem isPPTOn_cca2Game {Msg Out : Type} {encMsg : Msg ↪ List Bool} {encOut :
           (adversary.guess p.1.1.1 p.1.2.1.2 p.2)).run ()
         return guessOut.1) :=
     hphase2.bind (ComputableTidilyInPolyTime.fst _ _).isPPTOn
-  exact hkeyGen.bind_with (hphase1.bind_with (hencStep.bind_with hphase2Bool))
+  have hbranch : IsPPTOn E2 encBool
+      (fun p : (ℕ × (List Bool × List Bool)) × (((Msg × Msg) × List Bool) × Unit) =>
+        if valid p.1.1 p.1.2.1 p.2.1.1.1 p.2.1.1.2 then do
+          let ct ← encrypt p.1.1 p.1.2.1 (if bit then p.2.1.1.2 else p.2.1.1.1)
+          let guessOut ← (OracleComp.interpret
+            (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifFin m))
+              (cca2Phase2Oracle encOut decrypt p.1.1 p.1.2.2 ct))
+            (adversary.guess p.1.1 p.2.1.2 ct)).run ()
+          return guessOut.1
+        else
+          return false) :=
+    IsPPTOn.cond hvalidStep (hencStep.bind_with hphase2Bool)
+      (ComputableTidilyInPolyTime.const false).isPPTOn
+  exact hkeyGen.bind_with (hphase1.bind_with hbranch)
+
+/-- The complete `cca2Game` experiment is uniformly strict PPT on the unary security parameter
+whenever `keyGen`, `encrypt`, `decrypt`, and `adversary` are admissible. -/
+@[program_certificate]
+theorem isPPTOn_cca2Game {Msg Out : Type} {encMsg : Msg ↪ List Bool} {encOut : Out ↪ List Bool}
+    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
+    {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
+    {decrypt : ℕ → List Bool → List Bool → Option Out}
+    {adversary : CCA2AdversaryOf Msg}
+    (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
+    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encMsg)) encBits
+      (fun p => encrypt p.1 p.2.1 p.2.2))
+    (hdecrypt : ComputableInPolyTime
+      (fun p : ℕ × List Bool × List Bool => decrypt p.1 p.2.1 p.2.2)
+      (encPair encUnary (encPair encBits encBits)) (encOption encOut))
+    (hA : adversary.IsPPT encMsg) (bit : Bool) :
+    IsPPTOn encUnary encBool (cca2Game encOut keyGen encrypt decrypt adversary bit) :=
+  isPPTOn_cca2GameOn (ComputableTidilyInPolyTime.const true).computableInPolyTime
+    hkeyGen hencrypt hdecrypt hA bit
 
 /-- Lift a chosen-plaintext `Adversary` to a 0-query `CCA2Adversary`. -/
 def CCA2Adversary.ofCPA (adversary : Adversary) : CCA2Adversary where
@@ -509,9 +620,9 @@ theorem eval_cca2Game_ofCPA {Out : Type} (encOut : Out ↪ List Bool)
     (adversary : Adversary) (bit : Bool) (n : ℕ) :
     ProbComp.eval (cca2Game encOut keyGen encrypt decrypt (CCA2Adversary.ofCPA adversary) bit n) =
       ProbComp.eval (game keyGen encrypt adversary bit n) := by
-  simp only [cca2Game, game, CCA2Adversary.ofCPA, ProbComp.eval_bind, ProbComp.eval_pure,
-    ProbOracleComp.eval_run_interpret, ProbOracleComp.run_interpret_sample, PMF.bind_map,
-    PMF.bind_pure, Function.comp_def]
+  simp only [cca2Game, cca2GameOn, ↓reduceIte, game, CCA2Adversary.ofCPA, ProbComp.eval_bind,
+    ProbComp.eval_pure, ProbOracleComp.eval_run_interpret, ProbOracleComp.run_interpret_sample,
+    PMF.bind_map, PMF.bind_pure, Function.comp_def]
 
 /-- **1CCA security implies IND-CPA security**: any bit encryption scheme satisfying `INDCCA2Of`
 also satisfies `INDCPA`. -/
