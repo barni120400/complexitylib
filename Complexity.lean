@@ -1077,6 +1077,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCombi
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OLoops
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListBinaryLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
