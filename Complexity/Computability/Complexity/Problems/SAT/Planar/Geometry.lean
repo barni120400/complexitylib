@@ -17,6 +17,7 @@ public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.Nodup
 import Mathlib.Data.List.Flatten
+import Mathlib.Data.List.Forall2
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -45,8 +46,11 @@ ordinary center spokes. Their translated supports are confined to the correspond
 * `Cslib.Complexity.SAT.PlanarCompile.positions_nodup`: every actual output vertex has a
   distinct displayed position under those same source bounds.
 
-These results do not yet certify the complete planar drawing: incidence-order endpoint transport,
-nonincident-vertex avoidance and global route contacts remain to be proved.
+* `Cslib.Complexity.SAT.PlanarCompile.routes_endpoints`: actual incidence-order endpoints,
+  including repeated literal occurrences and compact variable indices.
+
+These results do not yet certify the complete planar drawing: nonincident-vertex avoidance and
+global route contacts remain to be proved.
 
 ## References
 
@@ -1266,5 +1270,198 @@ theorem positions_nodup {φ : CNF ℕ}
     (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) : (positions φ).Nodup :=
   (variablePositions_nodup φ).append (clausePositions_nodup hw hv)
     (variable_clause_positions_disjoint φ)
+
+private theorem originalClause_endpoints {φ : CNF ℕ} {sites : List Point}
+    {pc : PlacedClause} (hpc : pc ∈ originalClauses φ sites)
+    {l : Literal Variable} {r : Route} (hlr : (l, r) ∈ pc.1.zip pc.2.2) :
+    r.head? = some pc.2.1 ∧ r.getLast? = some (variablePosition l.1) := by
+  obtain ⟨⟨c, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+  dsimp only at hlr ⊢
+  rw [← List.zip_of_prod rfl rfl] at hlr
+  obtain ⟨⟨sourceLiteral, j⟩, hlj, heq⟩ := List.mem_map.mp hlr
+  have ho : (i, j, sourceLiteral) ∈ Cslib.Logic.PL.occurrences φ :=
+    List.mem_flatMap.mpr ⟨(c, i), hci, List.mem_map.mpr ⟨(sourceLiteral, j), hlj, rfl⟩⟩
+  dsimp only [lastLiteral] at heq
+  obtain ⟨rfl, rfl⟩ := Prod.mk.inj heq
+  have hlast : (occurrencePath φ (i, j, sourceLiteral)).getLastD (0, 0) =
+      Layout.center (φ.distinctVars.length + i) := by
+    rw [List.getLastD_eq_getLast?, (occurrencePath_endpoints ho).2]
+    rfl
+  simpa only [hlast] using finalRoute_endpoints sites
+    ((occurrencePath φ (i, j, sourceLiteral)).getD
+      ((occurrencePath φ (i, j, sourceLiteral)).length - 2) (0, 0))
+    ((occurrencePath φ (i, j, sourceLiteral)).getLastD (0, 0))
+
+private theorem crossing_literal_routes_cover : ∀ i : Fin 74,
+    ((Crossover.splitFormula.getD i.val []).zip
+      ((Crossover.incidenceRoutes.filter fun e => e.1 == i.val).map fun e => e.2.2)).all
+        (fun lr => decide ((i.val, lr.1.1, lr.2) ∈ Crossover.incidenceRoutes)) = true := by
+  decide +kernel
+
+private theorem crossingClause_endpoints {c : Point} {pc : PlacedClause}
+    (hpc : pc ∈ crossingClauses c) {l : Literal Variable} {r : Route}
+    (hlr : (l, r) ∈ pc.1.zip pc.2.2) :
+    r.head? = some pc.2.1 ∧ r.getLast? = some (variablePosition l.1) := by
+  obtain ⟨⟨sourceClause, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+  have hi : i < 74 := by
+    simpa only [Nat.zero_add, Crossover.length_splitFormula] using (List.mem_zipIdx hci).2.1
+  have hc : sourceClause = Crossover.splitFormula.getD i [] := by
+    rw [List.getD_eq_getElem _ _ (by simpa only [Crossover.length_splitFormula] using hi)]
+    simpa only [Nat.sub_zero] using (List.mem_zipIdx hci).2.2
+  change (l, r) ∈
+    (sourceClause.map (Prod.map (fun v => (c, some v)) id)).zip
+      ((Crossover.incidenceRoutes.filter fun e => e.1 == i).map
+        (fun e => translate (cellOrigin 120 c) e.2.2)) at hlr
+  have hmap : ((Crossover.incidenceRoutes.filter fun e => e.1 == i).map
+      (fun e => translate (cellOrigin 120 c) e.2.2)) =
+      ((Crossover.incidenceRoutes.filter fun e => e.1 == i).map fun e => e.2.2).map
+        (translate (cellOrigin 120 c)) := by rw [List.map_map]; rfl
+  rw [hmap, List.zip_map] at hlr
+  obtain ⟨⟨oldLiteral, oldRoute⟩, hold, heq⟩ := List.mem_map.mp hlr
+  rw [hc] at hold
+  have he : (i, oldLiteral.1, oldRoute) ∈ Crossover.incidenceRoutes :=
+    of_decide_eq_true (List.all_eq_true.mp (crossing_literal_routes_cover ⟨i, hi⟩) _ hold)
+  change (((c, some oldLiteral.1), oldLiteral.2),
+    translate (cellOrigin 120 c) oldRoute) = (l, r) at heq
+  obtain ⟨rfl, rfl⟩ := Prod.mk.inj heq
+  have hend := Crossover.incidence_endpoints _ he
+  constructor
+  · simp only [translate, List.head?_map, hend.2.1, Option.map_some]
+    congr 1
+    exact add_comm _ _
+  · simp only [translate, List.getLast?_map, hend.2.2, Option.map_some,
+      variablePosition, Option.elim_some]
+    congr 1
+    exact add_comm _ _
+
+/-- Every literal/route pair in every actual placed clause has the declared endpoints.
+The statement retains literal order, including all original repeated literal occurrences. -/
+theorem placedClause_endpoints (φ : CNF ℕ) {pc : PlacedClause} (hpc : pc ∈ placedClauses φ)
+    {l : Literal Variable} {r : Route} (hlr : (l, r) ∈ pc.1.zip pc.2.2) :
+    r.head? = some pc.2.1 ∧ r.getLast? = some (variablePosition l.1) := by
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨_, _, hpc⟩) | ⟨o, ho, hpc⟩
+  · exact originalClause_endpoints hpc hlr
+  · exact crossingClause_endpoints hpc hlr
+  · obtain ⟨e, he, rfl⟩ := List.mem_map.mp hpc
+    have he' : e ∈ (occurrencePath φ o).consecutivePairs := by
+      rw [consecutivePairs_dropLast] at he
+      exact (List.dropLast_sublist _).subset he
+    exact link_endpoints _ _ (occurrencePath_unit ho he') hlr
+
+private theorem positions_getD_raw_variable (φ : CNF ℕ) {v : Variable}
+    (hv : v ∈ (rawFormula φ).vars) :
+    (positions φ).getD ((rawFormula φ).distinctVars.idxOf v) (0, 0) = variablePosition v := by
+  have hi := List.idxOf_lt_length_of_mem (CNF.mem_distinctVars.mpr hv)
+  rw [positions, List.getD_append _ _ _ _ (by simpa only [List.length_map] using hi)]
+  rw [List.getD_eq_getElem _ _ (by simpa only [List.length_map] using hi), List.getElem_map]
+  congr 1
+  exact List.getElem_idxOf hi
+
+/-- The graph's actual variable vertex index resolves to its emitted structured position. -/
+theorem drawingPosition_raw_variable (φ : CNF ℕ) {v : Variable}
+    (hv : v ∈ (rawFormula φ).vars) :
+    Graph.drawingPosition (SAT.incidenceGraph (rawFormula φ)) (positions φ, routes φ)
+      ((rawFormula φ).distinctVars.idxOf v) = variablePosition v := by
+  have hi := List.idxOf_lt_length_of_mem (CNF.mem_distinctVars.mpr hv)
+  change (positions φ).getD ((List.range _).idxOf ((rawFormula φ).distinctVars.idxOf v))
+    (0, 0) = _
+  rw [idxOf_range_eq (by omega)]
+  exact positions_getD_raw_variable φ hv
+
+/-- The graph's actual clause vertex index resolves to the placed clause at that index. -/
+theorem drawingPosition_raw_clause (φ : CNF ℕ) {i : ℕ} (hi : i < (placedClauses φ).length) :
+    Graph.drawingPosition (SAT.incidenceGraph (rawFormula φ)) (positions φ, routes φ)
+      ((rawFormula φ).distinctVars.length + i) = ((placedClauses φ)[i]).2.1 := by
+  change (positions φ).getD ((List.range _).idxOf ((rawFormula φ).distinctVars.length + i))
+    (0, 0) = _
+  have hlen : (rawFormula φ).length = (placedClauses φ).length := by
+    simp only [rawFormula, List.length_map]
+  rw [idxOf_range_eq (by omega), positions,
+    List.getD_append_right _ _ _ _ (by simp only [List.length_map]; omega)]
+  simp only [List.length_map, Nat.add_sub_cancel_left]
+  rw [List.getD_eq_getElem _ _ (by simpa only [List.length_map] using hi), List.getElem_map]
+
+private theorem forall₂_flatMap_same {A B C : Type*} {R : B → C → Prop}
+    (xs : List A) (f : A → List B) (g : A → List C)
+    (h : ∀ a ∈ xs, List.Forall₂ R (f a) (g a)) :
+    List.Forall₂ R (xs.flatMap f) (xs.flatMap g) := by
+  induction xs with
+  | nil => exact List.Forall₂.nil
+  | cons a xs ih =>
+    exact List.rel_append (h a List.mem_cons_self)
+      (ih (fun b hb => h b (List.mem_cons_of_mem _ hb)))
+
+private theorem map_zipIdx_ignore {A B : Type*} (xs : List A) (f : A → B) :
+    (xs.zipIdx.map fun a => f a.1) = xs.map f := by
+  calc
+    _ = (xs.zipIdx.map Prod.fst).map f := by rw [List.map_map]; rfl
+    _ = _ := by rw [List.zipIdx_map_fst]
+
+private theorem raw_edges_eq (φ : CNF ℕ) :
+    (SAT.incidenceGraph (rawFormula φ)).2 =
+      (placedClauses φ).zipIdx.flatMap fun pci => pci.1.1.map fun l =>
+        ((rawFormula φ).distinctVars.idxOf l.1, (rawFormula φ).distinctVars.length + pci.2) := by
+  simp only [SAT.incidenceGraph, Cslib.Logic.PL.occurrences, rawFormula, List.zipIdx_map,
+    List.flatMap_map, List.map_flatMap, List.map_map, Function.comp_def,
+    Prod.map_fst, Prod.map_snd, id_eq, List.idxOf, beq_eq_decide]
+  congr 1
+  funext pci
+  simpa only [rawFormula, List.idxOf, beq_eq_decide] using
+    map_zipIdx_ignore pci.1.1 (fun l =>
+      ((rawFormula φ).distinctVars.idxOf l.1, (rawFormula φ).distinctVars.length + pci.2))
+
+private theorem raw_routes_eq (φ : CNF ℕ) :
+    routes φ = (placedClauses φ).zipIdx.flatMap (fun pci => pci.1.2.2) := by
+  calc
+    _ = ((placedClauses φ).zipIdx.map Prod.fst).flatMap (fun pc => pc.2.2) := by
+      rw [List.zipIdx_map_fst]
+      rfl
+    _ = _ := by rw [List.flatMap_map]
+
+private theorem raw_routes_endpoints (φ : CNF ℕ) :
+    List.Forall₂ (fun e r =>
+      r.head? = some (Graph.drawingPosition (SAT.incidenceGraph (rawFormula φ))
+        (positions φ, routes φ) e.2) ∧
+      r.getLast? = some (Graph.drawingPosition (SAT.incidenceGraph (rawFormula φ))
+        (positions φ, routes φ) e.1))
+      (SAT.incidenceGraph (rawFormula φ)).2 (routes φ) := by
+  rw [raw_edges_eq, raw_routes_eq]
+  apply forall₂_flatMap_same
+  intro pci hpci
+  rcases pci with ⟨pc, i⟩
+  have hpc := List.fst_mem_of_mem_zipIdx hpci
+  have hi : i < (placedClauses φ).length := by
+    simpa only [Nat.zero_add] using (List.mem_zipIdx hpci).2.1
+  have hget : pc = (placedClauses φ)[i] := by
+    simpa only [Nat.sub_zero] using (List.mem_zipIdx hpci).2.2
+  apply List.forall₂_map_left_iff.mpr
+  apply List.forall₂_iff_zip.mpr
+  refine ⟨(placedClause_route_count φ pc hpc).symm, ?_⟩
+  intro l r hlr
+  have hends := placedClause_endpoints φ hpc hlr
+  have hvar : l.1 ∈ (rawFormula φ).vars := by
+    exact CNF.mem_vars.mpr ⟨pc.1, List.mem_map_of_mem hpc, l.2, (List.of_mem_zip hlr).1⟩
+  change r.head? = some (Graph.drawingPosition (SAT.incidenceGraph (rawFormula φ))
+      (positions φ, routes φ) ((rawFormula φ).distinctVars.length + i)) ∧
+    r.getLast? = some (Graph.drawingPosition (SAT.incidenceGraph (rawFormula φ))
+      (positions φ, routes φ) ((rawFormula φ).distinctVars.idxOf l.1))
+  rw [drawingPosition_raw_clause φ hi, drawingPosition_raw_variable φ hvar, ← hget]
+  exact hends
+
+/-- Every actual indexed route has its actual incident graph vertices as endpoints, in
+clause-to-variable order. Compaction and repeated edge occurrences preserve that order. -/
+theorem routes_endpoints (φ : CNF ℕ) {i : ℕ}
+    (hi : i < (SAT.incidenceGraph (formula φ)).2.length) :
+    let r := (routes φ).getD i []
+    r.head? = some (Graph.drawingPosition (SAT.incidenceGraph (formula φ))
+      (positions φ, routes φ) (SAT.incidenceGraph (formula φ)).2[i].2) ∧
+    r.getLast? = some (Graph.drawingPosition (SAT.incidenceGraph (formula φ))
+      (positions φ, routes φ) (SAT.incidenceGraph (formula φ)).2[i].1) := by
+  simp only [incidenceGraph_formula] at hi ⊢
+  have hir : i < (routes φ).length := by
+    rwa [routes_length, incidenceGraph_formula]
+  have h := (raw_routes_endpoints φ).get hi hir
+  simpa only [List.get_eq_getElem, List.getD_eq_getElem _ _ hir] using h
 
 end Cslib.Complexity.SAT.PlanarCompile
