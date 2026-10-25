@@ -34,6 +34,9 @@ base scheme, or fixed-key evaluation without a predetermined budget.
 * `Cslib.Crypto.Homomorphic.Leveled.exists_scheme_of_polynomiallyBounded`: every polynomially
   bounded depth family is covered by an actual efficient and secure scheme, without requiring
   the requested family to be computable.
+* `Cslib.Crypto.Homomorphic.Leveled.schemeFamily_spec`: the depth-indexed family
+  `fun d => scheme D (fun _ => d)` satisfies Gentry's Definition 3 with one uniform polynomial
+  clock in `(n, d)` jointly across all depths.
 
 ## References
 
@@ -124,5 +127,55 @@ theorem exists_scheme_of_polynomiallyBounded {E : Scheme}
     computableTidilyInPolyTime_scheme_decrypt D hD budget,
     isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hbudget,
     indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length hbudget D⟩
+
+/-- The depth-indexed family `fun d => scheme D (fun _ => d)` (`{E^(d) : d ∈ ℕ}` in
+[Gentry2009, Definition 3, p. 170]) shares one uniform strict PPT clock jointly in `(n, d)`
+for key generation and evaluation, one parameter-only clock for encryption and decryption, and
+satisfies correctness, exact fixed widths, and IND-CPA at every depth `d`. Any budget-specific
+scheme `scheme D budget` is obtained by substituting `d = budget n` at each parameter `n`. -/
+theorem schemeFamily_spec {E : Scheme} {secretWidth ciphertextWidth : ℕ → ℕ}
+    (D : DecryptionCircuits E secretWidth ciphertextWidth)
+    (hE : E.Correct) (hwidth : E.FixedWidth secretWidth ciphertextWidth)
+    (hboot : Scheme.Bootstrappable D)
+    (hsecure : Encryption.INDCPA E.keyGen E.encrypt)
+    (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) E.keyGen)
+    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
+      (fun p => E.encrypt p.1 p.2.1 p.2.2))
+    (hevaluate : IsPPTOn
+      (encPair encUnary (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits))))
+      encBits (fun p => E.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2))
+    (hD : ComputableInPolyTime
+      (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
+      encUnary (Boolean.encCircuit 1)) :
+    PolynomiallyBounded (fun n => 3 * secretWidth n + 1) ∧
+      PolynomiallyBounded (fun n => ciphertextWidth n + 1) ∧
+      IsPPTOn (encPair encUnary encUnary) (encPair encBits encBits)
+        (fun p : ℕ × ℕ => (scheme D (fun _ => p.2)).keyGen p.1) ∧
+      IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
+        (fun p => (scheme D (fun _ => 0)).encrypt p.1 p.2.1 p.2.2) ∧
+      ComputableInPolyTime
+        (fun p : ℕ × List Bool × List Bool => (scheme D (fun _ => 0)).decrypt p.1 p.2.1 p.2.2)
+        (encPair encUnary (encPair encBits encBits)) encBool ∧
+      IsPPTOn
+        (encPair encUnary (encPair encUnary
+          (encPair encBits (encPair (Boolean.encCircuit 1) (encList encBits)))))
+        encBits
+        (fun p => (scheme D (fun _ => p.2.1)).evaluate p.1 p.2.2.1 p.2.2.2.1 p.2.2.2.2) ∧
+      ∀ d : ℕ,
+        (scheme D (fun _ => d)).Correct ∧
+          (∀ n c, c.2.depth ≤ d → (scheme D (fun _ => d)).permitted n c) ∧
+          (scheme D (fun _ => d)).FixedWidth (fun n => 3 * secretWidth n + 1)
+            (fun n => ciphertextWidth n + 1) ∧
+          Encryption.INDCPA (scheme D (fun _ => d)).keyGen (scheme D (fun _ => d)).encrypt := by
+  have hD' := hD.tidy
+  refine ⟨(polynomiallyBounded_widths D hD').1, (polynomiallyBounded_widths D hD').2,
+    isPPTOn_keyGen hkeyGen hencrypt (by fun_prop) (by fun_prop),
+    isPPTOn_scheme_encrypt hencrypt D (fun _ => 0),
+    (computableTidilyInPolyTime_scheme_decrypt D hD' (fun _ => 0)).computableInPolyTime,
+    isPPTOn_evaluate hencrypt D hD' hevaluate (by fun_prop) (by fun_prop)
+      (by fun_prop) (by fun_prop) (by fun_prop),
+    fun d => ⟨correct D hE hwidth hboot (fun _ => d), fun _ _ hc => hc,
+      fixedWidth D hE hwidth hboot (fun _ => d),
+      indCPA_scheme hsecure hkeyGen hencrypt hwidth.secret_length (by fun_prop) D⟩⟩
 
 end Cslib.Crypto.Homomorphic.Leveled
