@@ -64,6 +64,32 @@ class QuickCheckTests(unittest.TestCase):
         self.assertEqual(self.plan().targets,
                          ["Demo.Base", "Demo.Middle", "DemoTests.AllClient", "DemoTests.Client"])
 
+    def use_glob_test_library(self, globs='["DemoTests.+"]'):
+        """Switch the fixture's test library to the repository's glob layout: no aggregator."""
+        self.write("lakefile.toml", 'name = "quickfixture"\n[[lean_lib]]\nname = "Demo"\n'
+                   f'[[lean_lib]]\nname = "DemoTests"\nroots = []\nglobs = {globs}\n')
+        (self.root / "DemoTests.lean").unlink()
+        self.commit()
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")
+
+    def test_glob_test_library_plans_affected_tests(self):
+        self.use_glob_test_library()
+        self.write("Demo/Base.lean", "def value : Nat := 2\n")
+        self.assertEqual(self.plan().targets,
+                         ["Demo.Base", "Demo.Middle", "DemoTests.AllClient", "DemoTests.Client"])
+
+    def test_other_glob_layouts_fall_back(self):
+        self.use_glob_test_library('["DemoTests.*"]')
+        self.write("Demo/Base.lean", "def value : Nat := 2\n")
+        with self.assertRaises(quick.FullCheck):
+            self.plan()
+
+    def test_glob_library_with_aggregator_falls_back(self):
+        self.use_glob_test_library()
+        self.write("DemoTests.lean", "import DemoTests.Client\n")
+        with self.assertRaises(quick.FullCheck):
+            self.plan()
+
     def test_test_helper_and_diamond(self):
         self.write("DemoTests/Helper.lean", "import Demo.Middle\n")
         self.write("DemoTests/Client.lean", "import Demo.Base\nimport DemoTests.Helper\n")
