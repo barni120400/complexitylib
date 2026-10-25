@@ -37,9 +37,9 @@ example : MCSP.tableFunction 2 [false, true, true, false] ![true, false] = true 
 example : MCSP.tableFunction 2 [false, true, true, false] ![true, true] = false := by decide
 example : Kannan.table 0 0 (List.replicate 10 true) = List.replicate 8 true := by decide
 
--- GapMCSP bundles `GapMCSP.yes`, `GapMCSP.no`, and `GapMCSP.disjoint_yes_no` as a `PromiseProblem`.
-example (s : ℕ → ℕ) (n : ℕ) :
-    GapMCSP s s n le_rfl = PromiseProblem.ofSet (GapMCSP.yes s n) := by simp
+-- GapMCSP bundles `GapMCSP.yesSet`, `GapMCSP.noSet`, and `GapMCSP.disjoint_yesSet_noSet`.
+example (s : ℕ → ℕ) :
+    (GapMCSP s s fun _ => le_rfl).yes = GapMCSP.yesSet s := rfl
 
 example : BitString.binaryValue [true, false, true] = 5 := by decide
 example {u v : List Bool} (hlen : u.length = v.length)

@@ -155,11 +155,13 @@ example : (⟨1, ![true, false], 0⟩ : MCSP.Instance) ∉ MCSP := by
   · have := hV []; revert this; cases b <;> decide
   · simp [certLength, MCSP.budget] at hu
 
-example : ![false, true] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) 1 le_rfl).yes :=
-  MCSP.mem_of_verifier_eq_true (x := ⟨1, ![false, true], 0⟩) (w := certificate 1 0 [] 0) (by decide)
+example : [false, true] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) fun _ => le_rfl).yes :=
+  (GapMCSP.ofFn_mem_yesSet_iff_mem_MCSP (n := 1) (T := ![false, true])).mpr
+    (MCSP.mem_of_verifier_eq_true (x := ⟨1, ![false, true], 0⟩) (w := certificate 1 0 [] 0)
+      (by decide))
 
-example : ![true, false] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) 1 le_rfl).no := by
-  rw [GapMCSP.no_eq, GapMCSP.no_eq_compl_yes, Set.mem_compl_iff, GapMCSP.mem_yes_iff]
+example : [true, false] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) fun _ => le_rfl).no := by
+  refine (GapMCSP.ofFn_mem_noSet_iff_not_mem_MCSP (n := 1) (T := ![true, false])).mpr ?_
   intro hx
   obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := MCSP.exists_verifier_append hx
   · revert hu; decide
