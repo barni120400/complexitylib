@@ -509,6 +509,10 @@ public import Complexity.Computability.Communication.Functions
 public import Complexity.Computability.Communication.Inclusion
 public import Complexity.Computability.Communication.InnerProductRank
 public import Complexity.Computability.Communication.KarchmerWigderson
+public import Complexity.Computability.Communication.Lifting.Density
+public import Complexity.Computability.Communication.Lifting.Gadget
+public import Complexity.Computability.Communication.Lifting.Partition
+public import Complexity.Computability.Communication.Lifting.Simulation
 public import Complexity.Computability.Communication.Newman
 public import Complexity.Computability.Communication.Operations
 public import Complexity.Computability.Communication.Protocol
@@ -1655,6 +1659,7 @@ public import Complexity.Foundations.Combinatorics.FunctionalGraph.Projection
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Spectrum
 public import Complexity.Foundations.Combinatorics.Hoeffding
 public import Complexity.Foundations.Combinatorics.Hypergeometric
+public import Complexity.Foundations.Combinatorics.Janson
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
 public import Complexity.Foundations.Combinatorics.LineCode.HighRate
