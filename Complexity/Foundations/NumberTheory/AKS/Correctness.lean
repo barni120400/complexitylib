@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.NumberTheory.AKS.Introspective
+import Complexity.Foundations.Combinatorics.CentralBinomial
 import Mathlib.Data.Nat.Choose.Central
 import Mathlib.Data.Sym.Card
 import Mathlib.NumberTheory.Cyclotomic.PrimitiveRoots
@@ -94,21 +95,6 @@ theorem exists_eq_pow_of_pow_mul_pow_eq {p q i j i' j' : ℕ} (hp : p.Prime) (hq
       Nat.eq_of_mul_eq_mul_left (pow_pos (Nat.pos_of_ne_zero hq) i) h
     exact (hne (Prod.ext rfl (Nat.pow_right_injective hp.two_le hj))).elim
 
-/-- `2^{B + 1} ≤ C(2B, B)` for `B ≥ 3`. -/
-theorem two_pow_succ_le_centralBinom {B : ℕ} (hB : 3 ≤ B) : 2 ^ (B + 1) ≤ B.centralBinom := by
-  induction B, hB using Nat.le_induction with
-  | base => decide
-  | succ B hB ih =>
-    have hrec := Nat.succ_mul_centralBinom_succ B
-    have : (B + 1) * (2 * 2 ^ (B + 1)) ≤ (B + 1) * (B + 1).centralBinom := by
-      rw [hrec]
-      calc
-        (B + 1) * (2 * 2 ^ (B + 1)) = ((B + 1) * 2) * 2 ^ (B + 1) := by ring
-        _ ≤ (2 * (2 * B + 1)) * 2 ^ (B + 1) := Nat.mul_le_mul_right _ (by omega)
-        _ ≤ 2 * (2 * B + 1) * B.centralBinom := Nat.mul_le_mul_left _ ih
-    rw [pow_succ, mul_comm (2 ^ (B + 1))]
-    exact Nat.le_of_mul_le_mul_left this (Nat.succ_pos B)
-
 /-! ### Products of linear polynomials -/
 
 section Bounds
@@ -150,9 +136,8 @@ theorem linProd_injective (hB : B < p) : Function.Injective (linProd (B := B) p)
 omit [Fact p.Prime] [DecidableEq K] [Algebra (ZMod p) K] in
 /-- Powers of a primitive `r`-th root of unity only depend on the exponent modulo `r`. -/
 theorem _root_.IsPrimitiveRoot.pow_eq_pow_of_natCast_eq {ζ : K} (hζ : IsPrimitiveRoot ζ r)
-    {m₁ m₂ : ℕ} (h : (m₁ : ZMod r) = m₂) : ζ ^ m₁ = ζ ^ m₂ := by
-  rw [ZMod.natCast_eq_natCast_iff'] at h
-  rw [← pow_mod_orderOf, ← pow_mod_orderOf ζ m₂, ← hζ.eq_orderOf, h]
+    {m₁ m₂ : ℕ} (h : (m₁ : ZMod r) = m₂) : ζ ^ m₁ = ζ ^ m₂ :=
+  pow_eq_pow_of_modEq ((ZMod.natCast_eq_natCast_iff m₁ m₂ r).mp h) hζ.pow_eq_one
 
 /-- **The lower bound.** Let `S` be a set of more than `B` residues modulo `r`, each the residue
 of a number introspective for every product `∏_{a ∈ s} (X + a)`. If `B < p`, these `C(2B, B)`
