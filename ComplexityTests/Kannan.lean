@@ -37,9 +37,30 @@ example : MCSP.tableFunction 2 [false, true, true, false] ![true, false] = true 
 example : MCSP.tableFunction 2 [false, true, true, false] ![true, true] = false := by decide
 example : Kannan.table 0 0 (List.replicate 10 true) = List.replicate 8 true := by decide
 
--- GapMCSP bundles `GapMCSP.yes`, `GapMCSP.no`, and `GapMCSP.disjoint_yes_no` as a `PromiseProblem`.
-example (s : ℕ → ℕ) (n : ℕ) :
-    GapMCSP s s n le_rfl = PromiseProblem.ofSet (GapMCSP.yes s n) := by simp
+-- Words whose length is not a power of two belong to neither side of GapMCSP.
+example (s : ℕ → ℕ) : [true, false, true] ∉ (GapMCSP s s fun _ => le_rfl).yes := by
+  rintro ⟨n, hn, -⟩
+  match n with
+  | 0 => revert hn; decide
+  | 1 => revert hn; decide
+  | k + 2 =>
+    have h : 3 < 2 ^ (k + 2) :=
+      calc 3 < 2 ^ 2 := by decide
+      _ ≤ 2 ^ (k + 2) := Nat.pow_le_pow_right (by omega) (by omega)
+    revert hn
+    exact ne_of_lt (by simpa using h)
+
+example (s : ℕ → ℕ) : [true, false, true] ∉ (GapMCSP s s fun _ => le_rfl).no := by
+  rintro ⟨n, hn, -⟩
+  match n with
+  | 0 => revert hn; decide
+  | 1 => revert hn; decide
+  | k + 2 =>
+    have h : 3 < 2 ^ (k + 2) :=
+      calc 3 < 2 ^ 2 := by decide
+      _ ≤ 2 ^ (k + 2) := Nat.pow_le_pow_right (by omega) (by omega)
+    revert hn
+    exact ne_of_lt (by simpa using h)
 
 example : BitString.binaryValue [true, false, true] = 5 := by decide
 example {u v : List Bool} (hlen : u.length = v.length)
