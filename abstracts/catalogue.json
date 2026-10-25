@@ -157,7 +157,28 @@
       "namespace": "ComplexityTests.Abstracts.CryptographyAbstract",
       "foundations": [
         "ComplexityAbstracts.Encoding",
-        "ComplexityAbstracts.Computation"
+        "ComplexityAbstracts.Computation",
+        "ComplexityAbstracts.Randomized"
+      ]
+    },
+    {
+      "id": "gsw-fhe",
+      "title": "Gentry and GSW: fully homomorphic encryption from LWE",
+      "module": "ComplexityAbstracts.GSWFHEAbstract",
+      "headline_theorems": [
+        "ComplexityTests.Abstracts.GSWFHEAbstract.leveled",
+        "ComplexityTests.Abstracts.GSWFHEAbstract.fullyHomomorphic"
+      ],
+      "supporting_theorems": [
+        "ComplexityTests.Abstracts.GSWFHEAbstract.base_scheme"
+      ],
+      "summary": "Bootstrapping the GSW scheme gives leveled fully homomorphic encryption from decision LWE, and fully homomorphic encryption under an additional circular-security assumption.",
+      "scope": "The named library construction at an explicit centered-binomial LWE family with quasi-polynomial modulus; perfect correctness on fresh encryptions, fixed widths, polynomial-size decryption circuits, native strict PPT algorithms and asymptotic IND-CPA. Circular security is a separate hypothesis; no lattice hardness, circuit privacy, multi-hop evaluation or concrete loss.",
+      "namespace": "ComplexityTests.Abstracts.GSWFHEAbstract",
+      "foundations": [
+        "ComplexityAbstracts.Encoding",
+        "ComplexityAbstracts.Computation",
+        "ComplexityAbstracts.Randomized"
       ]
     },
     {

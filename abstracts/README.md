@@ -1,10 +1,13 @@
 # Selected formal abstracts
 
-The catalogue promotes fifteen major result groups. Each has a checked Lean abstract with the
+The catalogue promotes seventeen major result groups. Each has a checked Lean abstract with the
 definitions needed to understand its statement, a bridge to the library proof, and an audited
 dependency boundary. Some abstracts also allowlist a few library modules for foundational models
 (for example circuit signatures or oracle runs); each such abstract names them in its docstring, and
-a reader must inspect them as well. The generated PDFs present the mathematical definitions and
+a reader must inspect them as well. The fully homomorphic encryption abstract is the exception to
+"a few": it names the library's construction instead of restating it, so it allowlists the modules
+that define the construction, while stating both assumptions and every claimed property itself.
+The generated PDFs present the mathematical definitions and
 selected statements first, followed by exact representation details and any shared foundations in
 appendices. Proof bodies are omitted. Lean checks the proofs; independent review must still check
 their intended meaning.
@@ -44,9 +47,11 @@ former paper/TeX index is retired; Git history retains its sources.
 | [Håstad and Razborov–Smolensky: parity resists shallow circuits](ComplexityAbstracts/ConstantDepthAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/constant-depth.pdf) | Explicit finite bounds, gate semantics and depth conventions; nonuniform lower bounds. |
 | [Formula lower bounds: parity and Andreev](ComplexityAbstracts/FormulaBoundsAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/formula-bounds.pdf) | De Morgan formulas, literal leaves, explicit block indexing and finite quantitative bounds; no general-circuit lower bound. |
 | [One-way functions yield pseudorandom generators and adaptive functions](ComplexityAbstracts/CryptographyAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/cryptography.pdf) | Uniform probabilistic polynomial time with explicit native evaluators, negligible advantage and full stateful oracle semantics; asymptotic security, not a concrete implementation audit. |
+| [Gentry and GSW: fully homomorphic encryption from LWE](ComplexityAbstracts/GSWFHEAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/gsw-fhe.pdf) | The named construction at an explicit LWE family with quasi-polynomial modulus; correctness, fixed widths, polynomial-size decryption circuits, native algorithms and IND-CPA, with circular security as a separate hypothesis. |
 | [Haken: pigeonhole formulas require long resolution proofs](ComplexityAbstracts/ResolutionAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/resolution.pdf) | The non-onto pigeonhole formula and a line-based resolution rule, with bound 2^(floor(n/24)); proof size is not solver runtime. |
 | [Communication: disjointness and inner product resist randomness](ComplexityAbstracts/CommunicationAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/communication.pdf) | Shared randomness, per-input error at most one third and explicit linear bounds; exact deterministic equality records the final-answer convention. |
 | [Sipser–Gács–Lautemann: BPP lies in the second polynomial level](ComplexityAbstracts/SipserLautemannAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/sipser-lautemann.pdf) | Fair random bits, explicit quantifier blocks and total native polynomial-time tests. |
+| [Chor–Goldreich: the inner product extracts from two weak sources](ComplexityAbstracts/ChorGoldreichAbstract.lean) · [PDF](https://www.cslib.io/complexitylib/abstracts/chor-goldreich.pdf) | Arbitrary sources with real min-entropy bounds, the exact bias bound and its strong form, sharpness at k1 + k2 = n; information-theoretic. |
 
 ## Generate and review PDFs
 

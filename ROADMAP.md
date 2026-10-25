@@ -63,9 +63,10 @@ Priorities live in this list and in the tiers of [#897].
 - **Gentry's bootstrapping, instantiated** ([#486]). GSW at its logarithmic-depth parameter
   family instantiates the generic theorem: leveled FHE under decision LWE with quasi-polynomial
   modulus for exactly that family, and FHE under the additional one-key circular-security
-  assumption. Open: the checked formal abstract of these endpoints, a uniform generator for the
-  leveled scheme's wrapper decryption circuits (uniform compactness), reuse of evaluated
-  ciphertexts as fresh inputs (multi-hop evaluation), and Gentry's exact concrete-security loss.
+  assumption. The checked formal abstract `gsw-fhe` names this construction. Open: a uniform
+  generator for the leveled scheme's wrapper decryption circuits (uniform compactness), reuse of
+  evaluated ciphertexts as fresh inputs (multi-hop evaluation), and Gentry's exact
+  concrete-security loss.
 - **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
   multiparty functionality admits a protocol secure against static malicious corruptions, with
   real/ideal simulation and abort, under the standard communication assumptions.
