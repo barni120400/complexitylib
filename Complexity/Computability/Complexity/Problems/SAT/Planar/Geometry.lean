@@ -11,8 +11,10 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
+public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 import Mathlib.Data.List.GetD
+import Mathlib.Data.List.Nodup
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -36,6 +38,8 @@ ordinary center spokes. Their translated supports are confined to the correspond
   `Cslib.Complexity.SAT.PlanarCompile.positions_length`: counts match the final incidence graph.
 * `Cslib.Complexity.SAT.PlanarCompile.variablePosition_injOn_rawVars`: distinct actual variable
   names have distinct displayed positions.
+* `Cslib.Complexity.SAT.PlanarCompile.pathPorts_nodup`: all directed unit-cell ports of the
+  actual paths are distinct under the source width and occurrence bounds.
 
 These results do not yet certify the complete planar drawing: all clause positions and global
 incidence contacts must also be separated.
@@ -325,6 +329,26 @@ theorem finalRoute_orthogonal (sites : List Point) {p q : Point}
     (h : Orthogonal.length p q = 1) : IsOrthogonal (center q :: access sites p q) := by
   rw [finalRoute_eq_translate sites h, isOrthogonal_translate_iff]
   exact finalLocalRoute_orthogonal _ _
+
+/-- Access length is exactly 20 inside a crossing cell and 120 inside an ordinary cell. -/
+theorem access_wireLength (sites : List Point) (p q : Point) :
+    wireLength (access sites p q) = if p ∈ sites then 20 else 120 := by
+  by_cases hp : p ∈ sites
+  · simp only [access, hp, ↓reduceIte, wireLength_translate]
+    exact (Crossover.access_route_sizes _).2
+  · rw [access_eq_spoke hp, wireLength_translate]
+    simp only [hp, ↓reduceIte]
+    generalize side p q = s
+    fin_cases s <;> decide
+
+/-- A final literal route across one unit step uses at most 240 units of wire. -/
+theorem finalRoute_wireLength_le (sites : List Point) {p q : Point}
+    (h : Orthogonal.length p q = 1) :
+    wireLength (center q :: access sites p q) ≤ 240 := by
+  rw [finalRoute_eq_translate sites h, wireLength_translate]
+  generalize side p q = s
+  generalize decide (p ∈ sites) = crossing
+  fin_cases s <;> cases crossing <;> decide
 
 /-- A final literal route is the ordinary clause-cell spoke followed by its neighbor's access.
 This equality concerns the full real supports and includes the shared boundary midpoint. -/
@@ -620,6 +644,11 @@ theorem positions_length (φ : CNF ℕ) :
     (positions φ).length = (SAT.incidenceGraph (formula φ)).1.length := by
   simp [positions, SAT.incidenceGraph, formula, CNF.distinctVars_compact, rawFormula]
 
+/-- The final compact output has exactly the same ordered incidence graph as the raw output. -/
+theorem incidenceGraph_formula (φ : CNF ℕ) :
+    SAT.incidenceGraph (formula φ) = SAT.incidenceGraph (rawFormula φ) :=
+  SAT.incidenceGraph_compact _
+
 /-- The actual displayed variable positions have no repetitions. -/
 theorem variablePositions_nodup (φ : CNF ℕ) :
     ((rawFormula φ).distinctVars.map variablePosition).Nodup :=
@@ -667,5 +696,261 @@ theorem crossingClause_mem_openCell {c : Point} {pc : PlacedClause}
     (Crossover.clausePositions.getD ci.2 (0, 0)).1 < 240 ∧
       0 < (Crossover.clausePositions.getD ci.2 (0, 0)).2 ∧
       (Crossover.clausePositions.getD ci.2 (0, 0)).2 < 240 by omega)
+
+private theorem consecutivePair_index {r : Route} {a b : Point}
+    (h : (a, b) ∈ r.consecutivePairs) :
+    ∃ (k : ℕ) (hk : k + 1 < r.length), r[k] = a ∧ r[k + 1] = b := by
+  obtain ⟨k, hk, heq⟩ := List.mem_iff_getElem.mp h
+  have hk' : k + 1 < r.length := by
+    simpa only [List.consecutivePairs, List.length_zip, List.length_tail,
+      min_eq_right (Nat.sub_le _ _), Nat.lt_sub_iff_add_lt] using hk
+  simp only [List.consecutivePairs, List.getElem_zip, List.getElem_tail] at heq
+  exact ⟨k, hk', congrArg Prod.fst heq, congrArg Prod.snd heq⟩
+
+private theorem mem_of_adjacent {r : Route} {p q : Point}
+    (h : (p, q) ∈ r.consecutivePairs ∨ (q, p) ∈ r.consecutivePairs) : p ∈ r := by
+  rcases h with h | h
+  · exact (List.of_mem_zip h).1
+  · exact List.mem_of_mem_tail (List.of_mem_zip h).2
+
+private theorem neighbor_of_straight {r : Route} {p q d : Point}
+    (ht : StraightThrough r p d) (hn : r.Nodup)
+    (h : (p, q) ∈ r.consecutivePairs ∨ (q, p) ∈ r.consecutivePairs) :
+    q = p - d ∨ q = p + d := by
+  rcases h with h | h
+  · obtain ⟨k, hk, hp, hq⟩ := consecutivePair_index h
+    have hh := ht.getD_neighbors hn (by omega) hp
+    have hd : r.getD (k + 1) p = q := by rw [List.getD_eq_getElem _ _ hk]; exact hq
+    rcases hh.2.2 with ⟨_, hnext⟩ | ⟨_, hnext⟩
+    · exact Or.inr (hd.symm.trans hnext)
+    · exact Or.inl (hd.symm.trans hnext)
+  · obtain ⟨k, hk, hq, hp⟩ := consecutivePair_index h
+    have hh := ht.getD_neighbors hn hk hp
+    have hd : r.getD (k + 1 - 1) p = q := by
+      rw [Nat.add_sub_cancel, List.getD_eq_getElem _ _ (by omega)]
+      exact hq
+    rcases hh.2.2 with ⟨hprev, _⟩ | ⟨hprev, _⟩
+    · exact Or.inl (hd.symm.trans hprev)
+    · exact Or.inr (hd.symm.trans hprev)
+
+private theorem horizontal_vertical_neighbors {p q : Point}
+    (hx : q = p - (1, 0) ∨ q = p + (1, 0))
+    (hy : q = p - (0, 1) ∨ q = p + (0, 1)) : False := by
+  rcases hx with hx | hx <;> rcases hy with hy | hy <;>
+    have h := hx.symm.trans hy <;>
+    have h' := congrArg Prod.fst h <;> simp at h'
+
+private theorem canonical_neighbor_unique (G : Graph)
+    (hG : ∀ e ∈ G.2, e.1 ∈ G.1 ∧ e.2 ∈ G.1)
+    (hloop : ∀ e ∈ G.2, e.1 ≠ e.2)
+    (hdeg : ∀ v, G.incidenceVertices.count v ≤ 3) {i j : ℕ}
+    (hi : i < G.2.length) (hj : j < G.2.length) (hij : i ≠ j) {p q : Point}
+    (hcenter : p ∉ G.orthogonalPositions)
+    (hiadj : (p, q) ∈ (G.unitPath i).consecutivePairs ∨
+      (q, p) ∈ (G.unitPath i).consecutivePairs)
+    (hjadj : (p, q) ∈ (G.unitPath j).consecutivePairs ∨
+      (q, p) ∈ (G.unitPath j).consecutivePairs) : False := by
+  have hn := Graph.unitPath_nodup G hG hloop hi
+  have hm := Graph.unitPath_nodup G hG hloop hj
+  rcases Graph.unitPath_crossing_neighbors G hG hloop hdeg hi hj hij hcenter
+      (mem_of_adjacent hiadj) (mem_of_adjacent hjadj) with ⟨hx, hy⟩ | ⟨hy, hx⟩
+  · exact horizontal_vertical_neighbors (neighbor_of_straight hx hn hiadj)
+      (neighbor_of_straight hy hm hjadj)
+  · exact horizontal_vertical_neighbors (neighbor_of_straight hx hm hjadj)
+      (neighbor_of_straight hy hn hiadj)
+
+private theorem unit_not_both_centers (G : Graph) {p q : Point}
+    (hunit : Orthogonal.length p q = 1) (hp : p ∈ G.orthogonalPositions)
+    (hq : q ∈ G.orthogonalPositions) : False := by
+  obtain ⟨i, _, rfl⟩ := List.mem_map.mp hp
+  obtain ⟨j, _, rfl⟩ := List.mem_map.mp hq
+  simp only [Orthogonal.length, Layout.center] at hunit
+  omega
+
+/-- Two actual canonical paths cannot share a unit grid edge, even in opposite directions.
+This count-free uniqueness statement also applies to the final step into a clause cell. -/
+theorem paths_shared_step_index {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {i j : ℕ} (hi : i < (paths φ).length) (hj : j < (paths φ).length) {p q : Point}
+    (he : (p, q) ∈ ((paths φ).getD i []).consecutivePairs)
+    (hf : (p, q) ∈ ((paths φ).getD j []).consecutivePairs ∨
+      (q, p) ∈ ((paths φ).getD j []).consecutivePairs) : i = j := by
+  by_contra hij
+  have hi' : i < (SAT.incidenceGraph φ).2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+  have hj' : j < (SAT.incidenceGraph φ).2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hj
+  change (p, q) ∈ ((SAT.incidenceGraph φ).unitPath i).consecutivePairs at he
+  change (p, q) ∈ ((SAT.incidenceGraph φ).unitPath j).consecutivePairs ∨
+    (q, p) ∈ ((SAT.incidenceGraph φ).unitPath j).consecutivePairs at hf
+  have hG : ∀ e ∈ (SAT.incidenceGraph φ).2,
+      e.1 ∈ (SAT.incidenceGraph φ).1 ∧ e.2 ∈ (SAT.incidenceGraph φ).1 :=
+    fun _ => SAT.incidenceGraph_endpoints
+  have hloop : ∀ e ∈ (SAT.incidenceGraph φ).2, e.1 ≠ e.2 :=
+    fun _ => SAT.incidenceGraph_loopless
+  have hdeg := SAT.incidenceGraph_degree_le hw hv
+  by_cases hp : p ∈ (SAT.incidenceGraph φ).orthogonalPositions
+  · have hq : q ∉ (SAT.incidenceGraph φ).orthogonalPositions := fun hq =>
+      unit_not_both_centers _ (Graph.unitPath_unit _ hG hloop hi' he) hp hq
+    exact canonical_neighbor_unique _ hG hloop hdeg hi' hj' hij hq (Or.inr he) hf.symm
+  · exact canonical_neighbor_unique _ hG hloop hdeg hi' hj' hij hp (Or.inl he) hf
+
+/-- At a unit neighbor, the facing side determines the neighbor itself. -/
+theorem side_injective_on_unit_neighbors {p q t : Point}
+    (hq : Orthogonal.length p q = 1) (ht : Orthogonal.length p t = 1)
+    (hside : side p q = side p t) : q = t := by
+  rcases p with ⟨px, py⟩
+  rcases unit_neighbor_cases hq with rfl | rfl | rfl | rfl <;>
+    rcases unit_neighbor_cases ht with rfl | rfl | rfl | rfl <;>
+    first | rfl | norm_num [side] at hside
+
+private def stepPorts (e : Point × Point) : List (Point × Fin 4) :=
+  [(e.1, side e.1 e.2), (e.2, side e.2 e.1)]
+
+private theorem unit_reverse {p q : Point} (h : Orthogonal.length p q = 1) :
+    Orthogonal.length q p = 1 := by
+  simp only [Orthogonal.length] at h ⊢
+  omega
+
+private theorem stepPorts_inter {e f : Point × Point} {x : Point × Fin 4}
+    (he : Orthogonal.length e.1 e.2 = 1) (hf : Orthogonal.length f.1 f.2 = 1)
+    (hx : x ∈ stepPorts e) (hy : x ∈ stepPorts f) :
+    e = f ∨ e = (f.2, f.1) := by
+  rcases e with ⟨a, b⟩
+  rcases f with ⟨c, d⟩
+  simp only [stepPorts, List.mem_cons, List.not_mem_nil, or_false] at hx hy
+  rcases hx with rfl | rfl <;> rcases hy with hy | hy
+  · obtain ⟨h, hs⟩ := Prod.mk.inj hy
+    subst c
+    have hb := side_injective_on_unit_neighbors he hf hs
+    exact Or.inl (Prod.ext rfl hb)
+  · obtain ⟨h, hs⟩ := Prod.mk.inj hy
+    subst d
+    have hb := side_injective_on_unit_neighbors he (unit_reverse hf) hs
+    exact Or.inr (Prod.ext rfl hb)
+  · obtain ⟨h, hs⟩ := Prod.mk.inj hy
+    subst c
+    have ha := side_injective_on_unit_neighbors (unit_reverse he) hf hs
+    exact Or.inr (Prod.ext ha rfl)
+  · obtain ⟨h, hs⟩ := Prod.mk.inj hy
+    subst d
+    have ha := side_injective_on_unit_neighbors (unit_reverse he) (unit_reverse hf) hs
+    exact Or.inl (Prod.ext ha rfl)
+
+private theorem routePorts_nodup {r : Route} (hn : r.Nodup)
+    (hu : ∀ e ∈ r.consecutivePairs, Orthogonal.length e.1 e.2 = 1) :
+    (r.consecutivePairs.flatMap stepPorts).Nodup := by
+  apply List.nodup_flatMap.mpr
+  constructor
+  · intro e he
+    have hne := (axisAligned_of_length_eq_one (hu e he)).2
+    simp only [stepPorts, List.nodup_cons, List.not_mem_nil, List.nodup_nil,
+      List.mem_singleton, not_false_eq_true, and_true]
+    exact fun h => hne (congrArg Prod.fst h)
+  · rw [List.pairwise_iff_getElem]
+    intro i j hi hj hij x hx hy
+    have hi' : i + 1 < r.length := by
+      simp only [List.consecutivePairs, List.length_zip, List.length_tail] at hi
+      omega
+    have hj' : j + 1 < r.length := by
+      simp only [List.consecutivePairs, List.length_zip, List.length_tail] at hj
+      omega
+    rcases stepPorts_inter (hu _ (List.getElem_mem hi)) (hu _ (List.getElem_mem hj)) hx hy
+        with heq | heq
+    · have heq' : r[i] = r[j] := by
+        simpa only [List.consecutivePairs, List.getElem_zip, List.getElem_tail] using
+          congrArg Prod.fst heq
+      have := hn.eq_of_getElem_eq (by omega) (by omega) heq'
+      omega
+    · have heq' : r[i] = r[j + 1] := by
+        simpa only [List.consecutivePairs, List.getElem_zip, List.getElem_tail] using
+          congrArg Prod.fst heq
+      have := hn.eq_of_getElem_eq (by omega) hj' heq'
+      omega
+
+/-- All directed cell ports in the actual canonical paths are distinct. Both halves of every
+unit step are included, even the final clause-directed half. No path witness is assumed. -/
+theorem pathPorts_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ((paths φ).flatMap fun r => r.consecutivePairs.flatMap fun e =>
+      [(e.1, side e.1 e.2), (e.2, side e.2 e.1)]).Nodup := by
+  have hi_edge {i : ℕ} (hi : i < (paths φ).length) :
+      i < (SAT.incidenceGraph φ).2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+  have hn {i : ℕ} (hi : i < (paths φ).length) : ((paths φ)[i]).Nodup := by
+    have h := Graph.unitPath_nodup (SAT.incidenceGraph φ)
+      (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) (hi_edge hi)
+    change ((paths φ).getD i []).Nodup at h
+    rwa [List.getD_eq_getElem _ _ hi] at h
+  have hu {i : ℕ} (hi : i < (paths φ).length) {e : Point × Point}
+      (he : e ∈ ((paths φ)[i]).consecutivePairs) : Orthogonal.length e.1 e.2 = 1 := by
+    apply Graph.unitPath_unit (SAT.incidenceGraph φ)
+      (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) (hi_edge hi)
+    change e ∈ ((paths φ).getD i []).consecutivePairs
+    rwa [List.getD_eq_getElem _ _ hi]
+  change ((paths φ).flatMap fun r => r.consecutivePairs.flatMap stepPorts).Nodup
+  apply List.nodup_flatMap.mpr
+  constructor
+  · intro r hr
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+    exact routePorts_nodup (hn hi) (fun _ he => hu hi he)
+  · rw [List.pairwise_iff_getElem]
+    intro i j hi hj hij x hx hy
+    obtain ⟨e, he, hx⟩ := List.mem_flatMap.mp hx
+    obtain ⟨f, hf, hy⟩ := List.mem_flatMap.mp hy
+    have hi_step : e ∈ ((paths φ).getD i []).consecutivePairs := by
+      rwa [List.getD_eq_getElem _ _ hi]
+    have hj_step : (e.1, e.2) ∈ ((paths φ).getD j []).consecutivePairs ∨
+        (e.2, e.1) ∈ ((paths φ).getD j []).consecutivePairs := by
+      rw [List.getD_eq_getElem _ _ hj]
+      rcases stepPorts_inter (hu hi he) (hu hj hf) hx hy with heq | heq
+      · exact Or.inl (heq.symm ▸ hf)
+      · exact Or.inr (by simpa only [heq] using hf)
+    have := paths_shared_step_index hw hv hi hj hi_step hj_step
+    omega
+
+/-- Equal boundary midpoints identify the same unordered unit grid edge. -/
+theorem cellPort_step_eq_cases {p q a b : Point}
+    (hpq : Orthogonal.length p q = 1) (hab : Orthogonal.length a b = 1)
+    (h : cellPort 120 p (side p q) = cellPort 120 a (side a b)) :
+    (p = a ∧ q = b) ∨ (p = b ∧ q = a) := by
+  rcases p with ⟨px, py⟩
+  rcases a with ⟨ax, ay⟩
+  rcases unit_neighbor_cases hpq with rfl | rfl | rfl | rfl <;>
+    rcases unit_neighbor_cases hab with rfl | rfl | rfl | rfl <;>
+    norm_num [side, cellPort, cellOrigin, Prod.ext_iff] at h ⊢ <;> omega
+
+/-- One geometric midpoint per actual unit step gives a duplicate-free list.
+This includes final steps, so any prefix selection used for binary clauses remains distinct. -/
+theorem pathMidpoints_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ((paths φ).flatMap fun r => r.consecutivePairs.map fun e =>
+      cellPort 120 e.1 (side e.1 e.2)).Nodup := by
+  let steps := (paths φ).flatMap List.consecutivePairs
+  have hu {e : Point × Point} (he : e ∈ steps) : Orthogonal.length e.1 e.2 = 1 := by
+    obtain ⟨r, hr, he⟩ := List.mem_flatMap.mp he
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+    have hi' : i < (SAT.incidenceGraph φ).2.length := by
+      simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+    apply Graph.unitPath_unit (SAT.incidenceGraph φ)
+      (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) hi'
+    change e ∈ ((paths φ).getD i []).consecutivePairs
+    rwa [List.getD_eq_getElem _ _ hi]
+  have hp : (steps.flatMap stepPorts).Nodup := by
+    have h := pathPorts_nodup hw hv
+    change ((paths φ).flatMap fun r => r.consecutivePairs.flatMap stepPorts).Nodup at h
+    simpa only [steps, List.flatMap_assoc] using h
+  have hpair := (List.nodup_flatMap.mp hp).2
+  have hmid : (steps.map fun e => cellPort 120 e.1 (side e.1 e.2)).Nodup := by
+    apply List.pairwise_map.mpr
+    apply hpair.imp_of_mem
+    intro e f he hf hd heq
+    have hx : (e.1, side e.1 e.2) ∈ stepPorts e := by simp [stepPorts]
+    rcases cellPort_step_eq_cases (hu he) (hu hf) heq with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
+    · have heq' : e = f := Prod.ext h₁ h₂
+      exact hd hx (heq' ▸ hx)
+    · have heq' : e = (f.2, f.1) := Prod.ext h₁ h₂
+      exact hd hx (by simp [stepPorts, heq'])
+  simpa only [steps, List.map_flatMap] using hmid
 
 end Cslib.Complexity.SAT.PlanarCompile

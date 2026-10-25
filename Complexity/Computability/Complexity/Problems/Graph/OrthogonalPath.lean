@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalLayout
-public import Complexity.Foundations.Geometry.Orthogonal.Neighborhood
+public import Complexity.Foundations.Geometry.Orthogonal.Endpoint
 import Mathlib.Data.List.GetD
 
 /-!
@@ -26,6 +26,8 @@ budget. Correctness statements refer to the existing graph's edge occurrences by
 
 * `Cslib.Complexity.Graph.unitPath_endpoints`, `.unitPath_nodup`, `.unitPath_unit`:
   endpoint, uniqueness and unit-adjacency certificates.
+* `Cslib.Complexity.Graph.unitPath_first_neighbor`, `.unitPath_last_neighbor`: exact canonical
+  port neighbors at both ends, with `.endpointNeighbor_ne` for different incident edges.
 * `Cslib.Complexity.Graph.unitPath_support`, `.unitPath_bounds`: continuous support and grid bounds.
 * `Cslib.Complexity.Graph.unitPath_declared_center_iff`: no nonincident source-center contacts.
 * `Cslib.Complexity.Graph.unitPath_contact`, `.unitPath_atMostTwo`: actual crossing classification
@@ -97,6 +99,86 @@ theorem unitPath_nodup (G : Graph)
   exact subdivide_nodup (canonical_orthogonal G hG hloop hi)
     (orthogonalRoutes_simple G G.canonicalPorts hi (hG _ (List.getElem_mem hi)).1
       (hG _ (List.getElem_mem hi)).2 (hloop _ (List.getElem_mem hi)))
+
+/-- The first unit neighbor is the source center plus its actual canonical port direction. -/
+theorem unitPath_first_neighbor (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2) {i : ℕ} (hi : i < G.2.length)
+    (d : Point) :
+    (G.unitPath i).getD 1 d = Layout.center (G.1.idxOf (G.edgeEndpoint i false)) +
+      Layout.portStep (portAt G.canonicalPorts i false) := by
+  have hf : segmentWalk (Layout.center (G.1.idxOf (G.edgeEndpoint i false)))
+      (Layout.elbow (G.1.idxOf (G.edgeEndpoint i false))
+        (portAt G.canonicalPorts i false)) <:+: G.unitPath i := by
+    rw [unitPath_eq_subdivide G hG hloop hi]
+    apply segmentWalk_infix_subdivide (canonical_orthogonal G hG hloop hi)
+      (e := (Layout.center (G.1.idxOf (G.edgeEndpoint i false)),
+        Layout.elbow (G.1.idxOf (G.edgeEndpoint i false)) (portAt G.canonicalPorts i false)))
+    rw [getElem_orthogonalRoutes_endpoint G G.canonicalPorts hi]
+    simp [Layout.route, List.consecutivePairs]
+  rw [Layout.fanWalk] at hf
+  have hp : [_ , _] <:+: [Layout.center (G.1.idxOf (G.edgeEndpoint i false)),
+      Layout.center (G.1.idxOf (G.edgeEndpoint i false)) +
+        Layout.portStep (portAt G.canonicalPorts i false),
+      Layout.elbow (G.1.idxOf (G.edgeEndpoint i false))
+        (portAt G.canonicalPorts i false)] := ⟨[], [_], rfl⟩
+  exact (infix_head_pair_getD (unitPath_nodup G hG hloop hi)
+    (hp.trans hf) (unitPath_endpoints G hG hloop hi).1 d).2
+
+/-- The penultimate unit point is the target center plus its canonical port direction. -/
+theorem unitPath_last_neighbor (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2) {i : ℕ} (hi : i < G.2.length)
+    (d : Point) :
+    (G.unitPath i).getD ((G.unitPath i).length - 2) d =
+      Layout.center (G.1.idxOf (G.edgeEndpoint i true)) +
+        Layout.portStep (portAt G.canonicalPorts i true) := by
+  have hf : segmentWalk (Layout.elbow (G.1.idxOf (G.edgeEndpoint i true))
+        (portAt G.canonicalPorts i true))
+      (Layout.center (G.1.idxOf (G.edgeEndpoint i true))) <:+: G.unitPath i := by
+    rw [unitPath_eq_subdivide G hG hloop hi]
+    apply segmentWalk_infix_subdivide (canonical_orthogonal G hG hloop hi)
+      (e := (Layout.elbow (G.1.idxOf (G.edgeEndpoint i true)) (portAt G.canonicalPorts i true),
+        Layout.center (G.1.idxOf (G.edgeEndpoint i true))))
+    rw [getElem_orthogonalRoutes_endpoint G G.canonicalPorts hi]
+    simp [Layout.route, List.consecutivePairs]
+  rw [Layout.returnFanWalk] at hf
+  have hp : [_ , _] <:+: [Layout.elbow (G.1.idxOf (G.edgeEndpoint i true))
+      (portAt G.canonicalPorts i true),
+      Layout.center (G.1.idxOf (G.edgeEndpoint i true)) +
+        Layout.portStep (portAt G.canonicalPorts i true),
+      Layout.center (G.1.idxOf (G.edgeEndpoint i true))] := ⟨[_], [], rfl⟩
+  exact (infix_last_pair_getD (unitPath_nodup G hG hloop hi)
+    (hp.trans hf) (unitPath_endpoints G hG hloop hi).2 d).2
+
+/-- The immediate unit neighbor at a chosen end of an indexed canonical path. -/
+def endpointNeighbor (G : Graph) (i : ℕ) (side : Bool) : Point :=
+  let r := G.unitPath i
+  if side then r.getD (r.length - 2) (0, 0) else r.getD 1 (0, 0)
+
+/-- Side-indexed exact endpoint-neighbor formula. -/
+theorem endpointNeighbor_eq (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2) {i : ℕ} (hi : i < G.2.length)
+    (side : Bool) :
+    G.endpointNeighbor i side = Layout.center (G.1.idxOf (G.edgeEndpoint i side)) +
+      Layout.portStep (portAt G.canonicalPorts i side) := by
+  cases side
+  · exact unitPath_first_neighbor G hG hloop hi (0, 0)
+  · exact unitPath_last_neighbor G hG hloop hi (0, 0)
+
+/-- Different edge occurrences at the same source center use different unit neighbors. -/
+theorem endpointNeighbor_ne (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2)
+    (hdeg : ∀ v, G.incidenceVertices.count v ≤ 3) {i j : ℕ}
+    (hi : i < G.2.length) (hj : j < G.2.length) (hij : i ≠ j) (left right : Bool)
+    (hc : G.1.idxOf (G.edgeEndpoint i left) = G.1.idxOf (G.edgeEndpoint j right)) :
+    G.endpointNeighbor i left ≠ G.endpointNeighbor j right := by
+  intro h
+  rw [endpointNeighbor_eq G hG hloop hi, endpointNeighbor_eq G hG hloop hj, hc] at h
+  have hp := Layout.portStep_injective (add_left_cancel h)
+  exact canonical_index_port_ne G hG hdeg hi hj hij left right (Prod.ext hc hp)
 
 /-- Every consecutive pair in a canonical unit path is exactly one Manhattan unit apart. -/
 theorem unitPath_unit (G : Graph)

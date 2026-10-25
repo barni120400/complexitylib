@@ -107,8 +107,54 @@ example : (reverseGraph.unitPath 0).getD 39 crossing = crossing + (1, 0) ∧
 example : (reverseGraph.unitPath 1).getD 43 crossing = crossing + (0, 1) ∧
     (reverseGraph.unitPath 1).getD 45 crossing = crossing - (0, 1) := by decide
 
-private def star : Graph := ([0, 1, 2, 3], [(0, 1), (0, 2), (0, 3)])
+private def starGraph : Graph := ([0, 1, 2, 3], [(0, 1), (0, 2), (0, 3)])
 
 -- A declared source center can have three paths; the nonvertex hypothesis is essential.
-example : Layout.center 0 ∈ star.unitPath 0 ∧ Layout.center 0 ∈ star.unitPath 1 ∧
-    Layout.center 0 ∈ star.unitPath 2 := by decide
+example : Layout.center 0 ∈ starGraph.unitPath 0 ∧ Layout.center 0 ∈ starGraph.unitPath 1 ∧
+    Layout.center 0 ∈ starGraph.unitPath 2 := by decide
+
+-- All three canonical source ports have the advertised first unit neighbor.
+example : starGraph.endpointNeighbor 0 false = (3, 4) ∧
+    starGraph.endpointNeighbor 1 false = (4, 5) ∧
+    starGraph.endpointNeighbor 2 false = (5, 4) := by decide
+
+private def returnStar : Graph := ([0, 1, 2, 3], [(1, 0), (2, 0), (3, 0)])
+
+-- The target uses the same outward neighbor, although the path traverses the fan in reverse.
+example : returnStar.endpointNeighbor 0 true = (3, 4) ∧
+    returnStar.endpointNeighbor 1 true = (4, 5) ∧
+    returnStar.endpointNeighbor 2 true = (5, 4) := by decide
+
+example (d : Point) : (exampleGraph.unitPath 0).getD 1 d =
+    Layout.center (exampleGraph.1.idxOf (exampleGraph.edgeEndpoint 0 false)) +
+      Layout.portStep (Graph.portAt exampleGraph.canonicalPorts 0 false) :=
+  Graph.unitPath_first_neighbor exampleGraph declared loopless (by decide) d
+
+example (d : Point) :
+    (exampleGraph.unitPath 0).getD ((exampleGraph.unitPath 0).length - 2) d =
+      Layout.center (exampleGraph.1.idxOf (exampleGraph.edgeEndpoint 0 true)) +
+        Layout.portStep (Graph.portAt exampleGraph.canonicalPorts 0 true) :=
+  Graph.unitPath_last_neighbor exampleGraph declared loopless (by decide) d
+
+private theorem star_declared : ∀ e ∈ starGraph.2, e.1 ∈ starGraph.1 ∧ e.2 ∈ starGraph.1 := by
+  intro e he
+  simp only [starGraph, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with rfl | rfl | rfl <;> decide
+
+private theorem star_loopless : ∀ e ∈ starGraph.2, e.1 ≠ e.2 := by
+  intro e he
+  simp only [starGraph, List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with rfl | rfl | rfl <;> decide
+
+private theorem star_degree : ∀ v, starGraph.incidenceVertices.count v ≤ 3 := by
+  intro v
+  by_cases hv : v ∈ starGraph.incidenceVertices
+  · have hv' : v = 0 ∨ v = 1 ∨ v = 2 ∨ v = 3 := by
+      simpa [starGraph, Graph.incidenceVertices, or_assoc, or_left_comm, or_comm] using hv
+    rcases hv' with rfl | rfl | rfl | rfl <;> decide
+  · rw [List.count_eq_zero_of_not_mem hv]
+    decide
+
+example : starGraph.endpointNeighbor 0 false ≠ starGraph.endpointNeighbor 1 false :=
+  Graph.endpointNeighbor_ne starGraph star_declared star_loopless star_degree
+    (by decide) (by decide) (by decide) false false (by decide)
