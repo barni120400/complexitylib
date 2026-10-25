@@ -21,7 +21,7 @@ and exact quotient identities for division by `m` with remainder strictly below 
 * `Nat.mul_div_pow_succ_le`: `b * (n / b ^ (j + 1)) ≤ n / b ^ j`.
 * `Nat.mul_add_div_of_lt`, `Nat.add_mul_div_of_lt`: dividing `k * m + i` or `i + k * m` by `m`
   when `i < m` yields `k`.
-* `Nat.mul_add_div_fin`, `Nat.add_mul_div_fin`: the same for `i : Fin m`.
+* `Nat.mul_add_div_fin`: the same for `i : Fin m`.
 -/
 
 @[expose] public section
@@ -48,20 +48,8 @@ theorem mul_add_div_of_lt (k : ℕ) {i m : ℕ} (hi : i < m) : (k * m + i) / m =
 theorem add_mul_div_of_lt (k : ℕ) {i m : ℕ} (hi : i < m) : (i + k * m) / m = k := by
   rw [Nat.add_mul_div_right _ _ (Nat.zero_lt_of_lt hi), Nat.div_eq_of_lt hi, Nat.zero_add]
 
-/-- Dividing `m * k + i` by `m` when `i < m` yields `k`. -/
-theorem mul_add_div_left_of_lt (k : ℕ) {i m : ℕ} (hi : i < m) : (m * k + i) / m = k := by
-  rw [Nat.mul_comm m k, mul_add_div_of_lt k hi]
-
-/-- Dividing `i + m * k` by `m` when `i < m` yields `k`. -/
-theorem add_mul_div_left_of_lt (k : ℕ) {i m : ℕ} (hi : i < m) : (i + m * k) / m = k := by
-  rw [Nat.mul_comm m k, add_mul_div_of_lt k hi]
-
 /-- Dividing `k * m + i` by `m` for `i : Fin m` yields `k`. -/
 theorem mul_add_div_fin (k : ℕ) {m : ℕ} (i : Fin m) : (k * m + i) / m = k :=
   mul_add_div_of_lt k i.isLt
-
-/-- Dividing `i + k * m` by `m` for `i : Fin m` yields `k`. -/
-theorem add_mul_div_fin (k : ℕ) {m : ℕ} (i : Fin m) : (i + k * m) / m = k :=
-  add_mul_div_of_lt k i.isLt
 
 end Nat
