@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
@@ -15,6 +16,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.Nodup
+import Mathlib.Data.List.Flatten
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.NormNum
@@ -40,9 +42,11 @@ ordinary center spokes. Their translated supports are confined to the correspond
   names have distinct displayed positions.
 * `Cslib.Complexity.SAT.PlanarCompile.pathPorts_nodup`: all directed unit-cell ports of the
   actual paths are distinct under the source width and occurrence bounds.
+* `Cslib.Complexity.SAT.PlanarCompile.positions_nodup`: every actual output vertex has a
+  distinct displayed position under those same source bounds.
 
-These results do not yet certify the complete planar drawing: all clause positions and global
-incidence contacts must also be separated.
+These results do not yet certify the complete planar drawing: incidence-order endpoint transport,
+nonincident-vertex avoidance and global route contacts remain to be proved.
 
 ## References
 
@@ -329,6 +333,26 @@ theorem finalRoute_orthogonal (sites : List Point) {p q : Point}
     (h : Orthogonal.length p q = 1) : IsOrthogonal (center q :: access sites p q) := by
   rw [finalRoute_eq_translate sites h, isOrthogonal_translate_iff]
   exact finalLocalRoute_orthogonal _ _
+
+/-- Access length is exactly 20 inside a crossing cell and 120 inside an ordinary cell. -/
+theorem access_wireLength (sites : List Point) (p q : Point) :
+    wireLength (access sites p q) = if p ∈ sites then 20 else 120 := by
+  by_cases hp : p ∈ sites
+  · simp only [access, hp, ↓reduceIte, wireLength_translate]
+    exact (Crossover.access_route_sizes _).2
+  · rw [access_eq_spoke hp, wireLength_translate]
+    simp only [hp, ↓reduceIte]
+    generalize side p q = s
+    fin_cases s <;> decide
+
+/-- A final literal route across one unit step uses at most 240 units of wire. -/
+theorem finalRoute_wireLength_le (sites : List Point) {p q : Point}
+    (h : Orthogonal.length p q = 1) :
+    wireLength (center q :: access sites p q) ≤ 240 := by
+  rw [finalRoute_eq_translate sites h, wireLength_translate]
+  generalize side p q = s
+  generalize decide (p ∈ sites) = crossing
+  fin_cases s <;> cases crossing <;> decide
 
 /-- A final literal route is the ordinary clause-cell spoke followed by its neighbor's access.
 This equality concerns the full real supports and includes the shared boundary midpoint. -/
@@ -888,5 +912,359 @@ theorem pathPorts_nodup {φ : CNF ℕ}
       · exact Or.inr (by simpa only [heq] using hf)
     have := paths_shared_step_index hw hv hi hj hi_step hj_step
     omega
+
+/-- Equal boundary midpoints identify the same unordered unit grid edge. -/
+theorem cellPort_step_eq_cases {p q a b : Point}
+    (hpq : Orthogonal.length p q = 1) (hab : Orthogonal.length a b = 1)
+    (h : cellPort 120 p (side p q) = cellPort 120 a (side a b)) :
+    (p = a ∧ q = b) ∨ (p = b ∧ q = a) := by
+  rcases p with ⟨px, py⟩
+  rcases a with ⟨ax, ay⟩
+  rcases unit_neighbor_cases hpq with rfl | rfl | rfl | rfl <;>
+    rcases unit_neighbor_cases hab with rfl | rfl | rfl | rfl <;>
+    norm_num [side, cellPort, cellOrigin, Prod.ext_iff] at h ⊢ <;> omega
+
+/-- One geometric midpoint per actual unit step gives a duplicate-free list.
+This includes final steps, so any prefix selection used for binary clauses remains distinct. -/
+theorem pathMidpoints_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ((paths φ).flatMap fun r => r.consecutivePairs.map fun e =>
+      cellPort 120 e.1 (side e.1 e.2)).Nodup := by
+  let steps := (paths φ).flatMap List.consecutivePairs
+  have hu {e : Point × Point} (he : e ∈ steps) : Orthogonal.length e.1 e.2 = 1 := by
+    obtain ⟨r, hr, he⟩ := List.mem_flatMap.mp he
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+    have hi' : i < (SAT.incidenceGraph φ).2.length := by
+      simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+    apply Graph.unitPath_unit (SAT.incidenceGraph φ)
+      (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) hi'
+    change e ∈ ((paths φ).getD i []).consecutivePairs
+    rwa [List.getD_eq_getElem _ _ hi]
+  have hp : (steps.flatMap stepPorts).Nodup := by
+    have h := pathPorts_nodup hw hv
+    change ((paths φ).flatMap fun r => r.consecutivePairs.flatMap stepPorts).Nodup at h
+    simpa only [steps, List.flatMap_assoc] using h
+  have hpair := (List.nodup_flatMap.mp hp).2
+  have hmid : (steps.map fun e => cellPort 120 e.1 (side e.1 e.2)).Nodup := by
+    apply List.pairwise_map.mpr
+    apply hpair.imp_of_mem
+    intro e f he hf hd heq
+    have hx : (e.1, side e.1 e.2) ∈ stepPorts e := by simp [stepPorts]
+    rcases cellPort_step_eq_cases (hu he) (hu hf) heq with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
+    · have heq' : e = f := Prod.ext h₁ h₂
+      exact hd hx (heq' ▸ hx)
+    · have heq' : e = (f.2, f.1) := Prod.ext h₁ h₂
+      exact hd hx (by simp [stepPorts, heq'])
+  simpa only [steps, List.map_flatMap] using hmid
+
+/-- Distinct integer cells have distinct displayed centers. -/
+theorem center_injective : Function.Injective center := by
+  intro p q h
+  have hp := center_mem_openCell (r := 120) (by decide) p
+  have hq := center_mem_openCell (r := 120) (by decide) q
+  change realPoint (center p) ∈ openCell 120 p at hp
+  change realPoint (center q) ∈ openCell 120 q at hq
+  rw [← h] at hq
+  exact cell_eq_of_mem_open_closed (by decide) hp
+    ⟨hq.1.le, hq.2.1.le, hq.2.2.1.le, hq.2.2.2.le⟩
+
+/-- Original clause cells are declared source centers and are never selected as crossings. -/
+theorem clause_cell_not_mem_crossingSites (φ : CNF ℕ) {i : ℕ} (hi : i < φ.length) :
+    Layout.center (φ.distinctVars.length + i) ∉ crossingSites φ := by
+  intro h
+  apply ((mem_crossingSites φ _).mp h).2.1
+  refine List.mem_map.mpr ⟨φ.distinctVars.length + i, List.mem_range.mpr ?_, rfl⟩
+  simp only [SAT.incidenceGraph, List.length_range]
+  omega
+
+/-- Original clause positions are pairwise distinct, including repeated and empty clauses. -/
+theorem originalPositions_nodup (φ : CNF ℕ) (sites : List Point) :
+    ((originalClauses φ sites).map fun pc => pc.2.1).Nodup := by
+  rw [List.Nodup, List.pairwise_iff_getElem]
+  intro i j hi hj hij heq
+  simp only [originalClauses, List.getElem_map, List.getElem_zipIdx] at heq
+  have hc := center_injective heq
+  have hx := congrArg Prod.fst hc
+  simp only [Layout.center] at hx
+  omega
+
+/-- Each translated crossover keeps the fixed clause-position order. -/
+theorem crossingClause_positions (c : Point) :
+    (crossingClauses c).map (fun pc => pc.2.1) =
+      Crossover.clausePositions.map (cellOrigin 120 c + ·) := by
+  apply List.ext_getElem
+  · simp [crossingClauses, Crossover.length_splitFormula, Crossover.drawing_sizes.1]
+  · intro i hi hj
+    simp only [crossingClauses, List.getElem_map, List.getElem_zipIdx, Nat.zero_add]
+    rw [List.getD_eq_getElem _ _ (by simpa only [List.length_map] using hj)]
+
+/-- Every crossover has pairwise distinct actual clause positions. -/
+theorem crossingClause_positions_nodup (c : Point) :
+    ((crossingClauses c).map fun pc => pc.2.1).Nodup := by
+  rw [crossingClause_positions]
+  exact Crossover.clausePositions_nodup.map (fun _ _ h => add_left_cancel h)
+
+/-- Different selected crossing cells contribute disjoint lists of interior clause positions. -/
+theorem crossingPositions_nodup {sites : List Point} (hn : sites.Nodup) :
+    ((sites.flatMap crossingClauses).map fun pc => pc.2.1).Nodup := by
+  rw [List.map_flatMap]
+  apply List.nodup_flatMap.mpr
+  refine ⟨fun c _ => crossingClause_positions_nodup c, hn.imp ?_⟩
+  intro c d hcd p hp hq
+  obtain ⟨pc, hpc, rfl⟩ := List.mem_map.mp hp
+  obtain ⟨pd, hpd, heq⟩ := List.mem_map.mp hq
+  have hc := crossingClause_mem_openCell hpc
+  have hd := crossingClause_mem_openCell hpd
+  rw [heq] at hd
+  exact Set.disjoint_left.mp (disjoint_openCell (by decide) hcd) hc hd
+
+/-- Original and crossover clause positions cannot coincide. -/
+theorem original_crossing_positions_disjoint (φ : CNF ℕ) :
+    List.Disjoint ((originalClauses φ (crossingSites φ)).map fun pc => pc.2.1)
+      (((crossingSites φ).flatMap crossingClauses).map fun pc => pc.2.1) := by
+  intro p hp hq
+  obtain ⟨pc, hpc, rfl⟩ := List.mem_map.mp hp
+  obtain ⟨pd, hpd, heq⟩ := List.mem_map.mp hq
+  obtain ⟨ci, hci, rfl⟩ := List.mem_map.mp hpc
+  obtain ⟨c, hc, hpd⟩ := List.mem_flatMap.mp hpd
+  have hpos := crossingClause_mem_openCell hpd
+  rw [heq] at hpos
+  have hcenter := center_mem_openCell (r := 120) (by decide)
+    (Layout.center (φ.distinctVars.length + ci.2))
+  have hcell := cell_eq_of_mem_open_closed (by decide) hcenter
+    ⟨hpos.1.le, hpos.2.1.le, hpos.2.2.1.le, hpos.2.2.2.le⟩
+  have hi : ci.2 < φ.length := by simpa only [Nat.zero_add] using (List.mem_zipIdx hci).2.1
+  exact clause_cell_not_mem_crossingSites φ hi (hcell ▸ hc)
+
+private theorem consecutivePairs_dropLast (r : Route) :
+    r.dropLast.consecutivePairs = r.consecutivePairs.dropLast := by
+  induction r with
+  | nil => rfl
+  | cons a r ih =>
+    cases r with
+    | nil => rfl
+    | cons b r =>
+      cases r with
+      | nil => rfl
+      | cons c r =>
+        simp only [List.dropLast_cons_cons, List.consecutivePairs, List.tail_cons,
+          List.zip_cons_cons] at ih ⊢
+        exact congrArg ((a, b) :: ·) ih
+
+/-- Binary-clause positions are a sublist of the distinct actual unit-step midpoints. -/
+theorem linkPositions_sublist_midpoints (φ : CNF ℕ) :
+    (((Cslib.Logic.PL.occurrences φ).flatMap fun o =>
+      links (crossingSites φ) o.2.2.2 (occurrencePath φ o)).map fun pc => pc.2.1).Sublist
+    ((paths φ).flatMap fun r => r.consecutivePairs.map fun e =>
+      cellPort 120 e.1 (side e.1 e.2)) := by
+  rw [← occurrencePaths_eq_paths φ, List.flatMap_map]
+  simp only [List.map_flatMap, links, List.map_map, Function.comp_def, link]
+  apply List.Sublist.flatMap_right
+  intro o _
+  apply List.Sublist.map
+  rw [consecutivePairs_dropLast]
+  exact List.dropLast_sublist _
+
+/-- All actual binary-link clauses have distinct positions, including between parallel paths. -/
+theorem linkPositions_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ((((Cslib.Logic.PL.occurrences φ).flatMap fun o =>
+      links (crossingSites φ) o.2.2.2 (occurrencePath φ o)).map fun pc => pc.2.1)).Nodup :=
+  (pathMidpoints_nodup hw hv).sublist (linkPositions_sublist_midpoints φ)
+
+private theorem link_position_not_open {sites : List Point} {positive : Bool} {r : Route}
+    {pc : PlacedClause} (hpc : pc ∈ links sites positive r) (c : Point) :
+    realPoint pc.2.1 ∉ openCell 120 c := by
+  obtain ⟨e, _, rfl⟩ := List.mem_map.mp hpc
+  exact cellPort_not_mem_openCell _ c _
+
+private theorem original_link_positions_disjoint (φ : CNF ℕ) :
+    List.Disjoint ((originalClauses φ (crossingSites φ)).map fun pc => pc.2.1)
+      (((Cslib.Logic.PL.occurrences φ).flatMap fun o =>
+        links (crossingSites φ) o.2.2.2 (occurrencePath φ o)).map fun pc => pc.2.1) := by
+  intro p hp hq
+  obtain ⟨pc, hpc, rfl⟩ := List.mem_map.mp hp
+  obtain ⟨pd, hpd, heq⟩ := List.mem_map.mp hq
+  obtain ⟨ci, _, rfl⟩ := List.mem_map.mp hpc
+  obtain ⟨_, _, hpd⟩ := List.mem_flatMap.mp hpd
+  apply link_position_not_open hpd (Layout.center (φ.distinctVars.length + ci.2))
+  rw [heq]
+  exact center_mem_openCell (by decide) _
+
+private theorem crossing_link_positions_disjoint (φ : CNF ℕ) :
+    List.Disjoint (((crossingSites φ).flatMap crossingClauses).map fun pc => pc.2.1)
+      (((Cslib.Logic.PL.occurrences φ).flatMap fun o =>
+        links (crossingSites φ) o.2.2.2 (occurrencePath φ o)).map fun pc => pc.2.1) := by
+  intro p hp hq
+  obtain ⟨pc, hpc, rfl⟩ := List.mem_map.mp hp
+  obtain ⟨pd, hpd, heq⟩ := List.mem_map.mp hq
+  obtain ⟨c, _, hpc⟩ := List.mem_flatMap.mp hpc
+  obtain ⟨_, _, hpd⟩ := List.mem_flatMap.mp hpd
+  apply link_position_not_open hpd c
+  rw [heq]
+  exact crossingClause_mem_openCell hpc
+
+/-- All actual output clauses have distinct displayed positions. Boundary clauses, interior
+crossover clauses and original source clauses are separated in the full real-cell geometry. -/
+theorem clausePositions_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ((placedClauses φ).map fun pc => pc.2.1).Nodup := by
+  simp only [placedClauses, List.map_append]
+  apply List.Nodup.append
+  · exact (originalPositions_nodup φ _).append
+      (crossingPositions_nodup (crossingSites_nodup φ)) (original_crossing_positions_disjoint φ)
+  · exact linkPositions_nodup hw hv
+  · intro p hp hq
+    rcases List.mem_append.mp hp with hp | hp
+    · exact original_link_positions_disjoint φ hp hq
+    · exact crossing_link_positions_disjoint φ hp hq
+
+private theorem penultimate_mem_dropLast {r : Route} (h : 2 ≤ r.length) :
+    r.getD (r.length - 2) (0, 0) ∈ r.dropLast := by
+  have hk : r.length - 2 < r.dropLast.length := by simp only [List.length_dropLast]; omega
+  rw [List.getD_eq_getElem _ _ (by omega), ← List.getElem_dropLast hk]
+  exact List.getElem_mem hk
+
+/-- Every emitted variable cell is a selected crossing or lies before the final clause point
+of an actual source occurrence path. -/
+theorem raw_variable_cell_membership (φ : CNF ℕ) {v : Variable}
+    (hv : v ∈ (rawFormula φ).vars) :
+    v.1 ∈ crossingSites φ ∨ ∃ o ∈ Cslib.Logic.PL.occurrences φ,
+      v.1 ∈ (occurrencePath φ o).dropLast := by
+  obtain ⟨c, hc, b, hv⟩ := CNF.mem_vars.mp hv
+  obtain ⟨pc, hpc, rfl⟩ := List.mem_map.mp hc
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨p, hp, hpc⟩) | ⟨o, ho, hpc⟩
+  · obtain ⟨ci, hci, rfl⟩ := List.mem_map.mp hpc
+    obtain ⟨lr, hlr, hlreq⟩ := List.mem_map.mp hv
+    obtain ⟨lj, hlj, rfl⟩ := List.mem_map.mp hlr
+    have ho : (ci.2, lj.2, lj.1) ∈ Cslib.Logic.PL.occurrences φ :=
+      List.mem_flatMap.mpr ⟨ci, hci, List.mem_map.mpr ⟨lj, hlj, rfl⟩⟩
+    have heq := congrArg Prod.fst hlreq
+    dsimp only [lastLiteral] at heq
+    subst v
+    exact Or.inr ⟨_, ho, penultimate_mem_dropLast (occurrencePath_length_ge_two ho)⟩
+  · obtain ⟨ci, _, rfl⟩ := List.mem_map.mp hpc
+    obtain ⟨l, _, hl⟩ := List.mem_map.mp hv
+    have heq := congrArg Prod.fst hl
+    dsimp only at heq
+    subst v
+    exact Or.inl hp
+  · obtain ⟨e, he, rfl⟩ := List.mem_map.mp hpc
+    cases hpos : o.2.2.2 <;>
+      simp only [link, hpos, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+        List.not_mem_nil, or_false] at hv <;>
+      rcases hv with hv | hv <;>
+      have heq := congrArg Prod.fst hv <;> dsimp only at heq <;> subst v
+    all_goals first
+      | exact Or.inr ⟨o, ho, (List.of_mem_zip he).1⟩
+      | exact Or.inr ⟨o, ho, List.mem_of_mem_tail (List.of_mem_zip he).2⟩
+
+private theorem occurrencePath_clause_center_iff {φ : CNF ℕ} {o : Occurrence ℕ}
+    (ho : o ∈ Cslib.Logic.PL.occurrences φ) {i : ℕ} (hi : i < φ.length) :
+    Layout.center (φ.distinctVars.length + i) ∈ occurrencePath φ o ↔ i = o.1 := by
+  have hoidx := occurrence_index_lt ho
+  have h := Graph.unitPath_center_iff (SAT.incidenceGraph φ)
+    (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) hoidx
+    (w := φ.distinctVars.length + i) (by simp only [SAT.incidenceGraph, List.length_range]; omega)
+  have he : (SAT.incidenceGraph φ).2[(Cslib.Logic.PL.occurrences φ).idxOf o] =
+      (φ.distinctVars.idxOf o.2.2.1, φ.distinctVars.length + o.1) := by
+    simp only [SAT.incidenceGraph, List.getElem_map]
+    rw [List.getElem_idxOf (List.idxOf_lt_length_of_mem ho)]
+  have hb := SAT.incidenceGraph_bipartite (List.getElem_mem hoidx)
+  rw [he] at hb h
+  change Layout.center (φ.distinctVars.length + i) ∈ occurrencePath φ o ↔
+    φ.distinctVars.length + i = (List.range _).idxOf (φ.distinctVars.idxOf o.2.2.1) ∨
+      φ.distinctVars.length + i = (List.range _).idxOf (φ.distinctVars.length + o.1) at h
+  rw [idxOf_range_eq (by omega), idxOf_range_eq hb.2.2] at h
+  exact h.trans (by omega)
+
+/-- No source clause center is used as a signal cell before a path's final endpoint. -/
+theorem clause_cell_not_mem_path_dropLast {φ : CNF ℕ} {o : Occurrence ℕ}
+    (ho : o ∈ Cslib.Logic.PL.occurrences φ) {i : ℕ} (hi : i < φ.length) :
+    Layout.center (φ.distinctVars.length + i) ∉ (occurrencePath φ o).dropLast := by
+  intro hp
+  have hi' := (occurrencePath_clause_center_iff ho hi).mp
+    ((List.dropLast_sublist _).subset hp)
+  subst i
+  obtain ⟨k, hk, hget⟩ := List.mem_iff_getElem.mp hp
+  have hlen := occurrencePath_length_ge_two ho
+  have hend := (occurrencePath_endpoints ho).2
+  rw [List.getLast?_eq_getElem?, List.getElem?_eq_getElem (by omega)] at hend
+  have hk' : k < (occurrencePath φ o).length := by
+    simp only [List.length_dropLast] at hk
+    omega
+  have heq : (occurrencePath φ o)[k] =
+      (occurrencePath φ o)[(occurrencePath φ o).length - 1] := by
+    rw [Option.some.inj hend]
+    simpa only [List.getElem_dropLast] using hget
+  have hidx := (occurrencePath_nodup ho).eq_of_getElem_eq hk' (by omega) heq
+  simp only [List.length_dropLast] at hk
+  omega
+
+/-- Actual output variables never occupy a source clause cell. -/
+theorem raw_variable_not_clause_cell {φ : CNF ℕ} {v : Variable}
+    (hv : v ∈ (rawFormula φ).vars) {i : ℕ} (hi : i < φ.length) :
+    v.1 ≠ Layout.center (φ.distinctVars.length + i) := by
+  intro h
+  rcases raw_variable_cell_membership φ hv with hsite | ⟨o, ho, hp⟩
+  · exact clause_cell_not_mem_crossingSites φ hi (h ▸ hsite)
+  · exact clause_cell_not_mem_path_dropLast ho hi (h ▸ hp)
+
+private theorem crossing_position_ne_raw_variable {φ : CNF ℕ} {c : Point}
+    (hc : c ∈ crossingSites φ) {pc : PlacedClause} (hpc : pc ∈ crossingClauses c)
+    {v : Variable} (hv : v ∈ (rawFormula φ).vars) : pc.2.1 ≠ variablePosition v := by
+  intro hpos
+  have hpcopen := crossingClause_mem_openCell hpc
+  have hvopen := variablePosition_mem_openCell v
+  rw [hpos] at hpcopen
+  have hcell : c = v.1 := cell_eq_of_mem_open_closed (by decide) hpcopen
+    ⟨hvopen.1.le, hvopen.2.1.le, hvopen.2.2.1.le, hvopen.2.2.2.le⟩
+  rcases v with ⟨p, v⟩
+  change c = p at hcell
+  subst p
+  cases v with
+  | none => exact (raw_variable_cell_kind φ hv).mp rfl hc
+  | some v =>
+    have hmem : pc.2.1 ∈ (crossingClauses c).map (fun pc => pc.2.1) :=
+      List.mem_map_of_mem hpc
+    rw [crossingClause_positions] at hmem
+    obtain ⟨q, hq, heq⟩ := List.mem_map.mp hmem
+    have heq' : q = Crossover.variablePosition v := add_left_cancel (heq.trans hpos)
+    exact Crossover.variablePosition_not_mem_clauses v (heq' ▸ hq)
+
+/-- The actual variable and clause position lists are disjoint. This includes empty original
+clauses and excludes variable vertices from all binary-clause boundary positions. -/
+theorem variable_clause_positions_disjoint (φ : CNF ℕ) :
+    List.Disjoint ((rawFormula φ).distinctVars.map variablePosition)
+      ((placedClauses φ).map fun pc => pc.2.1) := by
+  intro p hp hq
+  obtain ⟨v, hv, rfl⟩ := List.mem_map.mp hp
+  have hv' := CNF.mem_distinctVars.mp hv
+  obtain ⟨pc, hpc, hpos⟩ := List.mem_map.mp hq
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨c, hc, hpc⟩) | ⟨o, _, hpc⟩
+  · obtain ⟨⟨c, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+    dsimp only at hpos
+    have hcenter := center_mem_openCell (r := 120) (by decide)
+      (Layout.center (φ.distinctVars.length + i))
+    change realPoint (center (Layout.center (φ.distinctVars.length + i))) ∈ _ at hcenter
+    rw [hpos] at hcenter
+    have hvopen := variablePosition_mem_openCell v
+    have hcell : Layout.center (φ.distinctVars.length + i) = v.1 :=
+      cell_eq_of_mem_open_closed (by decide) hcenter
+        ⟨hvopen.1.le, hvopen.2.1.le, hvopen.2.2.1.le, hvopen.2.2.2.le⟩
+    have hi : i < φ.length := by
+      simpa only [Nat.zero_add] using (List.mem_zipIdx hci).2.1
+    exact raw_variable_not_clause_cell hv' hi hcell.symm
+  · exact crossing_position_ne_raw_variable hc hpc hv' hpos
+  · obtain ⟨e, _, rfl⟩ := List.mem_map.mp hpc
+    exact link_position_ne_variable _ _ _ _ v hpos
+
+/-- All actual displayed output vertices have distinct integer positions. -/
+theorem positions_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) : (positions φ).Nodup :=
+  (variablePositions_nodup φ).append (clausePositions_nodup hw hv)
+    (variable_clause_positions_disjoint φ)
 
 end Cslib.Complexity.SAT.PlanarCompile
