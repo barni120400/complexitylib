@@ -94,7 +94,8 @@ also loads private information, so such edits do reach its clients.
 - For an audit, `python3 scripts/audit_queries.py references PREFIX` lists where each declaration
   under a source path is referenced, and `duplicates` lists declarations with alpha-equivalent
   statements in different modules. Uses through `rfl`, `decide`, simp sets or instances leave no
-  reference. It is an on-demand helper, never run in CI.
+  reference, and a declaration nobody references may still be wanted API: privatize by intent
+  (#926), not because the helper lists it. It is an on-demand helper, never run in CI.
 
 Tidy computability (`ComputableTidily…`, `ComputesTidily…`, `IsTidy…`) may appear anywhere inside
 proofs, through `.tidy`, `.of_tidy`, a proof-local `attribute [local fun_prop] … in` or a tidy
