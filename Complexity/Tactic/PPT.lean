@@ -74,18 +74,46 @@ attribute [program_certificate]
   isPPTOn_uniform_bool
   IsPPTOn.memoize
 
-/-- Expose probabilistic sequencing to Aesop's joint search, retaining alternatives for the
-intermediate encoding until both the sampler and continuation have been proved. -/
+/-- Expose probabilistic sequencing to joint search. Matching local sampler certificates produce
+independent branches with their output encoding fixed before continuation search. The generic
+sequencing branch remains available for named and compositional samplers. -/
 @[aesop unsafe 80% tactic (rule_sets := [PPT])]
-private meta def pptCaptured : TacticM Unit :=
-  withMainContext <| Term.withoutErrToSorry <| withoutRecover do
-    let target := (← Core.betaReduce (← instantiateMVars (← getMainTarget))).consumeMData
-    unless target.isAppOf ``IsPPTOn do throwError "expected an encoded-input PPT goal"
-    let rule ← lambdaTelescope target.getAppArgs.back! fun _ body => do
-      if body.isAppOf ``Bind.bind then return ``IsPPTOn.bind_with
-      if body.isAppOf ``Functor.map then return ``IsPPTOn.map_with
-      throwError "expected probabilistic sequencing"
-    liftMetaTactic fun goal => goal.applyConst rule
+private meta def pptCaptured : Aesop.RuleTac := fun input => input.goal.withContext do
+  let target := (← Core.betaReduce (← instantiateMVars (← input.goal.getType))).consumeMData
+  unless target.isAppOf ``IsPPTOn do throwError "expected an encoded-input PPT goal"
+  let rule ← lambdaTelescope target.getAppArgs.back! fun _ body => do
+    if body.isAppOf ``Bind.bind then return ``IsPPTOn.bind_with
+    if body.isAppOf ``Functor.map then return ``IsPPTOn.map_with
+    throwError "expected probabilistic sequencing"
+  let initial ← saveState
+  try
+    let goals ← input.goal.applyConst rule
+    let applied ← saveState
+    let mut applications := #[]
+    if let some sampler := goals.head? then
+      let known? ← try
+        pure (some (← pptKnownCall { input with goal := sampler }))
+      catch _ => pure none
+      if let some known := known? then
+        for application in known.applications do
+          application.postState.restore
+          let pending ← goals.filterM fun goal => return !(← goal.isAssignedOrDelayedAssigned)
+          let mut remaining := application.goals.map (·.mvarId)
+          for goal in pending do
+            unless remaining.contains goal do remaining := remaining.push goal
+          applications := applications.push {
+            goals := ← remaining.mapM (Aesop.mvarIdToSubgoal input.goal)
+            postState := ← saveState
+            scriptSteps? := none
+            successProbability? := none }
+    applied.restore
+    applications := applications.push {
+      goals := ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
+      postState := ← saveState
+      scriptSteps? := none
+      successProbability? := none }
+    return ⟨applications⟩
+  finally initial.restore
 
 attribute [aesop unsafe 80% apply (rule_sets := [PPT])] IsPPTOn.cond IsPPTOn.ite
 
