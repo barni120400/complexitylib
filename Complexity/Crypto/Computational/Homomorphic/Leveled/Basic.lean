@@ -32,6 +32,16 @@ All algorithms are total. Decryption executes the supplied decryption circuit on
 truncated input, rather than relying on unspecified behavior of the base decryption algorithm
 on malformed words. Correctness, native efficiency and security are separate obligations.
 
+The scheme evaluator `(scheme D budget).evaluate` remains single-hop: it starts at the initial
+public key and pads to `2 * budget n` transitions. Multi-hop evaluation goes through
+`evaluateHop`, which starts at an explicit depth offset `offset` along the public key chain and
+evaluates a circuit of depth at most `step`, with the caller tracking the offsets. Only a hop
+ending at `offset + step = budget n` produces a ciphertext that `(scheme D budget).decrypt` can
+decrypt, because the private artifact retains only the two endpoint secrets (`0` and
+`2 * budget n`). A hop ending before `budget n` (including a depth-zero wiring hop at an
+intermediate offset) produces a `true`-tagged ciphertext under key `2 * (offset + step)` that
+`(scheme D budget).decrypt` cannot decrypt.
+
 ## Main definitions
 
 * `Cslib.Crypto.Homomorphic.Leveled.keyPair`: serialize the public and private artifacts.
@@ -42,7 +52,10 @@ on malformed words. Correctness, native efficiency and security are separate obl
 
 ## References
 
-* [C. Gentry, *Fully homomorphic encryption using ideal lattices*, Section 2][Gentry2009]
+* [C. Gentry, *Fully homomorphic encryption using ideal lattices*, Section 2,
+  pp. 171--172][Gentry2009]
+* [C. Gentry, S. Halevi, and V. Vaikuntanathan, *$i$-Hop Homomorphic Encryption and
+  Rerandomizable Yao Circuits*][GentryHaleviVaikuntanathan2010]
 -/
 
 @[expose] public section
@@ -92,7 +105,13 @@ def evaluateCircuit (n budget : ℕ) (publicKeys : List (List Bool))
 
 /-- Strip tags, evaluate a step-bounded circuit starting at depth offset `offset` along the
 public key chain (`2 * offset` layer transitions into the public artifact), and tag the result
-with `true`. -/
+with `true`. The scheme evaluator `(scheme D budget).evaluate` remains single-hop; multi-hop
+evaluation goes through `evaluateHop`, and the caller tracks the offsets. Only a hop that ends at
+`budget n` (`offset + step = budget n`) yields a ciphertext that `(scheme D budget).decrypt` can
+decrypt, because the private artifact holds only the two endpoint secrets (`0` and `2 * budget n`).
+A hop ending before `budget n` (including a depth-zero wiring hop at an intermediate offset)
+produces a `true`-tagged ciphertext under an intermediate key that `(scheme D budget).decrypt`
+cannot decrypt. -/
 def evaluateHop (n offset step : ℕ) (pk : List Bool) (c : Σ m, Circuit signature m 1)
     (inputs : List (List Bool)) : ProbComp (List Bool) :=
   let artifact := publicKeyDecoder.decode pk

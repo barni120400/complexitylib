@@ -35,8 +35,10 @@ ciphertext width.
 
 ## References
 
-* [C. Gentry, *Fully homomorphic encryption using ideal lattices*, Section 2, the self-loop
-  construction][Gentry2009]
+* [C. Gentry, *Fully homomorphic encryption using ideal lattices*, Section 2, pp. 171--172,
+  the self-loop construction][Gentry2009]
+* [C. Gentry, S. Halevi, and V. Vaikuntanathan, *$i$-Hop Homomorphic Encryption and
+  Rerandomizable Yao Circuits*][GentryHaleviVaikuntanathan2010]
 -/
 
 @[expose] public section

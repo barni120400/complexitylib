@@ -154,36 +154,12 @@ theorem isPPTOn_evaluateCircuit {inputCount : α → ℕ}
     (hcompiled.snd'.comp (ComputableTidilyInPolyTime.fst _ _))
   exact ComputableTidilyInPolyTime.listGetD_binary [] (by fun_prop) (by fun_prop)
 
-include hencrypt hevaluate hD in
-/-- The actual scheme evaluator is strict PPT, including on malformed artifacts and on circuits
-outside the chosen depth budget. The native certificate charges the complete circuit input. -/
-@[fun_prop]
-theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
-    {inputs : α → List (List Bool)}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbudget : ComputableTidilyInPolyTime budget input encUnary)
-    (hpk : ComputableTidilyInPolyTime pk input encBits)
-    (hc : ComputableTidilyInPolyTime c input (Boolean.encCircuit 1))
-    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits)) :
-    IsPPTOn input encBits
-      (fun a => evaluate D (n a) (budget a) (pk a) (c a) (inputs a)) := by
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
-  have hview : ComputableTidilyInPolyTime
-      (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
-      (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
-  have hparts := hview.comp hc
-  apply (isPPTOn_evaluateCircuit hencrypt D hD hevaluate hn hbudget
-    ((ComputableTidilyInPolyTime.listTail encBits).comp hpublic.fst') hpublic.snd'
-    (ComputableTidilyInPolyTime.bitsTail.map.comp hinputs) hparts.fst' hparts.snd').map
-  exact ComputableTidilyInPolyTime.bitsCons (by fun_prop)
-    (ComputableTidilyInPolyTime.headD [])
-
 include hencrypt hevaluate in
 /-- Hop evaluation is strict PPT uniformly in the security parameter, depth offset, step budget,
 public key, circuit, and input ciphertexts. -/
 @[fun_prop]
 theorem isPPTOn_evaluateHop
-    (hD : ComputableInPolyTime
+    (hcircuits : ComputableInPolyTime
       (fun n => (⟨_, D.circuit n⟩ : Σ m, Circuit Boolean.signature m 1))
       encUnary (Boolean.encCircuit 1))
     {offset step : α → ℕ}
@@ -208,10 +184,27 @@ theorem isPPTOn_evaluateHop
   have hpks := ComputableTidilyInPolyTime.listDropWithInput
     ((ComputableTidilyInPolyTime.listTail encBits).comp hpublic.fst') hdrop
   have hlinks := ComputableTidilyInPolyTime.listDropWithInput hpublic.snd' hdrop
-  apply (isPPTOn_evaluateCircuit hencrypt D hD.tidy hevaluate hn.tidy hstep.tidy hpks hlinks
+  apply (isPPTOn_evaluateCircuit hencrypt D hcircuits.tidy hevaluate hn.tidy hstep.tidy hpks hlinks
     (ComputableTidilyInPolyTime.bitsTail.map.comp hinputs.tidy) hparts.fst' hparts.snd').map
   exact ComputableTidilyInPolyTime.bitsCons (by fun_prop)
     (ComputableTidilyInPolyTime.headD [])
+
+include hencrypt hevaluate hD in
+/-- The actual scheme evaluator is strict PPT, including on malformed artifacts and on circuits
+outside the chosen depth budget. The native certificate charges the complete circuit input. -/
+@[fun_prop]
+theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
+    {inputs : α → List (List Bool)}
+    (hn : ComputableTidilyInPolyTime n input encUnary)
+    (hbudget : ComputableTidilyInPolyTime budget input encUnary)
+    (hpk : ComputableTidilyInPolyTime pk input encBits)
+    (hc : ComputableTidilyInPolyTime c input (Boolean.encCircuit 1))
+    (hinputs : ComputableTidilyInPolyTime inputs input (encList encBits)) :
+    IsPPTOn input encBits
+      (fun a => evaluate D (n a) (budget a) (pk a) (c a) (inputs a)) := by
+  simp only [← evaluateHop_zero]
+  exact isPPTOn_evaluateHop hencrypt D hevaluate (.of_tidy hD) (.of_tidy hn) (by fun_prop)
+    (.of_tidy hbudget) (.of_tidy hpk) (.of_tidy hc) (.of_tidy hinputs)
 
 include hD in
 /-- The circuit generator emits its input arity in unary. Its native runtime certificate

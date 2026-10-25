@@ -246,7 +246,7 @@ example (outer : Σ m, Circuit Boolean.signature m 1) (houter : outer.2.depth �
       (Leveled.evaluateHop decryptionCircuits 0 1 1 artifactTwo.1 outer mids)).support) :
     output.length = 3 ∧ Leveled.decrypt decryptionCircuits 0 artifactTwo.2 output =
       outer.2.eval Boolean.interpretation (BitString.ofList outer.1 midBits) 0 :=
-  Leveled.evaluate_twoHop_spec decryptionCircuits tagged_correct tagged_width
+  Leveled.evaluateHop_twoHop_spec decryptionCircuits tagged_correct tagged_width
     tagged_bootstrappable (fun _ => 2) 0 1 1 artifactTwo artifactTwo_supported rfl
     outer houter midBits mids hmidBits hmids output houtput
 
