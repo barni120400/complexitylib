@@ -1383,6 +1383,7 @@ public import Complexity.Crypto.Computational.DiffieHellman
 public import Complexity.Crypto.Computational.DiscreteLog
 public import Complexity.Crypto.Computational.DiscreteLog.SchnorrGroup
 public import Complexity.Crypto.Computational.ElGamal
+public import Complexity.Crypto.Computational.Encryption.Authenticated
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.Hybrid
