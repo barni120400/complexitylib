@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Incidence
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalLayout
 public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
 public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
-public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayout
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayout
 public import Complexity.Logics.Propositional.CNF.Compact
 
 /-!
