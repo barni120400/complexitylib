@@ -1481,6 +1481,7 @@ public import Complexity.Crypto.Computational.OneWay.LiuPass
 public import Complexity.Crypto.Computational.OneWay.MCSP
 public import Complexity.Crypto.Computational.OneWay.NP
 public import Complexity.Crypto.Computational.OneWay.Normalize
+public import Complexity.Crypto.Computational.OneWay.Weak
 public import Complexity.Crypto.Computational.OneWayToPRF
 public import Complexity.Crypto.Computational.OneWayToPRG
 public import Complexity.Crypto.Computational.OneWayToSignature
