@@ -63,18 +63,8 @@ Furthermore, `P/poly` preimages are closed under polynomial-time many-one reduct
 `SAT` hypothesis are all equivalent (`Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff`,
 `Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff_SAT`).
 
-## Main definitions
-
-* `Cslib.Circuits.Boolean.familyAdvice`: the advice string listing a family of circuits.
-* `Cslib.Circuits.Boolean.evalAdvice`: evaluation of the circuit for the length of the input read
-  from an advice string.
-
 ## Main results
 
-* `Cslib.Circuits.Boolean.evalAdvice_familyAdvice`: evaluation from the advice string of a family
-  is evaluation of its circuits.
-* `Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice`: evaluation from advice strings is
-  polynomial-time.
 * `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT`: if `SAT` has circuits of polynomial size,
   then `Π₂ ⊆ Σ₂`.
 * `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT`: under the same hypothesis, `Π₂ = Σ₂`.
@@ -106,98 +96,6 @@ Furthermore, `P/poly` preimages are closed under polynomial-time many-one reduct
 -/
 
 @[expose] public section
-
-namespace Cslib.Circuits.Boolean
-
-open Turing.MultiTapeTM
-
-/-! ### Advice strings for circuit families -/
-
-/-- The advice string listing the circuits `C 0, …, C N`, each with at most `s` gates: block `m`
-holds the certificate of `C m` (`certificate`), padded with `false` to `certLength N s` bits. -/
-def familyAdvice (N s : ℕ) (C : ∀ m, Circuit signature m 1) : List Bool :=
-  (List.range (N + 1)).flatMap fun m =>
-    certificate m s (C m).code.1 ((C m).outputs 0).toNat ++
-      List.replicate (certLength N s - certLength m s) false
-
-/-- The value on `x` of the circuit for inputs of length `x.length`, read with at most `s` gates
-from the block at position `x.length` of an advice string `w` whose blocks have `width` bits.
-Every advice string gives a value. -/
-def evalAdvice (s width : ℕ) (w x : List Bool) : Bool :=
-  evalOutput x (readCertificate x.length s (w.drop (x.length * width))).1
-    (readCertificate x.length s (w.drop (x.length * width))).2
-
-section Family
-
-variable {N s : ℕ} {C : ∀ m, Circuit signature m 1}
-
-private theorem length_familyAdvice_block (hs : ∀ m ≤ N, (C m).size ≤ s) {m : ℕ} (hm : m ≤ N) :
-    (certificate m s (C m).code.1 ((C m).outputs 0).toNat ++
-      List.replicate (certLength N s - certLength m s) false).length = certLength N s := by
-  rw [List.length_append, length_certificate_code _ (hs m hm), List.length_replicate,
-    Nat.add_sub_cancel' (certLength_mono_left hm s)]
-
-/-- The advice string of circuits with at most `s` gates has `N + 1` blocks of `certLength N s`
-bits. -/
-theorem length_familyAdvice (hs : ∀ m ≤ N, (C m).size ≤ s) :
-    (familyAdvice N s C).length = (N + 1) * certLength N s := by
-  rw [familyAdvice, List.length_flatMap, List.map_congr_left fun m hm =>
-    length_familyAdvice_block hs (Nat.lt_succ_iff.1 (List.mem_range.1 hm)), List.map_const',
-    List.length_range, List.sum_replicate, smul_eq_mul]
-
-/-- Block `m` of the advice string of a family starts with the certificate of `C m`. -/
-private theorem drop_familyAdvice (hs : ∀ m ≤ N, (C m).size ≤ s) {m : ℕ} (hm : m ≤ N) :
-    ∃ rest, (familyAdvice N s C).drop (m * certLength N s) =
-      certificate m s (C m).code.1 ((C m).outputs 0).toNat ++ rest := by
-  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le hm
-  have hprefix : ((List.range m).flatMap fun j =>
-      certificate j s (C j).code.1 ((C j).outputs 0).toNat ++
-        List.replicate (certLength (m + k) s - certLength j s) false).length =
-      m * certLength (m + k) s := by
-    rw [List.length_flatMap, List.map_congr_left fun j hj =>
-      length_familyAdvice_block hs (by have := List.mem_range.1 hj; omega), List.map_const',
-      List.length_range, List.sum_replicate, smul_eq_mul]
-  rw [familyAdvice, show m + k + 1 = m + (k + 1) by omega, List.range_add, List.flatMap_append,
-    List.drop_left' hprefix, List.range_succ_eq_map, List.map_cons, List.flatMap_cons,
-    Nat.add_zero, List.append_assoc]
-  exact ⟨_, rfl⟩
-
-/-- **Evaluation from the advice string of a family** is evaluation of its circuits, on inputs of
-length at most `N`. -/
-theorem evalAdvice_familyAdvice (hs : ∀ m ≤ N, (C m).size ≤ s) {x : List Bool}
-    (hx : x.length ≤ N) :
-    evalAdvice s (certLength N s) (familyAdvice N s C) x =
-      (C x.length).eval interpretation (fun i => x[i]) 0 := by
-  obtain ⟨rest, hrest⟩ := drop_familyAdvice hs hx
-  rw [evalAdvice, hrest, readCertificate_certificate_code_append _ (hs _ hx),
-    Circuit.eval_eq_evalOutput]
-  simp only [Fin.getElem_fin, List.ofFn_getElem]
-
-end Family
-
-open ComputableTidilyInPolyTime
-
-/-- **Evaluation from advice strings is polynomial-time**, for the number of gates and the block
-width in unary. -/
-@[fun_prop]
-theorem computableInPolyTime_evalAdvice {γ : Type} {encIn : γ ↪ List Bool}
-    {s width : γ → ℕ} {w x : γ → List Bool} (hs : ComputableInPolyTime s encIn encUnary)
-    (hwidth : ComputableInPolyTime width encIn encUnary)
-    (hw : ComputableInPolyTime w encIn encBits)
-    (hx : ComputableInPolyTime x encIn encBits) :
-    ComputableInPolyTime (fun a => evalAdvice (s a) (width a) (w a) (x a)) encIn
-      encBool := by
-  have hs := hs.tidy
-  have hwidth := hwidth.tidy
-  have hw := hw.tidy
-  have hx := hx.tidy
-  refine .of_tidy ?_
-  have hm : ComputableTidilyInPolyTime (fun a => (x a).length) encIn encUnary := length_bits.comp hx
-  have hc := (computableInPolyTime_readCertificate (.of_tidy hm) (.of_tidy hs)
-    (.of_tidy (bitsDropWithInput hw (unary_mul.comp (hm.prod hwidth))))).tidy
-  exact (computableInPolyTime_evalOutput (.of_tidy hx) (.of_tidy hc.fst') (.of_tidy hc.snd')).tidy
-
-end Cslib.Circuits.Boolean
 
 namespace Cslib.Complexity
 

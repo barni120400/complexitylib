@@ -55,6 +55,11 @@ example : (⊤ : Language Bool) ∈ PPoly :=
   PPoly.of_advice PPoly.top_mem (fun _ => [])
     (by change PolynomiallyBounded fun _ : ℕ => 0; fun_prop) (fun _ => Iff.rfl)
 
+example : (⊤ : Language Bool) ∈ PAdvice := PPoly_subset_PAdvice PPoly.top_mem
+example : (0 : Language Bool) ∈ PAdvice := PPoly_subset_PAdvice PPoly.zero_mem
+
+example : PPoly = (PAdvice : Set (Language Bool)) := PPoly_eq_PAdvice
+
 /--
 info: 'Cslib.Circuits.Boolean.PPoly.of_advice' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
@@ -65,5 +70,15 @@ info: 'Cslib.Circuits.Boolean.PAdvice_subset_PPoly' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Boolean.PAdvice_subset_PPoly
+/--
+info: 'Cslib.Circuits.Boolean.PPoly_subset_PAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Boolean.PPoly_subset_PAdvice
+/--
+info: 'Cslib.Circuits.Boolean.PPoly_eq_PAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Cslib.Circuits.Boolean.PPoly_eq_PAdvice
 
 end ComplexityTests.Advice
