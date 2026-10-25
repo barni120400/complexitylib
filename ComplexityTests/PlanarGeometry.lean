@@ -1,0 +1,49 @@
+/-
+Copyright (c) 2026 Erik Demaine. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Erik Demaine
+-/
+
+import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
+import Mathlib.Tactic.NormNum
+
+/-! Actual cell-access routes and compaction with repeated structured variable names. -/
+
+namespace ComplexityTests.PlanarGeometry
+
+open Cslib.Logic.PL Cslib.Orthogonal Cslib.Complexity
+open SAT.PlanarCompile
+
+example : IsOrthogonal (access [] (-1, -2) (0, -2)) := access_orthogonal _ _ _
+example : IsSimple (access [(-1, -2)] (-1, -2) (-1, -3)) := access_simple _ _ _
+
+example : cellPort 120 (-1, -2) (side (-1, -2) (0, -2)) =
+    cellPort 120 (0, -2) (side (0, -2) (-1, -2)) := shared_cellPort (by decide)
+
+example : Disjoint (support (access [(0, 0)] (0, 0) (-1, 0)))
+    (support (access [(0, 0)] (0, 0) (0, 1))) :=
+  crossing_access_disjoint (by decide) _ _ (by decide)
+
+example : ((180.5 : ℝ), (120 : ℝ)) ∈ support (access [] (0, 0) (1, 0)) := by
+  rw [access_eq_pair, support_cons_cons]
+  apply Or.inl
+  norm_num [cellPort, cellOrigin, side, variablePosition, signal, Cslib.Orthogonal.segment,
+    realPoint, mem_horizontal, Set.mem_uIcc]
+
+private def repeatedNames : CNF Variable :=
+  [[(((0, 0), none), true), (((0, 0), none), false), (((1, 0), none), true)]]
+
+-- Compact names are first literal positions, whereas graph indices count distinct variables.
+example : repeatedNames.compact.distinctVars = [0, 2] := by decide
+example : repeatedNames.compact.distinctVars.idxOf (repeatedNames.vars.idxOf ((1, 0), none)) =
+    repeatedNames.distinctVars.idxOf ((1, 0), none) :=
+  CNF.idxOf_distinctVars_compact _ (by decide)
+
+example : (positions [[(7, true)]]).getD
+    ((formula [[(7, true)]]).distinctVars.idxOf
+      ((rawFormula [[(7, true)]]).vars.idxOf ((4, 4), none))) (0, 0) =
+    variablePosition ((4, 4), none) := by
+  apply positions_getD_variable
+  decide +kernel
+
+end ComplexityTests.PlanarGeometry
