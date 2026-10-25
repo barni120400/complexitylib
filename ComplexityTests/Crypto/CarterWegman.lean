@@ -5,6 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Protocols.MAC.CarterWegman
+import Complexity.Tactic.PPT
+import Complexity.Tactic.PolyTime
 import Mathlib.Algebra.Field.ZMod
 
 /-!
@@ -196,5 +198,23 @@ example :
   simp only [padDistinguisher, OneTimeForger.ofProbComp, sampleBitStringQuery, sampleBitStringForge,
     sign, verify, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.pure_bind, ProbComp.eval_pure]
   congr 1
+
+-- Concrete `IsOraclePPT` admissibility check for `wordProbPadTest` and `prfPadDistinguisher`.
+example :
+    IsOraclePPT Turing.MultiTapeTM.encBool
+      (prfPadDistinguisher
+        (wordProbPadTest
+          (fun n => BitString.sampleList n)
+          (fun _ k _ => k)
+          (fun _ => pure [])
+          (fun _ _ t => pure ([true], t)))) :=
+  isOraclePPT_prfPadDistinguisher_wordProbPadTest (by ppt) (by polytime) (by ppt) (by ppt)
+
+-- Concrete `IsOraclePPT` admissibility check for `prfMultiPadDistinguisher`.
+example :
+    IsOraclePPT Turing.MultiTapeTM.encBool
+      (prfMultiPadDistinguisher (fun n => n) (fun n _ => List.replicate n false)
+        (fun _ _ => pure false)) :=
+  isOraclePPT_prfMultiPadDistinguisher (by polytime) (by polytime) (by ppt)
 
 end ComplexityTests.Crypto.CarterWegman

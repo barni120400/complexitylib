@@ -130,10 +130,7 @@ families and full-input native runtime.
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
-- **Symmetric:** `IsOraclePPT` admissibility of the PRF-pad reduction, uniform word-level
-  forger and hash families, the asymptotic `PseudorandomFunction` corollary and fresh-nonce
-  multi-query Carter–Wegman security ([#736]); the 4-round strong Feistel bound ([#748]); the
-  Naor–Reingold PRF from DDH.
+- **Symmetric:** the 4-round strong Feistel bound ([#748]); the Naor–Reingold PRF from DDH.
 - **General:** reusable adaptive reductions, public-key encryption, universal-instance zero
   knowledge, hard-core predicates and hardness amplification, and connections to learning and
   average-case hardness.
