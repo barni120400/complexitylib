@@ -7,8 +7,9 @@ Authors: Erik Demaine
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Geometry.Orthogonal
+public import Complexity.Foundations.Geometry.Orthogonal.Simple
 import Complexity.Foundations.Data.List.Counting
+import Mathlib.Data.List.Nodup
 import Mathlib.Tactic
 
 /-!
@@ -30,6 +31,8 @@ import Mathlib.Tactic
 * `Cslib.Orthogonal.subdivide_unit`: every subdivided segment has Manhattan length one.
 * `Cslib.Orthogonal.support_subdivide`: equality of the complete continuous real supports.
 * `Cslib.Orthogonal.wireLength_subdivide`: exact wire-length preservation.
+* `Cslib.Orthogonal.subdivide_nodup`: continuously simple orthogonal routes subdivide without
+  repeating lattice points.
 * `Cslib.Orthogonal.subdivideWithin_eq_of_wireLength_le`: recover full subdivision from a
   sufficient total-wire budget.
 * `Cslib.Orthogonal.subdivideWithin_length_le`: explicit bounded output size.
@@ -454,5 +457,116 @@ theorem length_le_wireLength {r : Route} {e : Point × Point} (he : e ∈ r.cons
 theorem subdivideWithin_eq_of_wireLength_le {r : Route} (hr : IsOrthogonal r) {budget : ℕ}
     (hbudget : wireLength r ≤ budget) : subdivideWithin budget r = subdivide r :=
   subdivideWithin_eq_subdivide hr (fun _ he => (length_le_wireLength he).trans hbudget)
+
+/-- A cardinal walk never repeats a lattice point. -/
+theorem walk_nodup (a d : Point) (k : ℕ) (hd : UnitVector d) : (walk a d k).Nodup := by
+  rw [walk_eq_map_range]
+  apply List.Nodup.map (l := List.range (k + 1)) ?_ List.nodup_range
+  intro i j hij
+  rcases hd with rfl | rfl | rfl | rfl
+  all_goals
+    have hx := congrArg Prod.fst hij
+    have hy := congrArg Prod.snd hij
+    norm_num [nsmul_eq_mul] at hx hy
+    omega
+
+/-- The unit walk along one segment has no repeated listed point. -/
+theorem segmentWalk_nodup (a b : Point) : (segmentWalk a b).Nodup :=
+  walk_nodup _ _ _ (direction_unit _ _)
+
+private theorem mem_support_segment {r : Route} (hlen : 2 ≤ r.length) {p : ℝ × ℝ}
+    (hp : p ∈ support r) : ∃ e ∈ r.consecutivePairs, p ∈ segment e.1 e.2 := by
+  induction r with
+  | nil => simp at hlen
+  | cons a r ih =>
+    cases r with
+    | nil => simp at hlen
+    | cons b r =>
+      rw [support_cons_cons] at hp
+      rcases hp with hp | hp
+      · exact ⟨(a, b), by simp [List.consecutivePairs], hp⟩
+      · cases r with
+        | nil =>
+          have hp' : p = realPoint b := by simpa [support, List.consecutivePairs] using hp
+          exact ⟨(a, b), by simp [List.consecutivePairs], hp' ▸ right_mem_segment ℝ _ _⟩
+        | cons c r =>
+          obtain ⟨e, he, hp⟩ := ih (by simp) hp
+          exact ⟨e, by simpa only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons,
+            List.mem_cons] using Or.inr he, hp⟩
+
+private theorem first_segment_tail_contact {a b : Point} {r : Route}
+    (hs : IsSimple (a :: b :: r)) {p : ℝ × ℝ} (hp : p ∈ segment a b)
+    (hq : p ∈ support (b :: r)) : p = realPoint b := by
+  have hnot := (List.nodup_cons.1 hs.1).1
+  cases r with
+  | nil => simpa [support, List.consecutivePairs] using hq
+  | cons c r =>
+    obtain ⟨f, hf, hpf⟩ := mem_support_segment (by simp) hq
+    have hfmem := List.of_mem_zip hf
+    have hne : (a, b) ≠ f := by
+      intro h
+      apply hnot
+      simpa only [← h] using hfmem.1
+    have hf' : f ∈ (a :: b :: c :: r).consecutivePairs := by
+      simpa only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons, List.mem_cons]
+        using Or.inr hf
+    have hc := hs.2 (a, b) (by simp [List.consecutivePairs]) f hf' hne p hp hpf
+    rcases hc.1 with hpa | hpb
+    · change p = realPoint a at hpa
+      exfalso
+      apply hnot
+      rcases hc.2 with hpf | hpf
+      · rw [realPoint_injective (hpa.symm.trans hpf)]
+        exact hfmem.1
+      · rw [realPoint_injective (hpa.symm.trans hpf)]
+        exact List.mem_of_mem_tail hfmem.2
+    · exact hpb
+
+/-- Unit subdivision of a continuously simple orthogonal route has no repeated lattice points.
+The proof uses the original segments' endpoint-contact certificates, not support equality alone. -/
+theorem subdivide_nodup {r : Route} (hr : IsOrthogonal r) (hs : IsSimple r) :
+    (subdivide r).Nodup := by
+  induction r with
+  | nil => simp [subdivide]
+  | cons a r ih =>
+    cases r with
+    | nil => simp [subdivide]
+    | cons b r =>
+      have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
+      have htail : IsOrthogonal (b :: r) := by
+        intro e he
+        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
+          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      have hstail : IsSimple (b :: r) := by
+        refine ⟨hs.1.tail, ?_⟩
+        intro e he f hf hne
+        apply hs.2 e _ f _ hne
+        · simpa only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons,
+            List.mem_cons] using Or.inr he
+        · simpa only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons,
+            List.mem_cons] using Or.inr hf
+      have hnd := ih htail hstail
+      obtain ⟨rest, hsub⟩ := List.head?_eq_some_iff.1 (subdivide_head (b :: r))
+      have hrest : (b :: rest).Nodup := by simpa only [hsub] using hnd
+      rw [subdivide, hsub]
+      refine List.nodup_append.2 ⟨segmentWalk_nodup a b, hrest.tail, ?_⟩
+      intro x hx y hy hxy
+      subst y
+      have hxq : realPoint x ∈ support (segmentWalk a b) := Or.inl ⟨x, hx, rfl⟩
+      rw [support_segmentWalk hab] at hxq
+      have hxt : realPoint x ∈ support (subdivide (b :: r)) := by
+        refine Or.inl ⟨x, ?_, rfl⟩
+        rw [hsub]
+        exact List.mem_cons_of_mem _ hy
+      rw [support_subdivide htail] at hxt
+      have hxb := realPoint_injective (first_segment_tail_contact hs hxq hxt)
+      subst x
+      exact (List.nodup_cons.1 hrest).1 hy
+
+/-- A sufficient-budget native enumeration also has no repeated points on a simple route. -/
+theorem subdivideWithin_nodup {r : Route} (hr : IsOrthogonal r) (hs : IsSimple r) {budget : ℕ}
+    (hbudget : wireLength r ≤ budget) : (subdivideWithin budget r).Nodup := by
+  rw [subdivideWithin_eq_of_wireLength_le hr hbudget]
+  exact subdivide_nodup hr hs
 
 end Cslib.Orthogonal
