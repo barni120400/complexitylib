@@ -10,6 +10,9 @@ for the actual algorithms, with explicit models, encodings and assumptions. An a
 a class definition or an assumed reconstruction theorem does not complete it. Search Mathlib,
 CSLib and this library before starting, and check upstream work.
 
+The [pre-rewrite roadmap][archive] is the archive of past detail and design records, including
+the FHE industrial context, the first-order design decisions and the repository's history.
+
 ## Programs
 
 | Program | Issues |
@@ -23,54 +26,77 @@ CSLib and this library before starting, and check upstream work.
 | Boneh–Shoup cryptography tracks; zero-knowledge architecture | [#640], [#643] |
 | A Verso guide with a chapter per area | [#585] |
 
+### Landmark theorems, in priority order
+
+Priorities live in this list and in the tiers of [#897].
+
+1. [Goldreich–Micali–Wigderson zero knowledge in full](#cryptographic-landmarks)
+2. [Rompel's signature theorem](#cryptographic-landmarks)
+3. [Gentry's bootstrapping, instantiated](#cryptographic-landmarks) ([#486])
+4. [Completeness of oblivious transfer](#cryptographic-landmarks)
+5. [Håstad's optimal MAX-E3SAT hardness](#approximation-and-pcp) ([#886])
+6. [Williams's NEXP ⊄ ACC⁰](#circuits-and-algebraic-complexity) ([#889])
+7. [Valiant's VNP-completeness of the permanent](#circuits-and-algebraic-complexity)
+8. [The Kabanets–Impagliazzo theorem](#circuits-and-algebraic-complexity) ([#891])
+9. [MIP = NEXP](#interactive-proofs) ([#892])
+10. [Regev's worst-case to average-case reduction](#cryptographic-landmarks)
+
 ## Cryptography
 
-### Landmark theorems
+### Cryptographic landmarks
 
-1. **Goldreich–Micali–Wigderson zero knowledge in full.** If one-way functions exist, every
-   language in NP has a computational zero-knowledge proof in Goldreich's sense (Def. 4.3.10):
-   for every `x ∈ L` and arbitrary auxiliary input `z`, against probabilistic polynomial-time
-   verifiers. This needs a bridge between the security premise and a clock independent of an
-   unbounded auxiliary word, witness-level Levin reductions, and sequential soundness
-   amplification to negligible error. Derive the advice-PRG premise of the auxiliary-input
-   theorem from uniform one-wayness, or replace it.
-2. **Rompel's signature theorem.** One-way functions imply digital signatures that are
-   existentially unforgeable under adaptive chosen-message attacks, for arbitrary
-   polynomial-length messages: universal one-way hash functions and authentication trees.
-3. **Gentry's bootstrapping, instantiated** ([#486]). A concrete LWE-based scheme satisfying the
-   correctness, security, bootstrappability and native-efficiency hypotheses of the generic
-   theorem: full native evaluation of the augmented GSW decryption circuit, bootstrappability
-   with compatible parameters, and the joint circular-security assumption needed for the
-   fixed-key endpoint. Gentry's exact concrete-security loss is a separate target.
-4. **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
-   multiparty functionality admits a protocol secure against static malicious corruptions, with
-   real/ideal simulation and abort, under the standard communication assumptions.
-5. **Regev's worst-case to average-case reduction.** For suitable `q` and Gaussian noise rate
-   `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
-   algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
-   restrictions and quantum reduction are part of the theorem.
+- **Goldreich–Micali–Wigderson zero knowledge in full.** If one-way functions exist, every
+  language in NP has a computational zero-knowledge proof in Goldreich's sense (Def. 4.3.10):
+  for every `x ∈ L` and arbitrary auxiliary input `z`, against probabilistic polynomial-time
+  verifiers. This needs a bridge between the security premise and a clock independent of an
+  unbounded auxiliary word, witness-level Levin reductions, and sequential soundness
+  amplification to negligible error. State it under nonuniformly one-way functions, as
+  Goldreich does (*Foundations of Cryptography*, Vol. 1, Section 4.4), and derive the
+  nonuniform (advice-secure) PRG premise of the auxiliary-input theorem from that; uniform
+  one-wayness is not known to give such a generator.
+- **Rompel's signature theorem.** One-way functions imply digital signatures that are
+  existentially unforgeable under adaptive chosen-message attacks, for arbitrary
+  polynomial-length messages: universal one-way hash functions and authentication trees.
+- **Gentry's bootstrapping, instantiated** ([#486]). A concrete LWE-based scheme satisfying the
+  correctness, security, bootstrappability and native-efficiency hypotheses of the generic
+  theorem: full native evaluation of the augmented GSW decryption circuit, bootstrappability
+  with compatible parameters, and the joint circular-security assumption needed for the
+  fixed-key endpoint. Further targets: a uniform generator for the leveled scheme's wrapper
+  decryption circuits (uniform compactness), reuse of evaluated ciphertexts as fresh inputs
+  (multi-hop evaluation), and Gentry's exact concrete-security loss.
+- **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
+  multiparty functionality admits a protocol secure against static malicious corruptions, with
+  real/ideal simulation and abort, under the standard communication assumptions.
+- **Regev's worst-case to average-case reduction.** For suitable `q` and Gaussian noise rate
+  `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
+  algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
+  restrictions and quantum reduction are part of the theorem.
 
 ### Modern fully homomorphic encryption
 
 After [#486], develop these in reviewable milestones, reusing the finite sampling, gadget
-algebra, native certificates and game reductions where their hypotheses match. [#513] maps the
-schemes to current libraries and workloads.
+algebra, native certificates and game reductions where their hypotheses match. The
+[pre-rewrite FHE section][archive-fhe] maps the schemes to current libraries and workloads.
 
 1. **Ring arithmetic and RLWE.** Polynomial-ring operations over `(Z/qZ)[X]/(X^d + 1)`, RNS/CRT
    conversions, rounding and modulus-switching error bounds, and negacyclic NTTs implementing
    ring multiplication, with native certificates. Define the RLWE secret and error laws and
    experiment separately; an ordinary-LWE reduction does not give them.
-2. **FHEW/TFHE programmable bootstrapping** (Ducas–Micciancio; Chillotti–Gama–Georgieva–
-   Izabachène). Ring-GSW external products, blind rotation, sample extraction and key switching;
-   prove the bootstrap decrypts to `f(m)` with its noise, failure, width and runtime bounds,
-   including negacyclic lookup restrictions and torus representations; floating-point FFT
-   implementations need their own rounding-error proof. Then smaller-key and batched variants,
-   preserving their exact secret distributions and joint error bounds.
-3. **Exact packed BFV/BGV** (Brakerski–Gentry–Vaikuntanathan; Fan–Vercauteren). Slot encoding,
+2. **FHEW/TFHE programmable bootstrapping**
+   ([Ducas–Micciancio](https://eprint.iacr.org/2014/816);
+   [Chillotti–Gama–Georgieva–Izabachène](https://eprint.iacr.org/2016/870)). Ring-GSW external
+   products, blind rotation, sample extraction and key switching; prove the bootstrap decrypts
+   to `f(m)` with its noise, failure, width and runtime bounds, including negacyclic lookup
+   restrictions and torus representations; floating-point FFT implementations need their own
+   rounding-error proof. Then the [smaller-key methods of Lee et al.](https://eprint.iacr.org/2022/198)
+   and batched variants, preserving their exact secret distributions and joint error bounds.
+3. **Exact packed BFV/BGV** ([Brakerski–Gentry–Vaikuntanathan](https://eprint.iacr.org/2011/277);
+   [Fan–Vercauteren](https://eprint.iacr.org/2012/144)). Slot encoding,
    multiplication, relinearization, rotations and level management, with leveled evaluation
    before a separately proved refresh. Equality modulo the plaintext modulus differs from
    ordinary integer equality, which needs a range bound.
-4. **Approximate packed CKKS and its bootstrap** (Cheon–Kim–Kim–Song), with an explicit
+4. **Approximate packed CKKS and its bootstrap**
+   ([Cheon–Kim–Kim–Song](https://eprint.iacr.org/2016/421)), with an explicit
    approximate-correctness interface and a norm bound on decoded error covering rescaling,
    rounding, key switching and rotations.
 5. **Scheme switching and threshold variants**, with explicit range/precision contracts,
@@ -138,7 +164,7 @@ index links to canonical definitions rather than keeping a second set.
 - A tight time hierarchy, which needs a linear-overhead tape-indexed simulation, and the
   `f log f` hierarchy with its simulation bound. The space hierarchy for `log n ≤ g n`, which
   needs a universal simulation that does not hold its input.
-- **Space** ([#885]): 2SAT NL-complete, `NSPACE(s) = coNSPACE(s)`, and Savitch bounds for general
+- **Space** ([#885]): `NSPACE(s) = coNSPACE(s)`, and Savitch bounds for general
   space-constructible functions.
 - **Randomized logspace** ([#459], [#474]): RL and BPL, `USTCON ∈ RL`, Nisan's generator,
   `BPL ⊆ L²` and Saks–Zhou.
@@ -156,7 +182,9 @@ index links to canonical definitions rather than keeping a second set.
 - Counting reductions and further oracle results preserving exact multiplicities; permanent
   #P-completeness; modular and counting hierarchies; the oracle-algorithm form of Stockmeyer's
   approximate counting.
-- Boolean closures of the modular classes for composite moduli.
+- For composite moduli: the prime-power collapse `Mod_{p^e}P = Mod_pP` and union closure.
+  Complement closure for moduli that are not prime powers is open, and relativizing proofs
+  cannot give it (Barrington–Beigel–Rudich), so it is not a library direction.
 - Target-relativized `LWPP^A`, `WPP^A` and `SBP^A` with `FP^A` targets; adaptive WPP closure and
   UP-oracle containment.
 - Native oracle counting machines: efficient encoded oracle checking, response-access costs and
@@ -173,7 +201,8 @@ index links to canonical definitions rather than keeping a second set.
 
 Ordered first-order complexity follows Immerman: structures on `{0, …, n-1}` with `n ≥ 2`, FO
 means FO(≤, BIT), and `≤_fo`, `≤_fop` and `≤_qfp` keep their standard meanings; the order-free
-`FO.Reduces` and `FO.QFReduces` stay as a general layer. In dependency order:
+`FO.Reduces` and `FO.QFReduces` stay as a general layer. Numeric predicates are computed from the
+universe size, not supplied as unverified input tables. In dependency order:
 
 - **Ordered completeness.** SAT, 3SAT, 3COL, independent set, clique and vertex cover
   NP-complete under first-order or quantifier-free projections; REACH NL-complete under
@@ -302,17 +331,20 @@ each statement against the numbered result. Organize modules by subject, not cha
   query and sample bounds, canonical testers and lower bounds.
 - **Kolmogorov complexity and metacomplexity** ([#798], [#884]): prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
-  circuitized anti-checker with an efficient generator, hardness magnification and MINKT/MINCKT
-  as independently scoped developments; the reverse multi-tape-to-single-tape simulation and
-  machine-backed Nisan–Wigderson decoding.
+  circuitized anti-checker with an efficient generator, hardness magnification, MINCKT and
+  hardness results for MINKT, as independently scoped developments; the reverse
+  multi-tape-to-single-tape simulation and machine-backed Nisan–Wigderson decoding.
 - **Quantum computation** ([#896]): BQP ⊆ PP and the BBBV and Grover bounds; reusable
-  circuit, channel and measurement semantics, reusing suitable quantum foundations rather than
-  incompatible models; BQP, QMA and related query, communication and interactive classes.
+  circuit, channel and measurement semantics with uniformity and approximation costs, reusing
+  suitable quantum foundations rather than incompatible models; BQP, QMA and related query,
+  communication and interactive classes, with amplification, containments and complete
+  problems.
 
 ## Machines, RAM and data structures
 
-- **Plain computability** ([#862]): delete the tidy calculus, keeping only a machine-level
-  kernel inside the Machines layer, and switch the abstract bridges to the shared predicate.
+- **Plain computability** ([#862]): complete the plain calculus ([#608]), delete the tidy
+  calculus, keeping only a machine-level kernel inside the Machines layer, and switch the
+  abstract bridges to the shared predicate.
 - **Certificate APIs and automation.** Infer encodings for ordinary functional expressions
   through constructor, projection, lookup and composition rules; generalize list, bounded-table,
   cache and nested-loop invariants where clients need them; keep separate time, workspace and
@@ -353,9 +385,9 @@ reuse is demonstrated.
 
 - **One sensitivity API.** Define the sensitivity measures over any `Fintype` in CSLib and drop
   the separate measures of the sensitivity-separation development.
-- **CNF evaluation automation:** `fun_prop` certificates for evaluating literals, clauses and
-  formulas under a polynomial-time assignment, and `Literal.eval` simp lemmas, so clients stop
-  unfolding `CNF.eval`.
+- **CNF evaluation certificates:** `fun_prop` certificates for evaluating literals, clauses and
+  formulas under a polynomial-time assignment, so clients stop passing `CNF.eval`,
+  `Clause.eval` and `Literal.eval` to `fun_prop` as unfolding hints.
 - Factor indicator-expectation identities from PCP's second-moment calculation, and recurring
   cardinality and logarithm conversions, once a second client benefits.
 
@@ -380,6 +412,8 @@ not planned, not as proved.
 - Vollmer's generalized-quantifier survey ([#399]): ordered leaf words, explicit uniformity and
   input-access models, finite-monoid classification and generalized logical quantifiers.
 
+[archive]: https://github.com/cslib-community/complexitylib/blob/c89dd48c/ROADMAP.md
+[archive-fhe]: https://github.com/cslib-community/complexitylib/blob/c89dd48c/ROADMAP.md#modern-fhe-methods-and-deployment-priorities
 [#321]: https://github.com/cslib-community/complexitylib/issues/321
 [#324]: https://github.com/cslib-community/complexitylib/issues/324
 [#361]: https://github.com/cslib-community/complexitylib/issues/361
@@ -389,9 +423,9 @@ not planned, not as proved.
 [#459]: https://github.com/cslib-community/complexitylib/issues/459
 [#474]: https://github.com/cslib-community/complexitylib/issues/474
 [#486]: https://github.com/cslib-community/complexitylib/issues/486
-[#513]: https://github.com/cslib-community/complexitylib/issues/513
 [#581]: https://github.com/cslib-community/complexitylib/issues/581
 [#585]: https://github.com/cslib-community/complexitylib/issues/585
+[#608]: https://github.com/cslib-community/complexitylib/issues/608
 [#640]: https://github.com/cslib-community/complexitylib/issues/640
 [#643]: https://github.com/cslib-community/complexitylib/issues/643
 [#645]: https://github.com/cslib-community/complexitylib/issues/645
