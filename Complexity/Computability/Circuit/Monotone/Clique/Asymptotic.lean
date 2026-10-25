@@ -124,9 +124,7 @@ private theorem positive_budget
       Nat.choose n k := by
   let familyBound := sunflowerBound (w ^ 2) w
   let ratio := 64 * w ^ 6
-  have ratioPositive : 0 < ratio := by
-    simp only [ratio]
-    positivity
+  have ratioPositive : 0 < ratio := by simp only [ratio]; positivity
   have budgetSmall : familyBound ^ 2 * 64 ^ w < ratio ^ (w + 1) :=
     sunflowerBound_sq_mul_sixtyFour_pow_lt w one_le
   have containing := Nat.pow_mul_choose_sub_le_choose (q := ratio) (n := n) (k := k)

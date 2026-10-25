@@ -148,7 +148,6 @@ private theorem toeplitzBand_mulVec_apply [Semiring α] {d : Fin n → α} {j₀
     (hmax : ∀ j, d j ≠ 0 → j ≤ j₀) (w : Fin m → α) (i : Fin m)
     (hw : ∀ i', i < i' → w i' = 0) :
     (toeplitz (toeplitzBand j₀ w) *ᵥ d) i = w i * d j₀ := by
-  -- If `w` vanishes beyond `i`, then the `i`-th coordinate of `L w` is `w i * d j₀`.
   change ∑ j, toeplitz (toeplitzBand j₀ w) i j * d j = w i * d j₀
   rw [sum_eq_single j₀]
   · congr 1
@@ -178,7 +177,6 @@ theorem toeplitz_mulVec_surjective [Field α] {d : Fin n → α} (hd : d ≠ 0) 
     Function.Surjective fun a : Fin (m + n - 1) → α => toeplitz a *ᵥ d := by
   classical
   obtain ⟨j₀, hj₀, hmax, -⟩ := exists_last_ne_zero hd
-  -- `band w` writes `w` on the `m` diagonals through column `j₀`, starting from row `0`.
   let L : (Fin m → α) →ₗ[α] Fin m → α :=
     { toFun w := toeplitz (toeplitzBand j₀ w) *ᵥ d
       map_add' w w' := by

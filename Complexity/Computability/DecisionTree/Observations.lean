@@ -99,8 +99,14 @@ theorem exists_of_observations (S : Finset X) (hS : S.Nonempty)
       · obtain ⟨x, hx, hne⟩ := by simpa only [not_forall, not_imp] using hconstant
         obtain ⟨q, i, hq, hbranches⟩ := hquery T hTS ⟨x₀, hx₀⟩ ⟨x, hx, x₀, hx₀, hne⟩
         have hi : i ∈ remaining := mem_remaining_of_branches hfixed hbranches
-        have branch (b : Bool) := ih (remaining.erase i) (erase_ssubset hi) _
-          ((filter_subset _ _).trans hTS) (hbranches b) (fixed_of_mem_filter_erase hfixed)
+        have branch (b : Bool) :
+            ∃ t : DecisionTree Q β,
+              (∀ x ∈ T.filter (fun x => observe x i = b),
+                t.eval (fun q => answer q x) = output x) ∧
+              t.depth ≤ (remaining.erase i).card ∧
+              t.leafCount ≤ ((T.filter (fun x => observe x i = b)).image observe).card :=
+          ih (remaining.erase i) (erase_ssubset hi) _
+            ((filter_subset _ _).trans hTS) (hbranches b) (fixed_of_mem_filter_erase hfixed)
         obtain ⟨left, hl, hld, hlc⟩ := branch false
         obtain ⟨right, hr, hrd, hrc⟩ := branch true
         refine ⟨.node q left right, ?_,

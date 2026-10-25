@@ -236,19 +236,13 @@ private theorem evalCode_dualGates_binary (vs : List Bool) {a b : ℕ} (ha : a <
   have hFb := getD_railBits_false vs hb
   simp only [List.getD_eq_getElem?_getD] at hTa hFa hTb hFb
   rw [railBits_append, railBits_append]
-  constructor
-  · simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
-    rw [evalCode_pair _ _ _ _ _ (by
-      simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
-        List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
-      omega)]
-    simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb]
-  · simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
-    rw [evalCode_pair _ _ _ _ _ (by
-      simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
-        List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
-      omega)]
-    simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb]
+  constructor <;>
+    (simp only [dualGates, List.getD_cons_zero, List.getD_cons_succ]
+     rw [evalCode_pair _ _ _ _ _ (by
+       simp only [railWire, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+         List.not_mem_nil, or_false, forall_eq_or_imp, forall_eq]
+       omega)]
+     simp [interpretation, Boolean.interpretation, hTa, hFa, hTb, hFb])
 
 /-- **The translated gate list computes the dual-rail values**: on the dual-rail inputs, the
 gates translating gate `j` carry the value of gate `j` and its negation. -/

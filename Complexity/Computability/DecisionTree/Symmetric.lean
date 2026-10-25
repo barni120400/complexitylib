@@ -76,8 +76,6 @@ private theorem eq_off_and_card_filter_of_eq_off_erase [DecidableEq ι] {S : Fin
     (∀ j ∉ S, x j = a j) ∧ x i = b ∧
       #(S.filter fun j => x j = true) =
         #((S.erase i).filter fun j => x j = true) + (if b then 1 else 0) := by
-  -- inputs agreeing with `update a i b` off `S.erase i` agree with `a` off `S`, and have bit
-  -- `i` equal to `b`
   have hxi : x i = b := by simpa using hx i (by simp)
   refine ⟨fun j hj => ?_, hxi, ?_⟩
   · have hji : j ≠ i := fun h => hj (h ▸ hi)
@@ -91,7 +89,7 @@ private theorem eq_off_and_card_filter_of_eq_off_erase [DecidableEq ι] {S : Fin
 
 /-- A leaf tree cannot agree with a profile `g` that takes two distinct values at counts
 `m, m + 1 ≤ #S`. -/
-private theorem leaf_contradiction (b : β) (S : Finset ι) (a : ι → Bool)
+private theorem false_of_leaf_eval_eq_comp_card_filter (b : β) (S : Finset ι) (a : ι → Bool)
     (g : ℕ → β) (m : ℕ)
     (ht : ∀ x : ι → Bool, (∀ j ∉ S, x j = a j) →
       (DecisionTree.leaf b : DecisionTree ι β).eval x = g #(S.filter fun j => x j = true))
@@ -114,7 +112,7 @@ theorem card_le_depth_of_eval_eq_comp_card_filter (t : DecisionTree ι β) (S : 
     (hm : m + 1 ≤ #S) (hg : g m ≠ g (m + 1)) : #S ≤ t.depth := by
   classical
   induction t generalizing S a g m with
-  | leaf b => exact (leaf_contradiction b S a g m ht hm hg).elim
+  | leaf b => exact (false_of_leaf_eval_eq_comp_card_filter b S a g m ht hm hg).elim
   | node i t₀ t₁ ih₀ ih₁ =>
     rw [depth_node]
     by_cases hi : i ∈ S
