@@ -1,4 +1,5 @@
 import Complexity.Computability.Geometry.OrthogonalSubdivision
+import Complexity.Foundations.Geometry.OrthogonalLayout
 
 /-! Regression instances for signed unit subdivision and continuous support preservation. -/
 
@@ -47,3 +48,14 @@ example : Turing.MultiTapeTM.ComputableInPolyTime
     (fun p : ℕ × Route => subdivideWithin p.1 p.2)
     (Turing.MultiTapeTM.encPair Turing.MultiTapeTM.encUnary encRoute) encRoute :=
   computableInPolyTime_subdivideWithin
+
+example : (subdivide (Layout.route 2 0 0 1 1 2)).Nodup :=
+  subdivide_nodup (Layout.route_orthogonal (by decide) (by decide) (by decide) 1 2)
+    (Layout.route_simple (by decide) (by decide) (by decide) 1 2)
+
+private def selfCrossing : Route := [(0, 1), (2, 1), (2, 0), (1, 0), (1, 2)]
+
+-- Distinct listed vertices alone do not prevent a repeated point after unit subdivision.
+example : selfCrossing.Nodup := by decide
+
+example : ¬ (subdivide selfCrossing).Nodup := by decide
