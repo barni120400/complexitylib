@@ -45,6 +45,12 @@ length `n` using a pseudorandom generator `generator`:
   receiver string `r` of length `length n` that `NaorBinding generator n r` fails.
 * `Cslib.Crypto.BitCommitmentScheme`: a two-message statistically binding, computationally hiding
   bit commitment scheme.
+* `Cslib.Crypto.CommitmentHidingAdversary`, `Cslib.Crypto.CommitmentHidingAdversary.IsPPT`,
+  `Cslib.Crypto.CommitmentScheme`, `Cslib.Crypto.CommitmentScheme.hidingForKey`,
+  `Cslib.Crypto.CommitmentScheme.hidingGame`, `Cslib.Crypto.CommitmentScheme.StatisticalHiding`,
+  `Cslib.Crypto.CommitmentScheme.ComputationalHiding`, `Cslib.Crypto.CommitmentScheme.bindingGame`,
+  `Cslib.Crypto.CommitmentScheme.Binding`: general public-parameter commitment scheme and the
+  chosen-message hiding and binding experiments ([BonehShoup2023], Section 8.12, Definition 8.8).
 
 ## Main results
 
@@ -66,12 +72,18 @@ length `n` using a pseudorandom generator `generator`:
 * `Cslib.Crypto.PseudorandomGenerator.naorBitCommitment`,
   `Cslib.Crypto.OneWay.exists_bitCommitmentScheme`: packaged Naor bit commitment scheme from a
   pseudorandom generator or one-way function.
+* `Cslib.Crypto.CommitmentScheme.hidingForKey_eq_of_commitDist_eq`,
+  `Cslib.Crypto.CommitmentScheme.advantage_hidingForKey_eq_zero`,
+  `Cslib.Crypto.CommitmentScheme.StatisticalHiding.computationalHiding`: general hiding lemmas for
+  `CommitmentScheme`.
 
 ## References
 
 * [M. Naor, *Bit Commitment Using Pseudorandomness*][Naor1991]
 * [O. Goldreich, *Foundations of Cryptography: Volume 1, Basic Tools*][Goldreich2001],
   Section 4.4.1.
+* [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
+  Version 0.6][BonehShoup2023], Section 8.12 (Definition 8.8, p. 344).
 -/
 
 @[expose] public section
@@ -1245,5 +1257,138 @@ theorem OneWay.exists_bitCommitmentScheme {f : List Bool → List Bool} (hf : On
     Nonempty BitCommitmentScheme := by
   obtain ⟨generator, hG⟩ := hf.exists_pseudorandomGenerator_three_mul
   exact ⟨hG.naorBitCommitment (fun n => Nat.le_succ (3 * n))⟩
+
+/-! ### Public-parameter commitment schemes ([BonehShoup2023], Section 8.12) -/
+
+/-- A two-stage chosen-message hiding adversary for a public-parameter commitment scheme
+([BonehShoup2023], Section 8.12, Definition 8.8, p. 344):
+1. `choose` receives the security parameter `n` and public parameter `param : Param` and outputs
+   two candidate message words `(m₀, m₁)` together with a saved state word `st`.
+2. `guess` receives `n` and `(st, c)` and outputs a guess bit.
+
+Unlike `CommitmentReceiver` above (which models Naor's two-message interactive bit commitment where
+a potentially malicious receiver chooses the first-round challenge string `r` alongside `(b₀, b₁)`),
+`CommitmentHidingAdversary` models non-interactive commitments with trusted public parameters
+`param` generated honestly by the challenger and passed as input to `choose`. -/
+structure CommitmentHidingAdversary (Param : Type) where
+  /-- First stage: choose `((m₀, m₁), st)` from `param`. -/
+  choose : ℕ → Param → ProbComp ((List Bool × List Bool) × List Bool)
+  /-- Second stage: output a guess bit from `(st, c)`. -/
+  guess : ℕ → List Bool × List Bool → ProbComp Bool
+
+/-- Uniform strict PPT admissibility for a `CommitmentHidingAdversary`. -/
+structure CommitmentHidingAdversary.IsPPT {Param : Type} (encParam : Param ↪ List Bool)
+    (adversary : CommitmentHidingAdversary Param) : Prop where
+  /-- First stage (`choose`) is uniform strict PPT. -/
+  choose : IsPPTOn (encPair encUnary encParam)
+    (encPair (encPair encBits encBits) encBits)
+    (fun input => adversary.choose input.1 input.2)
+  /-- Second stage (`guess`) is uniform strict PPT. -/
+  guess : IsPPTOn (encPair encUnary (encPair encBits encBits)) encBool
+    (fun input => adversary.guess input.1 input.2)
+
+/-- A commitment scheme with public parameters ([BonehShoup2023], Section 8.12, Definition 8.8,
+p. 344): a key space `Key` with public parameter view `viewKey : Key → Param`, a commitment
+distribution `commitDist k msg` over encoded commitment strings `c : List Bool` for message word
+`msg : List Bool`, and a Boolean collision predicate `checkCollision k ((m₀, r₀), (m₁, r₁))`
+testing whether two candidate openings open to the same commitment with distinct messages. -/
+structure CommitmentScheme (Key Param : Type) where
+  /-- Public parameter presented to the adversary for key `k`. -/
+  viewKey : Key → Param
+  /-- Distribution of the encoded commitment string for message word `msg` under key `k`. -/
+  commitDist : Key → List Bool → PMF (List Bool)
+  /-- Boolean predicate testing whether `((m₀, r₀), (m₁, r₁))` is a valid binding collision under
+  key `k`. -/
+  checkCollision : Key → (List Bool × List Bool) × (List Bool × List Bool) → Bool
+
+/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344)
+at a fixed commitment key `k : Key` for hidden bit `bit : Bool`. -/
+noncomputable def CommitmentScheme.hidingForKey {Key Param : Type}
+    (S : CommitmentScheme Key Param) (k : Key)
+    (adversary : CommitmentHidingAdversary Param) (bit : Bool) (n : ℕ) : Game := do
+  let choice ← ProbComp.eval (adversary.choose n (S.viewKey k))
+  let msg := if bit then choice.1.2 else choice.1.1
+  let c ← S.commitDist k msg
+  ProbComp.eval (adversary.guess n (choice.2, c))
+
+/-- If `S.commitDist k` is independent of the message word, then `S.hidingForKey k` produces the
+exact same output distribution for any two hidden bits `b₁` and `b₂`, against every (even
+computationally unbounded) `CommitmentHidingAdversary`. -/
+theorem CommitmentScheme.hidingForKey_eq_of_commitDist_eq {Key Param : Type}
+    (S : CommitmentScheme Key Param) {k : Key}
+    (hk : ∀ msg₁ msg₂ : List Bool, S.commitDist k msg₁ = S.commitDist k msg₂)
+    (adversary : CommitmentHidingAdversary Param) (b₁ b₂ : Bool) (n : ℕ) :
+    S.hidingForKey k adversary b₁ n = S.hidingForKey k adversary b₂ n := by
+  simp only [CommitmentScheme.hidingForKey, PMF.monad_bind_eq_bind]
+  congr 1; funext choice
+  rw [hk]
+
+/-- When `S.commitDist k` is independent of the message word, the hiding advantage of any
+(computationally unbounded) adversary at key `k` between `bit = false` and `bit = true` is `0`. -/
+theorem CommitmentScheme.advantage_hidingForKey_eq_zero {Key Param : Type}
+    (S : CommitmentScheme Key Param) {k : Key}
+    (hk : ∀ msg₁ msg₂ : List Bool, S.commitDist k msg₁ = S.commitDist k msg₂)
+    (adversary : CommitmentHidingAdversary Param) (n : ℕ) :
+    Game.advantage (S.hidingForKey k adversary false n)
+      (S.hidingForKey k adversary true n) = 0 := by
+  rw [S.hidingForKey_eq_of_commitDist_eq hk adversary false true n, Game.advantage_self]
+
+/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344)
+under a key distribution `keyDist : ℕ → PMF Key`. -/
+noncomputable def CommitmentScheme.hidingGame {Key Param : Type}
+    (S : CommitmentScheme Key Param) (keyDist : ℕ → PMF Key)
+    (adversary : CommitmentHidingAdversary Param) (bit : Bool) (n : ℕ) : Game := do
+  let k ← keyDist n
+  S.hidingForKey k adversary bit n
+
+/-- Statistical hiding ([BonehShoup2023], Section 8.12, Definition 8.8): every (even
+computationally unbounded) `CommitmentHidingAdversary` has negligible distinguishing advantage in
+`S.hidingGame keyDist`. -/
+def CommitmentScheme.StatisticalHiding {Key Param : Type}
+    (S : CommitmentScheme Key Param) (keyDist : ℕ → PMF Key) : Prop :=
+  Game.Indistinguishable
+    (fun adversary n => S.hidingGame keyDist adversary false n)
+    (fun adversary n => S.hidingGame keyDist adversary true n)
+    (fun _ => True)
+
+/-- Computational hiding ([BonehShoup2023], Section 8.12, Definition 8.8): every uniform strict
+PPT `CommitmentHidingAdversary` has negligible distinguishing advantage in `S.hidingGame keyDist`.
+-/
+def CommitmentScheme.ComputationalHiding {Key Param : Type}
+    (S : CommitmentScheme Key Param) (encParam : Param ↪ List Bool)
+    (keyDist : ℕ → PMF Key) : Prop :=
+  Game.Indistinguishable
+    (fun adversary n => S.hidingGame keyDist adversary false n)
+    (fun adversary n => S.hidingGame keyDist adversary true n)
+    (CommitmentHidingAdversary.IsPPT encParam)
+
+/-- Statistical hiding implies computational hiding against uniform strict PPT adversaries. -/
+theorem CommitmentScheme.StatisticalHiding.computationalHiding {Key Param : Type}
+    {S : CommitmentScheme Key Param} {keyDist : ℕ → PMF Key}
+    (h : S.StatisticalHiding keyDist) (encParam : Param ↪ List Bool) :
+    S.ComputationalHiding encParam keyDist :=
+  fun adversary _ => h adversary trivial
+
+/-- The commitment binding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344):
+draw `k ← keyDist n`, give `S.viewKey k` to `adversary`, and accept when the output openings
+satisfy `S.checkCollision k`. -/
+noncomputable def CommitmentScheme.bindingGame {Key Param : Type}
+    (S : CommitmentScheme Key Param) (keyDist : ℕ → PMF Key)
+    (adversary : ℕ → Param → ProbComp ((List Bool × List Bool) × (List Bool × List Bool)))
+    (n : ℕ) : Game := do
+  let k ← keyDist n
+  let openings ← ProbComp.eval (adversary n (S.viewKey k))
+  return S.checkCollision k openings
+
+/-- Computational binding ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344): every uniform
+strict PPT adversary has negligible success probability in `S.bindingGame keyDist`. -/
+def CommitmentScheme.Binding {Key Param : Type}
+    (S : CommitmentScheme Key Param) (encParam : Param ↪ List Bool)
+    (keyDist : ℕ → PMF Key) : Prop :=
+  ∀ adversary : ℕ → Param → ProbComp ((List Bool × List Bool) × (List Bool × List Bool)),
+    IsPPTOn (encPair encUnary encParam)
+      (encPair (encPair encBits encBits) (encPair encBits encBits))
+      (fun input => adversary input.1 input.2) →
+    Negligible fun n => Game.succProbability (S.bindingGame keyDist adversary n)
 
 end Cslib.Crypto

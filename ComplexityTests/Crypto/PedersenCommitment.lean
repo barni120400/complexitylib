@@ -91,4 +91,15 @@ example (setup : ℕ → PMF schnorrGroups.Desc) (hDL : schnorrGroups.DiscreteLo
       Game.succProbability (schnorrGroups.pedersenBindingGame setup trivialBindingAdversary n) :=
   hDL.pedersenBinding trivialBindingAdversary isPPTOn_trivialBindingAdversary
 
+/-- Packaged `CommitmentScheme.StatisticalHiding` and `CommitmentScheme.Binding` for
+`schnorrGroups.pedersenScheme`. -/
+example (setup : ℕ → PMF schnorrGroups.Desc) (hDL : schnorrGroups.DiscreteLog setup)
+    (hsize : ∀ n, ∀ d ∈ (setup n).support, 2 ^ n ≤ schnorrGroups.order d) :
+    schnorrGroups.pedersenScheme.StatisticalHiding (schnorrGroups.pedersenKeyDist setup) ∧
+      schnorrGroups.pedersenScheme.Binding (encPair schnorrGroups.encDesc encBits)
+        (schnorrGroups.pedersenKeyDist setup) :=
+  ⟨schnorrGroups.pedersenScheme_statisticalHiding setup Nat.two_pow_pos hsize
+      negligible_inv_two_pow,
+    hDL.pedersenScheme_binding⟩
+
 end ComplexityTests.Crypto.PedersenCommitment
