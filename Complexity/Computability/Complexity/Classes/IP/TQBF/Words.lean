@@ -465,10 +465,9 @@ theorem computableInPolyTime_decodeReply {p D : γ → ℕ} {word : γ → List 
 /-- The samples are strict PPT in a unary modulus. -/
 theorem isPPTOn_sampleMod {p : γ → ℕ} (hp : ComputableInPolyTime p encIn encUnary) :
     IsPPTOn encIn encUnary (fun x => sampleMod (p x)) := by
-  have hp := hp.tidy
   unfold sampleMod
   exact IsPPTOn.map_with (f := fun x i => i % p x)
-    (isPPTOn_sampleDyadicIndex (.of_tidy hp)) (by fun_prop)
+    (isPPTOn_sampleDyadicIndex hp) (by fun_prop)
 
 end PolyTime
 

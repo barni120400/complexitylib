@@ -24,8 +24,9 @@ at a computed cap, so both their intermediate states and their unary outputs rem
 bounded. The dyadic range is at most `2 * (bound + 1)`, including zero. No unbounded rejection
 loop is used. Public sampler premises use plain deterministic certificates.
 
-The scalar dyadic-size, logarithm and numeric-decoding helpers used in these proofs remain
-legacy-backed; the plain sampler interface does not claim their direct-machine internalization.
+The scalar dyadic-size, logarithm, numeric-decoding and modulus helpers used in these proofs
+remain legacy-backed. The plain sampler interface does not establish their direct-machine
+internalization.
 
 ## Main results
 

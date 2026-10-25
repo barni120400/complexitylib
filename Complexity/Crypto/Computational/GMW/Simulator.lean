@@ -999,7 +999,7 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
   · exact isPPTOn_sampleList.preprocess (by fun_prop)
   · apply IsPPTOn.map
     · exact isPPTOn_sampleList.preprocess (by fun_prop)
-    · exact hg
+    · exact .of_tidy hg
   · fun_prop
   · exact hcontext.preprocess
       (input := encPair (encPair input encBits) (encList encBits))
