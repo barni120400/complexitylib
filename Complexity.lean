@@ -772,6 +772,7 @@ public import Complexity.Computability.Complexity.Problems.ExactThreeSAT
 public import Complexity.Computability.Complexity.Problems.GeneralizedGeography
 public import Complexity.Computability.Complexity.Problems.Graph
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing
+public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing.Encoding
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalLayout
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 public import Complexity.Computability.Complexity.Problems.Graph.Ports
@@ -790,6 +791,7 @@ public import Complexity.Computability.Complexity.Problems.Knapsack
 public import Complexity.Computability.Complexity.Problems.MonotoneCircuitValue
 public import Complexity.Computability.Complexity.Problems.MonotoneCircuitValue.Completeness
 public import Complexity.Computability.Complexity.Problems.Partition
+public import Complexity.Computability.Complexity.Problems.PlanarThreeSATThree
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
@@ -821,6 +823,7 @@ public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Problems.ThreeSATThree
 public import Complexity.Computability.Complexity.Problems.ThreeSATThree.Size
+public import Complexity.Computability.Complexity.Problems.ThreeSATThree.Syntax
 public import Complexity.Computability.Complexity.Problems.TwoSAT
 public import Complexity.Computability.Complexity.Problems.TwoSAT.Completeness
 public import Complexity.Computability.Complexity.Problems.TwoSAT.Layout

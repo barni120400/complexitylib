@@ -92,6 +92,19 @@ def drawingFits (d : OrthogonalDrawing) (width height : ℕ) : Prop :=
   (∀ p ∈ d.1, 0 ≤ p.1 ∧ p.1 ≤ width ∧ 0 ≤ p.2 ∧ p.2 ≤ height) ∧
     ∀ r ∈ d.2, ∀ p ∈ r, 0 ≤ p.1 ∧ p.1 ≤ width ∧ 0 ≤ p.2 ∧ p.2 ≤ height
 
+/-- A larger rectangle preserves bounds on every displayed vertex and route point. -/
+theorem drawingFits_mono {d : OrthogonalDrawing} {w h w' h' : ℕ}
+    (hd : drawingFits d w h) (hw : w ≤ w') (hh : h ≤ h') : drawingFits d w' h' := by
+  have hw' : (w : ℤ) ≤ w' := by exact_mod_cast hw
+  have hh' : (h : ℤ) ≤ h' := by exact_mod_cast hh
+  constructor
+  · intro p hp
+    have hb := hd.1 p hp
+    exact ⟨hb.1, hb.2.1.trans hw', hb.2.2.1, hb.2.2.2.trans hh'⟩
+  · intro r hr p hp
+    have hb := hd.2 r hr p hp
+    exact ⟨hb.1, hb.2.1.trans hw', hb.2.2.1, hb.2.2.2.trans hh'⟩
+
 /-- The sum of Manhattan lengths of all incidence routes. -/
 def drawingWireLength (d : OrthogonalDrawing) : ℕ := (d.2.map wireLength).sum
 
