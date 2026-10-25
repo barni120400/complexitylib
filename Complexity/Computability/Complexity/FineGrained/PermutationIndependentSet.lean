@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.FineGrained.GraphProblems
+import Complexity.Computability.Complexity.FineGrained.ExhaustiveSearch
 import Complexity.Foundations.Data.BitString.List
 import Complexity.Foundations.Data.BitString.List.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
