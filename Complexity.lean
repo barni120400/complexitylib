@@ -800,6 +800,9 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Bounds
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Completeness
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Correctness
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayout
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutChecks
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutData
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
@@ -807,9 +810,6 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths.Occu
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
-public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayout
-public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutChecks
-public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutData
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
 public import Complexity.Computability.Complexity.Problems.STCON
@@ -1858,15 +1858,12 @@ public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Complexity.Foundations.Geometry.Orthogonal
 public import Complexity.Foundations.Geometry.Orthogonal.Endpoint
+public import Complexity.Foundations.Geometry.Orthogonal.Layout
 public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
 public import Complexity.Foundations.Geometry.Orthogonal.Neighborhood
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
-public import Complexity.Foundations.Geometry.OrthogonalLayout
-public import Complexity.Foundations.Geometry.Orthogonal.Layout
-public import Complexity.Foundations.Geometry.Orthogonal.Separation
-public import Complexity.Foundations.Geometry.Orthogonal.Simple
 public import Complexity.Foundations.GroupTheory.Perm.Fin
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
