@@ -330,6 +330,26 @@ theorem finalRoute_orthogonal (sites : List Point) {p q : Point}
   rw [finalRoute_eq_translate sites h, isOrthogonal_translate_iff]
   exact finalLocalRoute_orthogonal _ _
 
+/-- Access length is exactly 20 inside a crossing cell and 120 inside an ordinary cell. -/
+theorem access_wireLength (sites : List Point) (p q : Point) :
+    wireLength (access sites p q) = if p ∈ sites then 20 else 120 := by
+  by_cases hp : p ∈ sites
+  · simp only [access, hp, ↓reduceIte, wireLength_translate]
+    exact (Crossover.access_route_sizes _).2
+  · rw [access_eq_spoke hp, wireLength_translate]
+    simp only [hp, ↓reduceIte]
+    generalize side p q = s
+    fin_cases s <;> decide
+
+/-- A final literal route across one unit step uses at most 240 units of wire. -/
+theorem finalRoute_wireLength_le (sites : List Point) {p q : Point}
+    (h : Orthogonal.length p q = 1) :
+    wireLength (center q :: access sites p q) ≤ 240 := by
+  rw [finalRoute_eq_translate sites h, wireLength_translate]
+  generalize side p q = s
+  generalize decide (p ∈ sites) = crossing
+  fin_cases s <;> cases crossing <;> decide
+
 /-- A final literal route is the ordinary clause-cell spoke followed by its neighbor's access.
 This equality concerns the full real supports and includes the shared boundary midpoint. -/
 theorem support_finalRoute (sites : List Point) {p q : Point}
@@ -888,5 +908,49 @@ theorem pathPorts_nodup {φ : CNF ℕ}
       · exact Or.inr (by simpa only [heq] using hf)
     have := paths_shared_step_index hw hv hi hj hi_step hj_step
     omega
+
+/-- Equal boundary midpoints identify the same unordered unit grid edge. -/
+theorem cellPort_step_eq_cases {p q a b : Point}
+    (hpq : Orthogonal.length p q = 1) (hab : Orthogonal.length a b = 1)
+    (h : cellPort 120 p (side p q) = cellPort 120 a (side a b)) :
+    (p = a ∧ q = b) ∨ (p = b ∧ q = a) := by
+  rcases p with ⟨px, py⟩
+  rcases a with ⟨ax, ay⟩
+  rcases unit_neighbor_cases hpq with rfl | rfl | rfl | rfl <;>
+    rcases unit_neighbor_cases hab with rfl | rfl | rfl | rfl <;>
+    norm_num [side, cellPort, cellOrigin, Prod.ext_iff] at h ⊢ <;> omega
+
+/-- One geometric midpoint per actual unit step gives a duplicate-free list.
+This includes final steps, so any prefix selection used for binary clauses remains distinct. -/
+theorem pathMidpoints_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ((paths φ).flatMap fun r => r.consecutivePairs.map fun e =>
+      cellPort 120 e.1 (side e.1 e.2)).Nodup := by
+  let steps := (paths φ).flatMap List.consecutivePairs
+  have hu {e : Point × Point} (he : e ∈ steps) : Orthogonal.length e.1 e.2 = 1 := by
+    obtain ⟨r, hr, he⟩ := List.mem_flatMap.mp he
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+    have hi' : i < (SAT.incidenceGraph φ).2.length := by
+      simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+    apply Graph.unitPath_unit (SAT.incidenceGraph φ)
+      (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) hi'
+    change e ∈ ((paths φ).getD i []).consecutivePairs
+    rwa [List.getD_eq_getElem _ _ hi]
+  have hp : (steps.flatMap stepPorts).Nodup := by
+    have h := pathPorts_nodup hw hv
+    change ((paths φ).flatMap fun r => r.consecutivePairs.flatMap stepPorts).Nodup at h
+    simpa only [steps, List.flatMap_assoc] using h
+  have hpair := (List.nodup_flatMap.mp hp).2
+  have hmid : (steps.map fun e => cellPort 120 e.1 (side e.1 e.2)).Nodup := by
+    apply List.pairwise_map.mpr
+    apply hpair.imp_of_mem
+    intro e f he hf hd heq
+    have hx : (e.1, side e.1 e.2) ∈ stepPorts e := by simp [stepPorts]
+    rcases cellPort_step_eq_cases (hu he) (hu hf) heq with ⟨h₁, h₂⟩ | ⟨h₁, h₂⟩
+    · have heq' : e = f := Prod.ext h₁ h₂
+      exact hd hx (heq' ▸ hx)
+    · have heq' : e = (f.2, f.1) := Prod.ext h₁ h₂
+      exact hd hx (by simp [stepPorts, heq'])
+  simpa only [steps, List.map_flatMap] using hmid
 
 end Cslib.Complexity.SAT.PlanarCompile
