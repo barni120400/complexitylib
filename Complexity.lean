@@ -1972,6 +1972,11 @@ public import Complexity.Logics.Propositional.CNF.Gadgets
 public import Complexity.Logics.Propositional.CNF.ImplicationCycle
 public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.Parity
+public import Complexity.Logics.Propositional.CNF.Planar.Crossover
+public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayout
+public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayoutChecks
+public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayoutData
+public import Complexity.Logics.Propositional.CNF.Planar.CrossoverSplit
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
