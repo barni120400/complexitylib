@@ -48,7 +48,9 @@ Mathlib's standard linter set already enforces the mechanical part; reviews enfo
 6. **Placement.** No duplicates; small topic modules; clients import what they use.
 7. **Documentation.** Definitions and theorems are documented, citing sources; module docstrings
    list the actual public API; each area has a chapter in the guide.
-8. **Tests.** Checked, nonvacuous examples of the area's main API.
+8. **Tests.** Checked, nonvacuous examples of the area's main API: each exercises a concrete
+   instance (a small input, a run, a counterexample). A one-line `example … := someTheorem` that
+   only restates a signature is not a test; keep such lines only where they pin a curated abstract.
 
 Improving an interface never weakens the mathematics: keep the models, encodings, independent
 resource bounds and nonvacuity of the results it touches.
@@ -152,14 +154,17 @@ the tested revision (or base revision and exact diff), commands and outcomes, re
 scope, findings and their resolution, and any remaining limitations. Preserve enough evidence
 there for another contributor to assess the change; a path into a local `.lake/` directory is not
 a durable review record. Recheck changes made after review and identify the final reviewed revision.
+Link the hosted CI run for the final revision rather than asserting which checks passed. Keep review
+verdicts short: the revision, the verdict and the findings, linking evidence rather than pasting it.
 
 ## Documentation
 
 Keep each fact in one maintained location. The README explains the purpose and points to useful
-entry points; module docstrings explain the mathematics and API; checked Lean examples show
-usage. ROADMAP records outstanding work; UPSTREAM records coordination and exceptional integration
-decisions, while source markers record module status. Batch measurements and validation/review
-evidence belong in commit or PR descriptions.
+entry points; module docstrings explain the mathematics and API; checked Lean examples show usage.
+ROADMAP lists open directions only; status and progress live on issues and PRs, so a PR does not
+edit ROADMAP unless it opens or closes a direction. UPSTREAM records coordination and exceptional
+integration decisions, while source markers record module status. Batch measurements and
+validation/review evidence belong in commit or PR descriptions.
 Link to these sources instead of repeating them in new guides. Add a separate document only when
 it provides useful explanation that does not already have a suitable home.
 
