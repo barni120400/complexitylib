@@ -543,10 +543,10 @@ theorem PH_subset_BPOp_ParityP : PH enc ⊆ BPOp enc (ParityP (encPair enc encBi
     simp only [hL', Set.mem_ofPred_eq, decide_eq_true_eq, decide_eq_false_iff_not]
     rw [← hLV a] at ha
     constructor
-    · intro haL
+    · intro (haL : a ∈ L)
       simp only [haL, iff_true] at ha
       omega
-    · intro haL
+    · intro (haL : a ∉ L)
       simp only [haL, iff_false, not_not] at ha
       omega
 
