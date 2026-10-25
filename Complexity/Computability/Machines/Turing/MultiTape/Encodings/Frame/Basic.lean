@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
+public import Cslib.Init
 public import Mathlib.Data.List.Basic
 
 /-! # Pure framed words
