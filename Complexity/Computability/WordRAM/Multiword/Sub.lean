@@ -44,9 +44,10 @@ open Workspace
 
 variable {r : ℕ}
 
-/-- Incoming and outgoing borrow. -/
+/-- Incoming and outgoing borrow, reusing workspace register 1 (`Workspace.carry`). -/
 abbrev borrow : Fin (r + 4) := carry
-/-- Preserved one. -/
+/-- Preserved one, reusing workspace register 3 (`Workspace.zero`, which holds `0` in addition
+and `1` in subtraction). -/
 abbrev one : Fin (r + 4) := zero
 
 /-- Subtract one digit and the incoming borrow, replacing the minuend digit. -/

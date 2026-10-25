@@ -302,9 +302,9 @@ theorem computableInPolyTime_savitchVerifier :
       (ComputableTidilyInPolyTime.fst enc encBits)
   have hw : ComputableTidilyInPolyTime
       (fun x : α × List Bool => ntm.viewCodeWidth c d (enc x.1)) (encPair enc encBits)
-      encUnary := by
-    unfold MultiTapeNTM.viewCodeWidth
-    fun_prop
+      encUnary :=
+    (ntm.computableInPolyTime_viewCodeWidth c d).tidy.comp
+      ((ComputableTidilyInPolyTime.encode enc).comp (ComputableTidilyInPolyTime.fst enc encBits))
   have hinit : ComputableTidilyInPolyTime (fun x : α × List Bool =>
       (MultiTapeNTM.viewCode (ntm.codeWidth c d (enc x.1)) (ntm.initView (enc x.1)),
         MultiTapeNTM.acceptCode (ntm.codeWidth c d (enc x.1)), x.2))
@@ -353,8 +353,7 @@ theorem exists_isGameVerifier_of_mem_PSPACE (h : A ∈ PSPACE enc) :
     have hrounds : ComputableTidilyInPolyTime
         (fun a => (ntm.viewCodeWidth c d (enc a) + 1) * ntm.viewCodeWidth c d (enc a))
         enc encUnary := by
-      have := MultiTapeNTM.computableTidilyInPolyTime_codeWidth (ntm := ntm) (enc := enc) c d
-      unfold MultiTapeNTM.viewCodeWidth
+      have := (ntm.computableInPolyTime_viewCodeWidth c d).tidy.comp (.encode enc)
       fun_prop
     obtain ⟨p, hr⟩ := hrounds.polyBounded.exists_polynomial
     refine ⟨p, savitchVerifier (enc := enc) ntm c d,
