@@ -57,6 +57,27 @@ private meta def pptKnownCall : Aesop.RuleTac :=
 private meta def pptCertificate : Aesop.RuleTac :=
   Cslib.Tactic.applyCertificates ``IsPPTOn
 
+/-- Find the existing joint-sequencing rule without unfolding a sampler implementation. -/
+private meta def capturedRule (target : Expr) : MetaM Name := do
+  let target := (← Core.betaReduce (← instantiateMVars target)).consumeMData
+  unless target.isAppOf ``IsPPTOn do throwError "expected an encoded-input PPT goal"
+  lambdaTelescope target.getAppArgs.back! fun _ body => do
+    if body.isAppOf ``Bind.bind then return ``IsPPTOn.bind_with
+    if body.isAppOf ``Functor.map then return ``IsPPTOn.map_with
+    throwError "expected probabilistic sequencing"
+
+/-- A matched local sampler should choose its encoding jointly with the continuation before an
+expensive compositional attempt. This applicability probe preserves all caller assignments. -/
+private meta def hasLocalSampler (goal : MVarId) : MetaM Bool := do
+  let initial ← saveState
+  try
+    let goals ← goal.applyConst (← capturedRule (← goal.getType))
+    let some sampler := goals.head? | return false
+    discard <| (pptKnownCall { (default : Aesop.RuleTacInput) with goal := sampler }).run' {}
+    return true
+  catch _ => return false
+  finally initial.restore
+
 /-- Let compositional rules finish a goal before exposing individual monadic binds. -/
 @[aesop safe -20 tactic (rule_sets := [PPT])]
 private meta def pptFunProp : TacticM Unit :=
@@ -66,6 +87,8 @@ private meta def pptFunProp : TacticM Unit :=
       throwError "expected an encoded-input PPT goal"
     if target.getAppArgs[2]!.hasExprMVar then
       throwError "input encoding is not yet determined"
+    if ← hasLocalSampler (← getMainGoal) then
+      throwError "local sampler encodings are handled by joint sequencing"
     evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
 
 attribute [program_certificate]
@@ -79,12 +102,7 @@ independent branches with their output encoding fixed before continuation search
 sequencing branch remains available for named and compositional samplers. -/
 @[aesop unsafe 80% tactic (rule_sets := [PPT])]
 private meta def pptCaptured : Aesop.RuleTac := fun input => input.goal.withContext do
-  let target := (← Core.betaReduce (← instantiateMVars (← input.goal.getType))).consumeMData
-  unless target.isAppOf ``IsPPTOn do throwError "expected an encoded-input PPT goal"
-  let rule ← lambdaTelescope target.getAppArgs.back! fun _ body => do
-    if body.isAppOf ``Bind.bind then return ``IsPPTOn.bind_with
-    if body.isAppOf ``Functor.map then return ``IsPPTOn.map_with
-    throwError "expected probabilistic sequencing"
+  let rule ← capturedRule (← input.goal.getType)
   let initial ← saveState
   try
     let goals ← input.goal.applyConst rule
