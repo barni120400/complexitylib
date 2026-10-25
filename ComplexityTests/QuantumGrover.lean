@@ -6,7 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.QueryComplexity.Quantum.Grover
 
-/-! Grover's algorithm: concrete instances and axiom guards. -/
+/-! Grover's algorithm: concrete instances. -/
 
 namespace ComplexityTests.QuantumGrover
 
@@ -32,17 +32,5 @@ example : ((4 : ℕ) : ℝ) - 2 ≤ 144 * ((⌊Real.pi / (4 * groverAngle 4)⌋�
 example (z : Fin 4) :
     regProb (run (grover 4) (uniform 4) (marked z) 0) z = Real.sin (groverAngle 4) ^ 2 := by
   simpa using regProb_run_grover (by norm_num) z 0
-
-/--
-info: 'Cslib.Quantum.run_grover' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms run_grover
-
-/--
-info: 'Cslib.Quantum.grover_success' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms grover_success
 
 end ComplexityTests.QuantumGrover

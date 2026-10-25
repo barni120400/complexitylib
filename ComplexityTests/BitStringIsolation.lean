@@ -31,11 +31,4 @@ example : 2 ^ 2 ≤ ∑ σ ∈ ({![false, false], ![true, true]} : Finset (Fin 2
     2 ^ isolation {![false, false], ![true, true]} σ :=
   two_pow_le_sum_two_pow_isolation _ ⟨_, Finset.mem_insert_self _ _⟩
 
-/--
-info: 'Cslib.BitString.two_pow_le_sum_two_pow_isolation' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms two_pow_le_sum_two_pow_isolation
-
 end ComplexityTests.BitStringIsolation

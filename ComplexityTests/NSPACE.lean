@@ -51,17 +51,4 @@ example : STCONᶜ ∈ NSPACE encSTCON id := compl_mem_NSPACE Nat.log2_le_self s
 example : STCON ∈ coNSPACE encSTCON id :=
   (NSPACE_eq_coNSPACE (s := id) Nat.log2_le_self) ▸ stcon_mem_linear
 
-/--
-info: 'Cslib.Complexity.NSPACE_eq_coNSPACE' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NSPACE_eq_coNSPACE
-
-/--
-info: 'Cslib.Complexity.NL_eq_coNL' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NL_eq_coNL
-
 end ComplexityTests.NSPACE

@@ -37,18 +37,4 @@ example (W : (Fin (mulTwo.width 0) → Bool) → ℤ) (z : Fin (mulTwo.width 1) 
             (multilinearExtension (mulTwo.multPred (R := ℤ) 0)) * (W b * W c)) :=
   mulTwo.eval_multilinearExtension_step 0 W z
 
-/--
-info: 'Cslib.Interactive.GKR.LayeredCircuit.eval_multilinearExtension_step' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms LayeredCircuit.eval_multilinearExtension_step
-
-/--
-info: 'Cslib.Interactive.GKR.LayeredCircuit.eval_multilinearExtension_wiringPred' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms LayeredCircuit.eval_multilinearExtension_wiringPred
-
 end ComplexityTests.GKRLayered

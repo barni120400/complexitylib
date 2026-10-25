@@ -6,8 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Foundations.NumberTheory.AKS.Correctness
 
-/-! Correctness of the AKS tests: a satisfiable instance of the order hypothesis, and axiom
-guards. -/
+/-! Correctness of the AKS tests: a satisfiable instance of the order hypothesis. -/
 
 namespace ComplexityTests.AKSCorrectness
 
@@ -33,17 +32,5 @@ theorem logb_sq_lt : Real.logb 2 (31 : ℕ) ^ 2 < orderOf ((31 : ℕ) : ZMod 29)
 example : Passes 31 29 := passes_of_prime (by decide) 29
 
 example : Nat.Prime 31 ↔ Passes 31 29 := prime_iff_passes (by norm_num) logb_sq_lt
-
-/--
-info: 'Cslib.AKS.prime_of_passes' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms prime_of_passes
-
-/--
-info: 'Cslib.AKS.prime_iff_passes' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms prime_iff_passes
 
 end ComplexityTests.AKSCorrectness

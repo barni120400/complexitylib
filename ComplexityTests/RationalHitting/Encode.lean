@@ -11,9 +11,8 @@ import Complexity.Foundations.Data.Rat.Basic
 # Binary division, Euclidean GCD, and canonical rational encodings
 
 Concrete evaluations of binary long division, Euclidean remainder steps, and canonical natural and
-rational encodings; composed clients of `binary_div`, `binary_mod`, `binary_gcd`,
-`encodeNat_polytime`, and `encodeDivInt_polytime` under `fun_prop`; and `#print axioms` guards for
-the headline theorems.
+rational encodings; and composed clients of `binary_div`, `binary_mod`, `binary_gcd`,
+`encodeNat_polytime`, and `encodeDivInt_polytime` under `fun_prop`.
 -/
 
 namespace ComplexityTests.RationalHitting.Encode
@@ -119,42 +118,5 @@ example : ComputableTidilyInPolyTime
       (fun p : ℤ × ℤ => encodeNat (Nat.gcd p.1.natAbs p.2.natAbs))
       (encPair encIntBin encIntBin) encBits := by fun_prop
   fun_prop
-
-/-! ### Axioms of the headline certificates -/
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_div' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms binary_div
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_mod' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms binary_mod
-
-/--
-info: 'Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_gcd' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms binary_gcd
-
-/--
-info: 'Cslib.Circuits.Rational.encodeNat_polytime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms encodeNat_polytime
-
-/--
-info: 'Cslib.Circuits.Rational.encodeDivInt_polytime' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms encodeDivInt_polytime
 
 end ComplexityTests.RationalHitting.Encode

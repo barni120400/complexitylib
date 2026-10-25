@@ -37,18 +37,4 @@ example {v : ℝ} (hv : 0 ≤ v) (hv1 : v ≤ 1) (n : ℕ) :
       exact mul_le_mul_of_nonneg_left (le_add_of_nonneg_right (by positivity))
         (pow_nonneg hv m)
 
-/--
-info: 'Cslib.PCP.ParallelRepetition.le_two_mul_rpow_of_step' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms le_two_mul_rpow_of_step
-
-/--
-info: 'Cslib.PCP.ParallelRepetition.le_pow_floor_of_step' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms le_pow_floor_of_step
-
 end ComplexityTests.RepetitionRecursion

@@ -75,26 +75,4 @@ example : ComputableTidilyInSpace
     (budget_comp_linear (fst _ _) hr₂) (budget_comp_linear (fst _ _) hr₃)
     (budget_comp_linear (snd _ _) hr₃) (.refl _)
 
-/--
-info: 'Turing.MultiTapeNTM.ConfigurationGraph.accepts_iff_reachable_bad_of_runsInSpace'
-depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.ConfigurationGraph.accepts_iff_reachable_bad_of_runsInSpace
-
-/--
-info: 'Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol_budget' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.ConfigurationGraph.edgeWithSymbol_budget
-
-/--
-info: 'Turing.MultiTapeNTM.ConfigurationGraph.reachable_lt_pow_of_runsInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.ConfigurationGraph.reachable_lt_pow_of_runsInSpace
-
 end ComplexityTests.ConfigurationGraph

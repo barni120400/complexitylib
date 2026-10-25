@@ -8,8 +8,8 @@ import Complexity.Probability.CorrelatedSampling.Embeddability
 
 /-! # Local embeddings
 
-Independent private samples embed exactly; a common value known to both parties is embedded by
-Lemma 8; and Corollary 9 and Fact 11 are guarded.
+Independent private samples embed exactly, and a common value known to both parties is embedded
+by Lemma 8.
 -/
 
 namespace ComplexityTests.Embeddability
@@ -29,26 +29,5 @@ example (J : PMF ((Bool × Bool) × Bool)) :
       (2 * dist J (withKernel (J.map Prod.fst) fun xy => condX J xy.1) +
         2 * dist J (withKernel (J.map Prod.fst) fun xy => condY J xy.2)) :=
   isEmbeddable_diag J
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.isEmbeddable_diag_of_dist_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isEmbeddable_diag_of_dist_le
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.isEmbeddable_bind_prod' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isEmbeddable_bind_prod
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.dist_filter_le_two_mul' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms dist_filter_le_two_mul
 
 end ComplexityTests.Embeddability

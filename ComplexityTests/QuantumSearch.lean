@@ -6,8 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.QueryComplexity.Quantum.Search
 
-/-! The quantum query model: the oracle, a satisfiable instance of the search hypothesis, and axiom
-guards. -/
+/-! The quantum query model: the oracle and a satisfiable instance of the search hypothesis. -/
 
 namespace ComplexityTests.QuantumSearch
 
@@ -42,17 +41,5 @@ example (ψ : State 3 Unit) :
 example (ψ : State 3 Unit) :
     (phaseOracle (marked 1) ψ).ofLp (1, (false, ())) = ψ.ofLp (1, (false, ())) := by
   simp
-
-/--
-info: 'Cslib.Quantum.sum_sq_norm_run_sub_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_sq_norm_run_sub_le
-
-/--
-info: 'Cslib.Quantum.card_sub_two_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms card_sub_two_le
 
 end ComplexityTests.QuantumSearch

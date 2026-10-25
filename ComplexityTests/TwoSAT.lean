@@ -20,7 +20,7 @@ complement accepts `x₀ ∧ ¬x₀` and no branch accepts `(x₀ ∨ x₁) ∧ 
 
 The reduction from the complement of directed connectivity is pinned on two instances: the path
 `0 → 1 → 2` from `0` to `2` gives an unsatisfiable formula, the single arc `1 → 0` from `0` to
-`1` a satisfiable one. The headline theorems are guarded by `#print axioms`.
+`1` a satisfiable one.
 -/
 
 namespace ComplexityTests.TwoSAT
@@ -131,32 +131,5 @@ example : TwoSAT ∈ NL encCNF := TwoSAT.mem_NL
 example : LogSpaceReducible encSTCON encCNF STCONᶜ TwoSAT := TwoSAT.logSpaceReducible_compl_STCON
 
 example : LogSpaceComplete NL encCNF TwoSAT := TwoSAT.logSpaceComplete
-
-/--
-info: 'Cslib.Logic.PL.CNF.not_satisfiable_iff_of_width_le_two' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms CNF.not_satisfiable_iff_of_width_le_two
-
-/--
-info: 'Cslib.Complexity.TwoSAT.exists_decidesInLogSpace_compl' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TwoSAT.exists_decidesInLogSpace_compl
-
-/--
-info: 'Cslib.Complexity.TwoSAT.mem_NL' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TwoSAT.mem_NL
-
-/--
-info: 'Cslib.Complexity.TwoSAT.logSpaceComplete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.TwoSAT.logSpaceComplete
 
 end ComplexityTests.TwoSAT

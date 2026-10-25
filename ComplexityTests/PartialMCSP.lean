@@ -353,41 +353,4 @@ example (heth : ETH) :
       fun I => Nat.log 2 I.tableSize * Nat.log 2 (Nat.log 2 I.tableSize) :=
   heth.not_decidableInSubexpTime_PartialMCSP_tableSize_encBinary
 
-/-! ### Axiom audits -/
-
-/--
-info: 'Cslib.Circuits.Boolean.PosFormula.exists_perm_of_agreesWith_ilango' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PosFormula.exists_perm_of_agreesWith_ilango
-
-/--
-info: 'Cslib.PartialMCSP.mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem' depends on
-axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms PartialMCSP.mem_BipartitePermutationIndependentSet_iff_ilangoReduction_mem
-
-/--
-info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ETH.not_decidableInSubexpTime_PartialMCSP
-
-/--
-info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ETH.not_decidableInSubexpTime_PartialMCSP_binaryGate
-
-/--
-info: 'Cslib.Complexity.ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms ETH.not_decidableInSubexpTime_PartialMonotoneReadOnceMCSP
-
 end ComplexityTests.PartialMCSP

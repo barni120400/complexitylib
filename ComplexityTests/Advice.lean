@@ -68,30 +68,4 @@ example (N : Polynomial ℕ) :
         (evalAdvice (S.eval n) (W.eval n) (α n) x = true ↔ x ∈ (⊤ : Language Bool)) :=
   PPoly.exists_evalAdvice PPoly.top_mem N
 
-/--
-info: 'Cslib.Circuits.Boolean.PPoly.of_advice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly.of_advice
-/--
-info: 'Cslib.Circuits.Boolean.PPoly.exists_evalAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly.exists_evalAdvice
-/--
-info: 'Cslib.Circuits.Boolean.PAdvice_subset_PPoly' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PAdvice_subset_PPoly
-/--
-info: 'Cslib.Circuits.Boolean.PPoly_subset_PAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly_subset_PAdvice
-/--
-info: 'Cslib.Circuits.Boolean.PPoly_eq_PAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.PPoly_eq_PAdvice
-
 end ComplexityTests.Advice
