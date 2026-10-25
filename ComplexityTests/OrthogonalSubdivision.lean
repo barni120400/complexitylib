@@ -1,3 +1,9 @@
+/-
+Copyright (c) 2026 Erik Demaine. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Erik Demaine
+-/
+
 import Complexity.Computability.Geometry.OrthogonalSubdivision
 import Complexity.Foundations.Geometry.OrthogonalLayout
 
