@@ -18,11 +18,11 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 # Polynomial advice
 
 A machine *takes advice* when, on an input `x` of length `n`, it also reads a string `α n` that
-depends only on `n` [Arora and Barak, Definition 6.10][AroraBarak09]. With the advice placed in
+depends only on `n` [Arora and Barak, Section 6.3][AroraBarak09]. With the advice placed in
 front of the input as the pair `(α |x|, x)`, encoded as `frame (α |x|) ++ x`, a language is in
 `PAdvice` when it consists of the inputs whose pair lies in a problem decidable in polynomial time,
 for advice of polynomial length. This is the class `⋃ DTIME(n ^ c) / n ^ d` of
-[Arora and Barak, Theorem 6.11][AroraBarak09], the original definition of `P/poly`
+[Arora and Barak, Theorem 6.18][AroraBarak09], the original definition of `P/poly`
 [Karp and Lipton][KarpLipton1980].
 
 Hardwiring the advice into circuits for the pairs gives circuits for the language: at each length
@@ -163,7 +163,7 @@ theorem computableInPolyTime_evalAdvice {γ : Type} {encIn : γ ↪ List Bool}
     (hw.bitsDropWithInput (unary_mul.comp (hm.prod hwidth)))
   exact computableInPolyTime_evalOutput hx hc.fst' hc.snd'
 
-/-- **Polynomial time with polynomial advice** [Arora and Barak, Definition 6.10][AroraBarak09]:
+/-- **Polynomial time with polynomial advice** [Arora and Barak, Section 6.3][AroraBarak09]:
 the languages `L` with advice `α` of polynomial length and a problem `A` of pairs, decidable in
 polynomial time for the encoding `frame u ++ x` of `(u, x)`, such that `x ∈ L` exactly when
 `(α |x|, x) ∈ A`. -/
@@ -171,14 +171,14 @@ def PAdvice : Set (Language Bool) :=
   {L | ∃ α : ℕ → List Bool, PolynomiallyBounded (fun n => (α n).length) ∧
     ∃ A ∈ Complexity.P (encPair encBits encBits), ∀ x, x ∈ L ↔ (α x.length, x) ∈ A}
 
-/-- **P/advice ⊆ P/poly** [Arora and Barak, Theorem 6.11][AroraBarak09]: a language decided in
+/-- **P/advice ⊆ P/poly** [Arora and Barak, Theorem 6.18][AroraBarak09]: a language decided in
 polynomial time with polynomial advice has circuits of polynomial size. -/
 theorem PAdvice_subset_PPoly : PAdvice ⊆ PPoly := by
   rintro L ⟨α, hα, A, hA, hL⟩
   obtain ⟨M, hM, hAM⟩ := PPoly.exists_of_mem_P hA
   exact PPoly.of_advice hM α hα fun x => (hL x).trans (hAM _)
 
-/-- **P/poly ⊆ P/advice** [Arora and Barak, Theorem 6.11][AroraBarak09]: a language decided in
+/-- **P/poly ⊆ P/advice** [Arora and Barak, Theorem 6.18][AroraBarak09]: a language decided in
 polynomial size has polynomial advice. -/
 theorem PPoly_subset_PAdvice : PPoly ⊆ PAdvice := by
   intro L hL
@@ -230,7 +230,7 @@ theorem PPoly_subset_PAdvice : PPoly ⊆ PAdvice := by
       Language.slice_eq_true_iff]
     simp only [Fin.getElem_fin, List.ofFn_getElem]
 
-/-- **P/poly = P/advice** [Arora and Barak, Theorem 6.11][AroraBarak09]: the circuit class P/poly
+/-- **P/poly = P/advice** [Arora and Barak, Theorem 6.18][AroraBarak09]: the circuit class P/poly
 equals the advice class P/advice. -/
 theorem PPoly_eq_PAdvice : PPoly = (PAdvice : Set (Language Bool)) :=
   Set.Subset.antisymm PPoly_subset_PAdvice PAdvice_subset_PPoly

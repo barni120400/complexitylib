@@ -63,18 +63,8 @@ Furthermore, `P/poly` preimages are closed under polynomial-time many-one reduct
 `SAT` hypothesis are all equivalent (`Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff`,
 `Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff_SAT`).
 
-## Main definitions
-
-* `Cslib.Circuits.Boolean.familyAdvice`: the advice string listing a family of circuits.
-* `Cslib.Circuits.Boolean.evalAdvice`: evaluation of the circuit for the length of the input read
-  from an advice string.
-
 ## Main results
 
-* `Cslib.Circuits.Boolean.evalAdvice_familyAdvice`: evaluation from the advice string of a family
-  is evaluation of its circuits.
-* `Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice`: evaluation from advice strings is
-  polynomial-time.
 * `Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT`: if `SAT` has circuits of polynomial size,
   then `Π₂ ⊆ Σ₂`.
 * `Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT`: under the same hypothesis, `Π₂ = Σ₂`.
