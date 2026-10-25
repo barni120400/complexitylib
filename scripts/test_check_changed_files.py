@@ -67,6 +67,30 @@ class DocNameTests(unittest.TestCase):
         text = "/-!\n## Implementation notes\n\n* `missing`: x\n\nSee `missing` too.\n-/\n"
         self.assertEqual(self.check(text), [])
 
+    def test_listed_names(self) -> None:
+        doc = """
+# Title
+
+Mentions `Ignored.name` in prose.
+
+## Main definitions
+
+* `Foo.bar`, `Foo.baz`: two things, related to `NotListed`.
+* `Long.first`,
+  `Long.second`: a bullet continued on the next line.
+* `.relative`: a name relative to the previous one.
+* `u ≼ v` is notation, not a name.
+
+## Main results
+
+* `Foo.bar_spec`
+
+## References
+* `Not.a.result`: references are not listed.
+"""
+        self.assertEqual(c.listed_names(doc), [
+            "Foo.bar", "Foo.baz", "Long.first", "Long.second", "relative", "Foo.bar_spec"])
+
     def test_syntax_names(self) -> None:
         text = ('syntax (name := foSimp) "fo_simp" (simpArgs)? : tactic\n'
                 'scoped macro "ppt " : tactic => `(tactic| rfl)\n'

@@ -91,9 +91,11 @@ also loads private information, so such edits do reach its clients.
   instances stay local.
 - Ordinary imports cannot name private declarations. When privatizing, update the tests and
   abstracts that name them in the same PR, or give a companion module `import all`.
-- `scripts/quality_report.py` records where each declaration is referenced and where other modules
-  unfold a definition by name. Reduction by `rfl` or `decide` is not recorded, and its counts are
-  review signals, not rules.
+- For an audit, `python3 scripts/audit_queries.py references PREFIX` lists where each declaration
+  under a source path is referenced, and `duplicates` lists declarations with alpha-equivalent
+  statements in different modules. Uses through `rfl`, `decide`, simp sets or instances leave no
+  reference, and a declaration nobody references may still be wanted API: privatize by intent
+  (#926), not because the helper lists it. It is an on-demand helper, never run in CI.
 
 Tidy computability (`ComputableTidily…`, `ComputesTidily…`, `IsTidy…`) may appear anywhere inside
 proofs, through `.tidy`, `.of_tidy`, a proof-local `attribute [local fun_prop] … in` or a tidy

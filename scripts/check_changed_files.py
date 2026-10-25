@@ -36,7 +36,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
-import quality_report as qr  # noqa: E402
+import lean_outputs as lo  # noqa: E402
 from proof_lengths import command_starts, masks, signature_end  # noqa: E402
 
 # Lean's identifiers (`Lean.isIdFirst`, `Lean.isIdRest`), with `«…»` escapes; dot-separated.
@@ -95,6 +95,43 @@ def changed_files(root: Path, ref: str) -> tuple[list[str], list[str]]:
 
 # --- Module-doc names ---------------------------------------------------------------------------
 
+MAIN_SECTION = re.compile(r"^##\s+Main\b", re.M)
+BULLET = re.compile(r"^(\s*)[*-]\s+")
+DOC_NAME = re.compile(r"@?[^\s`()\[\]{},;:]*[A-Za-z][^\s`()\[\]{},;:]*")
+
+
+def doc_blocks(text: str) -> list[str]:
+    return re.findall(r"/-!(.*?)-/", text, re.S)
+
+
+def listed_names(doc: str) -> list[str]:
+    """Names listed in the "Main …" sections of a module docstring: the backquoted names before
+    the first colon (outside backquotes) of each bullet."""
+    names = []
+    for section in re.split(r"^(?=#)", doc, flags=re.M):
+        if not MAIN_SECTION.match(section):
+            continue
+        items: list[str | None] = []
+        for line in section.splitlines()[1:]:
+            if BULLET.match(line):
+                items.append(BULLET.sub("", line, count=1))
+            elif items and items[-1] is not None and line.startswith(" ") and line.strip():
+                items[-1] += " " + line.strip()
+            else:
+                items.append(None)
+        for item in filter(None, items):
+            head, inside = item, False
+            for i, char in enumerate(item):
+                if char == "`":
+                    inside = not inside
+                elif char == ":" and not inside:
+                    head = item[:i]
+                    break
+            names += [token.lstrip("@.") for token in re.findall(r"`([^`]*)`", head)
+                      if DOC_NAME.fullmatch(token)]
+    return names
+
+
 def syntax_names(text: str) -> set[str]:
     """Names of the tactics, attributes, rule sets and simp sets a source file declares."""
     names = {atom.strip() for atom in SYNTAX_ATOM.findall(text)}
@@ -128,7 +165,7 @@ def resolves(token: str, by_last: dict[str, set[str]]) -> bool:
 
 def listed_identifiers(text: str) -> list[str]:
     """The identifiers listed in the "Main …" sections of a source file's module docstrings."""
-    return [token for doc in qr.doc_blocks(text) for token in qr.listed_names(doc)
+    return [token for doc in doc_blocks(text) for token in listed_names(doc)
             if NAME.fullmatch(token)]
 
 
@@ -208,8 +245,8 @@ def main(argv: list[str] | None = None, root: Path = ROOT) -> int:
                if rel.startswith("Complexity/") and rel.endswith(".lean")]
 
     def load_ileans() -> dict[str, dict]:
-        qr.check_outputs(qr.DEFAULT_BUILD_DIR, args.no_build_check)
-        return qr.load_ileans(qr.DEFAULT_BUILD_DIR)
+        lo.check_outputs(lo.DEFAULT_BUILD_DIR, args.no_build_check)
+        return lo.load_ileans(lo.DEFAULT_BUILD_DIR)
 
     errors = check_new_tests(root, added) + check_doc_names(root, sorted(modules), load_ileans)
     for error in errors:
