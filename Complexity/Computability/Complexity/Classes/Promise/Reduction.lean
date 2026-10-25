@@ -300,14 +300,20 @@ theorem mem_PromiseCoRP_iff : Q ∈ PromiseCoRP enc ↔
     refine ⟨p, fun x => !V x, .of_tidy (by have := hV.tidy; fun_prop),
       fun a ha => by simpa using hno a ha, fun a ha r => by simp [hyes a ha r]⟩
 
+/-- A total language embedded as a promise problem belongs to `PromiseBPP` if and only if
+it belongs to `BPP`. -/
 @[simp]
 theorem ofSet_mem_PromiseBPP : ofSet A ∈ PromiseBPP enc ↔ A ∈ BPP enc := by
   simp only [PromiseBPP, BPP, Set.mem_ofPred_eq, solvesWithBoundedError_ofSet_iff]
 
+/-- A total language embedded as a promise problem belongs to `PromiseRP` if and only if
+it belongs to `RP`. -/
 @[simp]
 theorem ofSet_mem_PromiseRP : ofSet A ∈ PromiseRP enc ↔ A ∈ RP enc := by
   simp only [PromiseRP, RP, Set.mem_ofPred_eq, solvesWithOneSidedError_ofSet_iff]
 
+/-- A total language embedded as a promise problem belongs to `PromiseCoRP` if and only if
+it belongs to `coRP`. -/
 @[simp]
 theorem ofSet_mem_PromiseCoRP : ofSet A ∈ PromiseCoRP enc ↔ A ∈ coRP enc := by
   rw [PromiseCoRP, Set.mem_ofPred_eq, ← ofSet_compl, ofSet_mem_PromiseRP, mem_coRP]

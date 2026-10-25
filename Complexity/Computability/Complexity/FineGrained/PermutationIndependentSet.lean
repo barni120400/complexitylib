@@ -323,6 +323,9 @@ conflict edges in $E$. -/
 def BipartitePermutationIndependentSet : Set BipartitePermutationGraph :=
   {G | ∃ π₁ π₂ : Equiv.Perm (Fin G.1), G.Satisfies π₁ π₂}
 
+/-- Equivalence between the two-permutation bipartite formulation of the Bipartite Permutation
+Independent Set problem and the single-permutation undirected formulation
+[LokshtanovMarxSaurabh2018, Section 2.2, Theorem 2.11]. -/
 theorem BipartitePermutationIndependentSet.mem_iff_exists_satisfiesUndirected
     (G : BipartitePermutationGraph) :
     G ∈ BipartitePermutationIndependentSet ↔
