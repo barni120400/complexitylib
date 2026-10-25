@@ -46,18 +46,4 @@ example (x : (Fin (mulTwo.width 0) → Bool) → ZMod 101) :
   rw [h5, ZMod.card] at h
   exact_mod_cast h
 
-/--
-info: 'Cslib.Interactive.GKR.LayeredCircuit.protocol_complete' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms LayeredCircuit.protocol_complete
-
-/--
-info: 'Cslib.Interactive.GKR.LayeredCircuit.protocol_sound' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms LayeredCircuit.protocol_sound
-
 end ComplexityTests.GKRProtocol

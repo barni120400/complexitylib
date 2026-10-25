@@ -44,18 +44,4 @@ example : always.value = 1 := by
     simp [TwoProverGame.winProb, always]
   exact this ▸ always.winProb_le_value _ _
 
-/--
-info: 'Cslib.PCP.TwoProverGame.winProb_shared_le_value' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms TwoProverGame.winProb_shared_le_value
-
-/--
-info: 'Cslib.PCP.TwoProverGame.pow_value_le_value_pow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms TwoProverGame.pow_value_le_value_pow
-
 end ComplexityTests.TwoProverGame

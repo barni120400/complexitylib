@@ -41,45 +41,10 @@ example : (∑ j, dist (((pi bits).filter {u | u 0 = true} first_true_mem).map f
     2 * Real.log (1 / ((pi bits).toOuterMeasure {u | u 0 = true}).toReal) / 2 := by
   simpa using sq_sum_dist_map_filter_pi_le bits {u | u 0 = true} first_true_mem
 
-/--
-info: 'Cslib.Probability.PMF.sum_sum_mul_log_div_map_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_sum_mul_log_div_map_le
-
 -- Holenstein's form for the same event.
 example : ((pi bits).toOuterMeasure {u | u 0 = true}).toReal ≤ (2 : ℝ) ^
     (-∑ j, dist (((pi bits).filter {u | u 0 = true} first_true_mem).map fun u => u j)
       (bits j) ^ 2) :=
   toOuterMeasure_toReal_le_two_rpow bits _ first_true_mem
-
-/--
-info: 'Cslib.Probability.PMF.sum_sq_dist_map_filter_pi_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_sq_dist_map_filter_pi_le
-
-/--
-info: 'Cslib.Probability.PMF.toOuterMeasure_toReal_le_two_rpow' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms toOuterMeasure_toReal_le_two_rpow
-
-/--
-info: 'Cslib.Probability.PMF.sq_sum_dist_map_filter_pi_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sq_sum_dist_map_filter_pi_le
-
-/--
-info: 'Cslib.Probability.PMF.sum_dist_map_filter_pi_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_dist_map_filter_pi_le
 
 end ComplexityTests.ProductConditioning

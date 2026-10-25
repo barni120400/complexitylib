@@ -26,6 +26,13 @@ learns whether some reachable vertex is bad.
 * `Cslib.InductiveCounting.FullPrefix`: the selected count equals the reachable prefix count.
 * `Cslib.InductiveCounting.Honest`: the assertion maintained by honest choices.
 
+## Main results
+
+* `Cslib.InductiveCounting.accepts_iff`: correctness of the executable, binary-choice
+  small-register controller.
+* `Cslib.InductiveCounting.accepts_iff_not_reachable`: the controller nondeterministically decides
+  nonreachability.
+
 ## References
 
 * [M. Sipser, *Introduction to the Theory of Computation*, Section 8.6][Sipser2013]

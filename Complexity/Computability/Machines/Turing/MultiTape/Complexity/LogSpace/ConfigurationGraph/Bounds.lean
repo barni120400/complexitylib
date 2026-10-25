@@ -23,6 +23,8 @@ many vertices, and its local routines take only logarithmically many stored bits
 
 ## Main results
 
+* `Turing.MultiTapeNTM.ConfigurationGraph.reachable_lt_pow_of_runsInSpace`: polynomial ambient bound
+  on reachable configuration vertices.
 * `Turing.MultiTapeNTM.ConfigurationGraph.fits_of_runsInSpace_of_le`: every reachable view fits a
   large enough radix.
 * `Turing.MultiTapeNTM.ConfigurationGraph.fits_of_runsInSpace`: the logarithmic-space radix.

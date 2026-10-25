@@ -12,8 +12,7 @@ import Complexity.Foundations.Data.BitString.Enumeration
 # Tests for the SAT self-reduction and the Karp–Lipton theorem
 
 The self-reduction on concrete formulas with a brute-force decision procedure, which satisfies the
-hypothesis of `SAT.verifier_search`; advice strings for a concrete family of circuits; and axiom
-checks for the headline results.
+hypothesis of `SAT.verifier_search`; and advice strings for a concrete family of circuits.
 -/
 
 namespace Cslib.Complexity.Tests.KarpLipton2
@@ -95,186 +94,24 @@ example : evalAdvice 1 (certLength 3 1) (familyAdvice 3 1 firstBit) [true, true,
 
 /-! ### Nonuniform quantifier elimination and `PH ⊆ P/poly` -/
 
-example (hNP : ∀ B : Language Bool, (B : Set (List Bool)) ∈ NP encBits → B ∈ PPoly)
+example (hNP : NP encBits ⊆ PPolyOn encBits)
     (k : ℕ) {A : Language Bool} (hA : (A : Set (List Bool)) ∈ SigmaP k encBits) :
     A ∈ PPoly :=
-  mem_PPoly_of_mem_SigmaP_of_NP_subset_PPoly hNP hA
+  mem_PPolyOn_encBits_iff.1 (SigmaP_subset_PPolyOn_of_NP_subset_PPoly hNP k hA)
 
-example (hNP : ∀ B : Language Bool, (B : Set (List Bool)) ∈ NP encBits → B ∈ PPoly)
+example (hNP : NP encBits ⊆ PPolyOn encBits)
     (k : ℕ) {A : Language Bool} (hA : (A : Set (List Bool)) ∈ PiP k encBits) :
     A ∈ PPoly :=
-  mem_PPoly_of_mem_PiP_of_NP_subset_PPoly hNP hA
+  mem_PPolyOn_encBits_iff.1 (PiP_subset_PPolyOn_of_NP_subset_PPoly hNP k hA)
 
-example (hNP : ∀ B : Language Bool, (B : Set (List Bool)) ∈ NP encBits → B ∈ PPoly)
+example (hNP : NP encBits ⊆ PPolyOn encBits)
     {A : Language Bool} (hA : (A : Set (List Bool)) ∈ PH encBits) :
     A ∈ PPoly :=
-  mem_PPoly_of_mem_PH_of_NP_subset_PPoly hNP hA
+  mem_PPolyOn_encBits_iff.1 (PH_subset_PPolyOn_of_NP_subset_PPoly hNP hA)
 
-example (hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT ↔ encCNF φ ∈ L)
+example (hSAT : SAT ∈ PPolyOn encCNF)
     {α : Type} {enc : α ↪ List Bool} (k : ℕ) {A : Set α} (hA : A ∈ SigmaP k enc) :
-    ∃ L ∈ PPoly, ∀ a, a ∈ A ↔ enc a ∈ L :=
-  exists_mem_PPoly_of_mem_SigmaP_of_SAT hSAT hA
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.SAT.verifier_search' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SAT.verifier_search
-
-/--
-info: 'Cslib.Complexity.SAT.computableInPolyTime_search' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.computableInPolyTime_search
-
-/--
-info: 'Cslib.Complexity.SAT.exists_search' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SAT.exists_search
-
-/--
-info: 'Cslib.Circuits.Boolean.evalAdvice_familyAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.evalAdvice_familyAdvice
-
-/--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice
-
-/--
-info: 'Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT
-
-/--
-info: 'Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT
-
-/--
-info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_SAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_SAT
-
-/--
-info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.PolyTimeReducible.exists_mem_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PolyTimeReducible.exists_mem_PPoly
-
-/--
-info: 'Cslib.Complexity.mem_PPoly_of_exists_frame_append' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PPoly_of_exists_frame_append
-
-/--
-info: 'Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff
-
-/--
-info: 'Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff_SAT' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.forall_mem_NP_exists_mem_PPoly_iff_SAT
-
-/--
-info: 'Cslib.Complexity.forall_mem_NP_encBits_mem_PPoly_iff_SAT' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.forall_mem_NP_encBits_mem_PPoly_iff_SAT
-
-/--
-info: 'Cslib.Complexity.exists_mem_PPoly_of_mem_SigmaP' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_PPoly_of_mem_SigmaP
-
-/--
-info: 'Cslib.Complexity.exists_mem_PPoly_of_mem_PiP' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_PPoly_of_mem_PiP
-
-/--
-info: 'Cslib.Complexity.exists_mem_PPoly_of_mem_PH' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_PPoly_of_mem_PH
-
-/--
-info: 'Cslib.Complexity.exists_mem_PPoly_of_mem_SigmaP_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_PPoly_of_mem_SigmaP_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.exists_mem_PPoly_of_mem_SigmaP_of_SAT' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.exists_mem_PPoly_of_mem_SigmaP_of_SAT
-
-/--
-info: 'Cslib.Complexity.SigmaP_subset_PPoly_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SigmaP_subset_PPoly_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.PiP_subset_PPoly_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PiP_subset_PPoly_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.PH_subset_PPoly_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_subset_PPoly_of_NP_subset_PPoly
+    A ∈ PPolyOn enc :=
+  SigmaP_subset_PPolyOn_of_NP_subset_PPoly (NP_subset_PPolyOn_iff_SAT.2 hSAT) k hA
 
 end Cslib.Complexity.Tests.KarpLipton2

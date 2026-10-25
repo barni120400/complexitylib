@@ -58,46 +58,4 @@ example : dist ((Cslib.Probability.PMF.uniformOfFintype Bool).map id)
       ((Cslib.Probability.PMF.uniformOfFintype Bool).toOuterMeasure {b | id b ≠ true}).toReal :=
   Cslib.Probability.PMF.dist_map_map_le _ _ _
 
-/--
-info: 'Cslib.Probability.CorrelatedSampling.map_firstIn_weightedOrder' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms map_firstIn_weightedOrder
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.map_sample' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms map_sample
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.agree_ge' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms agree_ge
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.disagree_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms disagree_le
-
-/--
-info: 'Cslib.Probability.CorrelatedSampling.dist_embed_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms dist_embed_le
-
-/--
-info: 'Cslib.Probability.PMF.dist_map_map_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Probability.PMF.dist_map_map_le
-
 end ComplexityTests.CorrelatedSampling

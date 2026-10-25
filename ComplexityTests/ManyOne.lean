@@ -331,23 +331,9 @@ info: 'Cslib.Complexity.HardUnder.trans' does not depend on any axioms
 #print axioms Cslib.Complexity.HardUnder.trans
 
 /--
-info: 'Cslib.Complexity.HardUnder.compl' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.HardUnder.compl
-
-/--
 info: 'Cslib.Complexity.CompleteUnder.mono' does not depend on any axioms
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.CompleteUnder.mono
-
-/--
-info: 'Cslib.Complexity.CompleteUnder.compl' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.CompleteUnder.compl
 
 end ComplexityTests.ManyOne

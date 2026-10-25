@@ -155,11 +155,13 @@ example : (⟨1, ![true, false], 0⟩ : MCSP.Instance) ∉ MCSP := by
   · have := hV []; revert this; cases b <;> decide
   · simp [certLength, MCSP.budget] at hu
 
-example : ![false, true] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) 1 le_rfl).yes :=
-  MCSP.mem_of_verifier_eq_true (x := ⟨1, ![false, true], 0⟩) (w := certificate 1 0 [] 0) (by decide)
+example : [false, true] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) fun _ => le_rfl).yes :=
+  (GapMCSP.ofFn_mem_yesSet_iff_mem_MCSP (n := 1) (T := ![false, true])).mpr
+    (MCSP.mem_of_verifier_eq_true (x := ⟨1, ![false, true], 0⟩) (w := certificate 1 0 [] 0)
+      (by decide))
 
-example : ![true, false] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) 1 le_rfl).no := by
-  rw [GapMCSP.no_eq, GapMCSP.no_eq_compl_yes, Set.mem_compl_iff, GapMCSP.mem_yes_iff]
+example : [true, false] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) fun _ => le_rfl).no := by
+  refine (GapMCSP.ofFn_mem_noSet_iff_notMem_MCSP (n := 1) (T := ![true, false])).mpr ?_
   intro hx
   obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := MCSP.exists_verifier_append hx
   · revert hu; decide
@@ -179,87 +181,5 @@ info: 'Cslib.Circuits.Circuit.code_of_ofCode_eq_some' depends on axioms: [propex
 -/
 #guard_msgs in
 #print axioms Cslib.Circuits.Circuit.code_of_ofCode_eq_some
-
-/--
-info: 'Cslib.Circuits.Circuit.isSome_ofCode_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Circuit.isSome_ofCode_iff
-
-/--
-info: 'Cslib.Circuits.Program.evalCode_code' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Program.evalCode_code
-
-/--
-info: 'Cslib.Circuits.Circuit.eval_eq_getD' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Circuit.eval_eq_getD
-
-/--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalCode' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalCode
-
-/--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalOutput' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalOutput
-
-/--
-info: 'Cslib.Circuits.Boolean.readCertificate_certificate_append' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.readCertificate_certificate_append
-
-/--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_readCertificate' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_readCertificate
-
-/--
-info: 'Cslib.Complexity.CircuitValue.mem_P' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.CircuitValue.mem_P
-
-/--
-info: 'Cslib.Complexity.CircuitSAT.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.CircuitSAT.mem_NP
-
-/--
-info: 'Cslib.Complexity.SAT.toCircuit_mem_CircuitSAT_iff' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SAT.toCircuit_mem_CircuitSAT_iff
-
-/--
-info: 'Cslib.Complexity.SAT.polyTimeReducible_CircuitSAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SAT.polyTimeReducible_CircuitSAT
-
-/--
-info: 'Cslib.Complexity.CircuitSAT_npComplete' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.CircuitSAT_npComplete
-
-/--
-info: 'Cslib.MCSP.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.MCSP.mem_NP
 
 end Cslib.Complexity.Tests.KarpLipton

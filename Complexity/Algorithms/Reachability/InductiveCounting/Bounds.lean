@@ -26,6 +26,8 @@ vertex identifiers.
 
 * `Cslib.InductiveCounting.rank_initial_le_budget`: the initial progress measure.
 * `Cslib.InductiveCounting.halted_replay_budget`: a uniform all-branch time bound.
+* `Cslib.InductiveCounting.accepts_complete_bounded`: honest acceptance needs no more choices than
+  the instruction budget.
 * `Cslib.InductiveCounting.query_bounds`: legitimate queries use valid vertex identifiers.
 
 ## References

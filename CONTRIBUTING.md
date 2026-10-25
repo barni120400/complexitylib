@@ -124,9 +124,10 @@ shared by all agent clients. See the [cache guide](scripts/cache/README.md#autom
 for retries and intentional opt-out.
 
 The test suite audits the axiom dependencies of every declaration stored in imported `Complexity`
-modules; the named headline checks remain readable regression tests. This trusts the compiled Lean
-artifacts and permits `Classical.choice`; it does not certify efficient computation or agreement
-with a textbook statement.
+modules. Named `#print axioms` checks are added only for results meant to depend on fewer axioms
+than the standard `propext`, `Classical.choice` and `Quot.sound`, such as choice-free results. The
+audit trusts the compiled Lean artifacts and permits `Classical.choice`; it does not certify
+efficient computation or agreement with a textbook statement.
 
 For concurrent local validation, choose a thread budget for the shared host, for example
 `LEAN_NUM_THREADS=2 scripts/check.sh`. Lean's

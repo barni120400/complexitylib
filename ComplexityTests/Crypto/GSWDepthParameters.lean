@@ -124,34 +124,3 @@ example
         (DepthParameters.width k)) := DepthParameters.indCPA hLWE
 
 end ComplexityTests.GSWDepthParameters
-
-open Cslib.Crypto.Homomorphic.GSW
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.DepthParameters.noise_margin' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DepthParameters.noise_margin
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.DepthParameters.computableInPolyTime_modulus'
-depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DepthParameters.computableInPolyTime_modulus
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.DepthParameters.negligible_statistical_error' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DepthParameters.negligible_statistical_error
-
-/--
-info: 'Cslib.Crypto.Homomorphic.GSW.DepthParameters.indCPA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms DepthParameters.indCPA
