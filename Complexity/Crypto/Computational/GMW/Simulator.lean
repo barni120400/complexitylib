@@ -911,8 +911,27 @@ private theorem isPPTOn_gmwRealWithPads {α Param : Type} {enc : α ↪ List Boo
   have hpadsPlain := ComputableInPolyTime.of_tidy hpads
   have hvars := (Cslib.Logic.PL.CNF.computableInPolyTime_vars_length hφPlain).tidy
   have htotal := (computableInPolyTime_totalLen hφPlain).tidy
-  unfold gmwRealWithPads
-  ppt
+  dsimp only [gmwRealWithPads]
+  apply IsPPTOn.bind_with (left := encBits)
+  · exact (ComputableInPolyTime.const 3).sampleList
+  apply IsPPTOn.bind_with (left := encBits)
+  · apply ComputableInPolyTime.sampleList
+    fun_prop
+  apply IsPPTOn.bind_with (left := encBits)
+  · apply ComputableInPolyTime.sampleList
+    fun_prop
+  apply IsPPTOn.bind_with (left := encBits)
+  · apply ComputableInPolyTime.sampleList
+    fun_prop
+  apply IsPPTOn.bind_with (left := encList encBits)
+  · apply IsPPTOn.replicate
+    · apply ComputableInPolyTime.sampleList
+      fun_prop
+    · exact ComputableInPolyTime.tidy (by fun_prop)
+  simp only [bind_pure_comp]
+  apply IsPPTOn.map_with
+  · apply isPPTOn_runTwoRound_prover hV hgPlain <;> fun_prop
+  · fun_prop
 
 /-- The reduction has a strict uniform clock polynomial in its entire ordinary input. In
 particular the encoded witness and auxiliary word are charged, without requiring either to be
@@ -934,6 +953,8 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
       (fun p : (ℕ × (α × (List Bool × List Bool))) × List Bool =>
         gmwViewReduction generator length f Vstar adversary
           p.1.1 p.1.2.1 p.1.2.2.1 p.1.2.2.2 p.2) := by
+  have hgPlain := hg
+  have hfPlain := hf
   have hg := hg.tidy
   have hf := hf.tidy
   let input := encPair encUnary (encPair enc (encPair encBits encBits))
@@ -952,13 +973,23 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
         gmwRealPRGPads generator (p.1 + 7) (length (p.1 + 7)) (f p.2.1)
           p.2.2.1 (Vstar p.1 p.2.1 p.2.2.2)) := by
     dsimp only [input, gmwRealPRGPads]
-    ppt
+    apply IsPPTOn.bind_with ?_ hpad
+    apply IsPPTOn.replicate
+    · apply IsPPTOn.map ?_ hgPlain
+      apply ComputableInPolyTime.sampleList
+      fun_prop
+    · exact ComputableInPolyTime.tidy (by fun_prop)
   have hone : IsPPTOn input encBits
       (fun p : ℕ × (α × (List Bool × List Bool)) =>
         gmwRealUniformPads generator (p.1 + 7) (length (p.1 + 7)) (f p.2.1)
           p.2.2.1 (Vstar p.1 p.2.1 p.2.2.2)) := by
     dsimp only [input, gmwRealUniformPads]
-    ppt
+    apply IsPPTOn.bind_with ?_ hpad
+    apply IsPPTOn.replicate
+    · apply ComputableInPolyTime.sampleList
+      have hlengthPlain := PRG.polyTime_length hgPlain hlen
+      fun_prop
+    · exact ComputableInPolyTime.tidy (by fun_prop)
   have houter : IsPPTOn (encPair input encBits) encBool
       (fun p : (ℕ × (α × (List Bool × List Bool))) × List Bool =>
         sequenceTest
@@ -976,7 +1007,7 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
         (input := encPair (encPair input encBits) (encList encBits))
         (prepare := fun p =>
           ((p.1.1.1, p.1.1.2.1, p.1.1.2.2.2), gmwFirstSuccess p.2))
-        (by dsimp only [input]; fun_prop)
+        (by fun_prop)
     · fun_prop
   have hcontext : IsPPTOn (encPair input (encList encBits)) encBool
       (fun p : (ℕ × (α × (List Bool × List Bool))) × List (List Bool) => do
