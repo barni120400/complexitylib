@@ -58,6 +58,7 @@ example (count : List Bool → ℕ) (initial : List Bool → List Bool)
 
 -- Retain the original bounded shared-encoding regression in both local fact orders.
 set_option maxHeartbeats 12000 in
+-- Keep the original bounded regression allowance.
 example (sample : List Bool → ProbComp ℕ)
     (hUnary : IsPPTOn encBits encUnary sample) (_hBinary : IsPPTOn encBits encNat sample) :
     IsPPTOn encBits encBool (fun word => do
@@ -67,6 +68,7 @@ example (sample : List Bool → ProbComp ℕ)
 
 -- Retain the original bounded shared-encoding regression in both local fact orders.
 set_option maxHeartbeats 12000 in
+-- Keep the original bounded regression allowance.
 example (sample : List Bool → ProbComp ℕ)
     (_hBinary : IsPPTOn encBits encNat sample) (hUnary : IsPPTOn encBits encUnary sample) :
     IsPPTOn encBits encBool (fun word => do

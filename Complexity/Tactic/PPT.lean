@@ -66,11 +66,11 @@ private meta def pptFunProp : TacticM Unit :=
       throwError "expected an encoded-input PPT goal"
     if target.getAppArgs[2]!.hasExprMVar then
       throwError "input encoding is not yet determined"
-    evalTactic (← `(tactic| solve | fun_prop (config := { maxSteps := 128 })))
+    Cslib.Tactic.PolyTime.Internal.funPropWithPlainBoundary 128
 
 attribute [program_certificate]
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.isPPTOn
-  Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList
+  Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn
+  isPPTOn_sampleList
   isPPTOn_uniform_bool
   IsPPTOn.memoize
 
@@ -140,7 +140,7 @@ private meta def pptIterateCaptured : TacticM Unit :=
   pptIterate ``IsPPTOn.iterateWith_of_bounded_growth
 
 /-- Certify a probabilistic program using proved sampling, composition and deterministic rules. -/
-elab "ppt" : tactic => Cslib.Tactic.PolyTime.Internal.withPlainRuleMemo do
+elab "ppt" : tactic => Cslib.Tactic.PolyTime.Internal.withPlainRuleCache do
   evalTactic (← `(tactic| solve |
     aesop (config := { terminal := true, assumptionTransparency := .reducible })
       (rule_sets := [PPT, PolyTime])))
