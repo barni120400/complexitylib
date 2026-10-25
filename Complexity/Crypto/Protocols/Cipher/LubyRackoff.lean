@@ -1079,8 +1079,8 @@ private theorem randomFunctionGame_apply_le_feistel3FixedGame (f₁ : G → G)
   exact h
 
 /-- **3-round Luby–Rackoff theorem in `ℝ≥0∞` (with Δ-universal Round 1)**: for any adaptive
-program making at most `Q` queries, `feistel3HashIdealGame` and `randomFunctionGame` accept within
-`Q.choose 2 * ε + Q.choose 2 * |G|⁻¹` of each other. -/
+program making at most `Q` queries, `feistel3HashIdealGame` accepts with probability at most
+`randomFunctionGame` plus `Q.choose 2 * ε + Q.choose 2 * |G|⁻¹`. -/
 theorem feistel3HashIdealGame_apply_le {seed₁ : PMF K₁} {h₁ : K₁ → G → G} {ε : ℝ≥0∞}
     (hh₁ : IsDeltaUniversalHash seed₁ h₁ ε)
     {program : OracleComp (fun _ : G × G => G × G) Bool} {Q : ℕ}
