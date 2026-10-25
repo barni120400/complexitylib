@@ -178,6 +178,18 @@ private meta def polytimeCertificate : Aesop.RuleTac := fun input => do
   let predicate ← input.goal.withContext do polytimePredicate (← input.goal.getType)
   Cslib.Tactic.applyCertificates predicate input
 
+open Lean Meta in
+/-- A supplied scan callback may constrain compatible encodings before the eager list proof.
+The ordinary named-certificate rule retains the complete list-first alternative. -/
+@[aesop unsafe 100% tactic (rule_sets := [PolyTime])]
+private meta def polytimeScanKnownCallback : Aesop.RuleTac := fun input => input.goal.withContext do
+  let target := (← instantiateMVars (← input.goal.getType)).consumeMData
+  unless target.isAppOf ``ComputableInPolyTime do throwError "expected a plain scan goal"
+  let key ← Cslib.Tactic.efficiencyKey target
+  unless key.2.1 == ``List.any do throwError "expected a Boolean list scan"
+  Cslib.Tactic.applyScanWithLocalCallback ``ComputableInPolyTime
+    ``ComputableInPolyTime.anyWithInput input
+
 open Lean Meta Elab Tactic in
 /-- Decompose constructors before generic composition can guess intermediate encodings. -/
 private meta def polytimeConstruct (guard : TacticM Unit → TacticM Unit) : TacticM Unit :=
