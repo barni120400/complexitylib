@@ -771,6 +771,7 @@ public import Complexity.Computability.Complexity.Problems.CountingSAT
 public import Complexity.Computability.Complexity.Problems.ExactThreeSAT
 public import Complexity.Computability.Complexity.Problems.GeneralizedGeography
 public import Complexity.Computability.Complexity.Problems.Graph
+public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalLayout
 public import Complexity.Computability.Complexity.Problems.Graph.Ports
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
 public import Complexity.Computability.Complexity.Problems.Hamiltonian
