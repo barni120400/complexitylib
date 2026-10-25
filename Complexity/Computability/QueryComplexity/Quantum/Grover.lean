@@ -17,11 +17,13 @@ import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
 Grover's algorithm finds the marked item among `N ≥ 2` with `O(√N)` queries, matching the BBBV
 lower bound (`Cslib.Quantum.card_sub_two_le`) up to a constant [Grover][Grover1996]. In the query
 model of `Cslib.Quantum.run`, with a trivial workspace, it starts in the uniform superposition
-`|s⟩` (`Cslib.Quantum.uniform`) and alternates the phase oracle with the *diffusion*
-`D = 2|s⟩⟨s| - I`, the reflection about `|s⟩` (`Cslib.Quantum.diffusion`, `Cslib.Quantum.grover`).
+`|s⟩` of the query indices with control bit `1` (`Cslib.Quantum.uniform`) and alternates the
+controlled phase oracle with the *diffusion* `D = 2|s⟩⟨s| - I`, the reflection about `|s⟩`
+(`Cslib.Quantum.diffusion`, `Cslib.Quantum.grover`). The state never leaves the control-`1`
+subspace, where the oracle acts as the phase oracle `(-1)^{x_i}`.
 
 Let `θ = arcsin(1 / √N)`. After `k` queries on the input marking `z`, the amplitude of `z` is
-`sin((2k + 1) θ)` and every other amplitude is `cos((2k + 1) θ) / √(N - 1)`
+`sin((2k + 1) θ)` and every other amplitude with control bit `1` is `cos((2k + 1) θ) / √(N - 1)`
 (`Cslib.Quantum.run_grover`): each round rotates the state by `2θ` in the plane spanned by `|z⟩`
 and the uniform superposition of the other items. So `z` is measured with probability
 `sin²((2k + 1) θ)` (`Cslib.Quantum.regProb_run_grover`). With `k = ⌊π / (4θ)⌋ ≤ π√N / 4` queries,
@@ -54,26 +56,31 @@ open Finset Real
 
 variable {N : ℕ}
 
-/-- The uniform superposition `|s⟩ = N^{-1/2} ∑_i |i⟩`. -/
+/-- The uniform superposition `|s⟩ = N^{-1/2} ∑_i |i, 1⟩` with control bit `1`. -/
 noncomputable def uniform (N : ℕ) : State N Unit :=
-  WithLp.toLp 2 fun _ => ((Real.sqrt N)⁻¹ : ℝ)
+  WithLp.toLp 2 fun p => if p.2.1 then ((Real.sqrt N)⁻¹ : ℝ) else 0
 
 theorem norm_uniform (hN : 0 < N) : ‖uniform N‖ = 1 := by
   have h : ‖uniform N‖ ^ 2 = 1 := by
-    rw [EuclideanSpace.norm_sq_eq]
-    simp only [uniform, PiLp.toLp_apply, Complex.norm_real, Real.norm_eq_abs, sq_abs]
-    rw [sum_const, card_univ, Fintype.card_prod, Fintype.card_fin, Fintype.card_unit, mul_one,
-      nsmul_eq_mul, inv_pow, Real.sq_sqrt (Nat.cast_nonneg N)]
+    rw [EuclideanSpace.norm_sq_eq, Fintype.sum_prod_type]
+    simp only [Fintype.sum_prod_type, Fintype.sum_bool, Fintype.univ_unit, sum_singleton, uniform,
+      PiLp.toLp_apply, ite_true, Bool.false_eq_true, ite_false, norm_zero, Complex.norm_real,
+      Real.norm_eq_abs, sq_abs]
+    rw [sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul, inv_pow,
+      Real.sq_sqrt (Nat.cast_nonneg N)]
     field_simp
+    ring
   nlinarith [norm_nonneg (uniform N)]
 
 /-- The **diffusion** `D = 2|s⟩⟨s| - I`: the reflection about the uniform superposition. -/
 noncomputable def diffusion (N : ℕ) : State N Unit ≃ₗᵢ[ℂ] State N Unit :=
   (ℂ ∙ uniform N).reflection
 
-/-- The diffusion inverts every amplitude about the mean: `(Dψ)(i) = 2 · mean ψ - ψ(i)`. -/
-theorem diffusion_apply (hN : 0 < N) (ψ : State N Unit) (p : Fin N × Unit) :
-    (diffusion N ψ).ofLp p = 2 * ((N : ℂ)⁻¹ * ∑ q, ψ.ofLp q) - ψ.ofLp p := by
+/-- The diffusion inverts every control-`1` amplitude about their mean:
+`(Dψ)(i, b) = 2 b · mean_j ψ(j, 1) - ψ(i, b)`. -/
+theorem diffusion_apply (hN : 0 < N) (ψ : State N Unit) (p : Fin N × Bool × Unit) :
+    (diffusion N ψ).ofLp p =
+      2 * (if p.2.1 then (N : ℂ)⁻¹ * ∑ q, (if q.2.1 then ψ.ofLp q else 0) else 0) - ψ.ofLp p := by
   rw [diffusion, Submodule.reflection_apply, Submodule.starProjection_singleton,
     norm_uniform hN]
   simp only [one_pow, PiLp.sub_apply, PiLp.smul_apply,
@@ -82,10 +89,19 @@ theorem diffusion_apply (hN : 0 < N) (ψ : State N Unit) (p : Fin N × Unit) :
     rw [← mul_inv, ← Complex.ofReal_mul, Real.mul_self_sqrt (Nat.cast_nonneg N)]
     push_cast
     ring
-  simp only [dotProduct, Pi.star_apply, RCLike.star_def, Complex.conj_ofReal]
+  simp only [dotProduct, Pi.star_apply, RCLike.star_def, apply_ite, Complex.conj_ofReal, map_zero]
   push_cast
-  rw [div_one, ← sum_mul]
-  linear_combination (2 * ∑ q, ψ.ofLp q) * hsq
+  rw [div_one]
+  have hdot : (∑ q : Fin N × Bool × Unit,
+      if q.2.1 then ψ.ofLp q * ((Real.sqrt N : ℂ))⁻¹ else ψ.ofLp q * 0) =
+      ((Real.sqrt N : ℂ))⁻¹ * ∑ q, (if q.2.1 then ψ.ofLp q else 0) := by
+    rw [mul_sum]
+    refine sum_congr rfl fun q _ => ?_
+    split_ifs <;> ring
+  rw [hdot]
+  split_ifs
+  · linear_combination (2 * ∑ q : Fin N × Bool × Unit, (if q.2.1 then ψ.ofLp q else 0)) * hsq
+  · ring
 
 /-- The isometries of **Grover's algorithm**: the identity, then the diffusion after every
 query. Its initial state is `uniform N`. -/
@@ -117,12 +133,13 @@ private theorem cos_groverAngle (hN : 2 ≤ N) :
 
 variable [DecidableEq (Fin N)]
 
-/-- **The state of Grover's algorithm after `k` queries** on the input marking `z`: amplitude
-`sin((2k + 1) θ)` on `z` and `cos((2k + 1) θ) / √(N - 1)` elsewhere. -/
-theorem run_grover (hN : 2 ≤ N) (z : Fin N) (k : ℕ) (p : Fin N × Unit) :
+/-- **The state of Grover's algorithm after `k` queries** on the input marking `z`: with control
+bit `1`, amplitude `sin((2k + 1) θ)` on `z` and `cos((2k + 1) θ) / √(N - 1)` elsewhere; with
+control bit `0`, amplitude `0`. -/
+theorem run_grover (hN : 2 ≤ N) (z : Fin N) (k : ℕ) (p : Fin N × Bool × Unit) :
     (run (grover N) (uniform N) (marked z) k).ofLp p =
-      ((if p.1 = z then Real.sin ((2 * k + 1) * groverAngle N)
-        else Real.cos ((2 * k + 1) * groverAngle N) / Real.sqrt (N - 1) : ℝ) : ℂ) := by
+      if p.2.1 then ((if p.1 = z then Real.sin ((2 * k + 1) * groverAngle N)
+        else Real.cos ((2 * k + 1) * groverAngle N) / Real.sqrt (N - 1) : ℝ) : ℂ) else 0 := by
   have hN0 : (0 : ℝ) < N := by positivity
   have hN1 : (0 : ℝ) < N - 1 := by
     have : (2 : ℝ) ≤ N := by exact_mod_cast hN
@@ -136,18 +153,21 @@ theorem run_grover (hN : 2 ≤ N) (z : Fin N) (k : ℕ) (p : Fin N × Unit) :
   | zero =>
     simp only [run, grover, LinearIsometry.id_apply, uniform, PiLp.toLp_apply, Nat.cast_zero,
       mul_zero, zero_add, one_mul]
-    congr 1
     split_ifs
-    · exact hs.symm
+    · rw [hs]
     · rw [hc]
+      congr 1
       field_simp
+    · rfl
   | succ k ih =>
     set a := Real.sin ((2 * k + 1) * θ)
     set b := Real.cos ((2 * k + 1) * θ) / Real.sqrt (N - 1)
-    have hsum : ∑ q : Fin N × Unit, (phaseOracle (marked z) (run (grover N) (uniform N)
-        (marked z) k)).ofLp q = ((-a + (N - 1) * b : ℝ) : ℂ) := by
+    have hsum : ∑ q : Fin N × Bool × Unit, (if q.2.1 then (phaseOracle (marked z)
+        (run (grover N) (uniform N) (marked z) k)).ofLp q else 0) =
+          ((-a + (N - 1) * b : ℝ) : ℂ) := by
       simp only [phaseOracle_apply, ih, marked, decide_eq_true_eq, Fintype.sum_prod_type,
-        Fintype.univ_unit, sum_singleton]
+        Fintype.univ_unit, sum_singleton, Fintype.sum_bool, ite_true, Bool.true_and,
+        Bool.false_eq_true, ite_false, add_zero]
       have hterm : ∀ x : Fin N, (if x = z then (-1 : ℂ) else 1) *
           ((if x = z then a else b : ℝ) : ℂ) =
             (b : ℂ) + (if x = z then ((-a - b : ℝ) : ℂ) else 0) := by
@@ -170,8 +190,11 @@ theorem run_grover (hN : 2 ≤ N) (z : Fin N) (k : ℕ) (p : Fin N × Unit) :
       ring
     simp only [run, grover, LinearIsometryEquiv.coe_toLinearIsometry]
     rw [diffusion_apply (by omega), hsum, phaseOracle_apply, ih]
-    simp only [marked, decide_eq_true_eq]
-    by_cases h : p.1 = z
+    obtain ⟨i, c, u⟩ := p
+    cases c
+    · simp
+    simp only [marked, decide_eq_true_eq, Bool.true_and, ite_true]
+    by_cases h : i = z
     · have hreal : 2 * ((N : ℝ)⁻¹ * (-a + (N - 1) * b)) + a =
           Real.sin ((2 * ((k + 1 : ℕ) : ℝ) + 1) * θ) := by
         rw [harg, Real.sin_add, Real.sin_two_mul, Real.cos_two_mul, hs, hc, hcosx]
@@ -196,8 +219,10 @@ query register gives `z` with probability `sin²((2k + 1) θ)`. -/
 theorem regProb_run_grover (hN : 2 ≤ N) (z : Fin N) (k : ℕ) :
     regProb (run (grover N) (uniform N) (marked z) k) z =
       Real.sin ((2 * k + 1) * groverAngle N) ^ 2 := by
-  simp only [regProb, run_grover hN, ite_eq_left, Fintype.univ_unit, sum_singleton,
-    Complex.norm_real, Real.norm_eq_abs, sq_abs]
+  simp only [regProb, run_grover hN, Fintype.sum_prod_type, Fintype.sum_bool, Fintype.univ_unit,
+    sum_singleton, ite_true, Bool.false_eq_true, ite_false, norm_zero, Complex.norm_real,
+    Real.norm_eq_abs, sq_abs]
+  ring
 
 /-- **Grover's algorithm** [Grover][Grover1996]: for `N ≥ 2` and every `z`, with
 `T = ⌊π / (4θ)⌋` queries, where `θ = arcsin(1 / √N)`, the algorithm outputs the marked item `z`

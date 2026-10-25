@@ -20,9 +20,13 @@ example (z : Fin 4) :
       (⌊Real.pi / (4 * groverAngle 4)⌋₊ : ℝ) ≤ Real.pi * Real.sqrt (4 : ℕ) / 4 :=
   grover_success (by norm_num) z
 
--- Grover's algorithm is a query algorithm with a unit initial state, so the BBBV bound applies to
--- it as well.
+-- Grover's algorithm is a query algorithm with a unit initial state that succeeds with probability
+-- `3 / 4 ≥ 2 / 3`, so it satisfies the hypothesis of the BBBV bound, a non-vacuous instance.
 example : ‖uniform 4‖ = 1 := norm_uniform (by norm_num)
+
+example : ((4 : ℕ) : ℝ) - 2 ≤ 144 * ((⌊Real.pi / (4 * groverAngle 4)⌋₊ : ℕ) : ℝ) ^ 2 :=
+  card_sub_two_le (grover 4) (norm_uniform (by norm_num)) _ fun z =>
+    le_trans (by norm_num) (grover_success (by norm_num) z).1
 
 -- Before any query, the marked item has probability `sin² θ`.
 example (z : Fin 4) :
