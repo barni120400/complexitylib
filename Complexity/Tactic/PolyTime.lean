@@ -217,15 +217,10 @@ private meta def polytimeConstruct (guard : TacticM Unit → TacticM Unit) : Tac
       goals.flatMapM fun goal => goal.applyConst rule
 
 open Lean Meta Elab Tactic in
-/-- Restate known local certificates in the goal's family. This introduces proof facts only;
-it never changes the goal or searches the other calculus. -/
-@[aesop safe -30 tactic (rule_sets := [PolyTime])]
-private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
+/-- Restate complete supplied certificates using an explicit proved conversion. No premise is
+synthesized, and quantified families retain all their data arguments. -/
+private meta def restateKnownFacts (source conversion : Name) : TacticM Unit := withMainContext do
   let mut goal ← getMainGoal
-  let predicate ← polytimePredicate (← goal.getType)
-  let (source, conversion) := if predicate == ``ComputableInPolyTime then
-      (``ComputableTidilyInPolyTime, ``ComputableInPolyTime.of_tidy)
-    else (``ComputableInPolyTime, ``ComputableInPolyTime.tidy)
   let mut added := false
   for h in ← getLCtx do
     unless h.isImplementationDetail do
@@ -246,6 +241,17 @@ private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
           added := true
   unless added do throwError "no new known certificate"
   replaceMainGoal [goal]
+
+open Lean Meta Elab Tactic in
+/-- Restate known local certificates in the goal's family. This introduces proof facts only;
+it never changes the goal or searches the other calculus. -/
+@[aesop safe -30 tactic (rule_sets := [PolyTime])]
+private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
+  let predicate ← polytimePredicate (← getMainTarget)
+  let (source, conversion) := if predicate == ``ComputableInPolyTime then
+      (``ComputableTidilyInPolyTime, ``ComputableInPolyTime.of_tidy)
+    else (``ComputableInPolyTime, ``ComputableInPolyTime.tidy)
+  restateKnownFacts source conversion
 
 open Lean Meta in
 /-- Inspect proposition aliases with the same reducible transparency used by `fun_prop`.
@@ -501,24 +507,29 @@ open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
 /-- Shared compositional backend with a fresh alias-aware raw-premise boundary. The standard
 assumption discharger and ordinary transition depth are retained; callers keep their step limit.
 Consumers can reuse the same boundary for nested plain deterministic goals. -/
-meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := withMainContext do
-  let goal ← getMainGoal
-  let target ← goal.getType
-  let disch : Expr → MetaM (Option Expr) := fun e => do
-    if let some proof ← tacticToDischarge
-        (← `(tactic| first | with_reducible assumption | infer_param)) e then return some proof
-    if ← rawTransitionPremise e then knownLocalCertificate e else pure none
-  let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps }, disch }
-  let env ← getEnv
-  let state : Mathlib.Meta.FunProp.State := {
-    morTheorems := ← plainGeneralTheorems (morTheoremsExt.getState env)
-    transitionTheorems := ← plainGeneralTheorems (transitionTheoremsExt.getState env) }
-  let ruleEnv ← plainRuleEnvironment env
-  let (result, state) ← withEnv ruleEnv <| (funProp target ctx).run state
-  let some result := result | throwError "no compositional plain certificate: {state.msgLog}"
-  goal.assign result.proof
-  replaceMainGoal []
-
+meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := do
+  let saved ← saveState
+  try
+    restateKnownFacts ``ComputableTidilyInPolyTime ``ComputableInPolyTime.of_tidy
+  catch _ => saved.restore
+  -- `note` creates a generated goal context; nested search must use that current context.
+  withMainContext do
+    let goal ← getMainGoal
+    let target ← goal.getType
+    let disch : Expr → MetaM (Option Expr) := fun e => do
+      if let some proof ← tacticToDischarge
+          (← `(tactic| first | with_reducible assumption | infer_param)) e then return some proof
+      if ← rawTransitionPremise e then knownLocalCertificate e else pure none
+    let ctx : Mathlib.Meta.FunProp.Context := { config := { maxSteps }, disch }
+    let env ← getEnv
+    let state : Mathlib.Meta.FunProp.State := {
+      morTheorems := ← plainGeneralTheorems (morTheoremsExt.getState env)
+      transitionTheorems := ← plainGeneralTheorems (transitionTheoremsExt.getState env) }
+    let ruleEnv ← plainRuleEnvironment env
+    let (result, state) ← withEnv ruleEnv <| (funProp target ctx).run state
+    let some result := result | throwError "no compositional plain certificate: {state.msgLog}"
+    goal.assign result.proof
+    replaceMainGoal []
 open Lean Elab Tactic in
 /-- Plain deterministic goals use the shared backend at their original step limit. -/
 private meta def polytimePlainFunProp : TacticM Unit :=

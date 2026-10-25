@@ -279,4 +279,27 @@ example : ComputableInPolyTime
     encBits encBool := by
   polytime
 
+-- Nested preprocessing reuses only complete supplied callback evidence in its generated context.
+example (callback : List Bool → List Bool) (h : RawAliasFull callback encBits encBits) :
+    IsPPTOn (encPair encBits encBool) encBits (fun p => consume callback p.1) := by
+  ppt
+
+example (family : ℕ → List Bool → List Bool)
+    (hf : ∀ n, RawAliasFull (family n) encBits encBits) (n : ℕ) :
+    IsPPTOn (encPair encBits encBool) encBits (fun p => consume (family n) p.1) := by
+  ppt
+
+example : IsPPTOn (encPair encBits encBool) encBits
+    (fun p => consume rawOnlyReverse p.1) := by
+  fail_if_success ppt
+  exact consume_ppt (.of_tidy rawOnlyReverse_tidy) |>.preprocess
+    (ComputableInPolyTime.fst encBits encBool)
+
+example (h : RawAliasFull rawOnlyReverse encBits encBits →
+    ComputableInPolyTime rawOnlyReverse encBits encBits) :
+    IsPPTOn (encPair encBits encBool) encBits (fun p => consume rawOnlyReverse p.1) := by
+  fail_if_success ppt
+  exact consume_ppt (h rawOnlyReverse_tidy) |>.preprocess
+    (ComputableInPolyTime.fst encBits encBool)
+
 end ComplexityTests.PPTPlainSource
