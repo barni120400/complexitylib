@@ -425,6 +425,16 @@ theorem bridge_stem_transverse {n e f u v w : ℕ} (hw : w < n) (hef : e ≠ f)
   · change track n e < max (elbow w q).2 (track n f)
     omega
 
+/-- A bridge/stem transverse crossing has its exact integer column/row coordinates. -/
+theorem bridge_stem_crossing_point {n e f u v w : ℕ} {s t q : Fin 3} {p : ℝ × ℝ}
+    (h : Transverse (column u s, track n e) (column v t, track n e)
+      (elbow w q) (column w q, track n f) p) :
+    p = realPoint (column w q, track n e) := by
+  rcases h with ⟨_, _, hp, _⟩ | ⟨_, _, _, hlo, hhi, _⟩
+  · exact hp
+  · simp only [elbow, min_self, max_self] at hlo hhi
+    omega
+
 /-- Distinct ports' fans can contact only at their common graph endpoint. -/
 theorem fan_pair_contact {u v : ℕ} {s t : Fin 3} (h : (u, s) ≠ (v, t))
     {p : ℝ × ℝ} (hp : p ∈ fan u s) (hq : p ∈ fan v t) :

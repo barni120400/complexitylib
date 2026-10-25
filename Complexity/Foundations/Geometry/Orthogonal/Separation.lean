@@ -31,7 +31,8 @@ that an incidence route avoids a nonincident vertex.
 
 * `Cslib.Orthogonal.segmentContactCheck_sound`: every real intersection is an allowed grid point.
 * `Cslib.Orthogonal.routeContactCheck_sound`: the corresponding certificate for route supports.
-* `Cslib.Orthogonal.disjoint_support_of_routeContactCheck`: an empty contact list proves disjointness.
+* `Cslib.Orthogonal.disjoint_support_of_routeContactCheck`: an empty contact list proves
+  disjointness.
 * `Cslib.Orthogonal.not_mem_support_of_routeContactCheck`: a singleton check excludes a vertex.
 
 ## References
