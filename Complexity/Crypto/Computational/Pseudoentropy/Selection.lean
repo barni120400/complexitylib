@@ -84,7 +84,7 @@ theorem isPPTOn_selectPredictor {α : Type} {input : α ↪ List Bool}
     (prepare := fun x : α × ℕ => (x, observation x.1)) (by fun_prop)
   unfold selectPredictor
   apply IsPPTOn.bind_with (left := encUnary) ?_ hfinal
-  apply IsPPTOn.selectBest ?_ hcount htrials
+  apply IsPPTOn.selectBest ?_ (.of_tidy hcount) (.of_tidy htrials)
   exact (hsource.preprocess (by fun_prop)).bind_with (htrial.map_with (by fun_prop))
 
 attribute [program_certificate] isPPTOn_selectPredictor

@@ -408,7 +408,7 @@ theorem isPPTOn_learn {Param : Type} {input : Param ↪ List Bool}
       (ComputableInPolyTime.snd (encPair input encBits) encBits))
   have hsigned := isPPTOn_signedTest (test := fun p : Param × List Bool => test p.1)
     htest' (ComputableInPolyTime.snd input encBits)
-  exact IsPPTOn.sampleBest [] (isPPTOn_randomSign hcandidates) hsigned hcount.tidy htrials.tidy
+  exact IsPPTOn.sampleBest [] (isPPTOn_randomSign hcandidates) hsigned hcount htrials
 
 attribute [program_certificate hcandidates] isPPTOn_learn
 
