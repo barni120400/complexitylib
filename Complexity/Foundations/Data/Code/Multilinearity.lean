@@ -46,9 +46,9 @@ and it samples one random direction, where their test samples lines in every dir
   the rejection probability (`Cslib.Code.exists_isMultilinear_hammingDist_div_le`).
 
 The quantitative bound is ours, and it is weaker than the literature's: its constant is
-exponential in the dimension. Its proof is the `δ = 0` case of the Pasting Lemma of
-[Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991] applied by induction on the dimension
-without their self-improvement step: interpolating multilinear approximations of the two best
+exponential in the dimension. Its proof adapts the interpolation step in the proof of
+[Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991] and inducts on the dimension, without
+their self-improvement lemma: interpolating multilinear approximations of the two best
 slices `x 0 = t₁` and `x 0 = t₂` gives a multilinear function that agrees with `f` on every
 direction-`0` line that is affine and on which both slices are correct. Babai, Fortnow and Lund
 prove a bound polynomial in the dimension: if every direction has fewer than an `ε` fraction of
@@ -451,8 +451,9 @@ private theorem exists_two_mul_le_sum (D : F → ℕ) :
 /-- **Quantitative soundness of the multilinearity test**, with a constant exponential in the
 dimension: some multilinear `g` differs from `f` on at most `∑ i, 2 ^ i * #(wrongPoints f i)`
 points of `F ^ n`. The proof interpolates multilinear approximations of the two best slices
-`x 0 = t₁` and `x 0 = t₂` and inducts on the dimension, the `δ = 0` case of the Pasting Lemma of
-[Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991] without their self-improvement step. -/
+`x 0 = t₁` and `x 0 = t₂` and inducts on the dimension. This adapts the interpolation step in
+the proof of [Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991], without their
+self-improvement lemma. -/
 theorem exists_isMultilinear_hammingDist_le (f : (Fin n → F) → F) :
     ∃ g, IsMultilinear g ∧ hammingDist f g ≤ ∑ i : Fin n, 2 ^ (i : ℕ) * #(wrongPoints f i) := by
   induction n with
