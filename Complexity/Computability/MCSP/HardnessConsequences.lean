@@ -57,7 +57,7 @@ reductions (`Cslib.Complexity.NPHard`), several structural collapses and class s
    `Cslib.Complexity.not_EXP_subset_RP_of_MCSP_npHard`,
    `Cslib.Complexity.not_EXP_subset_ZPP_of_MCSP_npHard`,
    `Cslib.Complexity.EXP_ne_ZPP_of_MCSP_npHard`,
-   [Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]):
+   [Murray and Williams, Section 1, Theorem 1.6, p. 5][MurrayWilliams2017]):
    Murray and Williams state Theorem 1.6 as:
    > "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
    > Consequently, `EXP ≠ ZPP`."
@@ -551,7 +551,7 @@ theorem EXP_eq_NEXP_of_MCSP_npHard_of_EXP_subset_PPoly
   EXP_subset_NEXP.antisymm (NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly hHard hEXP enc)
 
 /-- **Murray–Williams Theorem 1.6 (`EXP ⊈ NP ∩ P/poly`)**
-[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]:
+[Murray and Williams, Section 1, Theorem 1.6, p. 5][MurrayWilliams2017]:
 > "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
 > Consequently, `EXP ≠ ZPP`."
 
@@ -566,7 +566,7 @@ theorem not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard
       encBits).trans fun _ hA => (h hA).1)
 
 /-- **Murray–Williams Theorem 1.6 (`EXP ≠ NP ∩ P/poly`)**
-[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]:
+[Murray and Williams, Section 1, Theorem 1.6, p. 5][MurrayWilliams2017]:
 > "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
 > Consequently, `EXP ≠ ZPP`." -/
 theorem EXP_ne_NP_inter_PPolyOn_of_MCSP_npHard
@@ -575,7 +575,7 @@ theorem EXP_ne_NP_inter_PPolyOn_of_MCSP_npHard
   fun h => not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard hHard h.le
 
 /-- Corollary of **Murray–Williams Theorem 1.6** (`not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard`)
-[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]: if `MCSP` is `NP`-hard
+[Murray and Williams, Section 1, Theorem 1.6, p. 5][MurrayWilliams2017]: if `MCSP` is `NP`-hard
 under arbitrary polynomial-time many-one reductions, then `EXP ⊈ RP`, via `RP ⊆ NP`
 (`RP_subset_NP`) and `RP ⊆ BPP ⊆ P/poly` (`RP_subset_PPolyOn`). -/
 theorem not_EXP_subset_RP_of_MCSP_npHard
@@ -591,7 +591,7 @@ theorem EXP_ne_RP_of_MCSP_npHard
   fun h => not_EXP_subset_RP_of_MCSP_npHard hHard h.le
 
 /-- **Murray–Williams Theorem 1.6 (`EXP ⊈ ZPP`)**
-[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]: if `MCSP` is `NP`-hard,
+[Murray and Williams, Section 1, Theorem 1.6, p. 5][MurrayWilliams2017]: if `MCSP` is `NP`-hard,
 then `EXP ⊈ ZPP`. -/
 theorem not_EXP_subset_ZPP_of_MCSP_npHard
     (hHard : NPHard MCSP.encInstance MCSP) :
@@ -599,7 +599,7 @@ theorem not_EXP_subset_ZPP_of_MCSP_npHard
   fun h => not_EXP_subset_RP_of_MCSP_npHard hHard (h.trans ZPP_subset_RP)
 
 /-- **Murray–Williams Theorem 1.6 (`EXP ≠ ZPP`)**
-[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]:
+[Murray and Williams, Section 1, Theorem 1.6, p. 5][MurrayWilliams2017]:
 > "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
 > Consequently, `EXP ≠ ZPP`." -/
 theorem EXP_ne_ZPP_of_MCSP_npHard
