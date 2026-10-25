@@ -28,7 +28,7 @@ independent uniform bit strings. This includes zero-width rows and zero rows.
 * `Cslib.BitString.uniformList_map_listXor`,
   `Cslib.BitString.uniformList_map_zipWith_xor`,
   `Cslib.BitString.uniformList_map_take_zipWith_xor`: XOR with a fixed word preserves uniformity
-  (both in `listXor m [y, r]` and direct `List.zipWith xor y r` forms).
+  (both in `listXor m [y, r]` and direct `List.zipWith Bool.xor y r` forms).
 
 ## References
 
@@ -68,7 +68,7 @@ theorem uniformList_listRows (count width : ℕ) :
 
 /-- XORing a uniform `m`-bit word with any word `r` preserves the uniform distribution; see
 `uniformList_map_zipWith_xor` and `uniformList_map_take_zipWith_xor` for the direct
-`List.zipWith xor y r` form alongside `listXor m [y, r]`. -/
+`List.zipWith Bool.xor y r` form alongside `listXor m [y, r]`. -/
 theorem uniformList_map_listXor (m : ℕ) (r : List Bool) :
     (uniformList m).map (fun y => listXor m [y, r]) = uniformList m := by
   unfold uniformList
@@ -79,28 +79,28 @@ theorem uniformList_map_listXor (m : ℕ) (r : List Bool) :
     simp [listXor_pair]
   rw [hfun, ← PMF.map_comp, Probability.PMF.uniformOfFintype_map_equiv]
 
-/-- Pointwise `List.zipWith xor` of a uniform `msg.length`-bit word with a fixed word `msg`
-preserves `uniformList msg.length` (the direct `List.zipWith xor y r` counterpart to
+/-- Pointwise `List.zipWith Bool.xor` of a uniform `msg.length`-bit word with a fixed word `msg`
+preserves `uniformList msg.length` (the direct `List.zipWith Bool.xor y r` counterpart to
 `uniformList_map_listXor`'s `listXor m [y, r]`). -/
 theorem uniformList_map_zipWith_xor (msg : List Bool) :
-    (uniformList msg.length).map (fun pad => List.zipWith xor pad msg) =
+    (uniformList msg.length).map (fun pad => List.zipWith Bool.xor pad msg) =
       uniformList msg.length := by
   unfold uniformList
   rw [PMF.map_comp]
-  have hfun : (fun pad => List.zipWith xor pad msg) ∘ List.ofFn =
+  have hfun : (fun pad => List.zipWith Bool.xor pad msg) ∘ List.ofFn =
       List.ofFn ∘ Equiv.addRight (ofList msg.length msg) := by
     funext x
     simp [ofFn_add, ofFn_ofList rfl]
   rw [hfun, ← PMF.map_comp, PMF.uniformOfFintype_map_equiv]
 
-/-- Pointwise `List.zipWith xor` of `pad.take n` for a uniform `n`-bit word `pad` with an `n`-bit
-word `msg` preserves `uniformList n`. -/
+/-- Pointwise `List.zipWith Bool.xor` of `pad.take n` for a uniform `n`-bit word `pad` with an
+`n`-bit word `msg` preserves `uniformList n`. -/
 theorem uniformList_map_take_zipWith_xor {n : ℕ} {msg : List Bool} (hmsg : msg.length = n) :
-    (uniformList n).map (fun pad => List.zipWith xor (pad.take n) msg) =
+    (uniformList n).map (fun pad => List.zipWith Bool.xor (pad.take n) msg) =
       uniformList n := by
   have hcongr :
-      (uniformList n).map (fun pad => List.zipWith xor (pad.take n) msg) =
-        (uniformList n).map (fun pad => List.zipWith xor pad msg) := by
+      (uniformList n).map (fun pad => List.zipWith Bool.xor (pad.take n) msg) =
+        (uniformList n).map (fun pad => List.zipWith Bool.xor pad msg) := by
     rw [PMF.map, PMF.map]
     refine PMF.bind_congr_on_support _ _ _ fun pad hpad => ?_
     dsimp only [Function.comp_def]

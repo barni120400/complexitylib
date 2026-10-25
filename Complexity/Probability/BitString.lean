@@ -33,11 +33,11 @@ this finite uniform distribution to a program drawing one independent fair bit a
 * `Cslib.BitString.uniformList_map_apply`,
   `Cslib.BitString.toOuterMeasure_map_uniformList_toReal`: the probability of a value or event
   under a map of a uniform word is the fraction of words of that length mapping into it.
-* `Cslib.BitString.zipWith_xor_self_left`: pointwise `List.zipWith xor` left-cancellation for
-  equal-length bit lists.
 * `Cslib.BitString.uniformList_apply_le`,
-  `Cslib.BitString.toOuterMeasure_lookup_uniformList_le`: point-mass bound `1 / 2 ^ n` and
-  finite-cache lookup union bound `cache.length * (1 / 2 ^ n)` for `uniformList n`.
+  `Cslib.BitString.toOuterMeasure_uniformList_finset_le`,
+  `Cslib.BitString.toOuterMeasure_lookup_uniformList_le`: point-mass bound `1 / 2 ^ n`, finite-set
+  union bound `s.card * (1 / 2 ^ n)`, and finite-cache lookup union bound
+  `cache.length * (1 / 2 ^ n)` for `uniformList n`.
 
 ## References
 
@@ -171,17 +171,6 @@ theorem toOuterMeasure_map_uniformList_toReal {β : Type*} (f : List Bool → β
     PMF.toOuterMeasure_uniformOfFintype_toReal]
   simp [Function.comp_def, Set.mem_preimage]
 
-/-- Pointwise XOR of equal-length bit lists is left-involutive:
-`List.zipWith xor pad (List.zipWith xor pad msg) = msg`. -/
-theorem zipWith_xor_self_left :
-    ∀ pad msg : List Bool, pad.length = msg.length →
-      List.zipWith xor pad (List.zipWith xor pad msg) = msg
-  | [], [], _ => rfl
-  | b :: pad, m :: msg, h => by
-    simp only [List.length_cons, Nat.add_right_cancel_iff] at h
-    simp only [List.zipWith_cons_cons, zipWith_xor_self_left pad msg h]
-    cases b <;> cases m <;> rfl
-
 /-- Every candidate word `r` has probability at most `1 / 2 ^ n` under `uniformList n`. -/
 theorem uniformList_apply_le (n : ℕ) (r : List Bool) :
     uniformList n r ≤ (1 : ENNReal) / 2 ^ n := by
@@ -193,37 +182,36 @@ theorem uniformList_apply_le (n : ℕ) (r : List Bool) :
   exact Finset.card_le_one.mpr fun a ha b hb =>
     List.ofFn_injective ((Finset.mem_filter.mp ha).2.trans (Finset.mem_filter.mp hb).2.symm)
 
+/-- Union bound on finite candidate sets: a uniform `n`-bit word lands in a finite set `s` with
+outer measure at most `s.card * (1 / 2 ^ n)`. -/
+theorem toOuterMeasure_uniformList_finset_le (n : ℕ) (s : Finset (List Bool)) :
+    (uniformList n).toOuterMeasure s ≤ s.card * ((1 : ENNReal) / 2 ^ n) := by
+  rw [PMF.toOuterMeasure_apply_finset, ← nsmul_eq_mul]
+  exact Finset.sum_le_card_nsmul _ _ _ fun r _ => uniformList_apply_le n r
+
 /-- Union bound on finite-cache lookups: a uniform `n`-bit word hits the domain of a finite
 association list `cache` with outer measure at most `cache.length * (1 / 2 ^ n)`. -/
 theorem toOuterMeasure_lookup_uniformList_le {V : Type*} (n : ℕ)
     (cache : List (List Bool × V)) :
     (uniformList n).toOuterMeasure {r | (cache.lookup r).isSome} ≤
       (cache.length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
-  induction cache with
-  | nil => simp
-  | cons entry rest ih =>
-    rcases entry with ⟨r₀, pad₀⟩
-    calc (uniformList n).toOuterMeasure
-          {r | (((r₀, pad₀) :: rest).lookup r).isSome}
-        ≤ (uniformList n).toOuterMeasure
-          ({r | r = r₀} ∪ {r | (rest.lookup r).isSome}) := by
-          refine (uniformList n).toOuterMeasure.mono fun r hr => ?_
-          have hr' : (((r₀, pad₀) :: rest).lookup r).isSome = true := hr
+  calc (uniformList n).toOuterMeasure {r | (cache.lookup r).isSome}
+      ≤ (uniformList n).toOuterMeasure ((cache.map Prod.fst).toFinset : Set (List Bool)) := by
+        refine (uniformList n).toOuterMeasure.mono fun r hr => ?_
+        rw [Finset.mem_coe, List.mem_toFinset]
+        induction cache with
+        | nil => simp at hr
+        | cons entry rest ih =>
+          have hr' : ((entry :: rest).lookup r).isSome = true := hr
           rw [List.lookup_cons] at hr'
-          by_cases h : r = r₀
-          · exact Or.inl h
+          by_cases h : r = entry.1
+          · exact List.mem_cons.mpr (Or.inl h)
           · rw [beq_false_of_ne h] at hr'
-            exact Or.inr hr'
-      _ ≤ (uniformList n).toOuterMeasure {r | r = r₀} +
-          (uniformList n).toOuterMeasure {r | (rest.lookup r).isSome} :=
-          MeasureTheory.measure_union_le _ _
-      _ ≤ (1 : ENNReal) / 2 ^ n + (rest.length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
-          refine add_le_add ?_ ih
-          rw [show {r : List Bool | r = r₀} = {r₀} from Set.ext fun _ => Set.mem_singleton_iff.symm,
-            PMF.toOuterMeasure_apply_singleton]
-          exact uniformList_apply_le n r₀
-      _ = (((r₀, pad₀) :: rest).length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
-          rw [List.length_cons, Nat.cast_add, Nat.cast_one]
-          ring
+            exact List.mem_cons_of_mem _ (ih hr')
+    _ ≤ ((cache.map Prod.fst).toFinset.card : ENNReal) * ((1 : ENNReal) / 2 ^ n) :=
+        toOuterMeasure_uniformList_finset_le n (cache.map Prod.fst).toFinset
+    _ ≤ (cache.length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
+        gcongr
+        exact_mod_cast (List.toFinset_card_le (cache.map Prod.fst)).trans (by simp)
 
 end Cslib.BitString
