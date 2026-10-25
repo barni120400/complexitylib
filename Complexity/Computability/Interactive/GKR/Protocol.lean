@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Interactive.Bundle
 public import Complexity.Computability.Interactive.Sumcheck
 public import Complexity.Computability.Interactive.GKR.Summand
+import Complexity.Foundations.FieldTheory.Finite.UnitSum
 import Complexity.Probability.PMF
 import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF.Uniform
@@ -86,30 +87,20 @@ theorem line_one {k : ℕ} (y w : Fin k → F) : line y w 1 = w := by
 degree at most `k` in the line parameter. -/
 noncomputable def restrictLine {k : ℕ} (y w : Fin k → F) (W : (Fin k → Bool) → F) :
     Polynomial F :=
-  ∑ a, Polynomial.C (W a) * ∏ j,
-    if a j then Polynomial.C (y j) + Polynomial.X * Polynomial.C (w j - y j)
-    else 1 - (Polynomial.C (y j) + Polynomial.X * Polynomial.C (w j - y j))
+  (multilinearExtension W).eval₂ Polynomial.C
+    fun j => Polynomial.C (w j - y j) * Polynomial.X + Polynomial.C (y j)
 
 theorem eval_restrictLine {k : ℕ} (y w : Fin k → F) (W : (Fin k → Bool) → F) (t : F) :
     (restrictLine y w W).eval t = eval (line y w t) (multilinearExtension W) := by
-  rw [eval_multilinearExtension_eq_sum, restrictLine, Polynomial.eval_finsetSum]
-  refine Finset.sum_congr rfl fun a _ => ?_
-  rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_prod, eval_indicatorPoly_apply]
-  congr 1
-  refine Finset.prod_congr rfl fun j _ => ?_
-  split_ifs <;> simp [line]
+  rw [restrictLine, FiniteField.eval_eval₂_line]
+  congr 2
+  funext j
+  exact add_comm _ _
 
 theorem natDegree_restrictLine_le {k : ℕ} (y w : Fin k → F) (W : (Fin k → Bool) → F) :
-    (restrictLine y w W).natDegree ≤ k := by
-  have hlin : ∀ j, (Polynomial.C (y j) + Polynomial.X * Polynomial.C (w j - y j)).natDegree ≤ 1 :=
-    fun j => (Polynomial.natDegree_add_le _ _).trans (max_le (by simp)
-      ((Polynomial.natDegree_mul_le).trans (by simp)))
-  refine Polynomial.natDegree_sum_le_of_forall_le _ _ fun a _ => ?_
-  refine (Polynomial.natDegree_C_mul_le _ _).trans ((Polynomial.natDegree_prod_le _ _).trans ?_)
-  refine (Finset.sum_le_card_nsmul _ _ 1 fun j _ => ?_).trans (by simp)
-  split_ifs
-  · exact hlin j
-  · exact (Polynomial.natDegree_sub_le _ _).trans (max_le (by simp) (hlin j))
+    (restrictLine y w W).natDegree ≤ k :=
+  (FiniteField.natDegree_eval₂_line_le (multilinearExtension W) (w - y) y).trans
+    ((totalDegree_multilinearExtension_le W).trans_eq (Fintype.card_fin k))
 
 /-! ### The line step -/
 

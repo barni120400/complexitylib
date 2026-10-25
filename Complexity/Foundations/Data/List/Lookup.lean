@@ -25,8 +25,6 @@ import Mathlib.Data.List.OfFn
   updates and bound defaulted reads of numeric register files.
 * `List.getD_map_range`: read a function tabulated over a bounded range.
 * `List.map_range_eq_ofFn`: runtime tabulation agrees with the finite coordinate view.
-* `List.ofFn_getElem_of_length_eq`: a list whose length equals `n` matches `List.ofFn` of its
-  elements.
 * `List.find?_range_getD_eq_sInf`: the least index below `m` passing a test, or `m`, as a search
   over a range.
 -/
@@ -84,11 +82,6 @@ theorem List.map_range_eq_ofFn {α : Type*} (n : ℕ) (f : ℕ → α) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp
-
-/-- A list whose length equals `n` matches `List.ofFn` of its elements indexed by `Fin n`. -/
-theorem List.ofFn_getElem_of_length_eq {α : Type*} {n : ℕ} (L : List α) (h : L.length = n) :
-    List.ofFn (fun i : Fin n => L[i.val]'(by omega)) = L :=
-  List.ext_getElem (by simp [h]) fun _ _ _ => by simp
 
 /-- The least index below `m` passing a test, or `m`, as a search over `List.range m`. -/
 theorem List.find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
