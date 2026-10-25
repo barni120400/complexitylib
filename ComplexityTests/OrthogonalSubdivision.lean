@@ -1,4 +1,4 @@
-import Complexity.Foundations.Geometry.Orthogonal.Subdivision
+import Complexity.Computability.Geometry.OrthogonalSubdivision
 
 /-! Regression instances for signed unit subdivision and continuous support preservation. -/
 
@@ -35,3 +35,15 @@ example : ∀ e ∈ (subdivide signedRoute).consecutivePairs, length e.1 e.2 = 1
   fun _ he => subdivide_unit signedRoute_orthogonal he
 
 example : IsOrthogonal (subdivide signedRoute) := subdivide_orthogonal signedRoute_orthogonal
+
+example : subdivideWithin 5 signedRoute = subdivide signedRoute :=
+  subdivideWithin_eq_of_wireLength_le signedRoute_orthogonal (by decide)
+
+example : subdivideWithin 2 signedRoute ≠ subdivide signedRoute := by decide
+
+example : subdivideWithin 0 signedRoute = [(1, -1)] := by decide
+
+example : Turing.MultiTapeTM.ComputableInPolyTime
+    (fun p : ℕ × Route => subdivideWithin p.1 p.2)
+    (Turing.MultiTapeTM.encPair Turing.MultiTapeTM.encUnary encRoute) encRoute :=
+  computableInPolyTime_subdivideWithin
