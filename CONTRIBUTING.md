@@ -72,7 +72,18 @@ each public declaration depends on. Editing docstrings, private declarations, pr
 non-exposed bodies leaves it unchanged, unless a proof edit changes that axiom set. `import all`
 also loads private information, so such edits do reach its clients.
 
-- Helpers are `private` by default. Keep `@[expose]` for bodies that downstream proofs unfold.
+- **What is a helper.** A helper is proof plumbing: a step meaningful only inside one proof, or a
+  fact about a module-local construction, encoding or intermediate quantity. Helpers are `private`
+  by default. Keep `@[expose]` for bodies that downstream proofs unfold.
+- **What stays public, even if nothing outside the module uses it yet.** Facts stated only in terms
+  of public definitions that a user of those definitions would expect: characterizations (`_iff`),
+  bounds, monotonicity and closure properties, simp and extensionality equations, invariance
+  lemmas, and named results from the literature. Move general mathematics (lists, finsets,
+  probability, bit strings) to `Complexity/Foundations` instead of making it private. Reference
+  counts are evidence about current use, not the criterion; privatize by intent.
+- **Reuse before re-proving.** If a fact you need already exists as a private declaration, make it
+  public, moving it to its natural home if needed, instead of proving it again. Reviewers treat a
+  re-proof of an existing private fact as a finding.
 - A private `@[fun_prop]` theorem still exports its rule, and `fun_prop` then fails in importers.
   Write `attribute [local fun_prop] helper` instead. Private `simp` lemmas, Aesop rules and
   instances stay local.
