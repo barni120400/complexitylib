@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine, Christian Reitwiessner, Samuel Schlesinger
 -/
 module
--- upstream: local-only (direct-calculus integration checkpoint)
+-- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Size

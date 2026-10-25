@@ -47,7 +47,6 @@ private theorem of_computesTidily {f : α → β} {k : ℕ} {State : Type} [Fini
 
 /-- **Composition**, through the machine-level composition of tidy machines. The intermediate word
 is no longer than the time of the inner machine. -/
-@[fun_prop]
 theorem comp {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
     (hg : ComputableInPolyTime g encIn encMid) :
     ComputableInPolyTime (f ∘ g) encIn encOut := by

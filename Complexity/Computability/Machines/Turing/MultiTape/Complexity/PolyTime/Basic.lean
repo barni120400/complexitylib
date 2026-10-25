@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
