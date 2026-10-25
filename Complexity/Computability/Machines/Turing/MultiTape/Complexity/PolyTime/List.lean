@@ -915,16 +915,6 @@ theorem flatMapWithInput {α : Type}
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.flatMapWithInput α β γ encA encB encIn
       f list hlist.tidy hf.tidy)
 
-/-- Read an optional head in any list encoding, without an inhabitant of the element type. -/
-@[fun_prop]
-theorem head? {α : Type}
-    (enc : α ↪ List Bool)
-    {encL : List α ↪ List Bool}
-    [_inst3 : ListEncoding enc encL] :
-    ComputableInPolyTime List.head? encL
-  (encOption enc) :=
-  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.head? α enc encL _inst3)
-
 /-- Read the head of any list encoding with a fixed fallback. -/
 @[fun_prop]
 theorem headD {α : Type}
