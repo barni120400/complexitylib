@@ -92,9 +92,9 @@ noncomputable def restrictLine {k : ℕ} (y w : Fin k → F) (W : (Fin k → Boo
 
 theorem eval_restrictLine {k : ℕ} (y w : Fin k → F) (W : (Fin k → Bool) → F) (t : F) :
     (restrictLine y w W).eval t = eval (line y w t) (multilinearExtension W) := by
-  rw [LayeredCircuit.eval_multilinearExtension_eq_sum, restrictLine, Polynomial.eval_finsetSum]
+  rw [eval_multilinearExtension_eq_sum, restrictLine, Polynomial.eval_finsetSum]
   refine Finset.sum_congr rfl fun a _ => ?_
-  rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_prod, LayeredCircuit.basis]
+  rw [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_prod, eval_indicatorPoly_apply]
   congr 1
   refine Finset.prod_congr rfl fun j _ => ?_
   split_ifs <;> simp [line]
