@@ -117,6 +117,8 @@ This module formalizes:
 * `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_eq_oneTimeGame`,
   `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_le`,
   `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_le`: Boneh–Shoup Theorem 7.3 (`≤ ε`).
+* `Cslib.Crypto.Protocols.CarterWegman.run_interpret_counterRealHandler`: simulation equivalence
+  between real and simulated signing handlers under transcript mapping.
 * `Cslib.Crypto.Protocols.CarterWegman.counterStrongGame_eq_counterSlotGame`,
   `Cslib.Crypto.Protocols.CarterWegman.counterSlotGame_le`,
   `Cslib.Crypto.Protocols.CarterWegman.counterGame_le`,
