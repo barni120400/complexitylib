@@ -6,8 +6,8 @@ Authors: Samuel Schlesinger
 
 import Complexity.Computability.Complexity.FineGrained.PPZ
 
-/-! PPZ for unique k-SAT: a uniquely satisfiable instance, critical clauses, random orders, and
-axiom guards. -/
+/-! PPZ for k-SAT: a uniquely satisfiable instance, a formula with several satisfying assignments,
+critical clauses, random orders, and axiom guards. -/
 
 namespace ComplexityTests.PPZ
 
@@ -35,6 +35,16 @@ example : (2 : ℝ) ^ (-((1 - 1 / ((2 : ℕ) : ℝ)) * (2 : ℕ))) ≤
     ((round φ) fun x => some ((fun _ => true) x)).toReal :=
   round_success (by norm_num) φ_sat φ_unique (by decide)
 
+/-- `x₀`: satisfied by two of the four assignments, with unit clauses only. -/
+def ψ : CNF (Fin 2) := [[(0, true)]]
+
+-- With unit clauses PPZ always finds a satisfying assignment: `2^{-(1 - 1/1) · 2} = 1`.
+example : (1 : ℝ) ≤ ((round ψ).toOuterMeasure
+    {τ | ∃ σ, ψ.eval σ = true ∧ τ = fun x => some (σ x)}).toReal :=
+  calc
+    (1 : ℝ) = 2 ^ (-((1 - 1 / ((1 : ℕ) : ℝ)) * (2 : ℕ))) := by norm_num
+    _ ≤ _ := round_success_of_satisfiable le_rfl ⟨fun _ => true, by decide⟩ (by decide)
+
 -- Each of three variables comes last in a third of the `3! = 6` orders.
 example : (Finset.univ.filter fun π : Equiv.Perm (Fin 3) =>
     IsLast π Finset.univ (0 : Fin 3)).card * 3 = 6 := by
@@ -54,5 +64,12 @@ info: 'Cslib.Complexity.PPZ.round_success' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms round_success
+
+/--
+info: 'Cslib.Complexity.PPZ.round_success_of_satisfiable' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms round_success_of_satisfiable
 
 end ComplexityTests.PPZ
