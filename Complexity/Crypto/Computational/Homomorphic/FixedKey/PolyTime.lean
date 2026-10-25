@@ -90,7 +90,7 @@ theorem isPPTOn_encrypt {bit : α → Bool}
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hn
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hpk
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hbit
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   exact hencrypt.preprocess (.of_tidy (hn.prod (hpublic.fst'.prod hbit)))
 
 variable {secretWidth ciphertextWidth : ℕ → ℕ}
@@ -166,7 +166,7 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hpk
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hc
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hinputs
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   have hview : ComputableTidilyInPolyTime
       (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl

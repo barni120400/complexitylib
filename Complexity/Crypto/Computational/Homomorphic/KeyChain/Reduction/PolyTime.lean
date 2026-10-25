@@ -104,7 +104,7 @@ theorem isPPTOn_guessLink {n : α → ℕ} {state challengeCiphertext : α → L
   have hn := hn.tidy
   have hstate := hstate.tidy
   have hchallenge := hchallenge.tidy
-  have hcontext := linkStateDecoder.computableTidilyInPolyTime.comp hstate
+  have hcontext := linkStateDecoder.computableInPolyTime.tidy.comp hstate
   dsimp only [encLinkState] at hcontext
   have hbefore := hcontext.snd'.fst'
   have hpredecessor := hcontext.snd'.snd'.fst'

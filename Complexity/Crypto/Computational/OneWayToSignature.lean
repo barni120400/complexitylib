@@ -94,7 +94,7 @@ open scoped NNReal ENNReal
 private theorem computableTidilyInPolyTime_frames {γ : Type} {encIn : γ ↪ List Bool}
     {w : γ → List Bool} (hw : ComputableTidilyInPolyTime w encIn encBits) :
     ComputableTidilyInPolyTime (fun a => frames (w a)) encIn (encList encBits) :=
-  computableTidilyInDegree_frames.computableTidilyInPolyTime.comp hw
+  computableInDegree_frames.computableInPolyTime.tidy.comp hw
 
 @[fun_prop]
 private theorem computableTidilyInPolyTime_encList_bits {γ : Type} {encIn : γ ↪ List Bool}
