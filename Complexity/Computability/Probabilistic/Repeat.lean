@@ -61,7 +61,8 @@ theorem IsPPTOn.replicate {α β : Type} {input : α ↪ List Bool} {output : β
       (encPair input encBits) (encList encBits) := by fun_prop
   have hmap := ComputableTidilyInPolyTime.mapWith hevaluate
     (ComputableTidilyInPolyTime.fst input encBits) hrows
-  have hcoins := (ComputableTidilyInPolyTime.unary_mul.comp (hcount.prod hbudget)).sampleList
+  have hcoins := (ComputableInPolyTime.of_tidy
+    (ComputableTidilyInPolyTime.unary_mul.comp (hcount.prod hbudget))).sampleList
   apply (hcoins.map_with (f := fun a coins =>
     (BitString.listRows (count a) (budget a) coins).map (evaluate a)) (.of_tidy hmap)).congr
   intro a

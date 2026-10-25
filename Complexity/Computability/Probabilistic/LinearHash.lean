@@ -72,7 +72,7 @@ theorem isPPTOn_extract {α : Type} {encode : α ↪ List Bool}
     IsPPTOn encode encBits (fun a => extract (count a) (input a)) := by
   have hwidth := ComputableTidilyInPolyTime.unary_mul.comp
     (hcount.prod (ComputableTidilyInPolyTime.length_bits.comp hinput))
-  have hsample := ComputableTidilyInPolyTime.sampleList hwidth
+  have hsample := ComputableInPolyTime.sampleList (.of_tidy hwidth)
   have hc := (ComputableInPolyTime.of_tidy hcount).comp
     (ComputableInPolyTime.fst encode encBits)
   have hi := (ComputableInPolyTime.of_tidy hinput).comp

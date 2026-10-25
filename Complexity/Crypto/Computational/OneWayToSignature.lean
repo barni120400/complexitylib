@@ -330,7 +330,7 @@ theorem isPPTOn_lamportKeyGen {f : List Bool → List Bool}
   unfold lamportKeyGen
   have hrep : IsPPTOn encUnary (encList encBits)
       (fun n : ℕ => OracleComp.replicate (2 * n) (BitString.sampleList n)) :=
-    (ComputableTidilyInPolyTime.id'.sampleList).replicate (by polytime)
+    (ComputableInPolyTime.id'.sampleList).replicate (by polytime)
   have hpost : ComputableTidilyInPolyTime
       (fun skWords : List (List Bool) => (encList encBits (skWords.map f), encList encBits skWords))
       (encList encBits) (encPair encBits encBits) := by
@@ -532,7 +532,7 @@ theorem isPPTOn_lamportSimKeys {f : List Bool → List Bool}
       (fun q : (ℕ × List Bool) × ℕ => OracleComp.replicate q.2 (BitString.sampleList q.1.1)) := by
     have hn : ComputableTidilyInPolyTime (fun q : (ℕ × List Bool) × ℕ => q.1.1)
         (encPair (encPair encUnary encBits) encUnary) encUnary := by polytime
-    exact hn.sampleList.replicate (by polytime)
+    exact (ComputableInPolyTime.of_tidy hn).sampleList.replicate (by polytime)
   have hback : IsPPTOn
       (encPair (encPair (encPair encUnary encBits) encUnary) (encList encBits))
       (encList encBits)
@@ -546,7 +546,7 @@ theorem isPPTOn_lamportSimKeys {f : List Bool → List Bool}
         (fun r : ((ℕ × List Bool) × ℕ) × List (List Bool) => 2 * r.1.1.1 - r.1.2 - 1)
         (encPair (encPair (encPair encUnary encBits) encUnary) (encList encBits))
         encUnary := by polytime
-    exact hn.sampleList.replicate hcnt
+    exact (ComputableInPolyTime.of_tidy hn).sampleList.replicate hcnt
   have hpost : ComputableTidilyInPolyTime
       (fun s : (((ℕ × List Bool) × ℕ) × List (List Bool)) × List (List Bool) =>
         (encList encBits (s.1.2.map f ++ s.1.1.1.2 :: s.2.map f),

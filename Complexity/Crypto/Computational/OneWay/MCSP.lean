@@ -142,8 +142,8 @@ variable {p : Polynomial ℕ} {V : MCSP.Instance × List Bool → Bool}
 theorem isPPTOn_mcspRun
     (hV : ComputableInPolyTime V (encPair MCSP.encInstance encBits) encBool) :
     IsPPTOn MCSP.encInstance encBool (mcspRun p V) :=
-  IsPPTOn.map_with (ComputableTidilyInPolyTime.sampleList
-    ((unary_eval p).comp (encoding_length MCSP.encInstance))) hV
+  IsPPTOn.map_with (ComputableInPolyTime.sampleList
+    (.of_tidy ((unary_eval p).comp (encoding_length MCSP.encInstance)))) hV
 
 /-- The acceptance probability of `mcspRun` is the fraction of accepting coin strings. -/
 theorem toReal_eval_mcspRun (p : Polynomial ℕ) (V : MCSP.Instance × List Bool → Bool)

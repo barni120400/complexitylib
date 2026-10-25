@@ -99,7 +99,7 @@ theorem isPPT_randomizedPreimageSearch {p : Polynomial ℕ}
     unfold searchCoinLength
     exact (unary_eval p).comp ((encoding_length encPreimagePrefix).comp
       ((fst _ _).prod ((snd _ _).prod ((bitsReplicate false).comp (fst _ _)))))
-  refine IsPPTOn.map_with hlen.sampleList
+  refine IsPPTOn.map_with (ComputableInPolyTime.of_tidy hlen).sampleList
     (computableInPolyTime_preimageSearch_of_input (.of_tidy ?_) (.of_tidy (fst _ _)))
   exact hV.comp ((snd _ _).prod (bitsTakeWithInput (fst _ _).snd'
     ((unary_eval p).comp ((encoding_length encPreimagePrefix).comp (snd _ _)))))
