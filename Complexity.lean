@@ -1787,6 +1787,7 @@ public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.MvPolynomial.HessianRank
 public import Complexity.Foundations.Data.Nat.ArithmeticProgression
+public import Complexity.Foundations.Data.Nat.Asymptotics
 public import Complexity.Foundations.Data.Nat.Bits
 public import Complexity.Foundations.Data.Nat.Bitwise.HighestDiff
 public import Complexity.Foundations.Data.Nat.Bitwise.Multiplication
