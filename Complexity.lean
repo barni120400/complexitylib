@@ -1045,6 +1045,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partrec
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListBinaryLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
