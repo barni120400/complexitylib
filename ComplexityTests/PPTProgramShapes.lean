@@ -58,6 +58,7 @@ example (count : List Bool → ℕ) (initial : List Bool → List Bool)
 
 -- Retain the original bounded shared-encoding regression in both local fact orders.
 set_option maxHeartbeats 12000 in
+-- Keep the original regression budget rather than the default proof-search allowance.
 example (sample : List Bool → ProbComp ℕ)
     (hUnary : IsPPTOn encBits encUnary sample) (_hBinary : IsPPTOn encBits encNat sample) :
     IsPPTOn encBits encBool (fun word => do
@@ -67,11 +68,52 @@ example (sample : List Bool → ProbComp ℕ)
 
 -- Retain the original bounded shared-encoding regression in both local fact orders.
 set_option maxHeartbeats 12000 in
+-- Keep the original regression budget rather than the default proof-search allowance.
 example (sample : List Bool → ProbComp ℕ)
     (_hBinary : IsPPTOn encBits encNat sample) (hUnary : IsPPTOn encBits encUnary sample) :
     IsPPTOn encBits encBool (fun word => do
       let n ← sample word
       pure ((List.range n).foldl (fun parity _ => !parity) true)) := by
   ppt
+
+-- A generic nonzero bound must remain available through the production named handler.
+private meta def namedOnly : Aesop.RuleTac :=
+  Cslib.Tactic.applyCertificates ``ComputableInPolyTime
+
+example {γ α β : Type} (encIn : γ ↪ List Bool) (encA : α ↪ List Bool)
+    (encB : β ↪ List Bool) (encL : List α ↪ List Bool)
+    (list : γ → List α) (init : γ → β) (step : γ → β → α → β)
+    (hi : ComputableInPolyTime init encIn encB)
+    (hc : ComputableInPolyTime list encIn encL ∧
+      ComputableInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+        (encPair (encPair encIn encB) encA) encB ∧
+      ListEncoding encA encL ∧ SizedListEncoding encA encL)
+    (growth : γ → ℕ)
+    (hb : PolyBounded (fun x => (encIn x).length) growth ∧
+      ∀ x state value, value ∈ list x →
+      (encB (step x state value)).length ≤ (encB state).length + growth x) :
+    ComputableInPolyTime (fun x => (list x).foldl (step x) (init x)) encIn encB := by
+  aesop (rule_sets := [-default]) (add unsafe 100% tactic namedOnly)
+
+-- Both checked-zero and unconstrained alternatives survive a successful local bound proof.
+private meta def twoNamedAlternatives : Aesop.RuleTac := fun input => do
+  let result ← Cslib.Tactic.applyCertificates ``ComputableInPolyTime input
+  unless result.applications.size ≥ 2 do
+    throwError "the checked-zero and generic alternatives must both survive"
+  return result
+
+example {γ α β : Type} (encIn : γ ↪ List Bool) (encA : α ↪ List Bool)
+    (encB : β ↪ List Bool) (encL : List α ↪ List Bool)
+    (list : γ → List α) (init : γ → β) (step : γ → β → α → β)
+    (hi : ComputableInPolyTime init encIn encB)
+    (hc : ComputableInPolyTime list encIn encL ∧
+      ComputableInPolyTime (fun p : (γ × β) × α => step p.1.1 p.1.2 p.2)
+        (encPair (encPair encIn encB) encA) encB ∧
+      ListEncoding encA encL ∧ SizedListEncoding encA encL)
+    (hb : PolyBounded (fun x => (encIn x).length) (fun _ => 0) ∧
+      ∀ x state value, value ∈ list x →
+      (encB (step x state value)).length ≤ (encB state).length + 0) :
+    ComputableInPolyTime (fun x => (list x).foldl (step x) (init x)) encIn encB := by
+  aesop (rule_sets := [-default]) (add unsafe 100% tactic twoNamedAlternatives)
 
 end ComplexityTests.PPTProgramShapes

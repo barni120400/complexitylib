@@ -214,6 +214,20 @@ private def applyNamedCertificate (goal : MVarId) (certificate : Name) : MetaM (
   tagPremises goal certificate goals
   return goals
 
+/-- Propose the constant zero function for the named fold's growth witness. The complete
+bound is still proved by the ordinary eager-premise search before recording this alternative. -/
+private def proposeZeroGrowth (goal : MVarId) (certificate : Name) : MetaM Unit := do
+  let some proof ← getExprMVarAssignment? goal | throwError "unassigned certificate goal"
+  let names ← forallTelescope (← getConstInfo certificate).type fun xs _ =>
+    xs.mapM fun x => return (← x.fvarId!.getDecl).userName
+  for name in names, argument in proof.getAppArgs do
+    if name == `growth then
+      let zero ← forallTelescope (← inferType argument) fun xs _ =>
+        mkLambdaFVars xs (mkNatLit 0)
+      unless ← isDefEq argument zero do throwError "growth is not zero"
+      return
+  throwError "no growth witness"
+
 /-- Expose every matching named certificate as an Aesop alternative. Eager premises are solved
 before exposing the remaining obligations, while different certificates keep independent
 metavariable assignments until the surrounding proof search has also succeeded. -/
@@ -224,21 +238,31 @@ def applyCertificates (predicate : Name) : Aesop.RuleTac := fun input => input.g
   let initial ← saveState
   let mut applications := #[]
   for (certificate, eager) in (certificateExt.getState (← getEnv)).getD key #[] do
-    try
-      let goals ← (Lean.Elab.Tactic.run input.goal <|
-          Term.withoutErrToSorry <| withoutRecover do
-        liftMetaTactic fun goal => applyNamedCertificate goal certificate
-        eager.forM solveTagged).run'
-      if ← Aesop.hasSorry (mkMVar input.goal) then
-        throwError "certificate application contains an admitted premise"
-      let goals ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
-      applications := applications.push {
-        goals
-        postState := ← saveState
-        scriptSteps? := none
-        successProbability? := none }
-    catch _ => pure ()
-    finally initial.restore
+    -- A zero-growth proposal is useful only if it proves the entire original bound. Keep
+    -- the unconstrained application independently: later computation premises can reject a
+    -- locally successful proposal without ruling out another growth witness.
+    let zeroGrowth := certificate ==
+      `Turing.MultiTapeTM.ComputableInPolyTime.foldlWithInput_of_bounded_growth
+    for checkedZero in (if zeroGrowth then #[true, false] else #[false]) do
+      try
+        let goals ← (Lean.Elab.Tactic.run input.goal <|
+            Term.withoutErrToSorry <| withoutRecover do
+          liftMetaTactic fun goal => applyNamedCertificate goal certificate
+          if checkedZero then
+            liftMetaTactic fun goal => do
+              proposeZeroGrowth input.goal certificate
+              return [goal]
+          eager.forM solveTagged).run'
+        if ← Aesop.hasSorry (mkMVar input.goal) then
+          throwError "certificate application contains an admitted premise"
+        let goals ← goals.toArray.mapM (Aesop.mvarIdToSubgoal input.goal)
+        applications := applications.push {
+          goals
+          postState := ← saveState
+          scriptSteps? := none
+          successProbability? := none }
+      catch _ => pure ()
+      finally initial.restore
   if applications.isEmpty then throwError "no certificate for `{key.2.1}` applies"
   return ⟨applications⟩
 
