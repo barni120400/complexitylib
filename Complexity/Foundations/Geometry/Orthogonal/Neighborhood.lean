@@ -21,6 +21,9 @@ import Mathlib.Tactic
 
 * `Cslib.Orthogonal.mem_iff_realPoint_mem_support`: for unit paths, integer support membership
   is exactly membership in the finite listed-point data.
+* `Cslib.Orthogonal.StraightThrough.getD_neighbors`: exact indexed predecessor/successor lookups.
+* `Cslib.Orthogonal.subdivide_horizontal`, `.subdivide_vertical`: strict interior grid points
+  retain consecutive straight neighborhoods after subdivision.
 * `Cslib.Orthogonal.point_bounds_of_mem_support`: listed-point bounds hold on all integer support.
 -/
 

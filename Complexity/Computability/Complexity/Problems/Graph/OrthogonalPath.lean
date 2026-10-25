@@ -27,6 +27,13 @@ budget. Correctness statements refer to the existing graph's edge occurrences by
 * `Cslib.Complexity.Graph.unitPath_endpoints`, `.unitPath_nodup`, `.unitPath_unit`:
   endpoint, uniqueness and unit-adjacency certificates.
 * `Cslib.Complexity.Graph.unitPath_support`, `.unitPath_bounds`: continuous support and grid bounds.
+* `Cslib.Complexity.Graph.unitPath_declared_center_iff`: no nonincident source-center contacts.
+* `Cslib.Complexity.Graph.unitPath_contact`, `.unitPath_atMostTwo`: actual crossing classification
+  and at most two paths at nonvertex points.
+* `Cslib.Complexity.Graph.unitPath_crossing_neighbors`: opposite horizontal/vertical unit neighbors.
+* `Cslib.Complexity.Graph.BridgeStemCrossing.not_listed`: crossings avoid all original bends.
+* `Cslib.Complexity.Graph.unitPath_neighbor_lengths`, `.unitPath_neighbors_distinct`: the two
+  distinct unit neighbors at every ordinary nonvertex occupied cell.
 -/
 
 @[expose] public section
@@ -192,6 +199,67 @@ theorem unitPath_interior_index (G : Graph)
       rw [List.getLast?_eq_getElem?, ← hkl, List.getElem?_eq_getElem hk, heq]
     apply hcenter
     rw [← Option.some.inj (he.2.symm.trans hh)]
+    exact hcenters true
+
+private theorem pair_mem_at {r : Route} {k : ℕ} (hk : k + 1 < r.length) :
+    (r[k], r[k + 1]) ∈ r.consecutivePairs := by
+  have hlen : k < r.consecutivePairs.length := by
+    simp only [List.consecutivePairs, List.length_zip, List.length_tail]
+    omega
+  have hm : r.consecutivePairs[k] ∈ r.consecutivePairs := List.getElem_mem hlen
+  simpa only [List.consecutivePairs, List.getElem_zip, List.getElem_tail] using hm
+
+/-- The two actual predecessor/successor lookups at a nonvertex cell are unit neighbors. -/
+theorem unitPath_neighbor_lengths (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2) {i k : ℕ} (hi : i < G.2.length)
+    (hk : k < (G.unitPath i).length) {p : Point} (heq : (G.unitPath i)[k] = p)
+    (hcenter : p ∉ G.orthogonalPositions) :
+    length ((G.unitPath i).getD (k - 1) p) p = 1 ∧
+      length p ((G.unitPath i).getD (k + 1) p) = 1 := by
+  obtain ⟨h0, hlast⟩ := unitPath_interior_index G hG hloop hi hk heq hcenter
+  have hprev : k - 1 < (G.unitPath i).length := by omega
+  rw [List.getD_eq_getElem _ _ hprev, List.getD_eq_getElem _ _ hlast]
+  constructor
+  · have hpair := pair_mem_at (r := G.unitPath i) (k := k - 1) (by omega)
+    have h := unitPath_unit G hG hloop hi hpair
+    simpa only [Nat.sub_add_cancel (show 1 ≤ k by omega), heq] using h
+  · have h := unitPath_unit G hG hloop hi (pair_mem_at hlast)
+    simpa only [heq] using h
+
+/-- A nonvertex cell's predecessor and successor are distinct, so its two ports differ. -/
+theorem unitPath_neighbors_distinct (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2) {i k : ℕ} (hi : i < G.2.length)
+    (hk : k < (G.unitPath i).length) {p : Point} (heq : (G.unitPath i)[k] = p)
+    (hcenter : p ∉ G.orthogonalPositions) :
+    (G.unitPath i).getD (k - 1) p ≠ (G.unitPath i).getD (k + 1) p := by
+  obtain ⟨h0, hlast⟩ := unitPath_interior_index G hG hloop hi hk heq hcenter
+  rw [List.getD_eq_getElem _ _ (show k - 1 < (G.unitPath i).length by omega),
+    List.getD_eq_getElem _ _ hlast]
+  intro h
+  have hindex := (unitPath_nodup G hG hloop hi).getElem_inj_iff.1 h
+  omega
+
+/-- Nonvertex occupied cells are neither end of a canonical path. -/
+theorem unitPath_not_endpoints (G : Graph)
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1)
+    (hloop : ∀ edge ∈ G.2, edge.1 ≠ edge.2) {i : ℕ} (hi : i < G.2.length)
+    {p : Point} (hcenter : p ∉ G.orthogonalPositions) :
+    (G.unitPath i).head? ≠ some p ∧ (G.unitPath i).getLast? ≠ some p := by
+  have hcenters (side : Bool) : Layout.center (G.1.idxOf (G.edgeEndpoint i side)) ∈
+      G.orthogonalPositions :=
+    List.mem_map.2 ⟨_, List.mem_range.2
+      (List.idxOf_lt_length_iff.2 (edgeEndpoint_mem G hG hi side)), rfl⟩
+  have he := unitPath_endpoints G hG hloop hi
+  constructor
+  · intro hp
+    apply hcenter
+    rw [← Option.some.inj (he.1.symm.trans hp)]
+    exact hcenters false
+  · intro hp
+    apply hcenter
+    rw [← Option.some.inj (he.2.symm.trans hp)]
     exact hcenters true
 
 /-- The vertical column assigned to one canonical graph incidence. -/
@@ -360,6 +428,56 @@ theorem BridgeStemCrossing.not_vertex_center {G : Graph} {i j : ℕ} {side : Boo
   have hy := congrArg Prod.snd (heq.trans hc.point)
   simp only [Layout.center, Layout.track] at hy
   omega
+
+private theorem listed_on_upper_track {n e f u v : ℕ} (hu : u < n) (hv : v < n)
+    (s t : Fin 3) {p : Point} (hp : p ∈ Layout.route n f u v s t)
+    (hy : p.2 = Layout.track n e) :
+    p = (Layout.column u s, Layout.track n f) ∨ p = (Layout.column v t, Layout.track n f) := by
+  have hcu : (Layout.center u).2 < Layout.track n e := by
+    simp only [Layout.center, Layout.track]
+    omega
+  have hcv : (Layout.center v).2 < Layout.track n e := by
+    simp only [Layout.center, Layout.track]
+    omega
+  have heu := Layout.elbow_below_track (e := e) hu s
+  have hev := Layout.elbow_below_track (e := e) hv t
+  simp only [Layout.route, List.mem_cons, List.not_mem_nil, or_false] at hp
+  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl
+  · exfalso; omega
+  · exfalso; omega
+  · exact Or.inl rfl
+  · exact Or.inr rfl
+  · exfalso; omega
+  · exfalso; omega
+
+/-- A crossing is not any listed point of either original polygonal route, including its
+elbows and upper endpoints. Thus no crossing occurs at a bend. -/
+theorem BridgeStemCrossing.not_listed {G : Graph}
+    (hG : ∀ edge ∈ G.2, edge.1 ∈ G.1 ∧ edge.2 ∈ G.1) {i j : ℕ}
+    (hi : i < G.2.length) (hj : j < G.2.length) {side : Bool} {p : Point}
+    (hc : G.BridgeStemCrossing i j side p) :
+    p ∉ (G.orthogonalRoutes G.canonicalPorts)[i]'(by simpa using hi) ∧
+      p ∉ (G.orthogonalRoutes G.canonicalPorts)[j]'(by simpa using hj) := by
+  have hindex (k : ℕ) (hk : k < G.2.length) (b : Bool) :
+      G.1.idxOf (G.edgeEndpoint k b) < G.1.length :=
+    List.idxOf_lt_length_iff.2 (edgeEndpoint_mem G hG hk b)
+  have hrow : p.2 = Layout.track G.1.length i := congrArg Prod.snd hc.point
+  have hx := hc.horizontal
+  have hy := hc.vertical hG hj
+  constructor
+  · intro hp
+    rw [getElem_orthogonalRoutes_endpoint G G.canonicalPorts hi] at hp
+    have htop := listed_on_upper_track (hindex i hi false) (hindex i hi true) _ _ hp hrow
+    rcases htop with heq | heq
+    · have heq' : p.1 = G.pathColumn i false := congrArg Prod.fst heq
+      omega
+    · have heq' : p.1 = G.pathColumn i true := congrArg Prod.fst heq
+      omega
+  · intro hp
+    rw [getElem_orthogonalRoutes_endpoint G G.canonicalPorts hj] at hp
+    have htop := listed_on_upper_track (hindex j hj false) (hindex j hj true) _ _ hp hrow
+    rcases htop with heq | heq <;>
+      have heq' : p.2 = Layout.track G.1.length j := congrArg Prod.snd heq <;> omega
 
 /-- A strict crossing produces actual consecutive opposite horizontal/vertical unit neighbors
 on its two paths. Both the positions and their traversal order come from the canonical data. -/
