@@ -27,7 +27,7 @@ We define standard string encodings for instances of the Partial Minimum Circuit
 (`Cslib.PartialMCSP.Instance`) and prove that `PartialMCSP` belongs to `NP` under both encodings:
 * `Cslib.PartialMCSP.enc`: encodes the $2^n$-entry truth table over `Option Bool` using
   `encList (encOption encBool)` followed by the threshold in unary (`encUnary`), matching
-  [Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30] and Issue #798 comment 3.
+  [Hirahara2022, ECCC TR22-119, Definition 8.4, p. 30].
 * `Cslib.PartialMCSP.encBinary`: encodes the $2^n$-entry truth table over `Option Bool` using
   `encList (encOption encBool)` followed by the threshold in binary (`encNat`), matching
   `Cslib.MCSP.encInstance` and [Ilango2020FOCS, Section II.B; ECCC TR20-183, Section 2.2].

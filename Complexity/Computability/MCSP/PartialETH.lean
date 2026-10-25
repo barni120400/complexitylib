@@ -63,8 +63,8 @@ subexponential time $2^{o(m \log m)} = N^{o(\log \log N)}$ (`¬DecidableInSubexp
    $(x, y, z) \mapsto \bigvee_{i \in [2n]} ((x_{\pi(i)} \vee y_i) \wedge z_i)$ for some permutation
    $\pi \in S_{2n}$.
 
-4. **Equivalence across circuit and formula models** (Issue #798 Decision D5,
-   [ECCC TR20-183, Section 3, Theorem 11, p. 20, construction and proof pp. 21–24]):
+4. **Equivalence across circuit and formula models**
+   ([ECCC TR20-183, Section 3, Theorem 11, p. 20, construction and proof pp. 21–24]):
    For $n \ge 2$, the instance `ilangoInstance G` of arity $6n$ and threshold $s = 6n - 1$ has all
    $6n$ variables positively essential (`ilangoInstance_posEssential`). By
    `Circuit.exists_posFormula_of_cost_binaryCost_le`, any circuit $c$ with at most $6n - 1$ binary
