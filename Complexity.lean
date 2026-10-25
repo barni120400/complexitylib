@@ -1385,6 +1385,7 @@ public import Complexity.Crypto.Computational.DiscreteLog.SchnorrGroup
 public import Complexity.Crypto.Computational.ElGamal
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.Circular
+public import Complexity.Crypto.Computational.Encryption.Hybrid
 public import Complexity.Crypto.Computational.Encryption.PolyTime
 public import Complexity.Crypto.Computational.Encryption.PublicKeyReplacement
 public import Complexity.Crypto.Computational.GGM.Circuit
