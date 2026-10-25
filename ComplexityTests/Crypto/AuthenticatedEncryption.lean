@@ -7,13 +7,13 @@ Authors: Samuel Schlesinger
 import Complexity.Crypto.Computational.Encryption.Authenticated
 
 /-!
-# Tests for Authenticated Encryption and Encrypt-then-MAC
+# Tests for Authenticated Encryption and Chosen-Ciphertext Security
 
-Provides concrete instantiations of `SymmetricCipher` and `encryptThenMAC`, verifies decryption
-completeness and tamper rejection on concrete inputs, proves that `CiphertextIntegrity` rejects an
-unauthenticated cipher via an explicit zero-query oracle-PPT adversary, and exercises the runtime
-certificates (`IsPPT`, `IsOraclePPT`) and quantitative/asymptotic security theorems for
-Boneh–Shoup Theorems 9.1 and 9.2.
+Provides concrete instantiations of `SymmetricCipher`, verifies oracle behavior on concrete inputs,
+proves that `echoCipher` fails both `INDCPA` (via `not_indcpa_of_ciphertext_length_eq`,
+Boneh–Shoup Example 5.1 / Exercise 5.10(a)) and `CiphertextIntegrity` (via an explicit zero-query
+oracle-PPT adversary), and exercises the runtime certificates (`IsPPT`, `IsOraclePPT`) and
+quantitative/asymptotic security theorems for Boneh–Shoup Theorem 9.1 (`AE ⇒ CCA`).
 -/
 
 namespace ComplexityTests.Crypto.AuthenticatedEncryption
@@ -22,8 +22,9 @@ open Cslib Cslib.Crypto Cslib.Probability Turing.MultiTapeTM
 open scoped NNReal
 
 /-- Concrete unauthenticated identity cipher on `n`-bit messages. Used to witness that the
-`SymmetricCipher` fields and the `encryptThenMAC` ciphertext-length hypothesis are jointly
-satisfiable, and to verify that `CiphertextIntegrity` rejects unauthenticated ciphers. -/
+`SymmetricCipher` fields are satisfiable and to verify that both
+`not_indcpa_of_ciphertext_length_eq` and `CiphertextIntegrity` reject deterministic unauthenticated
+ciphers. -/
 noncomputable def echoCipher : SymmetricCipher where
   keyGen _ := pure []
   encrypt _ _ msg := pure msg
@@ -47,37 +48,11 @@ theorem echoCipher_ctLen :
   subst hc
   exact hmsg
 
-/-- Concrete instantiation of `prfMAC` on the message-echo family `fun _ msg => msg`. -/
-noncomputable def echoMAC : MACScheme :=
-  prfMAC (fun _ msg => msg) (.of_tidy (ComputableTidilyInPolyTime.snd _ _))
-
-/-- Concrete instantiation of `encryptThenMAC` combining `echoCipher` and `echoMAC`. -/
-noncomputable def echoEtM : SymmetricCipher :=
-  encryptThenMAC echoCipher echoMAC echoCipher_ctLen
-
--- Valid `encryptThenMAC` ciphertext decrypts back to the original `n`-bit plaintext.
-example :
-    echoEtM.decrypt 2
-      (encPair encBits encBits ([], [true, false]))
-      (encPair encBits encBits ([false, true], [false, true])) =
-    some [false, true] := by
-  rfl
-
--- Tampering with the MAC tag causes `encryptThenMAC.decrypt` to reject with `none`.
-example :
-    echoEtM.decrypt 2
-      (encPair encBits encBits ([], [true, false]))
-      (encPair encBits encBits ([false, true], [true, true])) =
-    none := by
-  rfl
-
--- Non-canonical framing is rejected by `encryptThenMAC.decrypt`.
-example :
-    echoEtM.decrypt 2
-      (encPair encBits encBits ([], [true, false]))
-      [false, true] =
-    none := by
-  rfl
+/-- `echoCipher` has zero ciphertext expansion (`c.length = n`), so by Boneh–Shoup Example 5.1 and
+Exercise 5.10(a) (`SymmetricCipher.not_indcpa_of_ciphertext_length_eq`), it cannot satisfy
+`INDCPA`. -/
+theorem not_indcpa_echoCipher : ¬ echoCipher.INDCPA :=
+  echoCipher.not_indcpa_of_ciphertext_length_eq echoCipher_ctLen
 
 -- Wrong-length query to `ciEncryptionOracle` returns `[]` without modifying the queried list.
 example :
@@ -133,14 +108,10 @@ theorem not_authenticatedEncryption_echoCipher :
 
 section CertificatesAndReductions
 
-variable (E : SymmetricCipher) (M : MACScheme)
-  (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-    ∀ msg, msg.length = n →
-    ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-  {ctBound Q tagBound : ℕ → ℕ}
+variable (E : SymmetricCipher)
+  {ctBound Q : ℕ → ℕ}
   (hctBound : ComputableInPolyTime ctBound encUnary encUnary)
   (hQ : ComputableInPolyTime Q encUnary encUnary)
-  (htagBound : ComputableInPolyTime tagBound encUnary encUnary)
   {cpaAdv : OracleDistinguisher} (hcpaAdv : IsOraclePPT encBool cpaAdv)
   {ciAdv : CIAdversary} (hciAdv : IsOraclePPT encBits ciAdv)
   {ccaAdv : CCAAdversary} (hccaAdv : IsOraclePPT encBool ccaAdv)
@@ -155,7 +126,7 @@ example : IsPPT encBool (fun n _ => E.ciGame ciAdv n) :=
 example (bit : Bool) : IsPPT encBool (fun n _ => E.ccaGame ccaAdv bit n) :=
   E.isPPT_ccaGame hccaAdv bit
 
--- Theorem 9.1 and Theorem 9.2 reduction `IsOraclePPT` certificates.
+-- Theorem 9.1 reduction `IsOraclePPT` certificates.
 example : IsOraclePPT encBool (SymmetricCipher.ccaToCPAAdversary ctBound ccaAdv) :=
   SymmetricCipher.isOraclePPT_ccaToCPAAdversary hctBound hccaAdv
 
@@ -166,13 +137,7 @@ example (bit : Bool) :
 example : IsOraclePPT encBits (SymmetricCipher.ccaToCIHiddenBitAdversary ctBound Q ccaAdv) :=
   SymmetricCipher.isOraclePPT_ccaToCIHiddenBitAdversary hctBound hQ hccaAdv
 
-example : IsOraclePPT (encPair encBits encBits) (etmToMACForger E tagBound ciAdv) :=
-  isOraclePPT_etmToMACForger E htagBound hciAdv
-
-example : IsOraclePPT encBool (etmToCPAAdversary M cpaAdv) :=
-  isOraclePPT_etmToCPAAdversary M hcpaAdv
-
--- Quantitative security bounds (Theorems 9.1 and 9.2).
+-- Quantitative security bounds (Theorem 9.1).
 example (n : ℕ)
     (hq : (ccaAdv n []).IsQueryBounded (Q n))
     (hctBoundN : ∀ k ∈ (ProbComp.eval (E.keyGen n)).support,
@@ -211,51 +176,9 @@ example (n : ℕ)
           ℝ) :=
   E.advantage_ccaGame_le_two_mul ctBound Q ccaAdv n hq hctBoundN
 
-example (n : ℕ)
-    (htagBoundN : ∀ km ∈ (ProbComp.eval (M.keyGen n)).support,
-      ∀ c, c.length = n →
-      ∀ tag ∈ (ProbComp.eval (M.sign km c)).support, tag.length ≤ tagBound n) :
-    Game.succProbability (ProbComp.eval ((encryptThenMAC E M hctLen).ciGame ciAdv n)) ≤
-      Game.succProbability
-        (ProbComp.eval (M.sufCmaGame (etmToMACForger E tagBound ciAdv) n)) :=
-  succProbability_ciGame_encryptThenMAC_le E M hctLen tagBound ciAdv n htagBoundN
-
-example (n : ℕ) :
-    Game.advantage
-      (ProbComp.eval ((encryptThenMAC E M hctLen).cpaGame cpaAdv false n))
-      (ProbComp.eval ((encryptThenMAC E M hctLen).cpaGame cpaAdv true n)) =
-    Game.advantage
-      (ProbComp.eval (E.cpaGame (etmToCPAAdversary M cpaAdv) false n))
-      (ProbComp.eval (E.cpaGame (etmToCPAAdversary M cpaAdv) true n)) :=
-  advantage_cpaGame_encryptThenMAC_eq E M hctLen cpaAdv n
-
--- End-to-end asymptotic compositions (Theorems 9.1 and 9.2).
+-- End-to-end asymptotic composition (Theorem 9.1).
 example (hae : E.AuthenticatedEncryption) : E.INDCCA :=
   hae.indcca
-
-example (hmac : M.SUFCMA) : (encryptThenMAC E M hctLen).CiphertextIntegrity :=
-  ciphertextIntegrity_encryptThenMAC E M hctLen hmac
-
-example (hcpa : E.INDCPA) : (encryptThenMAC E M hctLen).INDCPA :=
-  indcpa_encryptThenMAC E M hctLen hcpa
-
-example (hcpa : E.INDCPA) (hmac : M.SUFCMA) :
-    (encryptThenMAC E M hctLen).AuthenticatedEncryption :=
-  authenticatedEncryption_encryptThenMAC E M hctLen hcpa hmac
-
-example (hcpa : E.INDCPA) (hmac : M.SUFCMA) :
-    (encryptThenMAC E M hctLen).INDCCA :=
-  indcca_encryptThenMAC E M hctLen hcpa hmac
-
-example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
-    (hcpa : E.INDCPA) :
-    (encryptThenMAC E (prfMAC family hprf.polyTime) hctLen).AuthenticatedEncryption :=
-  authenticatedEncryption_encryptThenMAC_prfMAC E hprf hctLen hcpa
-
-example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
-    (hcpa : E.INDCPA) :
-    (encryptThenMAC E (prfMAC family hprf.polyTime) hctLen).INDCCA :=
-  indcca_encryptThenMAC_prfMAC E hprf hctLen hcpa
 
 end CertificatesAndReductions
 

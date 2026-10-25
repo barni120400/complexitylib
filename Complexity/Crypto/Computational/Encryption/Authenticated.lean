@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Crypto.Computational.MAC
+public import Complexity.Crypto.Computational.PseudorandomFunction
+public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Game.UntilBad
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
@@ -26,20 +27,25 @@ import Complexity.Tactic.PolyTime
 import Complexity.Tactic.PPT
 
 /-!
-# Authenticated Encryption, Chosen-Ciphertext Security, and Encrypt-then-MAC
+# Authenticated Encryption and Adaptive Chosen-Ciphertext Security
 
-This module formalizes symmetric authenticated encryption, adaptive chosen-ciphertext security
-(`INDCCA`), and the generic **Encrypt-then-MAC** composition following
+This module formalizes symmetric authenticated encryption (`AuthenticatedEncryption`) and adaptive
+chosen-ciphertext security (`INDCCA`) following
 [Boneh and Shoup, *A Graduate Course in Applied Cryptography*, Version 0.6][BonehShoup2023],
-Chapter 5 (Section 5.3) and Chapter 9 (Sections 9.1, 9.2.2–9.2.3, and 9.4.1):
+Chapter 5 (Sections 5.3 and 5.10) and Chapter 9 (Sections 9.1 and 9.2.2–9.2.3):
 
-1. **Symmetric ciphers and adaptive CPA security (`SymmetricCipher`, `cpaGame`, `INDCPA`)**
-   ([BonehShoup2023], Section 5.3, Attack Game 5.2 and Definition 5.2, printed pp. 181–182):
+1. **Symmetric ciphers and adaptive CPA security (`SymmetricCipher`, `cpaGame`, `INDCPA`,
+   `not_indcpa_of_ciphertext_length_eq`)** ([BonehShoup2023], Section 5.3, Attack Game 5.2,
+   Definition 5.2, and Example 5.1, printed pp. 181–182; Exercise 5.10(a), printed p. 211):
    a uniform symmetric cipher on `n`-bit messages at security parameter `n` consists of strict PPT
    key generation `keyGen`, strict PPT encryption `encrypt`, and deterministic polynomial-time
    decryption `decrypt` returning `Option (List Bool)` (encoded via `encOption encBits`). In
    `cpaGame`, an adaptive `OracleDistinguisher` submits left-or-right pairs `(m0, m1)` of `n`-bit
-   messages and receives `encrypt n k (if bit then m1 else m0)`.
+   messages and receives `encrypt n k (if bit then m1 else m0)`. We also formalize Example 5.1 and
+   Exercise 5.10(a) (`not_indcpa_of_ciphertext_length_eq`): if every supported ciphertext of an
+   `n`-bit message has length `n`, decryption completeness forces `encrypt` to be a deterministic
+   permutation on `n`-bit strings, which a 2-query CPA adversary (`detCPAAdversary`) breaks with
+   advantage `1`.
 2. **Ciphertext integrity and authenticated encryption (`ciGame`, `CiphertextIntegrity`,
    `AuthenticatedEncryption`)** ([BonehShoup2023], Section 9.1, Attack Game 9.1 and
    Definitions 9.1–9.2, printed pp. 358–359): in `ciGame`, an adaptive `CIAdversary` queries an
@@ -58,43 +64,48 @@ Chapter 5 (Section 5.3) and Chapter 9 (Sections 9.1, 9.2.2–9.2.3, and 9.4.1):
    (`OracleComp.IdenticalUntilBad.advantage_le`, [BonehShoup2023], Theorem 4.7) between `ccaGame`
    and `ccaRejectGame` (where all decryption queries are rejected), we prove that every
    `AuthenticatedEncryption` cipher is `INDCCA`-secure.
-4. **Encrypt-then-MAC (`encryptThenMAC`, `etmToMACForger`, `etmToCPAAdversary`,
-   `succProbability_ciGame_encryptThenMAC_le`, `succProbability_ciGame_encryptThenMAC_eq`,
-   `advantage_cpaGame_encryptThenMAC_eq`, `ciphertextIntegrity_encryptThenMAC`,
-   `indcpa_encryptThenMAC`, `authenticatedEncryption_encryptThenMAC`, `indcca_encryptThenMAC`)**
-   ([BonehShoup2023], Section 9.4.1, Theorem 9.2, printed pp. 367–368): combining an `INDCPA`
-   symmetric cipher `E` with a strongly unforgeable `MACScheme` `M` (`MACScheme.SUFCMA`, #723) over
-   independent keys yields an `AuthenticatedEncryption` (and hence `INDCCA`-secure) cipher, with
-   certified `IsOraclePPT` reductions and exact quantitative bounds. Combining with
-   `PseudorandomFunction.sufCma_prfMAC` (`prfMAC`) yields authenticated and CCA-secure encryption
-   from any CPA-secure cipher and uniform PRF.
 
-## Specializations relative to Boneh–Shoup Chapter 9
+The generic **Encrypt-then-MAC** composition ([BonehShoup2023], Section 9.4.1, Theorem 9.2,
+printed pp. 367–368) is formalized in
+`Complexity/Crypto/Computational/Encryption/EncryptThenMAC.lean`.
+
+## Specializations and losses relative to Boneh–Shoup Chapter 9
 
 * **Fixed `n`-bit plaintext domain at security parameter `n`**: encryption queries take `n`-bit
   messages (`msg.length = n` in `ciGame`, `m0.length = n ∧ m1.length = n` in `cpaGame` and
   `ccaGame`). Malformed encryption queries return `[]` without invoking `encrypt` or recording a
   challenge ciphertext.
-* **Inner ciphertext length in `encryptThenMAC`**: because `MACScheme` in
-  `Complexity/Crypto/Computational/MAC.lean` authenticates `n`-bit messages at security parameter
-  `n`, `encryptThenMAC E M` takes an inner cipher `E` whose supported ciphertexts on `n`-bit
-  plaintexts at parameter `n` have length `n` (`hctLen`), frames `(c, tag)` via
-  `encPair encBits encBits`, and checks canonical framing
-  `encPair encBits encBits (unframe ct, dropFrame ct) == ct && (unframe ct).length == n &&
-  M.verify km (unframe ct) (dropFrame ct)` before invoking `E.decrypt n ke (unframe ct)`.
-* **Total-query budget in Theorem 9.1**: `ccaToCIAdversary` samples a query index uniformly from
-  `{0, ..., dyadicSize (Q n) - 1}` via `ProbComp.sampleDyadicIndex (Q n)` (where
-  `Q n < dyadicSize (Q n) ≤ 2 * Q n + 2`) and decrements the countdown on every external oracle
-  call `Sum.inr` of `(adversary n []).IsQueryBounded (Q n)`, yielding factor `dyadicSize (Q n)`
-  (and `2 * dyadicSize (Q n)` for `ccaToCIHiddenBitAdversary`).
+* **Challenge-ciphertext decryption queries in `ccaOracle`**: in Attack Game 9.2 (printed p. 362),
+  the text stipulates that "A is not allowed to query the decryption challenger with ci." In
+  `ccaOracle`, decryption queries on previously returned challenge ciphertexts
+  (`queriedCiphertexts`) are instead answered with `[] = encOption encBits none` (rejection), which
+  is equivalent for adversaries respecting the restriction and makes `ccaOracle` a total function on
+  all queries.
+* **Omitted 1AE $\Rightarrow$ 1CCA half and query-count preservation in Theorem 9.1**: Theorem 9.1
+  in [BonehShoup2023] (printed p. 363) also states that "if E is 1AE-secure, then E is 1CCA-secure"
+  (using Definition 9.6 on p. 363) and that "Moreover, Bcpa and Bci both make at most Qe encryption
+  queries." This module formalizes the multi-query adaptive `AuthenticatedEncryption`
+  (Definition 9.2) and `INDCCA` (Definition 9.5) notions and the `AE ⇒ CCA` implication; the
+  one-time notions (`1AE`, `1CCA`) and a separate encryption-query count preservation theorem are
+  omitted.
+* **Total-query budget in Theorem 9.1**: in equation (9.3) of [BonehShoup2023] (printed p. 363),
+  the CI term has coefficient `2 * Qd` (where `Qd` bounds decryption queries). Here
+  `ccaToCIAdversary` samples a query index uniformly from `{0, ..., dyadicSize (Q n) - 1}` via
+  `ProbComp.sampleDyadicIndex (Q n)` (where `Q n < dyadicSize (Q n) ≤ 2 * Q n + 2`) and decrements
+  the countdown on every external oracle call (`Sum.inr`) of
+  `(adversary n []).IsQueryBounded (Q n)`, where `Q n` bounds total queries `Qe + Qd`. This yields
+  factor `dyadicSize (Q n)` in `advantage_ccaGame_le` and `2 * dyadicSize (Q n) ≤ 4 * Q n + 4` in
+  `advantage_ccaGame_le_two_mul`, which remains polynomial in `n` for
+  `AuthenticatedEncryption.indcca`.
 
 ## Main definitions
 
 * `Cslib.Crypto.CIAdversary`, `Cslib.Crypto.CCAAdversary`: adaptive ciphertext-integrity and
   chosen-ciphertext adversaries.
 * `Cslib.Crypto.SymmetricCipher`: uniform symmetric cipher on `n`-bit messages.
-* `Cslib.Crypto.SymmetricCipher.cpaGame`, `INDCPA`: adaptive symmetric CPA game and security
-  predicate ([BonehShoup2023], Attack Game 5.2 / Definition 5.2).
+* `Cslib.Crypto.SymmetricCipher.cpaGame`, `INDCPA`, `detCPAAdversary`: adaptive symmetric CPA game,
+  security predicate, and 2-query determinism distinguisher ([BonehShoup2023], Attack Game 5.2 /
+  Definition 5.2 / Example 5.1).
 * `Cslib.Crypto.SymmetricCipher.ciGame`, `CiphertextIntegrity`, `AuthenticatedEncryption`:
   ciphertext-integrity game, CI predicate, and AE predicate ([BonehShoup2023], Attack Game 9.1 /
   Definitions 9.1–9.2).
@@ -103,38 +114,31 @@ Chapter 5 (Section 5.3) and Chapter 9 (Sections 9.1, 9.2.2–9.2.3, and 9.4.1):
   Definition 9.5).
 * `Cslib.Crypto.SymmetricCipher.ccaToCPAAdversary`, `ccaToCIAdversary`,
   `ccaToCIHiddenBitAdversary`: Theorem 9.1 reductions from CCA to CPA and CI.
-* `Cslib.Crypto.encryptThenMAC`, `etmToMACForger`, `etmToCPAAdversary`: Encrypt-then-MAC
-  construction and Theorem 9.2 reductions to `MACScheme.sufCmaGame` and `SymmetricCipher.cpaGame`.
 
 ## Main results
 
 * `Cslib.Crypto.SymmetricCipher.isPPTOn_cpaGame`, `isPPT_cpaGame`, `isPPTOn_ciGame`,
   `isPPT_ciGame`, `isPPTOn_ccaGame`, `isPPT_ccaGame`: strict PPT certificates for the CPA, CI, and
   CCA experiments.
+* `Cslib.Crypto.SymmetricCipher.encrypt_eq_of_ciphertext_length_eq`,
+  `Cslib.Crypto.SymmetricCipher.advantage_cpaGame_detCPAAdversary`,
+  `Cslib.Crypto.SymmetricCipher.not_indcpa_of_ciphertext_length_eq`: any cipher whose ciphertexts on
+  `n`-bit messages have length `n` is forced by decryption completeness to be deterministic and
+  hence cannot satisfy `INDCPA` ([BonehShoup2023], Example 5.1 and Exercise 5.10(a)).
 * `Cslib.Crypto.SymmetricCipher.isOraclePPT_ccaToCPAAdversary`,
-  `isOraclePPT_ccaToCIAdversary`, `isOraclePPT_ccaToCIHiddenBitAdversary`: `IsOraclePPT`
+  `Cslib.Crypto.SymmetricCipher.isOraclePPT_ccaToCIAdversary`,
+  `Cslib.Crypto.SymmetricCipher.isOraclePPT_ccaToCIHiddenBitAdversary`: `IsOraclePPT`
   certificates for the Theorem 9.1 reductions.
 * `Cslib.Crypto.SymmetricCipher.advantage_ccaGame_le`,
   `Cslib.Crypto.SymmetricCipher.advantage_ccaGame_le_two_mul`,
   `Cslib.Crypto.SymmetricCipher.AuthenticatedEncryption.indcca`: quantitative and asymptotic
   AE $\Rightarrow$ CCA security ([BonehShoup2023], Theorem 9.1).
-* `Cslib.Crypto.isOraclePPT_etmToMACForger`, `Cslib.Crypto.isOraclePPT_etmToCPAAdversary`,
-  `Cslib.Crypto.succProbability_ciGame_encryptThenMAC_le`,
-  `Cslib.Crypto.succProbability_ciGame_encryptThenMAC_eq`,
-  `Cslib.Crypto.advantage_cpaGame_encryptThenMAC_eq`,
-  `Cslib.Crypto.ciphertextIntegrity_encryptThenMAC`,
-  `Cslib.Crypto.indcpa_encryptThenMAC`,
-  `Cslib.Crypto.authenticatedEncryption_encryptThenMAC`,
-  `Cslib.Crypto.indcca_encryptThenMAC`,
-  `Cslib.Crypto.authenticatedEncryption_encryptThenMAC_prfMAC`,
-  `Cslib.Crypto.indcca_encryptThenMAC_prfMAC`: Encrypt-then-MAC security ([BonehShoup2023],
-  Theorem 9.2).
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 5.3 (pp. 181–182) and Chapter 9, Sections 9.1, 9.2, 9.4.1
-  (pp. 357–368).
+  Version 0.6][BonehShoup2023], Section 5.3 (pp. 181–182), Exercise 5.10(a) (p. 211), and Chapter 9,
+  Sections 9.1 and 9.2.2–9.2.3 (pp. 357–365).
 -/
 
 @[expose] public section
@@ -185,6 +189,35 @@ structure SymmetricCipher where
 namespace SymmetricCipher
 
 attribute [program_certificate] keyGen_ppt encrypt_ppt decrypt_polyTime
+
+/-- `E.keyGen` composed with a plain polynomial-time parameter selector is uniformly strict PPT. -/
+@[program_certificate, fun_prop]
+theorem isPPTOn_keyGen_comp (E : SymmetricCipher) {γ : Type} {encIn : γ ↪ List Bool}
+    {n : γ → ℕ} (hn : ComputableInPolyTime n encIn encUnary) :
+    IsPPTOn encIn encBits (fun a => E.keyGen (n a)) :=
+  E.keyGen_ppt.preprocess hn
+
+/-- `E.encrypt` composed with plain polynomial-time parameter, key, and message selectors is
+uniformly strict PPT. -/
+@[program_certificate, fun_prop]
+theorem isPPTOn_encrypt_comp (E : SymmetricCipher) {γ : Type} {encIn : γ ↪ List Bool}
+    {n : γ → ℕ} {k msg : γ → List Bool}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hk : ComputableInPolyTime k encIn encBits)
+    (hmsg : ComputableInPolyTime msg encIn encBits) :
+    IsPPTOn encIn encBits (fun a => E.encrypt (n a) (k a) (msg a)) :=
+  E.encrypt_ppt.preprocess (.of_tidy (hn.tidy.prod (hk.tidy.prod hmsg.tidy)))
+
+/-- `E.decrypt` composed with plain polynomial-time parameter, key, and ciphertext selectors is
+computable in plain polynomial time. -/
+@[program_certificate, fun_prop]
+theorem computableInPolyTime_decrypt_comp (E : SymmetricCipher)
+    {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ} {k ct : γ → List Bool}
+    (hn : ComputableInPolyTime n encIn encUnary)
+    (hk : ComputableInPolyTime k encIn encBits)
+    (hct : ComputableInPolyTime ct encIn encBits) :
+    ComputableInPolyTime (fun a => E.decrypt (n a) (k a) (ct a)) encIn (encOption encBits) :=
+  .of_tidy (E.decrypt_polyTime.tidy.comp (hn.tidy.prod (hk.tidy.prod hct.tidy)))
 
 /-! ### Adaptive Chosen-Plaintext Security (`cpaGame`, `INDCPA`) -/
 
@@ -319,6 +352,229 @@ def INDCPA (E : SymmetricCipher) : Prop :=
     (fun adversary n => ProbComp.eval (E.cpaGame adversary false n))
     (fun adversary n => ProbComp.eval (E.cpaGame adversary true n))
     (IsOraclePPT encBool)
+
+/-! #### Impossibility of Zero-Expansion CPA Security (Boneh–Shoup Example 5.1 & Exercise 5.10(a))
+-/
+
+/-- **Zero ciphertext expansion forces deterministic encryption** ([BonehShoup2023],
+Exercise 5.10(a), printed p. 211): if every supported ciphertext of an `n`-bit message under a
+supported key `ke` at parameter `n` has length `n`, then decryption completeness
+(`E.decrypt_encrypt`) gives an injection from the `2^n` plaintexts `BitString n` into `BitString n`
+by choosing one supported ciphertext per plaintext; by finiteness of `BitString n`, this map is
+surjective, forcing all supported ciphertexts of any `n`-bit plaintext `msg` under `ke` to
+coincide. -/
+theorem encrypt_eq_of_ciphertext_length_eq (E : SymmetricCipher) {n : ℕ} {ke : List Bool}
+    (hke : ke ∈ (ProbComp.eval (E.keyGen n)).support)
+    (hctLen : ∀ msg : List Bool, msg.length = n →
+      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
+    {msg : List Bool} (hmsg : msg.length = n)
+    {c₁ c₂ : List Bool}
+    (hc₁ : c₁ ∈ (ProbComp.eval (E.encrypt n ke msg)).support)
+    (hc₂ : c₂ ∈ (ProbComp.eval (E.encrypt n ke msg)).support) :
+    c₁ = c₂ := by
+  let toBS : (l : List Bool) → l.length = n → BitString n :=
+    fun l hl i => l[i.val]'(hl ▸ i.isLt)
+  have hofFn_toBS (l : List Bool) (hl : l.length = n) : List.ofFn (toBS l hl) = l := by
+    apply List.ext_getElem (by simp [hl])
+    intro i hi₁ hi₂
+    simp [toBS]
+  let chooseCt (v : BitString n) : List Bool :=
+    (ProbComp.eval (E.encrypt n ke (List.ofFn v))).support_nonempty.some
+  have hchooseMem (v : BitString n) :
+      chooseCt v ∈ (ProbComp.eval (E.encrypt n ke (List.ofFn v))).support :=
+    (ProbComp.eval (E.encrypt n ke (List.ofFn v))).support_nonempty.some_mem
+  have hchooseLen (v : BitString n) : (chooseCt v).length = n :=
+    hctLen (List.ofFn v) (List.length_ofFn) (chooseCt v) (hchooseMem v)
+  have hchooseDec (v : BitString n) : E.decrypt n ke (chooseCt v) = some (List.ofFn v) :=
+    E.decrypt_encrypt n ke hke (List.ofFn v) (List.length_ofFn) (chooseCt v) (hchooseMem v)
+  let g : BitString n → BitString n := fun v => toBS (chooseCt v) (hchooseLen v)
+  have hgInj : Function.Injective g := by
+    intro v₁ v₂ hgv
+    have hctEq : chooseCt v₁ = chooseCt v₂ := by
+      rw [← hofFn_toBS (chooseCt v₁) (hchooseLen v₁),
+        ← hofFn_toBS (chooseCt v₂) (hchooseLen v₂)]
+      exact congrArg List.ofFn hgv
+    have hdecEq : some (List.ofFn v₁) = some (List.ofFn v₂) := by
+      rw [← hchooseDec v₁, ← hchooseDec v₂, hctEq]
+    exact List.ofFn_injective (Option.some.inj hdecEq)
+  have hgSurj : Function.Surjective g := Finite.injective_iff_surjective.mp hgInj
+  have huniq (c : List Bool) (hc : c ∈ (ProbComp.eval (E.encrypt n ke msg)).support) :
+      c = chooseCt (toBS msg hmsg) := by
+    have hlen : c.length = n := hctLen msg hmsg c hc
+    obtain ⟨v, hv⟩ := hgSurj (toBS c hlen)
+    have hcv : chooseCt v = c := by
+      rw [← hofFn_toBS (chooseCt v) (hchooseLen v), ← hofFn_toBS c hlen]
+      exact congrArg List.ofFn hv
+    have hdec : some (List.ofFn v) = some msg := by
+      rw [← hchooseDec v, hcv, E.decrypt_encrypt n ke hke msg hmsg c hc]
+    have hvEq : v = toBS msg hmsg := by
+      apply List.ofFn_injective
+      rw [Option.some.inj hdec, hofFn_toBS msg hmsg]
+    rw [← hvEq, hcv]
+  rw [huniq c₁ hc₁, huniq c₂ hc₂]
+
+/-- Two-query CPA distinguisher against any deterministic symmetric cipher
+([BonehShoup2023], Example 5.1, printed p. 182): queries `(0^n, 1^n)` followed by `(0^n, 0^n)` and
+outputs `true` iff the two returned ciphertexts are equal (`c₁ == c₂`). -/
+def detCPAAdversary : OracleDistinguisher :=
+  fun n _ => do
+    let m0 := List.replicate n false
+    let m1 := List.replicate n true
+    let c₁ ← List.take n <$> ProbOracleComp.query ((), encPair encBits encBits (m0, m1))
+    let c₂ ← List.take n <$> ProbOracleComp.query ((), encPair encBits encBits (m0, m0))
+    return (c₁ == c₂)
+
+/-- `detCPAAdversary` is uniformly strict oracle-PPT (`IsOraclePPT encBool`). -/
+theorem isOraclePPT_detCPAAdversary : IsOraclePPT encBool detCPAAdversary := by
+  have hq1 : ComputableTidilyInPolyTime
+      (fun p : ℕ × List Bool =>
+        encPair encBits encBits (List.replicate p.1 false, List.replicate p.1 true))
+      (encPair encUnary encBits) encBits := by
+    polytime
+  have hlim1 : ComputableTidilyInPolyTime
+      (fun p : ℕ × List Bool => p.1) (encPair encUnary encBits) encUnary := by
+    fun_prop
+  have hq2 : ComputableTidilyInPolyTime
+      (fun p : (ℕ × List Bool) × List Bool =>
+        encPair encBits encBits (List.replicate p.1.1 false, List.replicate p.1.1 false))
+      (encPair (encPair encUnary encBits) encBits) encBits := by
+    polytime
+  have hlim2 : ComputableTidilyInPolyTime
+      (fun p : (ℕ × List Bool) × List Bool => p.1.1)
+      (encPair (encPair encUnary encBits) encBits) encUnary := by
+    fun_prop
+  have hout : ComputableTidilyInPolyTime
+      (fun p : ((ℕ × List Bool) × List Bool) × List Bool => p.1.2 == p.2)
+      (encPair (encPair (encPair encUnary encBits) encBits) encBits) encBool := by
+    polytime
+  unfold detCPAAdversary
+  exact ((IsOraclePPTOn.query_take () hq1 hlim1).bind_with
+    ((IsOraclePPTOn.query_take () hq2 hlim2).bind_with
+      hout.isOraclePPTOn)).isOraclePPT
+
+/-- In Experiment `false`, `detCPAAdversary` receives two encryptions of `0^n`; when all supported
+ciphertexts of `n`-bit plaintexts have length `n`, both encryptions return the same ciphertext and
+`detCPAAdversary` outputs `true` with probability `1`. -/
+theorem eval_cpaGame_detCPAAdversary_false (E : SymmetricCipher) (n : ℕ)
+    (hctLen : ∀ ke ∈ (ProbComp.eval (E.keyGen n)).support,
+      ∀ msg : List Bool, msg.length = n →
+      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n) :
+    ProbComp.eval (E.cpaGame detCPAAdversary false n) = PMF.pure true := by
+  simp only [cpaGame, detCPAAdversary, OracleComp.interpret_bind, OracleComp.interpret_map,
+    OracleComp.interpret_pure, ProbOracleComp.interpret_query, StateT.run_bind, StateT.run_map,
+    StateT.run_pure, ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure]
+  have hpair1 : unframe (encPair encBits encBits (List.replicate n false, List.replicate n true)) =
+      List.replicate n false ∧
+      dropFrame (encPair encBits encBits (List.replicate n false, List.replicate n true)) =
+      List.replicate n true := by
+    simp [encPair_apply, unframe_frame_append, dropFrame_frame_append]
+  have hpair2 : unframe (encPair encBits encBits (List.replicate n false, List.replicate n false)) =
+      List.replicate n false ∧
+      dropFrame (encPair encBits encBits (List.replicate n false, List.replicate n false)) =
+      List.replicate n false := by
+    simp [encPair_apply, unframe_frame_append, dropFrame_frame_append]
+  trans (ProbComp.eval (E.keyGen n)).bind (fun _ => PMF.pure true)
+  · refine PMF.bind_congr_on_support _ _ _ fun ke hke => ?_
+    unfold cpaEncryptionOracle
+    dsimp only [StateT.run]
+    simp only [hpair1.1, hpair1.2, hpair2.1, hpair2.2, List.length_replicate, beq_self_eq_true,
+      Bool.and_self, ↓reduceIte, Bool.false_eq_true, ProbComp.eval_bind, ProbComp.eval_pure,
+      PMF.map_bind, PMF.pure_map, PMF.bind_bind, PMF.pure_bind]
+    trans (ProbComp.eval (E.encrypt n ke (List.replicate n false))).bind (fun _ => PMF.pure true)
+    · refine PMF.bind_congr_on_support _ _ _ fun c₁ hc₁ => ?_
+      trans (ProbComp.eval (E.encrypt n ke (List.replicate n false))).bind (fun _ => PMF.pure true)
+      · refine PMF.bind_congr_on_support _ _ _ fun c₂ hc₂ => ?_
+        have heq : c₁ = c₂ :=
+          E.encrypt_eq_of_ciphertext_length_eq hke (hctLen ke hke) (List.length_replicate) hc₁ hc₂
+        simp [heq]
+      · exact PMF.bind_const _ _
+    · exact PMF.bind_const _ _
+  · exact PMF.bind_const _ _
+
+/-- In Experiment `true` for `n ≥ 1`, `detCPAAdversary` receives an encryption of `1^n` followed by
+an encryption of `0^n`; by decryption completeness the two ciphertexts are distinct, so
+`detCPAAdversary` outputs `false` with probability `1`. -/
+theorem eval_cpaGame_detCPAAdversary_true (E : SymmetricCipher) {n : ℕ} (hn : 1 ≤ n)
+    (hctLen : ∀ ke ∈ (ProbComp.eval (E.keyGen n)).support,
+      ∀ msg : List Bool, msg.length = n →
+      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n) :
+    ProbComp.eval (E.cpaGame detCPAAdversary true n) = PMF.pure false := by
+  simp only [cpaGame, detCPAAdversary, OracleComp.interpret_bind, OracleComp.interpret_map,
+    OracleComp.interpret_pure, ProbOracleComp.interpret_query, StateT.run_bind, StateT.run_map,
+    StateT.run_pure, ProbComp.eval_bind, ProbComp.eval_map, ProbComp.eval_pure]
+  have hpair1 : unframe (encPair encBits encBits (List.replicate n false, List.replicate n true)) =
+      List.replicate n false ∧
+      dropFrame (encPair encBits encBits (List.replicate n false, List.replicate n true)) =
+      List.replicate n true := by
+    simp [encPair_apply, unframe_frame_append, dropFrame_frame_append]
+  have hpair2 : unframe (encPair encBits encBits (List.replicate n false, List.replicate n false)) =
+      List.replicate n false ∧
+      dropFrame (encPair encBits encBits (List.replicate n false, List.replicate n false)) =
+      List.replicate n false := by
+    simp [encPair_apply, unframe_frame_append, dropFrame_frame_append]
+  have hneMsg : List.replicate n true ≠ List.replicate n false := by
+    obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by lia : n ≠ 0)
+    simp
+  trans (ProbComp.eval (E.keyGen n)).bind (fun _ => PMF.pure false)
+  · refine PMF.bind_congr_on_support _ _ _ fun ke hke => ?_
+    unfold cpaEncryptionOracle
+    dsimp only [StateT.run]
+    simp only [hpair1.1, hpair1.2, hpair2.1, hpair2.2, List.length_replicate, beq_self_eq_true,
+      Bool.and_self, ↓reduceIte, ProbComp.eval_bind, ProbComp.eval_pure,
+      PMF.map_bind, PMF.pure_map, PMF.bind_bind, PMF.pure_bind]
+    trans (ProbComp.eval (E.encrypt n ke (List.replicate n true))).bind (fun _ => PMF.pure false)
+    · refine PMF.bind_congr_on_support _ _ _ fun c₁ hc₁ => ?_
+      have hc₁Len : c₁.length = n :=
+        hctLen ke hke (List.replicate n true) (List.length_replicate) c₁ hc₁
+      trans (ProbComp.eval (E.encrypt n ke (List.replicate n false))).bind (fun _ => PMF.pure false)
+      · refine PMF.bind_congr_on_support _ _ _ fun c₂ hc₂ => ?_
+        have hc₂Len : c₂.length = n :=
+          hctLen ke hke (List.replicate n false) (List.length_replicate) c₂ hc₂
+        have hne : c₁ ≠ c₂ := by
+          intro hEq
+          have hdec1 := E.decrypt_encrypt n ke hke (List.replicate n true)
+            (List.length_replicate) c₁ hc₁
+          have hdec2 := E.decrypt_encrypt n ke hke (List.replicate n false)
+            (List.length_replicate) c₂ hc₂
+          rw [hEq, hdec2] at hdec1
+          exact hneMsg (Option.some.inj hdec1).symm
+        rw [List.take_of_length_le hc₁Len.le, List.take_of_length_le hc₂Len.le]
+        simp [beq_eq_false_iff_ne.mpr hne]
+      · exact PMF.bind_const _ _
+    · exact PMF.bind_const _ _
+  · exact PMF.bind_const _ _
+
+/-- At every security parameter `n ≥ 1` where supported ciphertexts of `n`-bit plaintexts have
+length `n`, `detCPAAdversary` achieves CPA advantage `1` ([BonehShoup2023], Example 5.1). -/
+theorem advantage_cpaGame_detCPAAdversary (E : SymmetricCipher) {n : ℕ} (hn : 1 ≤ n)
+    (hctLen : ∀ ke ∈ (ProbComp.eval (E.keyGen n)).support,
+      ∀ msg : List Bool, msg.length = n →
+      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n) :
+    Game.advantage (ProbComp.eval (E.cpaGame detCPAAdversary false n))
+      (ProbComp.eval (E.cpaGame detCPAAdversary true n)) = 1 := by
+  rw [eval_cpaGame_detCPAAdversary_false E n hctLen,
+    eval_cpaGame_detCPAAdversary_true E hn hctLen, Game.advantage]
+  simp [Game.succProbability]
+
+/-- **No zero-expansion symmetric cipher is CPA-secure** ([BonehShoup2023], Example 5.1 and
+Exercise 5.10(a), printed pp. 182, 211): if for every security parameter `n`, every supported key
+`ke`, and every `n`-bit message `msg`, every supported ciphertext of `msg` has length `n`, then `E`
+cannot satisfy `INDCPA`. -/
+theorem not_indcpa_of_ciphertext_length_eq (E : SymmetricCipher)
+    (hctLen : ∀ n, ∀ ke ∈ (ProbComp.eval (E.keyGen n)).support,
+      ∀ msg : List Bool, msg.length = n →
+      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n) :
+    ¬ E.INDCPA := by
+  intro hcpa
+  have hneg := hcpa detCPAAdversary isOraclePPT_detCPAAdversary
+  have hcomp : Negligible (fun n =>
+      Game.advantage (ProbComp.eval (E.cpaGame detCPAAdversary false (n + 1)))
+        (ProbComp.eval (E.cpaGame detCPAAdversary true (n + 1)))) :=
+    hneg.comp_of_polynomial_bound (bound := fun m => m) (Filter.tendsto_add_atTop_nat 1)
+      (by fun_prop) (Filter.Eventually.of_forall fun n => by lia)
+  have hcongr : Negligible (fun _ : ℕ => (1 : ℝ≥0)) :=
+    hcomp.congr fun n => advantage_cpaGame_detCPAAdversary E (by lia) (hctLen (n + 1))
+  exact not_negligible_const one_ne_zero hcongr
 
 /-! ### Ciphertext Integrity and Authenticated Encryption (`ciGame`, `CiphertextIntegrity`,
 `AuthenticatedEncryption`) -/
@@ -696,9 +952,12 @@ theorem isPPT_ccaGame (E : SymmetricCipher) {adversary : CCAAdversary}
   ((E.isPPTOn_ccaGame hadversary bit).preprocess (ComputableInPolyTime.fst _ _)).isPPT
 
 /-- Adaptive chosen-ciphertext security (`INDCCA`, or CCA-security) for a symmetric cipher
-([BonehShoup2023], Section 9.2.2, Attack Game 9.2 and Definition 9.5): every uniform strict
-`IsOraclePPT encBool` CCA adversary has negligible advantage between `E.ccaGame adversary false`
-and `E.ccaGame adversary true`. -/
+([BonehShoup2023], Section 9.2.2, Attack Game 9.2 and Definition 9.5, printed p. 362): every
+uniform strict `IsOraclePPT encBool` CCA adversary has negligible advantage between
+`E.ccaGame adversary false` and `E.ccaGame adversary true`.
+
+In [BonehShoup2023], Section 9.2.2, Definition 9.5 defines adaptive multi-query CCA security,
+whereas one-time CCA security (`1CCA`) is defined separately in Definition 9.6 (printed p. 363). -/
 def INDCCA (E : SymmetricCipher) : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (E.ccaGame adversary false n))
@@ -1824,10 +2083,15 @@ private theorem sum_succProbability_ccaToCIAtIndexAdversary_le (E : SymmetricCip
   exact Finset.sum_le_sum_of_subset_of_nonneg hsub fun _ _ _ => NNReal.coe_nonneg _
 
 /-- **Quantitative AE $\Rightarrow$ CCA bound** ([BonehShoup2023], Section 9.2.3, Theorem 9.1,
-printed pp. 363–365): for any `CCAAdversary` making at most `Q n` oracle queries at security
+printed pp. 363–365): for any `CCAAdversary` making at most `Q n` total oracle queries at security
 parameter `n`, the adaptive CCA distinguishing advantage is bounded by the CPA advantage of
 `ccaToCPAAdversary` plus `dyadicSize (Q n)` times the ciphertext-integrity winning probabilities of
-`ccaToCIAdversary` for `bit = false` and `bit = true`. -/
+`ccaToCIAdversary` for `bit = false` and `bit = true`.
+
+Relative to equation (9.3) in [BonehShoup2023]
+(`CCAadv[A, E] ≤ 2 Qd · CIadv[Bci, E] + CPAadv[Bcpa, E]`), `ccaToCIAdversary` samples a query index
+uniformly from `{0, ..., dyadicSize (Q n) - 1}` over the total query budget `Q n ≥ Qe + Qd`, giving
+coefficient `dyadicSize (Q n) ≤ 2 * Q n + 2` per bit. -/
 theorem advantage_ccaGame_le (E : SymmetricCipher) (ctBound Q : ℕ → ℕ)
     (adversary : CCAAdversary) (n : ℕ)
     (hq : (adversary n []).IsQueryBounded (Q n))
@@ -1920,7 +2184,8 @@ theorem eval_ciGame_ccaToCIHiddenBitAdversary (E : SymmetricCipher) (ctBound Q :
 
 /-- **Single-adversary quantitative AE $\Rightarrow$ CCA bound** ([BonehShoup2023], Section 9.2.3,
 Theorem 9.1, equation (9.3) and proof on printed pp. 363–364): using `ccaToCIHiddenBitAdversary` to
-sample the hidden challenge bit uniformly yields factor `2 * dyadicSize (Q n)` on the single CI
+sample the hidden challenge bit uniformly yields factor `2 * dyadicSize (Q n) ≤ 4 * Q n + 4` (over
+the total query budget `Q n`, vs. `2 * Qd` over decryption queries in (9.3)) on the single CI
 adversary. -/
 theorem advantage_ccaGame_le_two_mul (E : SymmetricCipher) (ctBound Q : ℕ → ℕ)
     (adversary : CCAAdversary) (n : ℕ)
@@ -1959,7 +2224,8 @@ theorem advantage_ccaGame_le_two_mul (E : SymmetricCipher) (ctBound Q : ℕ → 
 
 /-- **Authenticated encryption implies adaptive CCA security** ([BonehShoup2023], Section 9.2.3,
 Theorem 9.1, printed pp. 363–365): every symmetric cipher satisfying `AuthenticatedEncryption`
-(`INDCPA ∧ CiphertextIntegrity`) also satisfies `INDCCA`. -/
+(`INDCPA ∧ CiphertextIntegrity`) also satisfies `INDCCA` (the multi-query `AE ⇒ CCA` half of
+Theorem 9.1; the one-time `1AE ⇒ 1CCA` half over Definition 9.6 is omitted). -/
 theorem AuthenticatedEncryption.indcca {E : SymmetricCipher} (hAE : E.AuthenticatedEncryption) :
     E.INDCCA := by
   rcases hAE with ⟨hcpa, hci⟩
@@ -1998,929 +2264,5 @@ theorem AuthenticatedEncryption.indcca {E : SymmetricCipher} (hAE : E.Authentica
     advantage_ccaGame_le_two_mul E ctBound Q adversary n (hq n) (hctBound n)
 
 end SymmetricCipher
-
-/-! ### Encrypt-then-MAC Construction and Security (Boneh–Shoup Section 9.4.1 & Theorem 9.2) -/
-
-@[local fun_prop]
-private theorem isPPTOn_mac_keyGen_comp (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
-    {n : γ → ℕ} (hn : ComputableTidilyInPolyTime n encIn encUnary) :
-    IsPPTOn encIn encBits (fun a => M.keyGen (n a)) :=
-  M.keyGen_ppt.preprocess (ComputableInPolyTime.of_tidy hn)
-
-@[local fun_prop]
-private theorem isPPTOn_mac_sign_comp (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
-    {sk msg : γ → List Bool}
-    (hsk : ComputableTidilyInPolyTime sk encIn encBits)
-    (hmsg : ComputableTidilyInPolyTime msg encIn encBits) :
-    IsPPTOn encIn encBits (fun a => M.sign (sk a) (msg a)) :=
-  M.sign_ppt.preprocess (ComputableInPolyTime.of_tidy (hsk.prod hmsg))
-
-@[local fun_prop]
-private theorem computableTidilyInPolyTime_mac_verify_comp (M : MACScheme)
-    {γ : Type} {encIn : γ ↪ List Bool} {sk msg tag : γ → List Bool}
-    (hsk : ComputableTidilyInPolyTime sk encIn encBits)
-    (hmsg : ComputableTidilyInPolyTime msg encIn encBits)
-    (htag : ComputableTidilyInPolyTime tag encIn encBits) :
-    ComputableTidilyInPolyTime (fun a => M.verify (sk a) (msg a) (tag a)) encIn encBool :=
-  M.verify_polyTime.tidy.comp (hsk.prod (hmsg.prod htag))
-
-/-- **Encrypt-then-MAC symmetric cipher** ([BonehShoup2023], Section 9.4.1, printed p. 367):
-given a symmetric cipher `E : SymmetricCipher` whose ciphertexts on `n`-bit messages under supported
-keys at security parameter `n` have length `n`, and a message authentication code `M : MACScheme` on
-`n`-bit messages:
-* `keyGen n` samples independent keys `ke ← E.keyGen n` and `km ← M.keyGen n` and returns
-  `encPair encBits encBits (ke, km)`.
-* `encrypt n k msg` encrypts `c ← E.encrypt n (unframe k) msg`, computes a tag
-  `tag ← M.sign (dropFrame k) c`, and returns `encPair encBits encBits (c, tag)`.
-* `decrypt n k ct` checks canonical pair framing
-  `encPair encBits encBits (unframe ct, dropFrame ct) == ct`, checks `(unframe ct).length == n`, and
-  verifies `M.verify (dropFrame k) (unframe ct) (dropFrame ct)`; if all three hold, it returns
-  `E.decrypt n (unframe k) (unframe ct)`, and otherwise `none`.
-
-Canonical pair framing `encPair encBits encBits (c, tag)` establishes a bijection between valid
-encoded ciphertexts `ct` and pairs `(c, tag)` with `c.length = n`, so ciphertext freshness in
-`ciGame` coincides with pair freshness in `M.sufCmaGame`. -/
-noncomputable def encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n) :
-    SymmetricCipher where
-  keyGen n := do
-    let ke ← E.keyGen n
-    let km ← M.keyGen n
-    return encPair encBits encBits (ke, km)
-  encrypt n k msg := do
-    let c ← E.encrypt n (unframe k) msg
-    let tag ← M.sign (dropFrame k) c
-    return encPair encBits encBits (c, tag)
-  decrypt n k ct :=
-    if (encPair encBits encBits (unframe ct, dropFrame ct) == ct) &&
-        ((unframe ct).length == n) &&
-        M.verify (dropFrame k) (unframe ct) (dropFrame ct) then
-      E.decrypt n (unframe k) (unframe ct)
-    else
-      none
-  keyGen_ppt := by
-    simp only [encPair_apply, encBits_apply]
-    ppt
-  encrypt_ppt := by
-    simp only [encPair_apply, encBits_apply]
-    ppt
-  decrypt_polyTime := by
-    have hcond : ComputableTidilyInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          (frame (unframe p.2.2) ++ dropFrame p.2.2 == p.2.2) &&
-            ((unframe p.2.2).length == p.1) &&
-            M.verify (dropFrame p.2.1) (unframe p.2.2) (dropFrame p.2.2))
-        (encPair encUnary (encPair encBits encBits)) encBool := by polytime
-    have hdecArg : ComputableTidilyInPolyTime
-        (fun p : ℕ × List Bool × List Bool => (p.1, unframe p.2.1, unframe p.2.2))
-        (encPair encUnary (encPair encBits encBits))
-        (encPair encUnary (encPair encBits encBits)) := by polytime
-    have hyes : ComputableTidilyInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          E.decrypt p.1 (unframe p.2.1) (unframe p.2.2))
-        (encPair encUnary (encPair encBits encBits)) (encOption encBits) :=
-      E.decrypt_polyTime.tidy.comp hdecArg
-    have hno : ComputableTidilyInPolyTime
-        (fun _ : ℕ × List Bool × List Bool => (none : Option (List Bool)))
-        (encPair encUnary (encPair encBits encBits)) (encOption encBits) :=
-      ComputableTidilyInPolyTime.const none
-    simp only [encPair_apply, encBits_apply]
-    exact .of_tidy (ComputableTidilyInPolyTime.cond hcond hyes hno)
-  decrypt_encrypt := by
-    intro n k hk msg hmsg ct hct
-    simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.mem_support_bind_iff,
-      PMF.mem_support_pure_iff] at hk hct
-    obtain ⟨ke, hke, km, hkm, rfl⟩ := hk
-    have hunframe_k : unframe (encPair encBits encBits (ke, km)) = ke := by
-      simp [encPair_apply, unframe_frame_append]
-    have hdrop_k : dropFrame (encPair encBits encBits (ke, km)) = km := by
-      simp [encPair_apply, dropFrame_frame_append]
-    rw [hunframe_k, hdrop_k] at hct
-    obtain ⟨c, hc, tag, htag, rfl⟩ := hct
-    have hunframe_ct : unframe (encPair encBits encBits (c, tag)) = c := by
-      simp [encPair_apply, unframe_frame_append]
-    have hdrop_ct : dropFrame (encPair encBits encBits (c, tag)) = tag := by
-      simp [encPair_apply, dropFrame_frame_append]
-    have hcLen : c.length = n := hctLen n ke hke msg hmsg c hc
-    have hver : M.verify km c tag = true := M.verify_sign n km hkm c hcLen tag htag
-    have hdec : E.decrypt n ke c = some msg := E.decrypt_encrypt n ke hke msg hmsg c hc
-    rw [hunframe_k, hdrop_k, hunframe_ct, hdrop_ct]
-    simp [hcLen, hver, hdec]
-
-/-! #### Ciphertext-Integrity to SUF-CMA Reduction for Theorem 9.2 -/
-
-/-- Open stateful handler that simulates the `ciEncryptionOracle` of `encryptThenMAC E M` inside
-`M.sufCmaGame` ([BonehShoup2023], Section 9.4.1, Theorem 9.2, Part 1): on an `n`-bit message query
-`request.2`, it encrypts `c ← E.encrypt n ke request.2`, queries the external MAC signing oracle on
-`((), c)` (truncating the returned tag to `tagBound` bits), and returns
-`encPair encBits encBits (c, tag)`. -/
-noncomputable def etmToMACHandler (E : SymmetricCipher) (n tagBound : ℕ) (ke : List Bool)
-    (request : Unit × List Bool) :
-    StateT Unit (WordOracleComp Unit) (List Bool) :=
-  fun _ =>
-    if request.2.length == n then do
-      let c ← ProbOracleComp.sample (E.encrypt n ke request.2)
-      (fun tag => (encPair encBits encBits (c, tag), ())) <$>
-        (List.take tagBound <$> ProbOracleComp.query ((), c))
-    else
-      pure ([], ())
-
-/-- Ciphertext-integrity to SUF-CMA reduction `etmToMACForger` ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, Part 1, printed pp. 367–368): samples `ke ← E.keyGen n`, runs `adversary n []`
-against `etmToMACHandler E n (tagBound n) ke`, and when the candidate ciphertext `out.1` has
-canonical pair framing and `E.decrypt n ke (unframe out.1)` succeeds, outputs the candidate forgery
-pair `(unframe out.1, dropFrame out.1)`; otherwise outputs a dummy pair of length `≠ n` that is
-rejected by `M.sufCmaGame`. -/
-noncomputable def etmToMACForger (E : SymmetricCipher) (tagBound : ℕ → ℕ)
-    (adversary : CIAdversary) : Forger :=
-  fun n _ => do
-    let ke ← ProbOracleComp.sample (E.keyGen n)
-    (fun out : List Bool × Unit =>
-      if (encPair encBits encBits (unframe out.1, dropFrame out.1) == out.1) &&
-          (E.decrypt n ke (unframe out.1)).isSome then
-        (unframe out.1, dropFrame out.1)
-      else
-        (if n == 0 then [false] else [], [])) <$>
-      (OracleComp.interpret
-        (ProbOracleComp.handler
-          (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-          (etmToMACHandler E n (tagBound n) ke))
-        (adversary n [])).run ()
-
-private theorem isOraclePPTOn_etmToMACHandler (E : SymmetricCipher) {tagBound : ℕ → ℕ}
-    (htagBound : ComputableInPolyTime tagBound encUnary encUnary) :
-    IsOraclePPTOn
-      (encPair (encPair (encPair encUnary encBits) encBits)
-        (encPair (encPair (encFinite Unit) encBits) (encFinite Unit)))
-      (encPair encBits (encFinite Unit))
-      (fun pair : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        etmToMACHandler E pair.1.1.1 (tagBound pair.1.1.1) pair.1.2 pair.2.1 pair.2.2) := by
-  have htagTidy := htagBound.tidy
-  let ECaller := encPair (encPair encUnary encBits) encBits
-  let EIn := encPair ECaller (encPair (encPair (encFinite Unit) encBits) (encFinite Unit))
-  unfold etmToMACHandler
-  have hcond : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        p.2.1.2.length == p.1.1.1)
-      EIn encBool := by
-    dsimp only [EIn, ECaller]; polytime
-  have hencArg : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        (p.1.1.1, p.1.2, p.2.1.2))
-      EIn (encPair encUnary (encPair encBits encBits)) := by
-    dsimp only [EIn, ECaller]; fun_prop
-  have henc : IsOraclePPTOn (Operation := Unit) EIn encBits
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        ProbOracleComp.sample (E.encrypt p.1.1.1 p.1.2 p.2.1.2)) :=
-    (E.encrypt_ppt.preprocess hencArg.computableInPolyTime).isOraclePPTOn (Operation := Unit)
-  have hqReq : ComputableTidilyInPolyTime
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool => q.2)
-      (encPair EIn encBits) encBits := by
-    fun_prop
-  have hqN : ComputableTidilyInPolyTime
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        q.1.1.1.1)
-      (encPair EIn encBits) encUnary := by
-    dsimp only [EIn, ECaller]; fun_prop
-  have hqLim : ComputableTidilyInPolyTime
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        tagBound q.1.1.1.1)
-      (encPair EIn encBits) encUnary :=
-    htagTidy.comp hqN
-  have hq : IsOraclePPTOn (Operation := Unit) (encPair EIn encBits) encBits
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        List.take (tagBound q.1.1.1.1) <$> ProbOracleComp.query ((), q.2)) :=
-    IsOraclePPTOn.query_take (Operation := Unit) () hqReq hqLim
-  have hpairArg : ComputableTidilyInPolyTime
-      (fun r : ((((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool) ×
-          List Bool =>
-        (r.1.2, r.2))
-      (encPair (encPair EIn encBits) encBits)
-      (encPair encBits encBits) := by
-    fun_prop
-  have hmap : ComputableTidilyInPolyTime
-      (fun r : ((((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool) ×
-          List Bool =>
-        (encPair encBits encBits (r.1.2, r.2), ()))
-      (encPair (encPair EIn encBits) encBits)
-      (encPair encBits (encFinite Unit)) :=
-    ComputableTidilyInPolyTime.prod hpairArg.encoded (ComputableTidilyInPolyTime.const ())
-  have hqMap : IsOraclePPTOn (Operation := Unit) (encPair EIn encBits)
-      (encPair encBits (encFinite Unit))
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        (fun tag => (encPair encBits encBits (q.2, tag), ())) <$>
-          (List.take (tagBound q.1.1.1.1) <$> ProbOracleComp.query ((), q.2))) :=
-    hq.map_with hmap
-  have hyes : IsOraclePPTOn (Operation := Unit) EIn (encPair encBits (encFinite Unit))
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) => do
-        let c ← ProbOracleComp.sample (E.encrypt p.1.1.1 p.1.2 p.2.1.2)
-        (fun tag => (encPair encBits encBits (c, tag), ())) <$>
-          (List.take (tagBound p.1.1.1) <$> ProbOracleComp.query ((), c))) :=
-    henc.bind_with hqMap
-  have hno : IsOraclePPTOn (Operation := Unit) EIn (encPair encBits (encFinite Unit))
-      (fun _ : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        pure ([], ())) :=
-    (ComputableTidilyInPolyTime.const ([], ())).isPPTOn.isOraclePPTOn (Operation := Unit)
-  exact IsOraclePPTOn.cond hcond hyes hno
-
-/-- `etmToMACForger` preserves strict oracle-PPT admissibility (`IsOraclePPT`). -/
-theorem isOraclePPT_etmToMACForger (E : SymmetricCipher) {tagBound : ℕ → ℕ}
-    {adversary : CIAdversary}
-    (htagBound : ComputableInPolyTime tagBound encUnary encUnary)
-    (hadversary : IsOraclePPT encBits adversary) :
-    IsOraclePPT (encPair encBits encBits) (etmToMACForger E tagBound adversary) := by
-  have htagTidy := htagBound.tidy
-  obtain ⟨ce, de, hlenEnc⟩ := E.encrypt_ppt.length_le
-  let ECaller := encPair (encPair encUnary encBits) encBits
-  have hke : IsOraclePPTOn (Operation := Unit) (encPair encUnary encBits) encBits
-      (fun caller : ℕ × List Bool => ProbOracleComp.sample (E.keyGen caller.1)) :=
-    (E.keyGen_ppt.preprocess (ComputableInPolyTime.fst _ _)).isOraclePPTOn (Operation := Unit)
-  have hhandler := isOraclePPTOn_etmToMACHandler E htagBound
-  have hprepare : ComputableTidilyInPolyTime
-      (fun caller : (ℕ × List Bool) × List Bool => (caller.1.1, ([] : List Bool)))
-      ECaller (encPair encUnary encBits) := by
-    dsimp only [ECaller]; fun_prop
-  have hres : ComputableTidilyInPolyTime
-      (fun pair : ((ℕ × List Bool) × List Bool) × List Bool =>
-        2 * (ce * (2 * pair.1.1.1 + 2 * pair.1.2.length + pair.2.length + 3) ^ de) +
-          tagBound pair.1.1.1 + 2)
-      (encPair ECaller encBits) encUnary := by
-    dsimp only [ECaller]; polytime
-  have hrun : IsOraclePPTOn (Operation := Unit) ECaller (encPair encBits (encFinite Unit))
-      (fun caller : (ℕ × List Bool) × List Bool =>
-        (OracleComp.interpret
-          (ProbOracleComp.handler
-            (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-            (etmToMACHandler E caller.1.1 (tagBound caller.1.1) caller.2))
-          (adversary caller.1.1 [])).run ()) := by
-    apply hadversary.run_interpret_preprocess_open
-      (input := ECaller)
-      (handler := fun caller : (ℕ × List Bool) × List Bool =>
-        etmToMACHandler E caller.1.1 (tagBound caller.1.1) caller.2)
-      (prepare := fun caller : (ℕ × List Bool) × List Bool => (caller.1.1, ([] : List Bool)))
-      (initial := fun _ => ())
-      (resources := fun caller query =>
-        2 * (ce * (2 * caller.1.1 + 2 * caller.2.length + query.length + 3) ^ de) +
-          tagBound caller.1.1 + 2)
-      hprepare hhandler (ComputableTidilyInPolyTime.const ())
-      (fun _ _ => True) (fun _ => trivial) hres
-    intro caller request state _ result hresult
-    unfold etmToMACHandler at hresult
-    split_ifs at hresult with hlenEq
-    · obtain ⟨c, hc, hresult⟩ := OracleComp.mem_supportWith_bind_iff.mp hresult
-      change c ∈ OracleComp.support
-        (ProbOracleComp.sample (E.encrypt caller.1.1 caller.2 request.2)) at hc
-      rw [ProbOracleComp.support_sample] at hc
-      have hcLen := hlenEnc (caller.1.1, caller.2, request.2) c hc
-      simp only [length_encPair, encUnary_apply, List.length_replicate, encBits_apply] at hcLen
-      have hcBound : c.length ≤
-          ce * (2 * caller.1.1 + 2 * caller.2.length + request.2.length + 3) ^ de :=
-        hcLen.trans (Nat.mul_le_mul_left ce (Nat.pow_le_pow_left (by lia) de))
-      obtain ⟨tag, htag, rfl⟩ := ProbOracleComp.mem_support_map hresult
-      obtain ⟨rawTag, _, rfl⟩ := ProbOracleComp.mem_support_map htag
-      have htagTake : (List.take (tagBound caller.1.1) rawTag).length ≤ tagBound caller.1.1 :=
-        List.length_take_le _ _
-      refine ⟨trivial, ?_, by lia⟩
-      simp only [length_encPair, encBits_apply]
-      lia
-    · have hresEq := ProbOracleComp.eq_of_mem_support_pure hresult
-      subst hresEq
-      exact ⟨trivial, by simp, by lia⟩
-  have hdecArg : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        (p.1.1.1, p.1.2, unframe p.2.1))
-      (encPair ECaller (encPair encBits (encFinite Unit)))
-      (encPair encUnary (encPair encBits encBits)) := by
-    dsimp only [ECaller]; fun_prop
-  have hdecSome : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        (E.decrypt p.1.1.1 p.1.2 (unframe p.2.1)).isSome)
-      (encPair ECaller (encPair encBits (encFinite Unit))) encBool :=
-    (E.decrypt_polyTime.tidy.comp hdecArg).optionIsSome
-  have hpostYes : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        (unframe p.2.1, dropFrame p.2.1))
-      (encPair ECaller (encPair encBits (encFinite Unit))) (encPair encBits encBits) := by
-    dsimp only [ECaller]; fun_prop
-  have hframeEq : ComputableTidilyInPolyTime
-      (fun p : List Bool × List Bool => p.1 == p.2)
-      (encPair encBits encBits) encBool := by
-    polytime
-  have houtProj : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) => p.2.1)
-      (encPair ECaller (encPair encBits (encFinite Unit))) encBits := by
-    fun_prop
-  have hframeCond : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        encPair encBits encBits (unframe p.2.1, dropFrame p.2.1) == p.2.1)
-      (encPair ECaller (encPair encBits (encFinite Unit))) encBool :=
-    hframeEq.comp (hpostYes.encoded.prod houtProj)
-  have hand : ComputableTidilyInPolyTime
-      (fun p : Bool × Bool => p.1 && p.2)
-      (encPair encBool encBool) encBool := by
-    polytime
-  have hpostCond : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        (encPair encBits encBits (unframe p.2.1, dropFrame p.2.1) == p.2.1) &&
-          (E.decrypt p.1.1.1 p.1.2 (unframe p.2.1)).isSome)
-      (encPair ECaller (encPair encBits (encFinite Unit))) encBool :=
-    hand.comp (hframeCond.prod hdecSome)
-  have hnProj : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) => p.1.1.1)
-      (encPair ECaller (encPair encBits (encFinite Unit))) encUnary := by
-    dsimp only [ECaller]; fun_prop
-  have hpostNo : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        (if p.1.1.1 == 0 then [false] else [], ([] : List Bool)))
-      (encPair ECaller (encPair encBits (encFinite Unit))) (encPair encBits encBits) :=
-    ComputableTidilyInPolyTime.prod
-      (ComputableTidilyInPolyTime.cond
-        (ComputableTidilyInPolyTime.unary_beq hnProj (ComputableTidilyInPolyTime.const 0))
-        (ComputableTidilyInPolyTime.const [false])
-        (ComputableTidilyInPolyTime.const []))
-      (ComputableTidilyInPolyTime.const [])
-  have hpost : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
-        if (encPair encBits encBits (unframe p.2.1, dropFrame p.2.1) == p.2.1) &&
-            (E.decrypt p.1.1.1 p.1.2 (unframe p.2.1)).isSome then
-          (unframe p.2.1, dropFrame p.2.1)
-        else
-          (if p.1.1.1 == 0 then [false] else [], []))
-      (encPair ECaller (encPair encBits (encFinite Unit)))
-      (encPair encBits encBits) :=
-    ComputableTidilyInPolyTime.cond hpostCond hpostYes hpostNo
-  have hrunMap : IsOraclePPTOn (Operation := Unit) ECaller (encPair encBits encBits)
-      (fun caller : (ℕ × List Bool) × List Bool =>
-        (fun out : List Bool × Unit =>
-          if (encPair encBits encBits (unframe out.1, dropFrame out.1) == out.1) &&
-              (E.decrypt caller.1.1 caller.2 (unframe out.1)).isSome then
-            (unframe out.1, dropFrame out.1)
-          else
-            (if caller.1.1 == 0 then [false] else [], [])) <$>
-          (OracleComp.interpret
-            (ProbOracleComp.handler
-              (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-              (etmToMACHandler E caller.1.1 (tagBound caller.1.1) caller.2))
-            (adversary caller.1.1 [])).run ()) :=
-    hrun.map_with hpost
-  unfold etmToMACForger
-  exact (hke.bind_with hrunMap).isOraclePPT
-
-private theorem list_contains_map_encPair (pairs : List (List Bool × List Bool))
-    (p : List Bool × List Bool) :
-    (pairs.map (encPair encBits encBits)).contains (encPair encBits encBits p) =
-      pairs.contains p := by
-  rw [Bool.eq_iff_iff, List.contains_iff_mem, List.contains_iff_mem]
-  exact List.mem_map_of_injective (encPair encBits encBits).injective
-
-private theorem etm_sufCma_win_eq_ci_win (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (n : ℕ) (ke km out : List Bool) (queriedPairs : List (List Bool × List Bool)) :
-    (let pair :=
-      if (encPair encBits encBits (unframe out, dropFrame out) == out) &&
-          (E.decrypt n ke (unframe out)).isSome then
-        (unframe out, dropFrame out)
-      else
-        (if n == 0 then [false] else [], [])
-     (pair.1.length == n) && !queriedPairs.contains pair && M.verify km pair.1 pair.2) =
-      (!(queriedPairs.map (encPair encBits encBits)).contains out &&
-        ((encryptThenMAC E M hctLen).decrypt n (encPair encBits encBits (ke, km)) out).isSome) := by
-  have hunframe_k : unframe (encPair encBits encBits (ke, km)) = ke := by
-    simp [encPair_apply, unframe_frame_append]
-  have hdrop_k : dropFrame (encPair encBits encBits (ke, km)) = km := by
-    simp [encPair_apply, dropFrame_frame_append]
-  dsimp only [encryptThenMAC]
-  rw [hunframe_k, hdrop_k]
-  by_cases hframe : (encPair encBits encBits (unframe out, dropFrame out) == out) = true
-  · by_cases hdec : (E.decrypt n ke (unframe out)).isSome = true
-    · simp only [hframe, hdec, Bool.true_and, ↓reduceIte]
-      have houtEq : encPair encBits encBits (unframe out, dropFrame out) = out :=
-        beq_iff_eq.mp hframe
-      rw [← list_contains_map_encPair queriedPairs (unframe out, dropFrame out), houtEq]
-      cases hlen : ((unframe out).length == n) <;>
-        cases hmem : (queriedPairs.map (encPair encBits encBits)).contains out <;>
-        cases hver : M.verify km (unframe out) (dropFrame out) <;>
-        simp [hdec]
-    · have hdecF : (E.decrypt n ke (unframe out)).isSome = false := Bool.eq_false_iff.mpr hdec
-      have hlenDummy : ((if n == 0 then [false] else []).length == n) = false := by
-        cases n <;> rfl
-      simp only [hframe, hdecF, Bool.true_and, Bool.false_eq_true, ↓reduceIte, hlenDummy,
-        Bool.false_and]
-      split_ifs <;> simp [hdecF]
-  · have hframeF : (encPair encBits encBits (unframe out, dropFrame out) == out) = false :=
-      Bool.eq_false_iff.mpr hframe
-    have hlenDummy : ((if n == 0 then [false] else []).length == n) = false := by
-      cases n <;> rfl
-    simp only [hframeF, Bool.false_and, Bool.false_eq_true, ↓reduceIte, hlenDummy,
-      Option.isSome_none, Bool.and_false]
-
-/-- Running `etmToMACForger E tagBound adversary` in `M.sufCmaGame` produces the exact same
-winning distribution as running `adversary` in `(encryptThenMAC E M hctLen).ciGame` whenever
-`tagBound n` bounds all MAC tag lengths on `n`-bit ciphertexts under supported keys at security
-parameter `n`. -/
-theorem eval_sufCmaGame_etmToMACForger (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (tagBound : ℕ → ℕ) (adversary : CIAdversary) (n : ℕ)
-    (htagBound : ∀ km ∈ (ProbComp.eval (M.keyGen n)).support,
-      ∀ c, c.length = n →
-      ∀ tag ∈ (ProbComp.eval (M.sign km c)).support, tag.length ≤ tagBound n) :
-    ProbComp.eval (M.sufCmaGame (etmToMACForger E tagBound adversary) n) =
-      ProbComp.eval ((encryptThenMAC E M hctLen).ciGame adversary n) := by
-  simp only [MACScheme.sufCmaGame, SymmetricCipher.ciGame, etmToMACForger,
-    ProbComp.eval_bind, ProbComp.eval_pure, ProbOracleComp.eval_run_interpret]
-  have hinner (km : List Bool) :
-      ((OracleComp.interpret
-        (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifOracle m))
-          (fun q s => ProbComp.eval (M.signingPairOracle km q s)))
-        (do
-          let ke ← ProbOracleComp.sample (E.keyGen n)
-          (fun out : List Bool × Unit =>
-            if (encPair encBits encBits (unframe out.1, dropFrame out.1) == out.1) &&
-                (E.decrypt n ke (unframe out.1)).isSome then
-              (unframe out.1, dropFrame out.1)
-            else
-              (if n == 0 then [false] else [], [])) <$>
-            (OracleComp.interpret
-              (ProbOracleComp.handler
-                (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-                (etmToMACHandler E n (tagBound n) ke))
-              (adversary n [])).run ())).run []).bind
-        (fun out => PMF.pure
-          ((out.1.1.length == n) && !out.2.contains out.1 && M.verify km out.1.1 out.1.2)) =
-      (ProbComp.eval (E.keyGen n)).bind (fun ke =>
-        ((OracleComp.interpret
-          (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifOracle m))
-            (fun q s => ProbComp.eval (M.signingPairOracle km q s)))
-          ((OracleComp.interpret
-            (ProbOracleComp.handler
-              (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-              (etmToMACHandler E n (tagBound n) ke))
-            (adversary n [])).run ())).run []).bind
-          (fun out => PMF.pure
-            (let pair :=
-              if (encPair encBits encBits (unframe out.1.1, dropFrame out.1.1) == out.1.1) &&
-                  (E.decrypt n ke (unframe out.1.1)).isSome then
-                (unframe out.1.1, dropFrame out.1.1)
-              else
-                (if n == 0 then [false] else [], [])
-             (pair.1.length == n) && !out.2.contains pair && M.verify km pair.1 pair.2))) := by
-    rw [OracleComp.interpret_bind, StateT.run_bind, ProbOracleComp.run_interpret_sample]
-    simp only [Probability.PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def, PMF.bind_bind]
-    congr 1; funext ke
-    rw [OracleComp.interpret_map, StateT.run_map]
-    simp only [_root_.PMF.monad_map_eq_map, PMF.bind_map, Function.comp_def]
-  simp only [hinner]
-  rw [PMF.bind_comm]
-  have hkeyGen : ProbComp.eval ((encryptThenMAC E M hctLen).keyGen n) =
-      (ProbComp.eval (E.keyGen n)).bind (fun ke =>
-        (ProbComp.eval (M.keyGen n)).bind (fun km =>
-          PMF.pure (encPair encBits encBits (ke, km)))) := by
-    simp only [encryptThenMAC, ProbComp.eval_bind, ProbComp.eval_pure]
-  rw [hkeyGen]
-  simp only [PMF.bind_bind, PMF.pure_bind]
-  refine PMF.bind_congr_on_support _ _ _ fun ke hke => ?_
-  refine PMF.bind_congr_on_support _ _ _ fun km hkm => ?_
-  rw [ProbOracleComp.run_interpret_run_interpret]
-  simp only [PMF.bind_map, Function.comp_def]
-  conv_lhs =>
-    rhs; ext x
-    rw [etm_sufCma_win_eq_ci_win E M hctLen n ke km x.1 x.2.2]
-  have hsim := ProbOracleComp.run_interpret_map_state
-    (oracle := fun q (state : Unit × List (List Bool × List Bool)) =>
-      ((OracleComp.interpret
-        (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifOracle m))
-          (fun q s => ProbComp.eval (M.signingPairOracle km q s)))
-        (etmToMACHandler E n (tagBound n) ke q state.1)).run state.2).map
-        (fun result => (result.1.1, result.1.2, result.2)))
-    (oracle' := fun q s =>
-      ProbComp.eval ((encryptThenMAC E M hctLen).ciEncryptionOracle n
-        (encPair encBits encBits (ke, km)) q s))
-    (represent := fun s : Unit × List (List Bool × List Bool) =>
-      s.2.map (encPair encBits encBits))
-    (step := by
-      intro ⟨⟨⟩, msg⟩ ⟨⟨⟩, queriedPairs⟩
-      have hunframe_k : unframe (encPair encBits encBits (ke, km)) = ke := by
-        simp [encPair_apply, unframe_frame_append]
-      have hdrop_k : dropFrame (encPair encBits encBits (ke, km)) = km := by
-        simp [encPair_apply, dropFrame_frame_append]
-      unfold etmToMACHandler SymmetricCipher.ciEncryptionOracle
-      dsimp only [encryptThenMAC]
-      rw [hunframe_k, hdrop_k]
-      by_cases hlenEq : (msg.length == n) = true
-      · simp only [hlenEq, ↓reduceIte, OracleComp.interpret_bind, StateT.run_bind,
-          ProbOracleComp.run_interpret_sample, Probability.PMF.monad_bind_eq_bind,
-          PMF.bind_map, Function.comp_def, PMF.map_bind, ProbComp.eval_bind,
-          ProbComp.eval_pure, PMF.bind_bind]
-        apply PMF.bind_congr_on_support
-        intro c hc
-        have hcLen : c.length = n := hctLen n ke hke msg (beq_iff_eq.mp hlenEq) c hc
-        simp only [OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query,
-          _root_.PMF.monad_map_eq_map, MACScheme.signingPairOracle, ProbComp.eval_bind,
-          ProbComp.eval_pure]
-        dsimp only [StateT.run]
-        simp only [PMF.map_bind, PMF.pure_map, PMF.pure_bind]
-        apply PMF.bind_congr_on_support
-        intro tag htag
-        rw [List.take_of_length_le (htagBound km hkm c hcLen tag htag)]
-        rfl
-      · simp [hlenEq, OracleComp.interpret_pure, StateT.run_pure,
-          Probability.PMF.monad_pure_eq_pure, ProbComp.eval_pure])
-    (adversary n []) ((), [])
-  dsimp only [List.map] at hsim
-  rw [← hsim, PMF.bind_map, Function.comp_def]
-  rfl
-
-/-- **Quantitative Ciphertext-Integrity to SUF-CMA equality** ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, Part 1, printed pp. 367–368): when `tagBound n` bounds all MAC tag lengths on `n`-bit
-ciphertexts under supported keys at security parameter `n`, the ciphertext-integrity winning
-probability of `adversary` against `encryptThenMAC E M hctLen` equals the SUF-CMA winning
-probability of `etmToMACForger E tagBound adversary` against `M`. -/
-theorem succProbability_ciGame_encryptThenMAC_eq (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (tagBound : ℕ → ℕ) (adversary : CIAdversary) (n : ℕ)
-    (htagBound : ∀ km ∈ (ProbComp.eval (M.keyGen n)).support,
-      ∀ c, c.length = n →
-      ∀ tag ∈ (ProbComp.eval (M.sign km c)).support, tag.length ≤ tagBound n) :
-    Game.succProbability (ProbComp.eval ((encryptThenMAC E M hctLen).ciGame adversary n)) =
-      Game.succProbability
-        (ProbComp.eval (M.sufCmaGame (etmToMACForger E tagBound adversary) n)) := by
-  rw [eval_sufCmaGame_etmToMACForger E M hctLen tagBound adversary n htagBound]
-
-/-- **Quantitative Ciphertext-Integrity to SUF-CMA bound** ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, Part 1, printed pp. 367–368). -/
-theorem succProbability_ciGame_encryptThenMAC_le (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (tagBound : ℕ → ℕ) (adversary : CIAdversary) (n : ℕ)
-    (htagBound : ∀ km ∈ (ProbComp.eval (M.keyGen n)).support,
-      ∀ c, c.length = n →
-      ∀ tag ∈ (ProbComp.eval (M.sign km c)).support, tag.length ≤ tagBound n) :
-    Game.succProbability (ProbComp.eval ((encryptThenMAC E M hctLen).ciGame adversary n)) ≤
-      Game.succProbability
-        (ProbComp.eval (M.sufCmaGame (etmToMACForger E tagBound adversary) n)) :=
-  le_of_eq (succProbability_ciGame_encryptThenMAC_eq E M hctLen tagBound adversary n htagBound)
-
-/-! #### IND-CPA Reduction for Theorem 9.2 -/
-
-/-- Open stateful handler that simulates the `cpaEncryptionOracle` of `encryptThenMAC E M` inside
-`E.cpaGame` ([BonehShoup2023], Section 9.4.1, Theorem 9.2, Part 2): on a valid pair of `n`-bit
-messages `request.2`, it forwards `request` to the external CPA encryption oracle of `E`
-(truncating the returned ciphertext `c` to `n` bits), computes `tag ← M.sign km c`, and returns
-`encPair encBits encBits (c, tag)`. -/
-noncomputable def etmToCPAHandler (M : MACScheme) (n : ℕ) (km : List Bool)
-    (request : Unit × List Bool) :
-    StateT Unit (WordOracleComp Unit) (List Bool) :=
-  fun _ =>
-    let m0 := unframe request.2
-    let m1 := dropFrame request.2
-    if (m0.length == n) && (m1.length == n) then do
-      let c ← List.take n <$> ProbOracleComp.query ((), request.2)
-      (fun tag => (encPair encBits encBits (c, tag), ())) <$>
-        ProbOracleComp.sample (M.sign km c)
-    else
-      pure ([], ())
-
-/-- IND-CPA reduction `etmToCPAAdversary` for `encryptThenMAC E M` ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, Part 2, printed pp. 367–368): samples a secret MAC key `km ← M.keyGen n` privately and
-runs `adversary n []` against `etmToCPAHandler M n km`. -/
-noncomputable def etmToCPAAdversary (M : MACScheme) (adversary : OracleDistinguisher) :
-    OracleDistinguisher :=
-  fun n _ => do
-    let km ← ProbOracleComp.sample (M.keyGen n)
-    Prod.fst <$> (OracleComp.interpret
-      (ProbOracleComp.handler
-        (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-        (etmToCPAHandler M n km))
-      (adversary n [])).run ()
-
-private theorem isOraclePPTOn_etmToCPAHandler (M : MACScheme) :
-    IsOraclePPTOn
-      (encPair (encPair (encPair encUnary encBits) encBits)
-        (encPair (encPair (encFinite Unit) encBits) (encFinite Unit)))
-      (encPair encBits (encFinite Unit))
-      (fun pair : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        etmToCPAHandler M pair.1.1.1 pair.1.2 pair.2.1 pair.2.2) := by
-  let ECaller := encPair (encPair encUnary encBits) encBits
-  let EIn := encPair ECaller (encPair (encPair (encFinite Unit) encBits) (encFinite Unit))
-  unfold etmToCPAHandler
-  have hcond : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        ((unframe p.2.1.2).length == p.1.1.1) && ((dropFrame p.2.1.2).length == p.1.1.1))
-      EIn encBool := by
-    dsimp only [EIn, ECaller]; polytime
-  have hqReq : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) => p.2.1.2)
-      EIn encBits := by
-    dsimp only [EIn, ECaller]; fun_prop
-  have hqLim : ComputableTidilyInPolyTime
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) => p.1.1.1)
-      EIn encUnary := by
-    dsimp only [EIn, ECaller]; fun_prop
-  have hq : IsOraclePPTOn (Operation := Unit) EIn encBits
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        List.take p.1.1.1 <$> ProbOracleComp.query ((), p.2.1.2)) :=
-    IsOraclePPTOn.query_take (Operation := Unit) () hqReq hqLim
-  have hsignArg : ComputableTidilyInPolyTime
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        (q.1.1.2, q.2))
-      (encPair EIn encBits) (encPair encBits encBits) := by
-    dsimp only [EIn, ECaller]; fun_prop
-  have hsign : IsOraclePPTOn (Operation := Unit) (encPair EIn encBits) encBits
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        ProbOracleComp.sample (M.sign q.1.1.2 q.2)) :=
-    (M.sign_ppt.preprocess hsignArg.computableInPolyTime).isOraclePPTOn (Operation := Unit)
-  have hpairArg : ComputableTidilyInPolyTime
-      (fun r : ((((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool) ×
-          List Bool =>
-        (r.1.2, r.2))
-      (encPair (encPair EIn encBits) encBits)
-      (encPair encBits encBits) := by
-    fun_prop
-  have hmap : ComputableTidilyInPolyTime
-      (fun r : ((((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool) ×
-          List Bool =>
-        (encPair encBits encBits (r.1.2, r.2), ()))
-      (encPair (encPair EIn encBits) encBits)
-      (encPair encBits (encFinite Unit)) :=
-    ComputableTidilyInPolyTime.prod hpairArg.encoded (ComputableTidilyInPolyTime.const ())
-  have hsignMap : IsOraclePPTOn (Operation := Unit) (encPair EIn encBits)
-      (encPair encBits (encFinite Unit))
-      (fun q : (((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit)) × List Bool =>
-        (fun tag => (encPair encBits encBits (q.2, tag), ())) <$>
-          ProbOracleComp.sample (M.sign q.1.1.2 q.2)) :=
-    hsign.map_with hmap
-  have hyes : IsOraclePPTOn (Operation := Unit) EIn (encPair encBits (encFinite Unit))
-      (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) => do
-        let c ← List.take p.1.1.1 <$> ProbOracleComp.query ((), p.2.1.2)
-        (fun tag => (encPair encBits encBits (c, tag), ())) <$>
-          ProbOracleComp.sample (M.sign p.1.2 c)) :=
-    hq.bind_with hsignMap
-  have hno : IsOraclePPTOn (Operation := Unit) EIn (encPair encBits (encFinite Unit))
-      (fun _ : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
-        pure ([], ())) :=
-    (ComputableTidilyInPolyTime.const ([], ())).isPPTOn.isOraclePPTOn (Operation := Unit)
-  exact IsOraclePPTOn.cond hcond hyes hno
-
-/-- `etmToCPAAdversary` preserves strict oracle-PPT admissibility (`IsOraclePPT`). -/
-theorem isOraclePPT_etmToCPAAdversary (M : MACScheme) {adversary : OracleDistinguisher}
-    (hadversary : IsOraclePPT encBool adversary) :
-    IsOraclePPT encBool (etmToCPAAdversary M adversary) := by
-  obtain ⟨cs, ds, hlenSign⟩ := M.sign_ppt.length_le
-  let ECaller := encPair (encPair encUnary encBits) encBits
-  have hkm : IsOraclePPTOn (Operation := Unit) (encPair encUnary encBits) encBits
-      (fun caller : ℕ × List Bool => ProbOracleComp.sample (M.keyGen caller.1)) :=
-    (M.keyGen_ppt.preprocess (ComputableInPolyTime.fst _ _)).isOraclePPTOn (Operation := Unit)
-  have hhandler := isOraclePPTOn_etmToCPAHandler M
-  have hprepare : ComputableTidilyInPolyTime
-      (fun caller : (ℕ × List Bool) × List Bool => (caller.1.1, ([] : List Bool)))
-      ECaller (encPair encUnary encBits) := by
-    dsimp only [ECaller]; fun_prop
-  have hres : ComputableTidilyInPolyTime
-      (fun pair : ((ℕ × List Bool) × List Bool) × List Bool =>
-        2 * pair.1.1.1 + cs * (2 * pair.1.2.length + pair.1.1.1 + 2) ^ ds + 2)
-      (encPair ECaller encBits) encUnary := by
-    dsimp only [ECaller]; polytime
-  have hrun : IsOraclePPTOn (Operation := Unit) ECaller (encPair encBool (encFinite Unit))
-      (fun caller : (ℕ × List Bool) × List Bool =>
-        (OracleComp.interpret
-          (ProbOracleComp.handler
-            (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-            (etmToCPAHandler M caller.1.1 caller.2))
-          (adversary caller.1.1 [])).run ()) := by
-    apply hadversary.run_interpret_preprocess_open
-      (input := ECaller)
-      (handler := fun caller : (ℕ × List Bool) × List Bool =>
-        etmToCPAHandler M caller.1.1 caller.2)
-      (prepare := fun caller : (ℕ × List Bool) × List Bool => (caller.1.1, ([] : List Bool)))
-      (initial := fun _ => ())
-      (resources := fun caller _ =>
-        2 * caller.1.1 + cs * (2 * caller.2.length + caller.1.1 + 2) ^ ds + 2)
-      hprepare hhandler (ComputableTidilyInPolyTime.const ())
-      (fun _ _ => True) (fun _ => trivial) hres
-    intro caller request state _ result hresult
-    unfold etmToCPAHandler at hresult
-    dsimp only at hresult
-    split_ifs at hresult with hlenEq
-    · obtain ⟨c, hc, hresult⟩ := OracleComp.mem_supportWith_bind_iff.mp hresult
-      obtain ⟨rawCt, _, rfl⟩ := ProbOracleComp.mem_support_map hc
-      have hcTake : (List.take caller.1.1 rawCt).length ≤ caller.1.1 :=
-        List.length_take_le _ _
-      obtain ⟨tag, htag, rfl⟩ := ProbOracleComp.mem_support_map hresult
-      rw [ProbOracleComp.support_sample] at htag
-      have htagLen := hlenSign (caller.2, List.take caller.1.1 rawCt) tag htag
-      simp only [length_encPair, encBits_apply] at htagLen
-      have htagBound : tag.length ≤ cs * (2 * caller.2.length + caller.1.1 + 2) ^ ds :=
-        htagLen.trans (Nat.mul_le_mul_left cs (Nat.pow_le_pow_left (by lia) ds))
-      refine ⟨trivial, ?_, by lia⟩
-      simp only [length_encPair, encBits_apply]
-      lia
-    · have hresEq := ProbOracleComp.eq_of_mem_support_pure hresult
-      subst hresEq
-      exact ⟨trivial, by simp, by lia⟩
-  have hrunMap : IsOraclePPTOn (Operation := Unit) ECaller encBool
-      (fun caller : (ℕ × List Bool) × List Bool =>
-        Prod.fst <$> (OracleComp.interpret
-          (ProbOracleComp.handler
-            (fun m => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin m)))
-            (etmToCPAHandler M caller.1.1 caller.2))
-          (adversary caller.1.1 [])).run ()) :=
-    hrun.map (ComputableTidilyInPolyTime.fst encBool (encFinite Unit))
-  unfold etmToCPAAdversary
-  exact (hkm.bind_with hrunMap).isOraclePPT
-
-/-- Running `etmToCPAAdversary M adversary` in `E.cpaGame` at challenge bit `bit` produces the
-exact same output distribution as running `adversary` in
-`(encryptThenMAC E M hctLen).cpaGame` at challenge bit `bit`. -/
-theorem eval_cpaGame_etmToCPAAdversary (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (adversary : OracleDistinguisher) (bit : Bool) (n : ℕ) :
-    ProbComp.eval (E.cpaGame (etmToCPAAdversary M adversary) bit n) =
-      ProbComp.eval ((encryptThenMAC E M hctLen).cpaGame adversary bit n) := by
-  simp only [SymmetricCipher.cpaGame, etmToCPAAdversary, ProbComp.eval_bind, ProbComp.eval_pure,
-    ProbOracleComp.eval_run_interpret]
-  have hkeyGen : ProbComp.eval ((encryptThenMAC E M hctLen).keyGen n) =
-      (ProbComp.eval (E.keyGen n)).bind (fun ke =>
-        (ProbComp.eval (M.keyGen n)).bind (fun km =>
-          PMF.pure (encPair encBits encBits (ke, km)))) := by
-    simp only [encryptThenMAC, ProbComp.eval_bind, ProbComp.eval_pure]
-  rw [hkeyGen]
-  simp only [PMF.bind_bind, PMF.pure_bind]
-  refine PMF.bind_congr_on_support _ _ _ fun ke hke => ?_
-  rw [OracleComp.interpret_bind, StateT.run_bind, ProbOracleComp.run_interpret_sample]
-  simp only [Probability.PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def, PMF.bind_bind]
-  refine PMF.bind_congr_on_support _ _ _ fun km _ => ?_
-  rw [OracleComp.interpret_map, StateT.run_map]
-  simp only [_root_.PMF.monad_map_eq_map, PMF.bind_map, Function.comp_def]
-  rw [ProbOracleComp.run_interpret_run_interpret]
-  simp only [PMF.bind_map, Function.comp_def]
-  have hsim := ProbOracleComp.run_interpret_map_state
-    (oracle := fun q (state : Unit × Unit) =>
-      ((OracleComp.interpret
-        (ProbOracleComp.handler (fun m => StateT.lift (ProbComp.unifOracle m))
-          (fun q s => ProbComp.eval (E.cpaEncryptionOracle n ke bit q s)))
-        (etmToCPAHandler M n km q state.1)).run state.2).map
-        (fun result => (result.1.1, result.1.2, result.2)))
-    (oracle' := fun q s =>
-      ProbComp.eval ((encryptThenMAC E M hctLen).cpaEncryptionOracle n
-        (encPair encBits encBits (ke, km)) bit q s))
-    (represent := fun _ : Unit × Unit => ())
-    (step := by
-      intro ⟨⟨⟩, payload⟩ ⟨⟨⟩, ⟨⟩⟩
-      have hunframe_k : unframe (encPair encBits encBits (ke, km)) = ke := by
-        simp [encPair_apply, unframe_frame_append]
-      have hdrop_k : dropFrame (encPair encBits encBits (ke, km)) = km := by
-        simp [encPair_apply, dropFrame_frame_append]
-      unfold etmToCPAHandler SymmetricCipher.cpaEncryptionOracle
-      dsimp only [encryptThenMAC]
-      rw [hunframe_k, hdrop_k]
-      by_cases hlenEq : ((unframe payload).length == n && (dropFrame payload).length == n) = true
-      · simp only [hlenEq, ↓reduceIte, OracleComp.interpret_bind, StateT.run_bind,
-          OracleComp.interpret_map, StateT.run_map, ProbOracleComp.interpret_query,
-          ProbOracleComp.run_interpret_sample,
-          _root_.PMF.monad_map_eq_map, Probability.PMF.monad_bind_eq_bind,
-          ProbComp.eval_bind, ProbComp.eval_pure]
-        simp only [Bool.and_eq_true, beq_iff_eq] at hlenEq
-        have hmbLen : (if bit then dropFrame payload else unframe payload).length = n := by
-          cases bit <;> simp [hlenEq]
-        dsimp only [StateT.run]
-        simp only [PMF.map_comp, PMF.map_bind, Function.comp_def,
-          PMF.pure_map, PMF.pure_bind, PMF.bind_bind]
-        apply PMF.bind_congr_on_support
-        intro c hc
-        rw [List.take_of_length_le (le_of_eq (hctLen n ke hke _ hmbLen c hc))]
-        rfl
-      · simp [hlenEq, OracleComp.interpret_pure, StateT.run_pure,
-          Probability.PMF.monad_pure_eq_pure, ProbComp.eval_pure])
-    (adversary n []) ((), ())
-  have hsim' := congrArg (PMF.map Prod.fst) hsim
-  simp only [PMF.map_comp, Function.comp_def] at hsim'
-  exact hsim'
-
-/-- **Quantitative IND-CPA equality for Encrypt-then-MAC** ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, Part 2, printed pp. 367–368): the CPA distinguishing advantage of `adversary` against
-`encryptThenMAC E M hctLen` equals the CPA distinguishing advantage of
-`etmToCPAAdversary M adversary` against `E`. -/
-theorem advantage_cpaGame_encryptThenMAC_eq (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (adversary : OracleDistinguisher) (n : ℕ) :
-    Game.advantage
-      (ProbComp.eval ((encryptThenMAC E M hctLen).cpaGame adversary false n))
-      (ProbComp.eval ((encryptThenMAC E M hctLen).cpaGame adversary true n)) =
-    Game.advantage
-      (ProbComp.eval (E.cpaGame (etmToCPAAdversary M adversary) false n))
-      (ProbComp.eval (E.cpaGame (etmToCPAAdversary M adversary) true n)) := by
-  rw [eval_cpaGame_etmToCPAAdversary E M hctLen adversary false n,
-    eval_cpaGame_etmToCPAAdversary E M hctLen adversary true n]
-
-/-! #### Asymptotic Security of Encrypt-then-MAC (Boneh–Shoup Theorem 9.2) -/
-
-/-- **SUF-CMA security implies Ciphertext Integrity for Encrypt-then-MAC** ([BonehShoup2023],
-Section 9.4.1, Theorem 9.2, Part 1, printed pp. 367–368): if `M` is strongly unforgeable
-(`M.SUFCMA`), then `encryptThenMAC E M hctLen` satisfies `CiphertextIntegrity`. -/
-theorem ciphertextIntegrity_encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (hmac : M.SUFCMA) :
-    (encryptThenMAC E M hctLen).CiphertextIntegrity := by
-  obtain ⟨ck, dk, hlenKey⟩ := M.keyGen_ppt.length_le
-  obtain ⟨cs, ds, hlenSign⟩ := M.sign_ppt.length_le
-  let tagBound : ℕ → ℕ := fun n => cs * (2 * (ck * (n + 1) ^ dk) + n + 2) ^ ds
-  have htagBoundPoly : ComputableInPolyTime tagBound encUnary encUnary := by
-    dsimp only [tagBound]; polytime
-  have htagBound (n : ℕ) (km : List Bool) (hkm : km ∈ (ProbComp.eval (M.keyGen n)).support)
-       (c : List Bool) (hc : c.length = n) (tag : List Bool)
-      (htag : tag ∈ (ProbComp.eval (M.sign km c)).support) : tag.length ≤ tagBound n := by
-    have hkmLen := hlenKey n km hkm
-    have htagLen := hlenSign (km, c) tag htag
-    simp only [encUnary_apply, List.length_replicate, encBits_apply] at hkmLen
-    simp only [length_encPair, encBits_apply, hc] at htagLen
-    exact htagLen.trans (Nat.mul_le_mul_left cs (Nat.pow_le_pow_left (by lia) ds))
-  apply SymmetricCipher.CiphertextIntegrity.of_negligible
-  intro adversary hadversary
-  have hmacNeg := hmac.negligible (etmToMACForger E tagBound adversary)
-    (isOraclePPT_etmToMACForger E htagBoundPoly hadversary)
-  refine hmacNeg.congr fun n => ?_
-  exact (succProbability_ciGame_encryptThenMAC_eq E M hctLen tagBound adversary n
-    (htagBound n)).symm
-
-/-- **IND-CPA security transfers to Encrypt-then-MAC** ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, Part 2, printed pp. 367–368): if `E` satisfies `INDCPA`, then
-`encryptThenMAC E M hctLen` also satisfies `INDCPA`. -/
-theorem indcpa_encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (hcpa : E.INDCPA) :
-    (encryptThenMAC E M hctLen).INDCPA := by
-  intro adversary hadversary
-  have hred := hcpa (etmToCPAAdversary M adversary) (isOraclePPT_etmToCPAAdversary M hadversary)
-  refine hred.congr fun n => ?_
-  exact (advantage_cpaGame_encryptThenMAC_eq E M hctLen adversary n).symm
-
-/-- **Encrypt-then-MAC Authenticated Encryption Theorem** ([BonehShoup2023], Section 9.4.1,
-Theorem 9.2, printed pp. 367–368): if `E` is `INDCPA`-secure and `M` is `SUFCMA`-secure, then
-`encryptThenMAC E M hctLen` is an `AuthenticatedEncryption` cipher
-(`INDCPA ∧ CiphertextIntegrity`). -/
-theorem authenticatedEncryption_encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (hcpa : E.INDCPA) (hmac : M.SUFCMA) :
-    (encryptThenMAC E M hctLen).AuthenticatedEncryption :=
-  ⟨indcpa_encryptThenMAC E M hctLen hcpa, ciphertextIntegrity_encryptThenMAC E M hctLen hmac⟩
-
-/-- **Encrypt-then-MAC Adaptive Chosen-Ciphertext Security** ([BonehShoup2023], combining
-Theorem 9.2 and Theorem 9.1): if `E` is `INDCPA`-secure and `M` is `SUFCMA`-secure, then
-`encryptThenMAC E M hctLen` is `INDCCA`-secure. -/
-theorem indcca_encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (hcpa : E.INDCPA) (hmac : M.SUFCMA) :
-    (encryptThenMAC E M hctLen).INDCCA :=
-  (authenticatedEncryption_encryptThenMAC E M hctLen hcpa hmac).indcca
-
-/-- **Encrypt-then-MAC with a PRF-based MAC is Authenticated Encryption** ([BonehShoup2023],
-combining Theorem 6.2 and Theorem 9.2): if `E` is `INDCPA`-secure and `family` is a uniform
-`PseudorandomFunction`, then `encryptThenMAC E (prfMAC family hprf.polyTime) hctLen` satisfies
-`AuthenticatedEncryption`. -/
-theorem authenticatedEncryption_encryptThenMAC_prfMAC (E : SymmetricCipher)
-    {family : List Bool → List Bool → List Bool}
-    (hprf : PseudorandomFunction family)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (hcpa : E.INDCPA) :
-    (encryptThenMAC E (prfMAC family hprf.polyTime) hctLen).AuthenticatedEncryption :=
-  authenticatedEncryption_encryptThenMAC E (prfMAC family hprf.polyTime) hctLen hcpa
-    hprf.sufCma_prfMAC
-
-/-- **Encrypt-then-MAC with a PRF-based MAC is IND-CCA secure** ([BonehShoup2023], combining
-Theorem 6.2, Theorem 9.2, and Theorem 9.1): if `E` is `INDCPA`-secure and `family` is a uniform
-`PseudorandomFunction`, then `encryptThenMAC E (prfMAC family hprf.polyTime) hctLen` satisfies
-`INDCCA`. -/
-theorem indcca_encryptThenMAC_prfMAC (E : SymmetricCipher)
-    {family : List Bool → List Bool → List Bool}
-    (hprf : PseudorandomFunction family)
-    (hctLen : ∀ n ke, ke ∈ (ProbComp.eval (E.keyGen n)).support →
-      ∀ msg, msg.length = n →
-      ∀ c ∈ (ProbComp.eval (E.encrypt n ke msg)).support, c.length = n)
-    (hcpa : E.INDCPA) :
-    (encryptThenMAC E (prfMAC family hprf.polyTime) hctLen).INDCCA :=
-  (authenticatedEncryption_encryptThenMAC_prfMAC E hprf hctLen hcpa).indcca
 
 end Cslib.Crypto
