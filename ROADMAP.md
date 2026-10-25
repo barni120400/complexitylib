@@ -339,8 +339,10 @@ each statement against the numbered result. Organize modules by subject, not cha
   PAC/agnostic/SQ learning, learning lower bounds, compression and refutation.
 - **Property and distribution testing:** access models, one/two-sided and tolerant testing,
   query and sample bounds, canonical testers and lower bounds.
-- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the converse direction of
-  Liu–Pass (`K^t` mildly hard on average implies one-way functions); prefix-free complexity,
+- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the near-linear threshold regime
+  of Liu–Pass Theorem 3.1 (c), hardness for every polynomial `t(n) ≥ (1 + ε)n` rather than above a
+  polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`
+  multi-tape steps for a constant `c < 1`; prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
   circuitized anti-checker with an efficient generator, hardness magnification, MINCKT and
   hardness results for MINKT, as independently scoped developments; the reverse
