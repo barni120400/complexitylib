@@ -11,7 +11,7 @@ public import Complexity.Init
 public import Mathlib.Analysis.Convex.Segment
 public import Mathlib.Data.List.Defs
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic
+import Aesop
 
 /-!
 # Finite orthogonal polygonal routes

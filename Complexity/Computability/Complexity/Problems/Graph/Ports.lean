@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph
-public import Complexity.Foundations.Data.List.OccurrenceRank
+import Batteries.Data.List.Lemmas
 import Mathlib.Data.List.GetD
 
 /-!
@@ -93,7 +93,10 @@ theorem incidencePort_val (G : Graph)
     (hdeg : ∀ v, G.incidenceVertices.count v ≤ 3) {k : ℕ}
     (hk : k < G.incidenceVertices.length) :
     (G.incidencePort k : ℕ) = (G.incidenceVertices.take k).count G.incidenceVertices[k] := by
-  have h := List.count_take_getElem_lt_count hk
+  have h : (G.incidenceVertices.take k).count G.incidenceVertices[k] <
+      G.incidenceVertices.count G.incidenceVertices[k] := by
+    rw [← List.countBefore_eq_count_take]
+    exact List.countBefore_lt_count_getElem
   have htotal := hdeg G.incidenceVertices[k]
   simp only [incidencePort, List.getD_eq_getElem _ _ hk]
   exact Nat.mod_eq_of_lt (by omega)
@@ -107,7 +110,13 @@ theorem incidencePort_injective (G : Graph)
     (hp : G.incidencePort i = G.incidencePort j) : i = j := by
   have h := congrArg Fin.val hp
   rw [incidencePort_val G hdeg hi, incidencePort_val G hdeg hj] at h
-  exact List.eq_of_getElem_eq_of_count_take_eq hi hj hv h
+  simp only [← List.countBefore_eq_count_take] at h
+  calc i = G.incidenceVertices.idxOfNth G.incidenceVertices[i]
+        (G.incidenceVertices.countBefore G.incidenceVertices[i] i) :=
+      List.idxOfNth_countBefore_getElem.symm
+    _ = G.incidenceVertices.idxOfNth G.incidenceVertices[j]
+        (G.incidenceVertices.countBefore G.incidenceVertices[j] j) := by rw [h, hv]
+    _ = j := List.idxOfNth_countBefore_getElem
 
 /-- Endpoint label of a listed edge occurrence; `false` means first, `true` second. -/
 def edgeEndpoint (G : Graph) (i : ℕ) (side : Bool) : ℕ :=
