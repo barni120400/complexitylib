@@ -60,6 +60,22 @@ theorem comp {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid
     have := Nat.mul_le_mul_left c₂ (Nat.pow_le_pow_left (Nat.add_le_add_right hl 1) d₂)
     omega
 
+/-- Compose in execution order. This lets `fun_prop` infer the intermediate encoding from the
+inner function when it cannot be inferred from the outer function. -/
+@[fun_prop]
+theorem trans {f : α → β} {g : β → γ} (hf : ComputableInPolyTime f encIn encMid)
+    (hg : ComputableInPolyTime g encMid encOut) :
+    ComputableInPolyTime (fun x => g (f x)) encIn encOut :=
+  hg.comp hf
+
+-- Infer an intermediate encoding from the inner computation first. The outer-first
+-- composition rule remains available when the outer computation determines it instead.
+@[fun_prop]
+theorem comp' {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
+    (hg : ComputableInPolyTime g encIn encMid) :
+    ComputableInPolyTime (fun a => f (g a)) encIn encOut :=
+  hf.comp hg
+
 /-- **Pairing**, for any encoding of pairs, through its pairing combinator. -/
 @[fun_prop]
 theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β₁ ↪ List Bool}
