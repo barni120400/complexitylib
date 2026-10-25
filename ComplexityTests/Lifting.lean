@@ -73,12 +73,53 @@ example {p : Protocol (Fin 1 → Fin (2 ^ 30)) (Fin 1 → Fin (2 ^ 30) → Bool)
   obtain ⟨t, ht, hd⟩ := exists_decisionTree_of_solves h4 hm hn hp
   exact ⟨t, ht, hd⟩
 
+/--
+info: 'Cslib.card_filter_avoidsPatterns_mul_two_pow_le_of_spread' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms card_filter_avoidsPatterns_mul_two_pow_le_of_spread
+
+/--
+info: 'Cslib.Communication.Lifting.exists_forall_eq_of_isDense' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms exists_forall_eq_of_isDense
+
+/--
+info: 'Cslib.Communication.Lifting.exists_pieces' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms exists_pieces
+
+/--
+info: 'Cslib.Communication.Lifting.exists_piece_forall_le_card_filter' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms exists_piece_forall_le_card_filter
+
+/--
+info: 'Cslib.Communication.Lifting.ecomplexity_lift_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms ecomplexity_lift_le
+
+/--
+info: 'Cslib.Communication.Lifting.exists_decisionTree_of_solves' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms exists_decisionTree_of_solves
+
+/--
+info: 'Cslib.Communication.Lifting.depth_mul_logb_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
 #print axioms depth_mul_logb_le
 
 end LiftingTests
