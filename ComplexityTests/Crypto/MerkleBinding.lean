@@ -38,13 +38,14 @@ def idHash (_ x : List Bool) : List Bool := x
 example (i : ℕ) (hi : i < 4) :
     merkleVerify idHash key 2 (merkleRoot idHash key leaves) i (leaves.getD i [])
       (merklePath idHash key leaves i) = true :=
-  merkleVerify_merklePath leaves (by rwa [show Nat.clog 2 leaves.length = 2 from rfl])
+  merkleVerify_merklePath_of_clog_eq rfl hi
 
 -- A wrong leaf at position `1` is rejected.
 example : merkleVerify idHash key 2 (merkleRoot idHash key leaves) 1 [true, true]
     (merklePath idHash key leaves 1) = false := by decide
 
--- A path of the wrong length is rejected.
+-- A truncated path is rejected (its recomputed root differs too; `pairLeaf` below isolates the
+-- length check).
 example : merkleVerify idHash key 2 (merkleRoot idHash key leaves) 1 [false, true]
     (merklePath idHash key leaves 1).tail = false := by decide
 

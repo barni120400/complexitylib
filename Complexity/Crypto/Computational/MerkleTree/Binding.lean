@@ -17,43 +17,56 @@ import Complexity.Tactic.PolyTime
 import Complexity.Tactic.PPT
 
 /-!
-# Merkle trees as vector commitments: verification and position binding
+# Merkle trees as authenticated data structures: verification and position binding
 
-`Cslib.Crypto.merkleRoot` commits to a list of leaves, and `Cslib.Crypto.merklePath` opens one
-position. This module adds the commitment-side interface that Kilian's succinct arguments use:
-a verification predicate for openings at a given depth, the size of an opening, and position
-binding as a security game against uniform strict PPT adversaries, reduced to collision
-resistance with no loss.
+`Cslib.Crypto.merkleRoot` hashes a list of leaves and `Cslib.Crypto.merklePath` opens one position.
+This module adds the verifier and the security notion of an authenticated data structure scheme
+([BonehShoup2023], Section 8.9.1): a verifier `merkleVerify` with completeness, binding and a
+polynomial-time certificate, the game of Attack Game 8.2, and the security of Theorem 8.8,
+reduced to collision resistance with no loss.
 
-* `merkleVerify H k d root i leaf path` accepts when `path` has `d` labels, `i < 2 ^ d`, and the
-  root recomputed from `leaf` at position `i` along `path` is `root`. Honest openings of the tree
-  over `leaves` are accepted at depth `Nat.clog 2 leaves.length` (`merkleVerify_merklePath`). An
-  opening has one label per level, each of at most `k.length` bits when `H k` returns `k.length`
-  bits (`length_le_of_mem_merklePath`).
-* Binding holds for openings that `merkleVerify` accepts at the same depth and position
-  (`isCollision_of_merkleVerify`): `extractMerkleCollision` then finds a collision of `H k`. Both
-  checks of `merkleVerify` are needed. Leaves and internal nodes are hashed with the same `H k`,
-  so without the length check the pair of a node's child labels opens as a leaf one level up;
-  and `merkleRootOfPath` reads only the low `path.length` bits of `i`, so without the range check
-  position `i + 2 ^ d` reuses the opening of `i`. The root does not fix the number of leaves, so
-  binding is per depth; a verifier that knows the vector length `N` uses depth `Nat.clog 2 N`.
-* In the position-binding game (`merkleBindingGame`) the adversary receives the security
-  parameter and a uniform key `k`, and outputs a root, a position and two openings. It wins when
-  both openings are accepted at the depth of the first path and their leaves differ
-  (`merkleBreaksBinding`). `MerklePositionBinding H` asks that every uniform strict PPT adversary
-  win with negligible probability.
-* The reduction (`merkleCollisionFinder`) runs the adversary and applies
-  `Cslib.Crypto.extractMerkleCollision` to its two openings. A win always yields a collision, by
-  `Cslib.Crypto.isCollision_extractMerkleCollision`, so the binding advantage is at most the
-  collision advantage at every parameter (`succProbability_merkleBindingGame_le`), and the
-  reduction is strict PPT (`isPPT_merkleCollisionFinder`). Hence every collision-resistant
-  `HashFamily` gives position binding (`HashFamily.merklePositionBinding`).
+* **The verifier.** `merkleVerify H k d root i leaf path` accepts when `path` has `d` labels,
+  `i < 2 ^ d`, and the root recomputed from `leaf` at position `i` along `path` is `root`
+  (the `V` of [BonehShoup2023], Definition 8.3). These are the checks that the module
+  documentation of `Complexity.Crypto.Computational.MerkleTree` requires of a verifier, under
+  "What a verifier must check"; without them binding fails. Honest openings are accepted
+  (`merkleVerify_merklePath`, `merkleVerify_merklePath_of_clog_eq`), the correctness requirement
+  of Definition 8.3. An opening has one label per level, each of at most `k.length` bits when
+  `H k` returns `k.length` bits (`length_le_of_mem_merklePath`).
+* **Binding of the verifier.** Two openings of one position to different leaves, both accepted at
+  the same depth, give a collision of `H k`, found by `extractMerkleCollision`
+  (`isCollision_of_merkleVerify`).
+* **The game.** In `merkleBindingGame` the adversary receives the security parameter and a uniform
+  key `k`, and outputs a root, a position and two openings. It wins when both openings are
+  accepted at the depth of the first path and their leaves differ (`merkleBreaksBinding`).
+  `MerklePositionBinding H` asks that every uniform strict PPT adversary win with negligible
+  probability.
+* **The reduction.** `merkleCollisionFinder` runs the adversary and applies
+  `extractMerkleCollision` to its two openings. Every win yields a collision, so the binding
+  advantage is at most the collision advantage at every parameter
+  (`succProbability_merkleBindingGame_le`), and the reduction is strict PPT
+  (`isPPT_merkleCollisionFinder`). Hence every collision-resistant `HashFamily` gives position
+  binding (`HashFamily.merklePositionBinding`).
 
-Kilian's construction commits to a PCP proof with such a tree and opens the queried positions
-([Barak and Goldreich][BarakGoldreich2001], Construction 3.4, steps P1.3 and V3). There the
-hashing family resists non-uniform circuits; here, as in `CollisionResistant`, adversaries are
-uniform. Barak and Goldreich use binding inside the proof of their Lemma 3.5 rather than stating
-it separately; the game here is this library's statement of it.
+**Differences from [BonehShoup2023].** Attack Game 8.2 is stated for a scheme over `(X^n, Y)`
+with a fixed number `n` of items; here:
+* the hash is a keyed family with a uniform `n`-bit key, and adversaries are uniform strict PPT
+  programs, as in `CollisionResistant`;
+* the adversary chooses the depth `d`, the length of its first path, and must open both leaves at
+  that depth, which makes the game stronger than one with a fixed depth;
+* positions are `0 ≤ i < 2 ^ d`, the padding positions included, rather than `1 ≤ i ≤ n`;
+* the adversary writes its position in unary (`encMerkleBindingOutput`), so the game covers
+  polynomially bounded positions: enough for trees with polynomially many leaves, but not for
+  trees whose leaves are indexed by superpolynomially many positions.
+
+**Kilian's construction.** Kilian's succinct arguments commit to a PCP proof with a hash tree and
+open the queried positions ([Barak and Goldreich][BarakGoldreich2001], Construction 3.4, steps
+P1.3 and V3). That tree differs from this one, which is [BonehShoup2023]'s Figure 8.12: its leaf
+labels are the proof bits themselves, not their hashes, and an internal label hashes the plain
+concatenation `ℓ_γ0 ℓ_γ1` of its children's labels, not their `encPair` pairing. Its prover sends
+both child labels at every level of a path rather than only the siblings, and the verifier checks
+the same hash equations along the path. Barak and Goldreich's hashing family resists non-uniform
+circuits.
 
 ## Main definitions
 
@@ -66,9 +79,10 @@ it separately; the game here is this library's statement of it.
 
 ## Main results
 
-* `Cslib.Crypto.merkleVerify_merklePath`: honest openings are accepted.
-* `Cslib.Crypto.length_le_of_mem_merklePath`: the labels of an opening have at most `k.length`
-  bits.
+* `Cslib.Crypto.merkleVerify_merklePath`, `Cslib.Crypto.merkleVerify_merklePath_of_clog_eq`:
+  honest openings are accepted.
+* `Cslib.Crypto.length_of_mem_merkleLevel`, `Cslib.Crypto.length_le_of_mem_merklePath`: tree
+  nodes have `k.length` bits, and the labels of an opening at most `k.length` bits.
 * `Cslib.Crypto.computableInPolyTime_merkleVerify`: verification takes polynomial time.
 * `Cslib.Crypto.isCollision_of_merkleVerify`: two accepted openings of one position to different
   leaves yield a collision.
@@ -82,6 +96,8 @@ it separately; the game here is this library's statement of it.
 
 ## References
 
+* [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023], Section 8.9.1,
+  Definitions 8.3 and 8.4, Attack Game 8.2 and Theorem 8.8.
 * [B. Barak, O. Goldreich, *Universal Arguments and their Applications*][BarakGoldreich2001],
   Construction 3.4.
 -/
@@ -99,7 +115,9 @@ section Verify
 variable (H : List Bool → List Bool → List Bool) (k : List Bool)
 
 /-- Accept `path` as an opening of position `i` of a depth-`d` tree with root `root` to `leaf`:
-the path has `d` labels, `i < 2 ^ d`, and the recomputed root is `root`. -/
+the path has `d` labels, `i < 2 ^ d`, and the recomputed root is `root`. This is the verifier `V`
+of the Merkle tree as an authenticated data structure ([BonehShoup2023], Definition 8.3), with the
+depth as an explicit argument. -/
 def merkleVerify (d : ℕ) (root : List Bool) (i : ℕ) (leaf : List Bool)
     (path : List (List Bool)) : Bool :=
   path.length == d && decide (i < 2 ^ d) && merkleRootOfPath H k leaf i path == root
@@ -107,7 +125,8 @@ def merkleVerify (d : ℕ) (root : List Bool) (i : ℕ) (leaf : List Bool)
 variable {H k}
 
 /-- **Honest openings are accepted**: every position `i < 2 ^ Nat.clog 2 leaves.length` of the
-tree over `leaves`, opened by its authentication path, is accepted against the root. -/
+tree over `leaves`, opened by its authentication path, is accepted against the root (the
+correctness requirement of [BonehShoup2023], Definition 8.3). -/
 theorem merkleVerify_merklePath (leaves : List (List Bool)) {i : ℕ}
     (hi : i < 2 ^ Nat.clog 2 leaves.length) :
     merkleVerify H k (Nat.clog 2 leaves.length) (merkleRoot H k leaves) i (leaves.getD i [])
@@ -115,8 +134,17 @@ theorem merkleVerify_merklePath (leaves : List (List Bool)) {i : ℕ}
   rw [merkleVerify, merkleRootOfPath_merklePath leaves hi]
   simp [hi]
 
+/-- Honest openings are accepted at any depth `d` equal to the tree's depth, for instance
+`d = Nat.clog 2 N` for `N` leaves. -/
+theorem merkleVerify_merklePath_of_clog_eq {leaves : List (List Bool)} {d i : ℕ}
+    (hd : Nat.clog 2 leaves.length = d) (hi : i < 2 ^ d) :
+    merkleVerify H k d (merkleRoot H k leaves) i (leaves.getD i [])
+      (merklePath H k leaves i) = true := by
+  subst hd
+  exact merkleVerify_merklePath leaves hi
+
 /-- Every node of the tree has `k.length` bits when `H k` returns `k.length` bits. -/
-private theorem length_of_mem_merkleLevel (hlen : ∀ k x, (H k x).length = k.length)
+theorem length_of_mem_merkleLevel (hlen : ∀ k x, (H k x).length = k.length)
     {leaves : List (List Bool)} {j : ℕ} {y : List Bool} (hy : y ∈ merkleLevel H k leaves j) :
     y.length = k.length := by
   cases j with
@@ -214,7 +242,8 @@ abbrev MerkleBindingOutput :=
   (List Bool × ℕ) × (List Bool × List (List Bool)) × (List Bool × List (List Bool))
 
 /-- The encoding of `MerkleBindingOutput`: bit strings as themselves, the position in unary, as
-in `computableInPolyTime_extractMerkleCollision`. -/
+in `computableInPolyTime_extractMerkleCollision`. An efficient adversary therefore outputs only
+polynomially bounded positions. -/
 abbrev encMerkleBindingOutput : MerkleBindingOutput ↪ List Bool :=
   encPair (encPair encBits encUnary)
     (encPair (encPair encBits (encList encBits)) (encPair encBits (encList encBits)))
@@ -234,16 +263,18 @@ def merkleBreaksBinding (k : List Bool) (out : MerkleBindingOutput) : Bool :=
     merkleVerify H k out.2.1.2.length out.1.1 out.1.2 out.2.2.1 out.2.2.2 &&
       out.2.1.1 != out.2.2.1
 
-/-- The position-binding experiment: sample a uniform `n`-bit key `k`, run the adversary on
-`(n, k)`, and accept when its output breaks binding under `k`. -/
+/-- The position-binding experiment ([BonehShoup2023], Attack Game 8.2, for a keyed hash): sample
+a uniform `n`-bit key `k`, run the adversary on `(n, k)`, and accept when its output breaks
+binding under `k`. -/
 noncomputable def merkleBindingGame (adversary : MerkleBindingAdversary) (n : ℕ) :
     ProbComp Bool := do
   let k ← BitString.sampleList n
   let out ← adversary n k
   return merkleBreaksBinding H k out
 
-/-- Position binding of Merkle trees over `H`: every uniform strict PPT adversary breaks binding
-with negligible probability. -/
+/-- Position binding of Merkle trees over `H` ([BonehShoup2023], Definition 8.4): every uniform
+strict PPT adversary breaks binding with negligible probability. Adversaries write positions in
+unary, so this covers polynomially bounded positions. -/
 def MerklePositionBinding : Prop :=
   Game.Indistinguishable (fun adversary n => ProbComp.eval (merkleBindingGame H adversary n))
     (fun _ _ => PMF.pure false) (IsPPT encMerkleBindingOutput)
@@ -320,7 +351,8 @@ theorem MerklePositionBinding.of_negligible
 
 end Binding
 
-/-- **Collision-resistant hash families give position-binding Merkle trees**: no uniform strict
+/-- **Collision-resistant hash families give position-binding Merkle trees**
+([BonehShoup2023], Theorem 8.8, for keyed families and uniform adversaries): no uniform strict
 PPT adversary can open a position of a Merkle tree over a `HashFamily` to two different leaves,
 except with negligible probability. The reduction is `merkleCollisionFinder`, with no loss
 (`succProbability_merkleBindingGame_le`). -/
