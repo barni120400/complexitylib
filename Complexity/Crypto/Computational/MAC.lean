@@ -725,7 +725,7 @@ theorem isPPTOn_sufCmaGame (M : MACScheme) {adversary : Forger}
       (encPair encBits (encPair encBits encBits)) by fun_prop)
   have hsize : ComputableInPolyTime
       (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
-        pair.2.1.1.length == pair.1.1)
+        pair.2.1.1.length == M.msgLen pair.1.1)
       (encPair (encPair encUnary encBits)
         (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool :=
     ComputableInPolyTime.beq (encB := encUnary)
@@ -735,12 +735,12 @@ theorem isPPTOn_sufCmaGame (M : MACScheme) {adversary : Forger}
         (encPair (encPair encUnary encBits)
           (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
         encBits by fun_prop))
-      (show ComputableInPolyTime
+      (M.msgLen_polyTime.comp (show ComputableInPolyTime
         (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
           pair.1.1)
         (encPair (encPair encUnary encBits)
           (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
-        encUnary by fun_prop)
+        encUnary by fun_prop))
   have hpost : ComputableInPolyTime
       (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
         (pair.2.1.1.length == M.msgLen pair.1.1) && !pair.2.2.contains pair.2.1 &&
@@ -995,14 +995,15 @@ theorem isOraclePPT_reindexForger {ℓ : ℕ → ℕ}
     (hℓ : ComputableInPolyTime ℓ encUnary encUnary) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
     IsOraclePPT (encPair encBits encBits) (reindexForger ℓ adversary) := by
-  have hℓTidy := hℓ.tidy
   have hcond : ComputableTidilyInPolyTime
       (fun p : ℕ × List Bool => ℓ (GeneratorReindex.parameter ℓ p.1) == p.1)
       (encPair encUnary encBits) encBool := by
+    apply ComputableInPolyTime.tidy
     polytime
   have hprep : ComputableTidilyInPolyTime
       (fun p : ℕ × List Bool => (GeneratorReindex.parameter ℓ p.1, p.2))
       (encPair encUnary encBits) (encPair encUnary encBits) := by
+    apply ComputableInPolyTime.tidy
     polytime
   have hyes : IsOraclePPTOn (encPair encUnary encBits) (encPair encBits encBits)
       (fun p : ℕ × List Bool => adversary (GeneratorReindex.parameter ℓ p.1) p.2) :=
