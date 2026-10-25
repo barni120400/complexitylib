@@ -79,7 +79,7 @@ theorem isSensitiveCoord_threshold_iff (x : BitString n) (i : Fin n) :
     omega
 
 /-- At an input of weight `j`, the sensitive coordinates of `Th^n_j` are its true bits. -/
-private theorem sensitivityAt_threshold_of_weight_eq {x : BitString n} (hx : weight x = j) :
+theorem sensitivityAt_threshold_of_weight_eq {x : BitString n} (hx : weight x = j) :
     sensitivityAt (threshold n j) x = j := by
   have : sensitiveCoords (threshold n j) x = univ.filter fun i => x i = true := by
     ext i
@@ -88,7 +88,7 @@ private theorem sensitivityAt_threshold_of_weight_eq {x : BitString n} (hx : wei
 
 /-- At an input of weight `j - 1`, for `j ≥ 1`, the sensitive coordinates of `Th^n_j` are its
 false bits. -/
-private theorem sensitivityAt_threshold_of_weight_add_one_eq {x : BitString n}
+theorem sensitivityAt_threshold_of_weight_add_one_eq {x : BitString n}
     (hx : weight x + 1 = j) : sensitivityAt (threshold n j) x = n + 1 - j := by
   have : sensitiveCoords (threshold n j) x = univ.filter fun i => x i = false := by
     ext i
@@ -132,7 +132,7 @@ theorem certificateComplexityAt_threshold_le (x : BitString n) :
     omega
 
 /-- `bs(Th^n_j) ≤ max(j, n + 1 - j)`. -/
-private theorem blockSensitivity_threshold_le :
+theorem blockSensitivity_threshold_le :
     blockSensitivity (threshold n j) ≤ max j (n + 1 - j) :=
   (blockSensitivity_le_certificateComplexity _).trans
     (Finset.sup_le fun x _ => certificateComplexityAt_threshold_le x)
@@ -190,7 +190,7 @@ theorem blockSensitivity_threshold_one_right : blockSensitivity (threshold n 1) 
     ((sensitivityAt_le_sensitivity _ _).trans (sensitivity_le_blockSensitivity _)))
 
 /-- Certifying the value `0` of the disjunction at the all-false input takes every bit. -/
-private theorem certificateComplexityAt_threshold_one_right :
+theorem certificateComplexityAt_threshold_one_right :
     certificateComplexityAt (threshold n 1) (fun _ => false) = n :=
   le_antisymm (certificateComplexityAt_le_card _ _) (sensitivityAt_threshold_one_right.symm.trans_le
     ((sensitivityAt_le_blockSensitivityAt _ _).trans

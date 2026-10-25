@@ -80,7 +80,7 @@ private theorem isCertificate_queries {f : BooleanFunction n} {t : DecisionTree 
   fun y hy => (ht y).symm.trans ((t.eval_eq_of_forall_mem_queries hy).trans (ht x))
 
 /-- Certificate complexity at an input is at most the depth of any tree computing the function. -/
-private theorem certificateComplexityAt_le_depth {f : BooleanFunction n}
+theorem certificateComplexityAt_le_depth {f : BooleanFunction n}
     {t : DecisionTree (Fin n) Bool} (ht : t.Computes f) (x : BitString n) :
     certificateComplexityAt f x ≤ t.depth :=
   (certificateComplexityAt_le (isCertificate_queries ht x)).trans (t.card_queries_le_depth x)

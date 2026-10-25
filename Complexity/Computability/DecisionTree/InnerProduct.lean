@@ -82,7 +82,7 @@ theorem two_pow_le_leafCount_sq_of_dotProduct {ι : Type*} [Fintype ι]
 
 /-- Every bi-monotone comparison tree computing inner product modulo two satisfies
 `2 ^ Fintype.card ι ≤ (nodeCount + 1) ^ 2`. -/
-private theorem two_pow_le_nodeCount_add_one_sq_of_biMonotone_dotProduct {ι : Type*} [Fintype ι]
+theorem two_pow_le_nodeCount_add_one_sq_of_biMonotone_dotProduct {ι : Type*} [Fintype ι]
     (t : DecisionTree (BiMonotoneComparison (ι → Bool) (ι → Bool)) Bool)
     (ht : ∀ x y, t.eval (fun q => q.eval x y) = x ⬝ᵥ y) :
     2 ^ Fintype.card ι ≤ (t.nodeCount + 1) ^ 2 := by
@@ -100,7 +100,7 @@ theorem two_pow_le_nodeCount_add_one_sq_of_dotProduct {ι : Type*} [Fintype ι]
 
 /-- Every separable-comparison tree of rank at most `1` computing inner product modulo two
 satisfies `2 ^ Fintype.card ι ≤ (depth + 1) ^ 2`. -/
-private theorem two_pow_le_depth_add_one_sq_of_rank_le_one_dotProduct {ι : Type*} [Fintype ι]
+theorem two_pow_le_depth_add_one_sq_of_rank_le_one_dotProduct {ι : Type*} [Fintype ι]
     (t : DecisionTree (SeparableComparison (ι → Bool) (ι → Bool)) Bool)
     (hr : t.rank ≤ 1)
     (ht : ∀ x y, t.eval (fun q => q.eval x y) = x ⬝ᵥ y) :
@@ -119,7 +119,7 @@ theorem two_pow_le_depth_add_one_sq_of_isDecisionList_dotProduct {ι : Type*} [F
 
 /-- Every separable-comparison decision list computing inner product modulo two satisfies
 `2 ^ Fintype.card ι ≤ (nodeCount + 1) ^ 2`. -/
-private theorem two_pow_le_nodeCount_add_one_sq_of_isDecisionList_dotProduct {ι : Type*} [Fintype ι]
+theorem two_pow_le_nodeCount_add_one_sq_of_isDecisionList_dotProduct {ι : Type*} [Fintype ι]
     (t : DecisionTree (SeparableComparison (ι → Bool) (ι → Bool)) Bool)
     (_hl : t.IsDecisionList)
     (ht : ∀ x y, t.eval (fun q => q.eval x y) = x ⬝ᵥ y) :
@@ -128,7 +128,7 @@ private theorem two_pow_le_nodeCount_add_one_sq_of_isDecisionList_dotProduct {ι
 
 /-- Every bi-monotone comparison tree computing inner product modulo two satisfies the binomial-sum
 rank-depth lower bound `2 ^ Fintype.card ι ≤ (∑ j ≤ rank, depth.choose j) ^ 2`. -/
-private theorem two_pow_le_sum_choose_rank_sq_of_biMonotone_dotProduct {ι : Type*} [Fintype ι]
+theorem two_pow_le_sum_choose_rank_sq_of_biMonotone_dotProduct {ι : Type*} [Fintype ι]
     (t : DecisionTree (BiMonotoneComparison (ι → Bool) (ι → Bool)) Bool)
     (ht : ∀ x y, t.eval (fun q => q.eval x y) = x ⬝ᵥ y) :
     2 ^ Fintype.card ι ≤ (∑ j ∈ Finset.range (t.rank + 1), t.depth.choose j) ^ 2 :=
@@ -165,7 +165,7 @@ theorem rank_mul_rpow_le_depth_of_dotProduct {ι : Type*} [Fintype ι]
 
 /-- Every bi-monotone comparison tree computing inner product modulo two satisfies the binomial-sum
 energy-depth lower bound `2 ^ Fintype.card ι ≤ (∑ j ≤ energy, depth.choose j) ^ 2`. -/
-private theorem two_pow_le_sum_choose_energy_sq_of_biMonotone_dotProduct {ι : Type*} [Fintype ι]
+theorem two_pow_le_sum_choose_energy_sq_of_biMonotone_dotProduct {ι : Type*} [Fintype ι]
     (t : DecisionTree (BiMonotoneComparison (ι → Bool) (ι → Bool)) Bool)
     (ht : ∀ x y, t.eval (fun q => q.eval x y) = x ⬝ᵥ y) :
     2 ^ Fintype.card ι ≤ (∑ j ∈ Finset.range (t.energy + 1), t.depth.choose j) ^ 2 :=

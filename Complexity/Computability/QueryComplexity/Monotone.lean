@@ -113,7 +113,7 @@ private theorem certificateComplexityAt_le_sensitivityFor_false (hf : Monotone f
   exact le_antisymm this (Bool.false_le _)
 
 /-- For a monotone function, `C(f, x) ≤ s_{f(x)}(f)`. -/
-private theorem certificateComplexityAt_le_sensitivityFor_of_monotone (hf : Monotone f)
+theorem certificateComplexityAt_le_sensitivityFor_of_monotone (hf : Monotone f)
     (x : BitString n) : certificateComplexityAt f x ≤ sensitivityFor f (f x) := by
   cases hx : f x with
   | false => exact certificateComplexityAt_le_sensitivityFor_false hf hx

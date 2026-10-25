@@ -148,7 +148,7 @@ theorem exists_computes_of_forall_exists_distributionalError_le
     exact htree_depth S
 
 /-- `R_ε(f) ≤ d` exactly when `D^ν_ε(f) ≤ d` for every distribution `ν` on the inputs. -/
-private theorem randomizedComplexity_le_iff_forall_distributionalComplexity_le :
+theorem randomizedComplexity_le_iff_forall_distributionalComplexity_le :
     randomizedComplexity ε f ≤ d ↔
       ∀ ν : StdSimplex ℝ (ι → Bool), distributionalComplexity ε ν f ≤ d := by
   refine ⟨fun h ν => (distributionalComplexity_le_randomizedComplexity ε ν f).trans h,

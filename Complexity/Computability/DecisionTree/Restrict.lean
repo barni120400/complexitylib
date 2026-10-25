@@ -59,7 +59,7 @@ theorem eval_restrict (ρ : PartialAssignment ι) (t : DecisionTree ι β) (x : 
     | none => simp [ih₀, ih₁, PartialAssignment.fill_of_eq_none h]
     | some b => cases b <;> simp [ih₀, ih₁, PartialAssignment.fill_of_eq_some h]
 
-private theorem depth_restrict_le (ρ : PartialAssignment ι) (t : DecisionTree ι β) :
+theorem depth_restrict_le (ρ : PartialAssignment ι) (t : DecisionTree ι β) :
     (t.restrict ρ).depth ≤ t.depth := by
   induction t with
   | leaf b => simp [restrict]

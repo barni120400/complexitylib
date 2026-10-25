@@ -104,7 +104,7 @@ variable {f : BooleanFunction n} {x : BitString n}
 /-! ### `C(f) ≤ s(f) bs(f)` -/
 
 /-- A sensitive block contains a minimal sensitive block. -/
-private theorem IsSensitiveBlock.exists_isMinimalSensitiveBlock_subset {B : Block n}
+theorem IsSensitiveBlock.exists_isMinimalSensitiveBlock_subset {B : Block n}
     (hB : IsSensitiveBlock f x B) : ∃ C ⊆ B, IsMinimalSensitiveBlock f x C := by
   obtain ⟨C, hC, hmin⟩ := exists_min_image (B.powerset.filter (IsSensitiveBlock f x)) card
     ⟨B, mem_filter.2 ⟨mem_powerset_self B, hB⟩⟩
@@ -355,7 +355,7 @@ theorem complexity_le_blockSensitivityFor_not_mul_certificateComplexityFor
   | true => exact complexity_le_blockSensitivityFor_mul_certificateComplexityFor f
 
 /-- `D(f) ≤ C_b(f) bs(f)` for either value `b` [BealsBuhrmanCleveMoscaDeWolf2001]. -/
-private theorem complexity_le_certificateComplexityFor_mul_blockSensitivity (f : BooleanFunction n)
+theorem complexity_le_certificateComplexityFor_mul_blockSensitivity (f : BooleanFunction n)
     (b : Bool) : complexity f ≤ certificateComplexityFor f b * blockSensitivity f :=
   (complexity_le_blockSensitivityFor_not_mul_certificateComplexityFor f b).trans (by
     rw [mul_comm]
