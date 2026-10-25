@@ -217,8 +217,11 @@ noncomputable def doubleEchoPrfMAC : MACScheme :=
 
 example (n : ℕ) : doubleEchoPrfMAC.msgLen n = 2 * n := rfl
 
-example (n : ℕ) : MACScheme.reindexParam (fun k => 2 * k) (2 * n) = n :=
-  MACScheme.reindexParam_apply_of_strictMono strictMono_double n
+example : doubleEchoPrfMAC.verify [false, true] [true, false] [true, false] = true := by
+  decide
+
+example (n : ℕ) : GeneratorReindex.parameter (fun k => 2 * k) (2 * n) = n :=
+  GeneratorReindex.parameter_apply_of_strictMono strictMono_double n
 
 example (M : MACScheme) (h : M.SUFCMA) :
     (M.reindex (fun n => 2 * n) computableInPolyTime_double).SUFCMA :=

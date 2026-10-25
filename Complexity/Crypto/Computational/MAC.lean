@@ -7,12 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Crypto.Computational.GeneratorReindex
 public import Complexity.Crypto.Computational.PseudorandomFunction
 public import Complexity.Crypto.Computational.Signature
-public import Mathlib.Data.Nat.Find
 import Complexity.Probability.PMF.Bind
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Search
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Complexity.Computability.Probabilistic.Oracle.Composition
 import Complexity.Computability.Probabilistic.Oracle.Tidy
@@ -73,9 +72,8 @@ $$\Pr[\text{Forge}] \le \mathrm{Adv}_{\mathrm{PRF}}(B(\mathcal{A}), n) + 2^{-n}.
   experiment and security predicate.
 * `Cslib.Crypto.MACScheme.oneTimeSigningOracle`, `eufOneTimeGame`, `OneTimeEUFCMA`: one-time
   fresh-message adaptive EUF-CMA experiment and security predicate.
-* `Cslib.Crypto.MACScheme.reindex`, `Cslib.Crypto.MACScheme.reindexParam`,
-  `Cslib.Crypto.MACScheme.reindexForger`: schedule reindexing of a `MACScheme` and its adaptive
-  forger reduction.
+* `Cslib.Crypto.MACScheme.reindex`, `Cslib.Crypto.MACScheme.reindexForger`: schedule reindexing of
+  a `MACScheme` and its adaptive forger reduction (via `GeneratorReindex.parameter`).
 * `Cslib.Crypto.prfMAC`: canonical deterministic MAC constructed from a keyed function family
   ([Boneh and Shoup, Section 6.3][BonehShoup2023]).
 * `Cslib.Crypto.macLogHandler`, `Cslib.Crypto.macToPrfDistinguisher`: oracle logging handler and
@@ -185,16 +183,6 @@ private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ 
   rw [heq]
   exact ComputableTidilyInPolyTime.anyWithInput (test := fun a x => elem a == x) hlist (by polytime)
 
-/-- Membership test `List.contains` on lists of bitstrings is computable in plain polynomial
-time. -/
-@[program_certificate]
-theorem computableInPolyTime_contains {γ : Type} {encIn : γ ↪ List Bool}
-    {list : γ → List (List Bool)} {elem : γ → List Bool}
-    (hlist : ComputableInPolyTime list encIn (encList encBits))
-    (helem : ComputableInPolyTime elem encIn encBits) :
-    ComputableInPolyTime (fun a => (list a).contains (elem a)) encIn encBool :=
-  .of_tidy (computableTidilyInPolyTime_contains hlist.tidy helem.tidy)
-
 namespace MACScheme
 
 attribute [program_certificate] msgLen_polyTime keyGen_ppt sign_ppt verify_polyTime
@@ -212,7 +200,7 @@ polynomial-time. -/
 theorem computableInPolyTime_msgLen_comp (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
     {n : γ → ℕ} (hn : ComputableInPolyTime n encIn encUnary) :
     ComputableInPolyTime (fun a => M.msgLen (n a)) encIn encUnary :=
-  .of_tidy (M.computableTidilyInPolyTime_msgLen_comp hn.tidy)
+  M.msgLen_polyTime.comp hn
 
 @[local fun_prop]
 private theorem isPPTOn_keyGen_comp_tidy (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
@@ -242,7 +230,7 @@ theorem isPPTOn_sign_comp (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
     (hsk : ComputableInPolyTime sk encIn encBits)
     (hmsg : ComputableInPolyTime msg encIn encBits) :
     IsPPTOn encIn encBits (fun a => M.sign (sk a) (msg a)) :=
-  M.isPPTOn_sign_comp_tidy hsk.tidy hmsg.tidy
+  M.sign_ppt.preprocess (hsk.prod hmsg)
 
 @[local fun_prop]
 private theorem computableTidilyInPolyTime_verify_comp (M : MACScheme)
@@ -262,7 +250,7 @@ theorem computableInPolyTime_verify_comp (M : MACScheme)
     (hmsg : ComputableInPolyTime msg encIn encBits)
     (htag : ComputableInPolyTime tag encIn encBits) :
     ComputableInPolyTime (fun a => M.verify (sk a) (msg a) (tag a)) encIn encBool :=
-  .of_tidy (M.computableTidilyInPolyTime_verify_comp hsk.tidy hmsg.tidy htag.tidy)
+  M.verify_polyTime.comp (hsk.prod (hmsg.prod htag))
 
 /-! ### Full adaptive chosen-message security (`EUFCMA`) -/
 
@@ -952,38 +940,12 @@ noncomputable def reindex (M : MACScheme) (ℓ : ℕ → ℕ)
   verify_sign := fun n sk hsk msg hmsg tag htag =>
     M.verify_sign (ℓ n) sk hsk msg hmsg tag htag
 
-/-- Bounded search for the greatest parameter `n ≤ m` with `ℓ n ≤ m`. -/
-def reindexParam (ℓ : ℕ → ℕ) (m : ℕ) : ℕ :=
-  Nat.findGreatest (fun n => ℓ n ≤ m) m
-
-@[local fun_prop]
-private theorem computableTidilyInPolyTime_reindexParam
-    {γ : Type} {encIn : γ ↪ List Bool} {ℓ : ℕ → ℕ} {m : γ → ℕ}
-    (hℓ : ComputableInPolyTime ℓ encUnary encUnary)
-    (hm : ComputableTidilyInPolyTime m encIn encUnary) :
-    ComputableTidilyInPolyTime (fun a => reindexParam ℓ (m a)) encIn encUnary := by
-  have hℓTidy := hℓ.tidy
-  unfold reindexParam
-  polytime
-
-/-- For a strictly monotone schedule `ℓ`, `reindexParam ℓ (ℓ n) = n`. -/
-@[simp]
-theorem reindexParam_apply_of_strictMono {ℓ : ℕ → ℕ} (hmono : StrictMono ℓ) (n : ℕ) :
-    reindexParam ℓ (ℓ n) = n := by
-  apply le_antisymm
-  · by_contra! hlt
-    have hspec : ℓ (reindexParam ℓ (ℓ n)) ≤ ℓ n :=
-      Nat.findGreatest_spec (P := fun k => ℓ k ≤ ℓ n) (Nat.zero_le _)
-        (hmono.monotone (Nat.zero_le n))
-    exact (hmono hlt).not_ge hspec
-  · exact Nat.le_findGreatest (hmono.id_le n) le_rfl
-
 /-- Wrap a forger `adversary` against `M.reindex ℓ hℓ` into a forger against `M`: given unary
-parameter `m` and auxiliary input `aux`, recover `n := reindexParam ℓ m`; if `ℓ n == m`, run
-`adversary n aux`, and otherwise return `([], [])` without querying the oracle. -/
+parameter `m` and auxiliary input `aux`, recover `n := GeneratorReindex.parameter ℓ m`; if
+`ℓ n == m`, run `adversary n aux`, and otherwise return `([], [])` without querying the oracle. -/
 def reindexForger (ℓ : ℕ → ℕ) (adversary : Forger) : Forger :=
   fun m aux =>
-    let n := reindexParam ℓ m
+    let n := GeneratorReindex.parameter ℓ m
     if ℓ n == m then
       adversary n aux
     else
@@ -995,7 +957,7 @@ executes `adversary n`. -/
 theorem reindexForger_apply_of_strictMono {ℓ : ℕ → ℕ} (hmono : StrictMono ℓ)
     (adversary : Forger) (n : ℕ) (aux : List Bool) :
     reindexForger ℓ adversary (ℓ n) aux = adversary n aux := by
-  simp [reindexForger, reindexParam_apply_of_strictMono hmono]
+  simp [reindexForger, GeneratorReindex.parameter_apply_of_strictMono hmono]
 
 /-- `reindexForger ℓ adversary` preserves strict oracle-PPT admissibility (`IsOraclePPT`). -/
 theorem isOraclePPT_reindexForger {ℓ : ℕ → ℕ}
@@ -1004,15 +966,15 @@ theorem isOraclePPT_reindexForger {ℓ : ℕ → ℕ}
     IsOraclePPT (encPair encBits encBits) (reindexForger ℓ adversary) := by
   have hℓTidy := hℓ.tidy
   have hcond : ComputableTidilyInPolyTime
-      (fun p : ℕ × List Bool => ℓ (reindexParam ℓ p.1) == p.1)
+      (fun p : ℕ × List Bool => ℓ (GeneratorReindex.parameter ℓ p.1) == p.1)
       (encPair encUnary encBits) encBool := by
     polytime
   have hprep : ComputableTidilyInPolyTime
-      (fun p : ℕ × List Bool => (reindexParam ℓ p.1, p.2))
+      (fun p : ℕ × List Bool => (GeneratorReindex.parameter ℓ p.1, p.2))
       (encPair encUnary encBits) (encPair encUnary encBits) := by
     polytime
   have hyes : IsOraclePPTOn (encPair encUnary encBits) (encPair encBits encBits)
-      (fun p : ℕ × List Bool => adversary (reindexParam ℓ p.1) p.2) :=
+      (fun p : ℕ × List Bool => adversary (GeneratorReindex.parameter ℓ p.1) p.2) :=
     hadversary.preprocess hprep
   have hno : IsOraclePPTOn (encPair encUnary encBits) (encPair encBits encBits)
       (fun _ : ℕ × List Bool => (pure ([], []) : WordOracleComp Unit (List Bool × List Bool))) :=
