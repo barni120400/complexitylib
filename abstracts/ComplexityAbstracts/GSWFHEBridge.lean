@@ -746,7 +746,8 @@ theorem leveled_witness (hLWE : DecisionLWE) :
     nativeInDepth_of hkgJoint hencJoint hdecJoint hevalJoint,
     fun d => hforBudget (fun _ => d) (by fun_prop),
     fun budget hbudget =>
-      ⟨fun _ => ⟨rfl, rfl⟩, hforBudget budget (.of_tidy (CryptographyBridge.polyTime_iff.mp hbudget))⟩⟩
+      ⟨fun _ => ⟨rfl, rfl⟩,
+        hforBudget budget (.of_tidy (CryptographyBridge.polyTime_iff.mp hbudget))⟩⟩
 
 /-- **The library's fixed-key scheme witnesses `fullyHomomorphic`**, with GSW's own decryption
 circuits `GSW.DepthParameters.decryptionCircuits.circuit`. -/
