@@ -229,10 +229,13 @@ def NativeInDepth (E : ℕ → Homomorphic.Scheme) : Prop :=
       (Encoding.encPair Encoding.encBits Encoding.encBits)
       (fun p : ℕ × ℕ => ProbComp.eval ((E p.2).keyGen p.1)) ∧
     Randomized.StrictPPT
-      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encBits Encoding.encBool))
-      Encoding.encBits (fun p => ProbComp.eval ((E 0).encrypt p.1 p.2.1 p.2.2)) ∧
-    Computation.PolyTime (fun p : ℕ × List Bool × List Bool => (E 0).decrypt p.1 p.2.1 p.2.2)
-      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encBits Encoding.encBits))
+      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encUnary
+        (Encoding.encPair Encoding.encBits Encoding.encBool)))
+      Encoding.encBits (fun p => ProbComp.eval ((E p.2.1).encrypt p.1 p.2.2.1 p.2.2.2)) ∧
+    Computation.PolyTime
+      (fun p : ℕ × ℕ × List Bool × List Bool => (E p.2.1).decrypt p.1 p.2.2.1 p.2.2.2)
+      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encUnary
+        (Encoding.encPair Encoding.encBits Encoding.encBits)))
       Encoding.encBool ∧
     Randomized.StrictPPT
       (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encUnary
@@ -599,11 +602,12 @@ theorem native_of {S : Homomorphic.Scheme}
 theorem nativeInDepth_of {E : ℕ → Homomorphic.Scheme}
     (hkeyGen : IsPPTOn (encPair encUnary encUnary) (encPair encBits encBits)
       (fun p : ℕ × ℕ => (E p.2).keyGen p.1))
-    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
-      (fun p => (E 0).encrypt p.1 p.2.1 p.2.2))
+    (hencrypt : IsPPTOn
+      (encPair encUnary (encPair encUnary (encPair encBits encBool))) encBits
+      (fun p => (E p.2.1).encrypt p.1 p.2.2.1 p.2.2.2))
     (hdecrypt : ComputableInPolyTime
-      (fun p : ℕ × List Bool × List Bool => (E 0).decrypt p.1 p.2.1 p.2.2)
-      (encPair encUnary (encPair encBits encBits)) encBool)
+      (fun p : ℕ × ℕ × List Bool × List Bool => (E p.2.1).decrypt p.1 p.2.2.1 p.2.2.2)
+      (encPair encUnary (encPair encUnary (encPair encBits encBits))) encBool)
     (hevaluate : IsPPTOn
       (encPair encUnary (encPair encUnary
         (encPair encBits (encPair (Circuits.Boolean.encCircuit 1)
@@ -703,10 +707,8 @@ theorem leveled_witness (hLWE : DecisionLWE) :
   have hencrypt := GSW.DepthParameters.isPPTOn_encrypt
   have hevaluate := GSW.DepthParameters.isPPTOn_evaluate
   obtain ⟨circuits, hsize, hcircuits⟩ := Leveled.exists_decrypt_circuits D hD
-  obtain ⟨hsecret, hciphertext, hkgJoint, hencJoint, hdecJoint, hevalJoint, hfamily⟩ :=
-    Leveled.schemeFamily_spec D GSW.DepthParameters.correct
-      GSW.DepthParameters.fixedWidth GSW.DepthParameters.bootstrappable
-      (GSW.DepthParameters.indCPA_scheme (decisionLWE_iff.mp hLWE)) hkeyGen hencrypt hevaluate
+  obtain ⟨hsecret, hciphertext, hkgJoint, hencJoint, hdecJoint, hevalJoint⟩ :=
+    Leveled.schemeFamily_spec D hkeyGen hencrypt hevaluate
       GSW.DepthParameters.computableInPolyTime_decryptionCircuits
   have hforBudget (budget : ℕ → ℕ) (hb : ComputableTidilyInPolyTime budget encUnary encUnary) :
       (∀ security, (ProbComp.eval

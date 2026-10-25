@@ -46,11 +46,11 @@ depth-zero circuit, whose output is its input, on the challenge and read the hid
 
 **Provenance (not part of the checked statements).** The library's constructions witness both
 theorems. In the namespace `Cslib.Crypto.Homomorphic`, write `D` for GSW's decryption circuits
-`GSW.DepthParameters.decryptionCircuits`. Then `GSWFHEBridge.leveled_witness` proves the
-properties of `leveled` for `Leveled.scheme D budget`, and
-`GSWFHEBridge.fullyHomomorphic_witness` proves those of `fullyHomomorphic` for
-`FixedKey.scheme D`. A reader need not inspect them: the statements below do not depend on their
-definitions.
+`GSW.DepthParameters.decryptionCircuits`. Then `GSWFHEBridge.leveled_witness` exhibits the
+depth-indexed family `fun d => Leveled.scheme D (fun _ => d)` and proves the properties of
+`leveled` for `Leveled.scheme D budget`, and `GSWFHEBridge.fullyHomomorphic_witness` proves those
+of `fullyHomomorphic` for `FixedKey.scheme D`. A reader need not inspect them: the statements
+below do not depend on their definitions.
 
 **What a reader inspects.** The definitions and statements in this file, the displayed shared
 foundations, and the eight library modules that `#check_abstract` allows at the end of the file,
@@ -438,21 +438,25 @@ def Native (S : Cslib.Crypto.Homomorphic.Scheme) : Prop :=
       Encoding.encBits (fun p => Cslib.ProbComp.eval (S.evaluate p.1 p.2.1 p.2.2.1 p.2.2.2))
 
 /-- **Joint native efficiency in the parameter and the depth** [Gentry2009, Definition 3]. For a
-depth-indexed family `E : ℕ → Cslib.Crypto.Homomorphic.Scheme`, a single uniform strict PPT
-key-generation machine takes `(security, d)` in unary (`1^security, 1^d`), encryption and decryption
-take `1^security` independently of `d`, and a single uniform strict PPT evaluation machine takes
-`1^security`, `1^d`, the public key, the circuit in the binary code
-`Cslib.Circuits.Boolean.encCircuit 1`, and the framed list of input ciphertexts. One polynomial in
-the encoded input length bounds the runtime across all pairs `(security, d)` simultaneously. -/
+depth-indexed family `E : ℕ → Cslib.Crypto.Homomorphic.Scheme`, key generation, encryption and
+evaluation are uniform strict PPT in `(security, d)` jointly, and decryption is deterministic
+polynomial time in `(security, d)` jointly; each is one machine for all pairs `(security, d)`,
+taking `1^security` and `1^d` in unary together with the words (and, for evaluation, the circuit in
+the binary code `Cslib.Circuits.Boolean.encCircuit 1` followed by the framed list of input
+ciphertexts). One polynomial in the encoded input length bounds the runtime across all pairs
+`(security, d)` simultaneously. -/
 def NativeInDepth (E : ℕ → Cslib.Crypto.Homomorphic.Scheme) : Prop :=
   Randomized.StrictPPT (Encoding.encPair Encoding.encUnary Encoding.encUnary)
       (Encoding.encPair Encoding.encBits Encoding.encBits)
       (fun p : ℕ × ℕ => Cslib.ProbComp.eval ((E p.2).keyGen p.1)) ∧
     Randomized.StrictPPT
-      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encBits Encoding.encBool))
-      Encoding.encBits (fun p => Cslib.ProbComp.eval ((E 0).encrypt p.1 p.2.1 p.2.2)) ∧
-    Computation.PolyTime (fun p : ℕ × List Bool × List Bool => (E 0).decrypt p.1 p.2.1 p.2.2)
-      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encBits Encoding.encBits))
+      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encUnary
+        (Encoding.encPair Encoding.encBits Encoding.encBool)))
+      Encoding.encBits (fun p => Cslib.ProbComp.eval ((E p.2.1).encrypt p.1 p.2.2.1 p.2.2.2)) ∧
+    Computation.PolyTime
+      (fun p : ℕ × ℕ × List Bool × List Bool => (E p.2.1).decrypt p.1 p.2.2.1 p.2.2.2)
+      (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encUnary
+        (Encoding.encPair Encoding.encBits Encoding.encBits)))
       Encoding.encBool ∧
     Randomized.StrictPPT
       (Encoding.encPair Encoding.encUnary (Encoding.encPair Encoding.encUnary
@@ -501,15 +505,17 @@ Gentry's Definition 3 asks for one decryption circuit shared by all depths, corr
 circuit up to the depth, and algorithms polynomial in the parameter and the depth [Gentry2009,
 Definition 3]. In `leveled`, one polynomial-size circuit family `circuit` and one depth-indexed
 scheme family `E : ℕ → Cslib.Crypto.Homomorphic.Scheme` are chosen first. The family `E` satisfies
-`NativeInDepth E`, so key generation on `(1^security, 1^d)` and evaluation on `(1^security, 1^d, …)`
-each run on a single uniform strict PPT machine with one runtime polynomial in `(security, d)`
-jointly, and at every fixed depth `d`, `E d` is correct for circuits of depth at most `d`, has
-fixed polynomial widths, decrypts with `circuit`, and is IND-CPA secure. In addition, for every
-depth budget `budget : ℕ → ℕ` computable in unary polynomial time, there is a scheme `S` obtained
-by substituting `d = budget security` into `E` (`S.keyGen security = (E (budget security)).keyGen
-security` and `S.evaluate security = (E (budget security)).evaluate security`) that is correct for
-every circuit of depth at most `budget security`, has fixed polynomial widths, native algorithms and
-IND-CPA security.
+`NativeInDepth E`, so key generation, encryption, decryption and evaluation on
+`(1^security, 1^d, …)` each run on a single uniform machine with one runtime polynomial in
+`(security, d)` jointly, and at every fixed depth `d`, `E d` is correct for circuits of depth at
+most `d`, has fixed polynomial widths, decrypts with `circuit`, and is IND-CPA secure. In addition,
+for every depth budget `budget : ℕ → ℕ` computable in unary polynomial time, there is a scheme `S`
+obtained by substituting `d = budget security` into `E` (`S.keyGen security =
+(E (budget security)).keyGen security` and `S.evaluate security =
+(E (budget security)).evaluate security`) that is correct for every circuit of depth at most
+`budget security`, has fixed polynomial widths, native algorithms and IND-CPA security. Any
+polynomially bounded depth `d(security) ≤ c (security + 1) ^ e` is covered by the budget
+`c (security + 1) ^ e`.
 -/
 
 /-- **Leveled fully homomorphic encryption from decision LWE** [Gentry2009, Theorem 3]. One
