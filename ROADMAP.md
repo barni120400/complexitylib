@@ -22,7 +22,6 @@ the FHE industrial context, the first-order design decisions and the repository'
 | Plain computability: delete the tidy calculus, keeping a machine-level kernel | [#862], from [#456] |
 | Consolidation: duplicates, accurate statements and docs, less churn | [#949], [#939] |
 | A concrete LWE-based fully homomorphic scheme | [#486] |
-| Immerman–Szelepcsényi follow-ups | [#885] |
 | Boneh–Shoup cryptography tracks; zero-knowledge architecture | [#640], [#643] |
 | A Verso guide with a chapter per area | [#585] |
 
@@ -156,16 +155,15 @@ index links to canonical definitions rather than keeping a second set.
 
 ### Structure, time and space
 
-- **PRIMES ∈ P** ([#893]): the hard direction of the AKS criterion, the small-`r` bound and the
-  polynomial-time algorithm on binary inputs.
+- **PRIMES ∈ P** ([#893]): the polynomial-time AKS algorithm on binary inputs, on top of the
+  proved criterion and small-`r` bound.
 - Time, space and exponential hierarchies; oracle, advice, unambiguous and promise classes;
   completeness, padding, self-reducibility, relativization and oracle separations, preserving
   each reduction's resource bound.
 - A tight time hierarchy, which needs a linear-overhead tape-indexed simulation, and the
   `f log f` hierarchy with its simulation bound. The space hierarchy for `log n ≤ g n`, which
   needs a universal simulation that does not hold its input.
-- **Space** ([#885]): `NSPACE(s) = coNSPACE(s)`, and Savitch bounds for general
-  space-constructible functions.
+- **Space:** Savitch bounds for general space-constructible functions.
 - **Randomized logspace** ([#459], [#474]): RL and BPL, `USTCON ∈ RL`, Nisan's generator,
   `BPL ⊆ L²` and Saks–Zhou.
 - **Reingold:** a symmetric-machine model of SL, and the edge-list encoding of USTCON by a
@@ -193,7 +191,7 @@ index links to canonical definitions rather than keeping a second set.
 ### Interactive proofs
 
 - **MIP = NEXP** ([#892]): `NEXP ⊆ MIP₂` through the BFL multilinearity test and arithmetization
-  of exponential-time tableaux; GKR delegation.
+  of exponential-time tableaux; an efficient GKR verifier under log-space uniformity.
 - Private-to-public-coin transformations, `AM[k] = AM`, interactive-machine characterizations
   of Arthur–Merlin classes, and statistical and perfect zero knowledge.
 
@@ -311,9 +309,9 @@ each statement against the numbered result. Organize modules by subject, not cha
 
 - **Derandomization from hardness:** the infinitely-often variant, and the EXP ⊄ P/poly endpoint
   of Babai, Fortnow, Nisan and Wigderson.
-- **Extractors** ([#895]) up to explicit two-source extractors; condensers, limited independence,
-  explicit expanders and space-bounded generators, with finite guarantees separate from uniform
-  construction and decoding costs.
+- **Extractors** ([#895]) beyond Chor–Goldreich: two-source extractors for lower min-entropy;
+  condensers, limited independence, explicit expanders and space-bounded generators, with finite
+  guarantees separate from uniform construction and decoding costs.
 - **Codes:** Guruswami–Sudan list decoding and local decoding, keeping interpolation,
   list-size/agreement guarantees and decoding runtime as separate obligations; concrete
   list-decodable codes for Nisan–Wigderson.
@@ -321,7 +319,8 @@ each statement against the numbered result. Organize modules by subject, not cha
 
 ## Communication, queries, learning and other models
 
-- **Lifting** ([#890]): Raz–McKenzie and Göös–Pitassi–Watson query-to-communication lifting.
+- **Lifting** ([#890]): applications of deterministic lifting, such as partition-number
+  separations, and randomized lifting.
 - Multiparty protocols, discrepancy and information complexity, direct-sum and direct-product
   results, and reductions to streaming, sketching and cell-probe lower bounds.
 - **Learning:** machine-certified running times for the LMN and Kushilevitz–Mansour learners;
@@ -329,12 +328,13 @@ each statement against the numbered result. Organize modules by subject, not cha
   PAC/agnostic/SQ learning, learning lower bounds, compression and refutation.
 - **Property and distribution testing:** access models, one/two-sided and tolerant testing,
   query and sample bounds, canonical testers and lower bounds.
-- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): prefix-free complexity,
+- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the converse direction of
+  Liu–Pass (`K^t` mildly hard on average implies one-way functions); prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
   circuitized anti-checker with an efficient generator, hardness magnification, MINCKT and
   hardness results for MINKT, as independently scoped developments; the reverse
   multi-tape-to-single-tape simulation and machine-backed Nisan–Wigderson decoding.
-- **Quantum computation** ([#896]): BQP ⊆ PP and the BBBV and Grover bounds; reusable
+- **Quantum computation** ([#896]): BQP ⊆ PP; reusable
   circuit, channel and measurement semantics with uniformity and approximation costs, reusing
   suitable quantum foundations rather than incompatible models; BQP, QMA and related query,
   communication and interactive classes, with amplification, containments and complete
@@ -434,7 +434,6 @@ not planned, not as proved.
 [#798]: https://github.com/cslib-community/complexitylib/issues/798
 [#862]: https://github.com/cslib-community/complexitylib/issues/862
 [#884]: https://github.com/cslib-community/complexitylib/issues/884
-[#885]: https://github.com/cslib-community/complexitylib/issues/885
 [#886]: https://github.com/cslib-community/complexitylib/issues/886
 [#888]: https://github.com/cslib-community/complexitylib/issues/888
 [#889]: https://github.com/cslib-community/complexitylib/issues/889
