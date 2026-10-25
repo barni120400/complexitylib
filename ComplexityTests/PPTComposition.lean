@@ -85,3 +85,12 @@ example {yes no : List Bool → ProbComp Bool}
   fun_prop
 
 end ComplexityTests.PPTComposition
+
+-- Plain deterministic postprocessing retains the full arbitrary encoded contract.
+example {α β γ : Type} {input : α ↪ List Bool} {middle : β ↪ List Bool}
+    {output : γ ↪ List Bool} {sample : α → Cslib.ProbComp β} {finish : β → γ}
+    (hs : Cslib.Probability.IsPPTOn input middle sample)
+    (hf : Turing.MultiTapeTM.ComputableInPolyTime finish middle output) :
+    Cslib.Probability.IsPPTOn input output (fun a => finish <$> sample a) := by
+  fail_if_success (clear hf; fun_prop)
+  fun_prop
