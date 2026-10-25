@@ -11,11 +11,11 @@ public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
 public import Complexity.Computability.Circuit.Boolean.PPoly
 public import Complexity.Computability.Complexity.Classes.PH.KarpLipton
 public import Complexity.Computability.MCSP.Basic
+public import Complexity.Computability.MCSP.NP
 public import Complexity.Foundations.Data.BitString.WordCount
 import Complexity.Computability.Circuit.Boolean.EvaluationTime
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
 import Complexity.Computability.Circuit.Boolean.Substitution
-import Complexity.Computability.MCSP.NP
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -28,43 +28,59 @@ import Mathlib.Tactic.Linarith
 /-!
 # Hardness Magnification for MCSP via Circuit-Min-Merge
 
-Slightly superlinear circuit lower bounds for `MCSP[s]` imply `NP ⊄ P/poly` and `P ≠ NP`
-[McKay, Murray, and Williams, Lemma 3.1 and Theorem 1.4 (third bullet)][McKayMurrayWilliams2019].
+Slightly superlinear circuit lower bounds for `MCSP[s]` (`Cslib.GapMCSP.yesSet s`) imply
+`NP ⊄ P/poly` and `P ≠ NP` [McKay, Murray, and Williams, Lemma 3.1, Theorem 1.4 (third bullet),
+and Section 5][McKayMurrayWilliams2019].
 
-Assuming `NP ⊆ P/poly`, the polynomial-hierarchy language `CIRCUIT-MIN-MERGE`
-(`Cslib.MCSP.CircuitMinMergeLanguage`) has polynomial-size circuits: given two subcube circuit
-certificates `w₀` and `w₁` for the half-subcubes `p ++ [false]` and `p ++ [true]` of `{0, 1} ^ n`,
-it outputs the lexicographically first (`Cslib.BitString.wordLt`) size-`s` circuit certificate `w`
+Assuming `NP ⊆ P/poly`, the polynomial-hierarchy language `CircuitMinMergeLanguage`
+(`Cslib.MCSP.CircuitMinMergeLanguage`), adapted from `Circuit-Min-Merge` in
+[McKayMurrayWilliams2019, Proof of Lemma 3.1], has polynomial-size circuits: given two subcube
+circuit certificates `w₀` and `w₁` for the half-subcubes `p ++ [false]` and `p ++ [true]` of
+`{0, 1} ^ n` (rather than `t` intervals), it selects the `Cslib.BitString.wordLt`-least valid
+size-`≤ s` circuit certificate `w` of length `certLength n s` (rather than a minimum-size circuit)
 that agrees with `w₀` on `p ++ [false]` and with `w₁` on `p ++ [true]`, together with a validity
-bit. Composing this merge circuit across the `2 ^ n` nodes of the full binary tree of subcubes of
-`{0, 1} ^ n` produces a circuit of size `2 ^ n · poly(n, s(n))` deciding the `2 ^ n`-bit slice of
-`MCSP[s]` (`Cslib.MCSP.exists_complexity_MCSPAt_le_of_NP_subset_PPoly`). Taking the contrapositive
-magnifies `2 ^ n · poly(n, s(n))` circuit lower bounds for `MCSP[s]` to `NP ⊄ P/poly` and `P ≠ NP`.
+bit. Following the `C = P/poly` case of the proof of Theorem 1.4 (Section 5) combined with Lemma
+3.1's merge-tree idea, composing this merge circuit across the `2 ^ n` nodes of the full binary
+tree of subcubes of `{0, 1} ^ n` (rather than a `d`-ary tree with `ℓ = s³`) produces a circuit of
+size `2 ^ n · poly(n, s(n))` deciding the `2 ^ n`-bit slice of `GapMCSP.yesSet s`
+(`Cslib.MCSP.exists_complexity_yesSet_le_of_NP_subset_PPoly`).
+
+Taking the contrapositive magnifies `2 ^ n · poly(n, s(n))` circuit lower bounds for
+`GapMCSP.yesSet s` to `NP ⊄ P/poly` and `P ≠ NP`
+(`Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_hard`). Relative
+to [McKayMurrayWilliams2019, Theorem 1.4, third bullet], these statements incorporate four
+specializations:
+1. decision `GapMCSP.yesSet s` (`MCSP[s]`) instead of `search-MCSP^A[s]`;
+2. no oracle (`A = ∅`);
+3. fan-in-2 De Morgan circuits counting all gates (`Cslib.Circuits.Circuit.size`);
+4. a size-only lower bound, whereas the paper assumes no circuits of simultaneous size
+   `N · poly(s)` and depth `poly(s)`.
+Each specialization makes the lower-bound hypothesis stronger (a decision lower bound implies a
+search lower bound, and a size-only lower bound implies a combined size-and-depth lower bound).
 
 ## Main definitions
 
-* `Cslib.MCSP.MCSPAt`: `MCSP[s]` as a language of truth tables (`GapMCSP.yesSet s`).
-* `Cslib.MCSP.validCert`, `Cslib.MCSP.evalCert`: validity and evaluation of canonical circuit
-  certificates of length `certLength n s`.
-* `Cslib.MCSP.inSubcube`, `Cslib.MCSP.agreesOnPoint`, `Cslib.MCSP.AgreesWithChildren`: subcube
-  prefix membership and child-agreement predicates.
+* `Cslib.MCSP.agreesOnPoint`, `Cslib.MCSP.AgreesWithChildren`: child-agreement predicates on a
+  subcube prefix `p` (tested via `List.isPrefixOf`).
 * `Cslib.MCSP.IsMergedCert`, `Cslib.MCSP.IsMinMergedCert`: valid and lexicographically minimal
   merged certificates.
-* `Cslib.MCSP.CircuitMinMergeLanguage`: the `CIRCUIT-MIN-MERGE` decision problem.
+* `Cslib.MCSP.CircuitMinMergeLanguage`: the `Circuit-Min-Merge` decision problem, adapted to binary
+  subcube merging of fixed-threshold certificates.
 
 ## Main results
 
 * `Cslib.MCSP.circuitMinMergeLanguage_mem_PPolyOn`: under `NP ⊆ P/poly`,
   `CircuitMinMergeLanguage ∈ PPolyOn encMerge`.
-* `Cslib.MCSP.exists_complexity_MCSPAt_le_of_NP_subset_PPoly`: **MMW19 Lemma 3.1**, under
-  `NP ⊆ P/poly`, `MCSP[s]` has circuits of size `2 ^ n · c · (n + s n + 1) ^ c` on `2 ^ n`-bit
-  truth tables.
-* `Cslib.MCSP.exists_complexity_MCSPAt_pow_le_of_NP_subset_PPoly`: specialization to polynomial
+* `Cslib.MCSP.exists_complexity_yesSet_le_of_NP_subset_PPoly`: under `NP ⊆ P/poly`,
+  `GapMCSP.yesSet s` has circuits of size `2 ^ n · c · (n + s n + 1) ^ c` on `2 ^ n`-bit truth
+  tables (`[McKayMurrayWilliams2019, Lemma 3.1 and Section 5]`).
+* `Cslib.MCSP.exists_complexity_yesSet_pow_le_of_NP_subset_PPoly`: specialization to polynomial
   schedules `s(n) = n ^ k`.
-* `Cslib.MCSP.not_NP_subset_PPoly_of_MCSPAt_hard`, `Cslib.MCSP.P_ne_NP_of_MCSPAt_hard`,
-  `Cslib.MCSP.not_NP_subset_PPoly_of_MCSPAt_pow_hard`, `Cslib.MCSP.P_ne_NP_of_MCSPAt_pow_hard`:
-  **MMW19 Theorem 1.4 (third bullet)**, circuit lower bounds for `MCSP[s]` imply `NP ⊄ P/poly`
-  and `P ≠ NP`.
+* `Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_hard`,
+  `Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_pow_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_pow_hard`:
+  circuit lower bounds for `GapMCSP.yesSet` imply `NP ⊄ P/poly` and `P ≠ NP`
+  (`[McKayMurrayWilliams2019, Theorem 1.4, third bullet]`, specialized to decision `MCSP[s]`
+  without oracle and size-only De Morgan circuit lower bounds).
 
 ## References
 
@@ -77,27 +93,6 @@ magnifies `2 ^ n · poly(n, s(n))` circuit lower bounds for `MCSP[s]` to `NP ⊄
 namespace Cslib.MCSP
 
 open Circuits Circuits.Boolean Turing.MultiTapeTM Complexity
-
-/-! ### `MCSP[s]` as a truth-table language -/
-
-/-- **`MCSP[s]`**, the Minimum Circuit Size Problem with threshold schedule `s : ℕ → ℕ`: the
-language of truth tables (of length `2 ^ n` for some `n`) of `n`-variable Boolean functions with
-circuit complexity at most `s n`, defined as `GapMCSP.yesSet s` [McKayMurrayWilliams2019]. -/
-abbrev MCSPAt (s : ℕ → ℕ) : Language Bool := GapMCSP.yesSet s
-
-/-- A `2 ^ n`-bit truth table `T` belongs to `MCSPAt s` iff its function has circuit complexity at
-most `s n`. -/
-theorem ofFn_mem_MCSPAt_iff {s : ℕ → ℕ} {n : ℕ} {T : BitString (2 ^ n)} :
-    List.ofFn T ∈ MCSPAt s ↔
-      complexity interpretation (single ((truthTable n).symm T)) ≤ s n :=
-  GapMCSP.ofFn_mem_yesSet_iff
-
-/-- The `2 ^ n`-bit slice of `MCSPAt s` evaluates to `true` on `T` iff the function of `T` has
-circuit complexity at most `s n`. -/
-theorem slice_MCSPAt_eq_true_iff {s : ℕ → ℕ} {n : ℕ} {T : BitString (2 ^ n)} :
-    (MCSPAt s).slice (2 ^ n) T = true ↔
-      complexity interpretation (single ((truthTable n).symm T)) ≤ s n := by
-  rw [Language.slice_eq_true_iff, ofFn_mem_MCSPAt_iff]
 
 /-! ### Lexicographic minimum on fixed-length bit lists -/
 
@@ -138,111 +133,56 @@ private theorem eq_of_wordLt_eq_false {m : ℕ} {w₁ w₂ : List Bool}
     decide
   exact congrArg (List.ofFn ∘ ofLex) (le_antisymm (not_lt.1 h2) (not_lt.1 h1))
 
-/-! ### Canonical circuit certificates -/
+/-! ### Soundness and completeness of `validCertificate` and `evalCertificate` -/
 
-/-- Whether `w` is a canonical certificate of length `certLength n s` encoding a valid `n`-input
-circuit of size at most `s`. -/
-def validCert (n s : ℕ) (w : List Bool) : Bool :=
-  decide (w.length = certLength n s) &&
-    codeCheck n (readCertificate n s w).1 &&
-    decide ((readCertificate n s w).2 < n + (readCertificate n s w).1.length)
-
-/-- Evaluate the circuit certificate `w` (for `n` inputs and gate budget `s`) on input `x`. -/
-def evalCert (n s : ℕ) (w x : List Bool) : Bool :=
-  evalOutput x (readCertificate n s w).1 (readCertificate n s w).2
-
-/-- A valid certificate for `(n, s)` has length `certLength n s`. -/
-theorem length_of_validCert {n s : ℕ} {w : List Bool} (hw : validCert n s w = true) :
-    w.length = certLength n s := by
-  simp only [validCert, Bool.and_eq_true, decide_eq_true_eq] at hw
-  exact hw.1.1
-
-/-- Soundness of `validCert`: a valid certificate decodes to a circuit of size at most `s` whose
-evaluation agrees with `evalCert`. -/
-theorem exists_circuit_of_validCert {n s : ℕ} {w : List Bool} (hw : validCert n s w = true) :
+/-- Soundness of `validCertificate`: a well-formed certificate for `(n, s)` decodes to a circuit of
+size at most `s` whose evaluation agrees with `evalCertificate`. -/
+private theorem exists_circuit_of_validCertificate {n s : ℕ} {w : List Bool}
+    (hw : validCertificate n s w = true) :
     ∃ C : Circuit signature n 1, C.size ≤ s ∧
-      ∀ x : BitString n, C.eval interpretation x 0 = evalCert n s w (List.ofFn x) := by
-  have hcheck : checkCertificate (fun y out => out == evalCert n s w y) n s w = true := by
-    simp only [validCert, Bool.and_eq_true] at hw
-    simp [checkCertificate, evalCert, hw.1.2, hw.2]
+      ∀ x : BitString n, C.eval interpretation x 0 = evalCertificate n s w (List.ofFn x) := by
+  have hcheck : checkCertificate (fun y out => out == evalCertificate n s w y) n s w = true := by
+    simp [checkCertificate, hw]
   obtain ⟨C, hcS, heval⟩ := exists_circuit_of_checkCertificate hcheck
   exact ⟨C, hcS, fun x => beq_iff_eq.1 (heval x)⟩
 
-/-- Completeness of `validCert`: every circuit of size at most `s` on `n` inputs has a valid
-certificate whose `evalCert` agrees with the circuit on all `n`-bit inputs. -/
-theorem exists_validCert_of_circuit {n s : ℕ} (C : Circuit signature n 1) (hcS : C.size ≤ s) :
-    ∃ w : List Bool, validCert n s w = true ∧
-      ∀ x : BitString n, evalCert n s w (List.ofFn x) = C.eval interpretation x 0 := by
+/-- Completeness of `validCertificate`: every circuit of size at most `s` on `n` inputs has a
+canonical certificate of length `certLength n s` satisfying `validCertificate` whose
+`evalCertificate` agrees with the circuit on all `n`-bit inputs. -/
+private theorem exists_validCertificate_of_circuit {n s : ℕ} (C : Circuit signature n 1)
+    (hcS : C.size ≤ s) :
+    ∃ w : List Bool, w.length = certLength n s ∧ validCertificate n s w = true ∧
+      ∀ x : BitString n, evalCertificate n s w (List.ofFn x) = C.eval interpretation x 0 := by
   obtain ⟨w, hlen, hcheck⟩ := exists_checkCertificate_append
     (accept := fun y out => out == C.eval interpretation (BitString.ofList n y) 0) hcS
     (fun y => by simp)
   have hw := hcheck []
   rw [List.append_nil] at hw
   simp only [checkCertificate, Bool.and_eq_true, List.all_eq_true, beq_iff_eq] at hw
-  refine ⟨w, ?_, fun x => ?_⟩
-  · simp [validCert, hlen, hw.1.1, hw.1.2]
-  · simpa [evalCert] using hw.2 (List.ofFn x) (BitString.mem_enumList.2 List.length_ofFn)
-
-open ComputableTidilyInPolyTime in
-/-- `validCert` is computable in polynomial time when `n` and `s` are given in unary. -/
-@[fun_prop]
-theorem computableInPolyTime_validCert {γ : Type} {encIn : γ ↪ List Bool}
-    {n s : γ → ℕ} {w : γ → List Bool}
-    (hn : ComputableInPolyTime n encIn encUnary)
-    (hs : ComputableInPolyTime s encIn encUnary)
-    (hw : ComputableInPolyTime w encIn encBits) :
-    ComputableInPolyTime (fun a => validCert (n a) (s a) (w a)) encIn encBool := by
-  refine .of_tidy ?_
-  have hn_t := hn.tidy
-  have hs_t := hs.tidy
-  have hw_t := hw.tidy
-  have hc := (computableInPolyTime_readCertificate hn hs hw).tidy
-  have hcert : ComputableTidilyInPolyTime (fun a => certLength (n a) (s a)) encIn encUnary := by
-    unfold certLength
-    fun_prop
-  have hlen : ComputableTidilyInPolyTime
-      (fun a => decide ((w a).length = certLength (n a) (s a))) encIn encBool :=
-    decide_eq' (length_bits.comp hw_t) hcert
-  have hcode := (computableInPolyTime_codeCheck hn (.of_tidy hc.fst')).tidy
-  have hbound : ComputableTidilyInPolyTime
-      (fun a => decide ((readCertificate (n a) (s a) (w a)).2 <
-        n a + (readCertificate (n a) (s a) (w a)).1.length))
-      encIn encBool :=
-    binary_lt' hc.snd' (unary_to_binary.comp (unary_add.comp
-      (hn_t.prod ((length_list encGate).comp hc.fst'))))
-  unfold validCert
-  exact bool_and' (bool_and' hlen hcode) hbound
-
-/-- `evalCert` is computable in polynomial time when `n` and `s` are given in unary. -/
-@[fun_prop]
-theorem computableInPolyTime_evalCert {γ : Type} {encIn : γ ↪ List Bool}
-    {n s : γ → ℕ} {w x : γ → List Bool}
-    (hn : ComputableInPolyTime n encIn encUnary)
-    (hs : ComputableInPolyTime s encIn encUnary)
-    (hw : ComputableInPolyTime w encIn encBits)
-    (hx : ComputableInPolyTime x encIn encBits) :
-    ComputableInPolyTime (fun a => evalCert (n a) (s a) (w a) (x a)) encIn encBool := by
-  have hc := (computableInPolyTime_readCertificate hn hs hw).tidy
-  exact computableInPolyTime_evalOutput hx (.of_tidy hc.fst') (.of_tidy hc.snd')
+  refine ⟨w, hlen, hw.1, fun x => ?_⟩
+  simpa using hw.2 (List.ofFn x) (BitString.mem_enumList.2 List.length_ofFn)
 
 /-! ### Subcubes and child-agreement predicates -/
 
-/-- Whether `p` is a prefix of `x`, i.e., `x.take p.length == p`. For `x` of length `n`, this tests
-membership in the subcube of `{0, 1} ^ n` with fixed prefix `p`. -/
-def inSubcube (p x : List Bool) : Bool :=
-  x.take p.length == p
+private theorem isPrefixOf_eq_take_beq : ∀ p x : List Bool,
+    p.isPrefixOf x = (x.take p.length == p)
+  | [], _ => rfl
+  | _ :: _, [] => rfl
+  | a :: p, b :: x => by
+    simp only [List.isPrefixOf_cons_cons, List.length_cons, List.take_succ_cons,
+      isPrefixOf_eq_take_beq p x]
+    cases a <;> cases b <;> rfl
 
-@[simp] theorem inSubcube_nil (x : List Bool) : inSubcube [] x = true := by
-  simp [inSubcube]
+private theorem isPrefixOf_of_length_eq {p x : List Bool} (hp : p.length = x.length) :
+    p.isPrefixOf x = true ↔ x = p := by
+  simp [isPrefixOf_eq_take_beq, hp]
 
-theorem inSubcube_of_length_eq {p x : List Bool} (hp : p.length = x.length) :
-    inSubcube p x = true ↔ x = p := by
-  simp [inSubcube, hp]
-
-theorem inSubcube_append_singleton {p x : List Bool} {b : Bool} (hp : p.length < x.length) :
-    inSubcube (p ++ [b]) x = true ↔ inSubcube p x = true ∧ x.getD p.length false = b := by
-  simp only [inSubcube, List.length_append, List.length_singleton, beq_iff_eq,
-    List.take_add_one, List.getElem?_eq_getElem hp, Option.toList_some, List.getD_eq_getElem _ _ hp]
+private theorem isPrefixOf_append_singleton {p x : List Bool} {b : Bool}
+    (hp : p.length < x.length) :
+    (p ++ [b]).isPrefixOf x = true ↔ p.isPrefixOf x = true ∧ x.getD p.length false = b := by
+  simp only [isPrefixOf_eq_take_beq, List.length_append, List.length_singleton, beq_iff_eq,
+    List.take_add_one, List.getElem?_eq_getElem hp, Option.toList_some,
+    List.getD_eq_getElem _ _ hp]
   have hlen : (x.take p.length).length = p.length := List.length_take_of_le hp.le
   constructor
   · intro h
@@ -251,12 +191,13 @@ theorem inSubcube_append_singleton {p x : List Bool} {b : Bool} (hp : p.length <
   · rintro ⟨h1, h2⟩
     rw [h1, h2]
 
-/-- Whether the candidate circuit `w` agrees at point `x` in the subcube `p` with the child
-certificate `w₀` (if `x[p.length] = false`) or `w₁` (if `x[p.length] = true`). -/
+/-- Whether the candidate circuit `w` agrees at point `x` in the subcube `p` (tested by
+`p.isPrefixOf x`) with the child certificate `w₀` (if `x[p.length] = false`) or `w₁`
+(if `x[p.length] = true`). -/
 def agreesOnPoint (n s : ℕ) (p w₀ w₁ w x : List Bool) : Bool :=
-  !inSubcube p x ||
-    (evalCert n s w x ==
-      if x.getD p.length false then evalCert n s w₁ x else evalCert n s w₀ x)
+  !p.isPrefixOf x ||
+    (evalCertificate n s w x ==
+      if x.getD p.length false then evalCertificate n s w₁ x else evalCertificate n s w₀ x)
 
 open ComputableTidilyInPolyTime in
 /-- `agreesOnPoint` is computable in polynomial time when `n` and `s` are given in unary. -/
@@ -274,14 +215,15 @@ theorem computableInPolyTime_agreesOnPoint {γ : Type} {encIn : γ ↪ List Bool
   refine .of_tidy ?_
   have hp_t := hp.tidy
   have hx_t := hx.tidy
-  have hin : ComputableTidilyInPolyTime (fun a => inSubcube (p a) (x a)) encIn encBool :=
-    (bitsTakeWithInput hx_t (length_bits.comp hp_t)).beq hp_t
+  have hin : ComputableTidilyInPolyTime (fun a => (p a).isPrefixOf (x a)) encIn encBool := by
+    simp only [isPrefixOf_eq_take_beq]
+    exact (bitsTakeWithInput hx_t (length_bits.comp hp_t)).beq hp_t
   have hbit : ComputableTidilyInPolyTime
       (fun a => (x a).getD (p a).length false) encIn encBool :=
     bitsGetDWithInput hx_t (length_bits.comp hp_t) false
-  have hew := (computableInPolyTime_evalCert hn hs hw hx).tidy
-  have hew₀ := (computableInPolyTime_evalCert hn hs hw₀ hx).tidy
-  have hew₁ := (computableInPolyTime_evalCert hn hs hw₁ hx).tidy
+  have hew := (computableInPolyTime_evalCertificate hn hs hw hx).tidy
+  have hew₀ := (computableInPolyTime_evalCertificate hn hs hw₀ hx).tidy
+  have hew₁ := (computableInPolyTime_evalCertificate hn hs hw₁ hx).tidy
   unfold agreesOnPoint
   exact bool_or.comp ((bool_not.comp hin).prod (hew.beq (hbit.cond hew₁ hew₀)))
 
@@ -290,10 +232,10 @@ theorem computableInPolyTime_agreesOnPoint {γ : Type} {encIn : γ ↪ List Bool
 def AgreesWithChildren (n s : ℕ) (p w₀ w₁ w : List Bool) : Prop :=
   ∀ x : List Bool, x.length = n → agreesOnPoint n s p w₀ w₁ w x = true
 
-/-- `w` is a valid size-`s` circuit certificate on `n` inputs that agrees with `w₀` on
-`p ++ [false]` and with `w₁` on `p ++ [true]`. -/
+/-- `w` is a canonical certificate of length `certLength n s` encoding a valid size-`s` circuit on
+`n` inputs that agrees with `w₀` on `p ++ [false]` and with `w₁` on `p ++ [true]`. -/
 def IsMergedCert (n s : ℕ) (p w₀ w₁ w : List Bool) : Prop :=
-  validCert n s w = true ∧ AgreesWithChildren n s p w₀ w₁ w
+  w.length = certLength n s ∧ validCertificate n s w = true ∧ AgreesWithChildren n s p w₀ w₁ w
 
 /-- `w` is the lexicographically smallest (`BitString.wordLt`) certificate satisfying
 `IsMergedCert n s p w₀ w₁`. -/
@@ -302,7 +244,7 @@ def IsMinMergedCert (n s : ℕ) (p w₀ w₁ w : List Bool) : Prop :=
     ∀ w' : List Bool, w'.length = certLength n s →
       IsMergedCert n s p w₀ w₁ w' → BitString.wordLt w' w = false
 
-/-! ### `CIRCUIT-MIN-MERGE` and nonuniform quantifier elimination -/
+/-! ### `CircuitMinMergeLanguage` and nonuniform quantifier elimination -/
 
 /-- The width `certLength n s + 1` of a child state vector `(ok, w)`, consisting of one validity
 bit followed by a certificate of length `certLength n s`. -/
@@ -340,11 +282,13 @@ def mergeOk₁ (a : MergeInput) : Bool :=
 def mergeCert₁ (a : MergeInput) : List Bool :=
   (a.2.drop (stateWidth a.1.1.1 a.1.1.2 + 1)).take (certLength a.1.1.1 a.1.1.2)
 
-/-- **The `CIRCUIT-MIN-MERGE` language** [McKayMurrayWilliams2019, Proof of Lemma 3.1]: given
-parameters `((n, s), (p, j))` and concatenated child states `v` representing `(ok₀, w₀)` and
-`(ok₁, w₁)`, accepts when `ok₀ = true`, `ok₁ = true`, and there is a lexicographically minimum
-merged certificate `w` (`IsMinMergedCert n s p w₀ w₁ w`) whose `j`-th output bit (`true` at `j = 0`,
-and bit `j - 1` of `w` at `j > 0`) is `true`. -/
+/-- **The `CircuitMinMergeLanguage` decision problem**, adapted from `Circuit-Min-Merge` in
+[McKayMurrayWilliams2019, Proof of Lemma 3.1]: given parameters `((n, s), (p, j))` and
+concatenated child states `v` representing `(ok₀, w₀)` and `(ok₁, w₁)` for the two half-subcubes
+`p ++ [false]` and `p ++ [true]` (rather than `t` intervals), accepts when `ok₀ = true`,
+`ok₁ = true`, and there is a `BitString.wordLt`-least valid size-`≤ s` merged certificate `w`
+(`IsMinMergedCert n s p w₀ w₁ w`, rather than a minimum-size circuit) whose `j`-th output bit
+(`true` at `j = 0`, and bit `j - 1` of `w` at `j > 0`) is `true`. -/
 def CircuitMinMergeLanguage : Set MergeInput :=
   {a | mergeOk₀ a = true ∧ mergeOk₁ a = true ∧
     ∃ w : List Bool, IsMinMergedCert a.1.1.1 a.1.1.2 a.1.2.1 (mergeCert₀ a) (mergeCert₁ a) w ∧
@@ -355,18 +299,6 @@ private theorem PPolyOn_of_computableInPolyTime {α : Type} {enc : α ↪ List B
     {a : α | f a = true} ∈ PPolyOn enc :=
   P_subset_PPolyOn ⟨f, hf, fun _ => Iff.rfl⟩
 
-private theorem PPolyOn_inter {α : Type} {enc : α ↪ List Bool} {A B : Set α}
-    (hA : A ∈ PPolyOn enc) (hB : B ∈ PPolyOn enc) : (A ∩ B : Set α) ∈ PPolyOn enc := by
-  obtain ⟨LA, hLA, hA⟩ := hA
-  obtain ⟨LB, hLB, hB⟩ := hB
-  exact ⟨LA ⊓ LB, PPoly.inf hLA hLB, fun a => by rw [Set.mem_inter_iff, hA a, hB a]; rfl⟩
-
-private theorem PPolyOn_union {α : Type} {enc : α ↪ List Bool} {A B : Set α}
-    (hA : A ∈ PPolyOn enc) (hB : B ∈ PPolyOn enc) : (A ∪ B : Set α) ∈ PPolyOn enc := by
-  obtain ⟨LA, hLA, hA⟩ := hA
-  obtain ⟨LB, hLB, hB⟩ := hB
-  exact ⟨LA ⊔ LB, PPoly.sup hLA hLB, fun a => by rw [Set.mem_union, hA a, hB a]; rfl⟩
-
 private theorem PPolyOn_imp {α : Type} {enc : α ↪ List Bool} {P Q : α → Prop}
     (hP : {a | P a} ∈ PPolyOn enc) (hQ : {a | Q a} ∈ PPolyOn enc) :
     {a | P a → Q a} ∈ PPolyOn enc := by
@@ -374,55 +306,7 @@ private theorem PPolyOn_imp {α : Type} {enc : α ↪ List Bool} {P Q : α → P
     ext a
     simp [imp_iff_not_or]
   rw [h]
-  exact PPolyOn_union (PPolyOn.compl hP) hQ
-
-private theorem PPolyOn_exists_of_computableInPolyTime_length {α : Type} {enc : α ↪ List Bool}
-    (hNP : NP encBits ⊆ PPolyOn encBits) {N : α → ℕ}
-    (hN : ComputableInPolyTime N enc encUnary) {P : α → List Bool → Prop}
-    (hP : {p : α × List Bool | P p.1 p.2} ∈ PPolyOn (encPair enc encBits)) :
-    {a : α | ∃ u : List Bool, u.length = N a ∧ P a u} ∈ PPolyOn enc := by
-  let B : Set (α × List Bool) := {p | P p.1 (p.2.take (N p.1))}
-  have hred : PolyTimeReducible (encPair enc encBits) (encPair enc encBits)
-      B {p : α × List Bool | P p.1 p.2} := by
-    refine ⟨fun p => (p.1, p.2.take (N p.1)), ?_, fun _ => Iff.rfl⟩
-    exact .of_tidy ((ComputableTidilyInPolyTime.fst enc encBits).prod
-      (ComputableTidilyInPolyTime.bitsTakeWithInput
-        (ComputableTidilyInPolyTime.snd enc encBits)
-        (hN.tidy.comp (ComputableTidilyInPolyTime.fst enc encBits))))
-  obtain ⟨M, hM, hBM⟩ := hred.mem_PPolyOn hP
-  obtain ⟨p, hp⟩ := hN.tidy.polyBounded.exists_polynomial
-  refine ⟨{x : List Bool | ∃ w : List Bool, w.length = p.eval x.length ∧ frame x ++ w ∈ M},
-    mem_PPoly_of_exists_frame_append hNP hM p, fun a => ?_⟩
-  have hle : N a ≤ p.eval (enc a).length := hp a
-  constructor
-  · rintro ⟨u, hu, hPu⟩
-    refine ⟨u ++ List.replicate (p.eval (enc a).length - N a) false,
-      by rw [List.length_append, List.length_replicate, hu, Nat.add_sub_cancel' hle], ?_⟩
-    have htake : (u ++ List.replicate (p.eval (enc a).length - N a) false).take (N a) = u := by
-      rw [← hu, List.take_left]
-    have hmem : (a, u ++ List.replicate (p.eval (enc a).length - N a) false) ∈ B := by
-      change P a ((u ++ List.replicate (p.eval (enc a).length - N a) false).take (N a))
-      rwa [htake]
-    simpa [encPair_apply, encBits_apply] using (hBM _).1 hmem
-  · rintro ⟨w, hw, hwM⟩
-    have hmem : (a, w) ∈ B :=
-      (hBM (a, w)).2 (by simpa [encPair_apply, encBits_apply] using hwM)
-    refine ⟨w.take (N a), ?_, hmem⟩
-    rw [List.length_take, hw, Nat.min_eq_left hle]
-
-private theorem PPolyOn_forall_of_computableInPolyTime_length {α : Type} {enc : α ↪ List Bool}
-    (hNP : NP encBits ⊆ PPolyOn encBits) {N : α → ℕ}
-    (hN : ComputableInPolyTime N enc encUnary) {P : α → List Bool → Prop}
-    (hP : {p : α × List Bool | P p.1 p.2} ∈ PPolyOn (encPair enc encBits)) :
-    {a : α | ∀ u : List Bool, u.length = N a → P a u} ∈ PPolyOn enc := by
-  have hex : {a : α | ∃ u : List Bool, u.length = N a ∧ ¬ P a u} ∈ PPolyOn enc :=
-    PPolyOn_exists_of_computableInPolyTime_length hNP hN (PPolyOn.compl hP)
-  have h_eq : {a : α | ∀ u : List Bool, u.length = N a → P a u} =
-      {a : α | ∃ u : List Bool, u.length = N a ∧ ¬ P a u}ᶜ := by
-    ext a
-    simp
-  rw [h_eq]
-  exact PPolyOn.compl hex
+  exact PPolyOn.sup (PPolyOn.compl hP) hQ
 
 open ComputableTidilyInPolyTime in
 private theorem computableInPolyTime_mergeCert₀ :
@@ -466,10 +350,16 @@ private theorem isMergedCert_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBits) 
   let encQ := encPair encMerge encBits
   have hq1 : ComputableTidilyInPolyTime (fun q : MergeInput × List Bool => q.1) encQ encMerge :=
     fst encMerge encBits
+  have hn_t : ComputableTidilyInPolyTime (fun q : MergeInput × List Bool => q.1.1.1.1)
+      encQ encUnary :=
+    (fst encUnary encUnary).comp ((fst _ _).comp ((fst encHeader encBits).comp hq1))
+  have hs_t : ComputableTidilyInPolyTime (fun q : MergeInput × List Bool => q.1.1.1.2)
+      encQ encUnary :=
+    (snd encUnary encUnary).comp ((fst _ _).comp ((fst encHeader encBits).comp hq1))
   have hn : ComputableInPolyTime (fun q : MergeInput × List Bool => q.1.1.1.1) encQ encUnary :=
-    .of_tidy ((fst encUnary encUnary).comp ((fst _ _).comp ((fst encHeader encBits).comp hq1)))
+    .of_tidy hn_t
   have hs : ComputableInPolyTime (fun q : MergeInput × List Bool => q.1.1.1.2) encQ encUnary :=
-    .of_tidy ((snd encUnary encUnary).comp ((fst _ _).comp ((fst encHeader encBits).comp hq1)))
+    .of_tidy hs_t
   have hp : ComputableInPolyTime (fun q : MergeInput × List Bool => q.1.1.2.1) encQ encBits :=
     .of_tidy ((fst encBits encUnary).comp ((snd _ _).comp ((fst encHeader encBits).comp hq1)))
   have hw₀ : ComputableInPolyTime (fun q : MergeInput × List Bool => mergeCert₀ q.1) encQ encBits :=
@@ -478,9 +368,17 @@ private theorem isMergedCert_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBits) 
     computableInPolyTime_mergeCert₁.comp (.of_tidy hq1)
   have hw : ComputableInPolyTime (fun q : MergeInput × List Bool => q.2) encQ encBits :=
     .of_tidy (snd encMerge encBits)
-  have hvalid : {q : MergeInput × List Bool | validCert q.1.1.1.1 q.1.1.1.2 q.2 = true} ∈
+  have hcert_t : ComputableTidilyInPolyTime
+      (fun q : MergeInput × List Bool => certLength q.1.1.1.1 q.1.1.1.2) encQ encUnary := by
+    unfold certLength
+    fun_prop
+  have hlen : {q : MergeInput × List Bool | q.2.length = certLength q.1.1.1.1 q.1.1.1.2} ∈
+      PPolyOn encQ := by
+    simpa [decide_eq_true_eq] using PPolyOn_of_computableInPolyTime
+      (.of_tidy (decide_eq' (length_bits.comp (snd encMerge encBits)) hcert_t))
+  have hvalid : {q : MergeInput × List Bool | validCertificate q.1.1.1.1 q.1.1.1.2 q.2 = true} ∈
       PPolyOn encQ :=
-    PPolyOn_of_computableInPolyTime (computableInPolyTime_validCert hn hs hw)
+    PPolyOn_of_computableInPolyTime (computableInPolyTime_validCertificate hn hs hw)
   let encQX := encPair encQ encBits
   have hqx1 : ComputableInPolyTime (fun r : (MergeInput × List Bool) × List Bool => r.1)
       encQX encQ := .of_tidy (fst encQ encBits)
@@ -493,8 +391,8 @@ private theorem isMergedCert_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBits) 
   have hagrees : {q : MergeInput × List Bool |
       AgreesWithChildren q.1.1.1.1 q.1.1.1.2 q.1.1.2.1 (mergeCert₀ q.1) (mergeCert₁ q.1) q.2} ∈
       PPolyOn encQ :=
-    PPolyOn_forall_of_computableInPolyTime_length hNP hn hagrees_pt
-  exact PPolyOn_inter hvalid hagrees
+    PPolyOn.forall_of_computableInPolyTime_length hNP hn hagrees_pt
+  exact PPolyOn.inf hlen (PPolyOn.inf hvalid hagrees)
 
 open ComputableTidilyInPolyTime in
 private theorem isMinMergedCert_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBits) :
@@ -542,8 +440,8 @@ private theorem isMinMergedCert_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBit
       ∀ w' : List Bool, w'.length = certLength q.1.1.1.1 q.1.1.1.2 →
         IsMergedCert q.1.1.1.1 q.1.1.1.2 q.1.1.2.1 (mergeCert₀ q.1) (mergeCert₁ q.1) w' →
           BitString.wordLt w' q.2 = false} ∈ PPolyOn encQ :=
-    PPolyOn_forall_of_computableInPolyTime_length hNP hcert_q (PPolyOn_imp hmerged' hwordLt)
-  exact PPolyOn_inter hmerged hforall
+    PPolyOn.forall_of_computableInPolyTime_length hNP hcert_q (PPolyOn_imp hmerged' hwordLt)
+  exact PPolyOn.inf hmerged hforall
 
 open ComputableTidilyInPolyTime in
 /-- **Under `NP ⊆ P/poly`, `CircuitMinMergeLanguage` has polynomial-size circuits.** Since
@@ -589,8 +487,8 @@ theorem circuitMinMergeLanguage_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBit
   have hex : {a : MergeInput | ∃ w : List Bool, w.length = certLength a.1.1.1 a.1.1.2 ∧
       (IsMinMergedCert a.1.1.1 a.1.1.2 a.1.2.1 (mergeCert₀ a) (mergeCert₁ a) w ∧
         (a.1.2.2 == 0 || w.getD (a.1.2.2 - 1) false) = true)} ∈ PPolyOn encMerge :=
-    PPolyOn_exists_of_computableInPolyTime_length hNP hcert_a
-      (PPolyOn_inter (isMinMergedCert_mem_PPolyOn hNP) hbit_q)
+    PPolyOn.exists_of_computableInPolyTime_length hNP hcert_a
+      (PPolyOn.inf (isMinMergedCert_mem_PPolyOn hNP) hbit_q)
   have h_eq : CircuitMinMergeLanguage =
       {a : MergeInput | mergeOk₀ a = true ∧ mergeOk₁ a = true} ∩
       {a : MergeInput | ∃ w : List Bool, w.length = certLength a.1.1.1 a.1.1.2 ∧
@@ -599,18 +497,18 @@ theorem circuitMinMergeLanguage_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBit
     ext a
     simp only [CircuitMinMergeLanguage, Set.mem_inter_iff, Set.mem_ofPred_eq, and_assoc]
     refine and_congr_right fun _ => and_congr_right fun _ => exists_congr fun w => ?_
-    exact ⟨fun ⟨hmin, hbit⟩ => ⟨length_of_validCert hmin.1.1, hmin, hbit⟩,
+    exact ⟨fun ⟨hmin, hbit⟩ => ⟨hmin.1.1, hmin, hbit⟩,
       fun ⟨_, hmin, hbit⟩ => ⟨hmin, hbit⟩⟩
   rw [h_eq]
-  exact PPolyOn_inter hok hex
+  exact PPolyOn.inf hok hex
 
 /-! ### Subcube certificates and semantic tree synthesis -/
 
-/-- `w` is a valid size-`s` circuit certificate on `n` inputs that computes `f` on every point in
-the subcube `p`. -/
+/-- `w` is a canonical certificate of length `certLength n s` encoding a valid size-`s` circuit on
+`n` inputs that computes `f` on every point in the subcube `p` (tested via `p.isPrefixOf`). -/
 def IsSubcubeCert (n s : ℕ) (f : BooleanFunction n) (p w : List Bool) : Prop :=
-  validCert n s w = true ∧
-    ∀ x : BitString n, inSubcube p (List.ofFn x) = true → evalCert n s w (List.ofFn x) = f x
+  w.length = certLength n s ∧ validCertificate n s w = true ∧
+    ∀ x : BitString n, p.isPrefixOf (List.ofFn x) = true → evalCertificate n s w (List.ofFn x) = f x
 
 /-- `w` is the lexicographically smallest (`BitString.wordLt`) certificate satisfying
 `IsSubcubeCert n s f p`. -/
@@ -623,50 +521,48 @@ private theorem exists_isMinSubcubeCert_iff {n s : ℕ} {f : BooleanFunction n} 
     (∃ w, IsMinSubcubeCert n s f p w) ↔ ∃ w, IsSubcubeCert n s f p w := by
   refine ⟨fun ⟨w, hw, _⟩ => ⟨w, hw⟩, fun ⟨w₀, hw₀⟩ => ?_⟩
   obtain ⟨w, _, hPw, hmin⟩ :=
-    exists_wordLt_min ⟨w₀, length_of_validCert hw₀.1, hw₀⟩
+    exists_wordLt_min ⟨w₀, hw₀.1, hw₀⟩
   exact ⟨w, hPw, hmin⟩
 
 private theorem isMinSubcubeCert_unique {n s : ℕ} {f : BooleanFunction n} {p w₁ w₂ : List Bool}
     (h₁ : IsMinSubcubeCert n s f p w₁) (h₂ : IsMinSubcubeCert n s f p w₂) :
     w₁ = w₂ :=
-  eq_of_wordLt_eq_false (length_of_validCert h₁.1.1) (length_of_validCert h₂.1.1)
-    (h₂.2 w₁ (length_of_validCert h₁.1.1) h₁.1)
-    (h₁.2 w₂ (length_of_validCert h₂.1.1) h₂.1)
+  eq_of_wordLt_eq_false h₁.1.1 h₂.1.1 (h₂.2 w₁ h₁.1.1 h₁.1) (h₁.2 w₂ h₂.1.1 h₂.1)
 
 private theorem isSubcubeCert_append_of_isSubcubeCert {n s : ℕ} {f : BooleanFunction n}
     {p w : List Bool} (hp : p.length < n) (hw : IsSubcubeCert n s f p w) (b : Bool) :
     IsSubcubeCert n s f (p ++ [b]) w := by
-  refine ⟨hw.1, fun x hx => hw.2 x ?_⟩
+  refine ⟨hw.1, hw.2.1, fun x hx => hw.2.2 x ?_⟩
   have hx' : p.length < (List.ofFn x).length := by simpa using hp
-  exact ((inSubcube_append_singleton hx').1 hx).1
+  exact ((isPrefixOf_append_singleton hx').1 hx).1
 
 private theorem isMergedCert_iff_isSubcubeCert {n s : ℕ} {f : BooleanFunction n}
     {p w₀ w₁ w : List Bool} (hp : p.length < n)
     (hw₀ : IsSubcubeCert n s f (p ++ [false]) w₀)
     (hw₁ : IsSubcubeCert n s f (p ++ [true]) w₁) :
     IsMergedCert n s p w₀ w₁ w ↔ IsSubcubeCert n s f p w := by
-  refine and_congr_right fun _ => ⟨fun h x hx => ?_, fun h x hx => ?_⟩
+  refine and_congr_right fun _ => and_congr_right fun _ => ⟨fun h x hx => ?_, fun h x hx => ?_⟩
   · have hpt := h (List.ofFn x) List.length_ofFn
     simp only [agreesOnPoint, hx, Bool.not_true, Bool.false_or, beq_iff_eq] at hpt
     have hlen : p.length < (List.ofFn x).length := by simpa using hp
     cases hb : (List.ofFn x).getD p.length false
     · simp only [hb, Bool.false_eq_true, ↓reduceIte] at hpt
-      exact hpt.trans (hw₀.2 x ((inSubcube_append_singleton hlen).2 ⟨hx, hb⟩))
+      exact hpt.trans (hw₀.2.2 x ((isPrefixOf_append_singleton hlen).2 ⟨hx, hb⟩))
     · simp only [hb, ↓reduceIte] at hpt
-      exact hpt.trans (hw₁.2 x ((inSubcube_append_singleton hlen).2 ⟨hx, hb⟩))
+      exact hpt.trans (hw₁.2.2 x ((isPrefixOf_append_singleton hlen).2 ⟨hx, hb⟩))
   · obtain ⟨y, rfl⟩ : ∃ y : BitString n, List.ofFn y = x :=
       ⟨BitString.ofList n x, BitString.ofFn_ofList hx⟩
     have hlen : p.length < (List.ofFn y).length := by simpa using hp
     simp only [agreesOnPoint, Bool.or_eq_true, Bool.not_eq_true', beq_iff_eq]
-    cases hin : inSubcube p (List.ofFn y)
+    cases hin : p.isPrefixOf (List.ofFn y)
     · left; rfl
     · right
       rw [h y hin]
       cases hb : (List.ofFn y).getD p.length false
       · simp only [Bool.false_eq_true, ↓reduceIte]
-        exact (hw₀.2 y ((inSubcube_append_singleton hlen).2 ⟨hin, hb⟩)).symm
+        exact (hw₀.2.2 y ((isPrefixOf_append_singleton hlen).2 ⟨hin, hb⟩)).symm
       · simp only [↓reduceIte]
-        exact (hw₁.2 y ((inSubcube_append_singleton hlen).2 ⟨hin, hb⟩)).symm
+        exact (hw₁.2.2 y ((isPrefixOf_append_singleton hlen).2 ⟨hin, hb⟩)).symm
 
 private theorem isMinMergedCert_iff_isMinSubcubeCert {n s : ℕ} {f : BooleanFunction n}
     {p w₀ w₁ w : List Bool} (hp : p.length < n)
@@ -705,7 +601,7 @@ private theorem getD_zero_ofFn_subcubeState_eq_true_iff (n s : ℕ) (f : Boolean
 private theorem drop_one_ofFn_subcubeState_eq {n s : ℕ} {f : BooleanFunction n}
     {p w : List Bool} (hw : IsMinSubcubeCert n s f p w) :
     (List.ofFn (subcubeState n s f p)).drop 1 = w := by
-  have hwlen : w.length = certLength n s := length_of_validCert hw.1.1
+  have hwlen : w.length = certLength n s := hw.1.1
   have hdlen : ((List.ofFn (subcubeState n s f p)).drop 1).length = w.length := by
     rw [List.length_drop, List.length_ofFn, stateWidth, hwlen]
     omega
@@ -874,13 +770,14 @@ private theorem complexity_single_comp_proj_le {m : ℕ} (g : Bool → Bool) (i�
 private theorem isSubcubeCert_of_length_eq {n s : ℕ} {f : BooleanFunction n} {p w : List Bool}
     (hp : p.length = n) :
     IsSubcubeCert n s f p w ↔
-      validCert n s w = true ∧ evalCert n s w p = f (BitString.ofList n p) := by
-  refine and_congr_right fun _ => ⟨fun h => ?_, fun h x hx => ?_⟩
+      w.length = certLength n s ∧ validCertificate n s w = true ∧
+        evalCertificate n s w p = f (BitString.ofList n p) := by
+  refine and_congr_right fun _ => and_congr_right fun _ => ⟨fun h => ?_, fun h x hx => ?_⟩
   · have h1 := h (BitString.ofList n p)
-      (by simp [inSubcube, BitString.ofFn_ofList hp])
+      (by simp [isPrefixOf_eq_take_beq, BitString.ofFn_ofList hp])
     rwa [BitString.ofFn_ofList hp] at h1
   · have hx' : List.ofFn x = p :=
-      (inSubcube_of_length_eq (hp.trans List.length_ofFn.symm)).1 hx
+      (isPrefixOf_of_length_eq (hp.trans List.length_ofFn.symm)).1 hx
     have hxy : x = BitString.ofList n p := by
       rw [← hx', BitString.ofList_ofFn]
     rw [hx', hxy, h]
@@ -968,19 +865,19 @@ private theorem complexity_subcubeState_tree_le {L : Language Bool}
 private theorem isSubcubeCert_nil_iff {n s : ℕ} {f : BooleanFunction n} :
     (∃ w, IsSubcubeCert n s f [] w) ↔ complexity interpretation (single f) ≤ s := by
   constructor
-  · rintro ⟨w, hvalid, heval⟩
-    obtain ⟨C, hcS, hC⟩ := exists_circuit_of_validCert hvalid
+  · rintro ⟨w, _, hvalid, heval⟩
+    obtain ⟨C, hcS, hC⟩ := exists_circuit_of_validCertificate hvalid
     refine complexity_le_iff.2 ⟨C, Circuit.computes_single_iff.2 fun x => ?_, hcS⟩
-    rw [hC x, heval x (inSubcube_nil _)]
+    rw [hC x, heval x (by simp)]
   · intro h
     obtain ⟨C, hC, hcS⟩ := complexity_le_iff.1 h
-    obtain ⟨w, hvalid, heval⟩ := exists_validCert_of_circuit C hcS
-    exact ⟨w, hvalid, fun x _ => (heval x).trans (Circuit.computes_single_iff.1 hC x)⟩
+    obtain ⟨w, hlen, hvalid, heval⟩ := exists_validCertificate_of_circuit C hcS
+    exact ⟨w, hlen, hvalid, fun x _ => (heval x).trans (Circuit.computes_single_iff.1 hC x)⟩
 
-private theorem subcubeState_nil_zero_eq_slice_MCSPAt (s : ℕ → ℕ) (n : ℕ) (T : BitString (2 ^ n)) :
+private theorem subcubeState_nil_zero_eq_slice_yesSet (s : ℕ → ℕ) (n : ℕ) (T : BitString (2 ^ n)) :
     subcubeState n (s n) ((truthTable n).symm T) [] ⟨0, Nat.succ_pos _⟩ =
-      (MCSPAt s).slice (2 ^ n) T := by
-  rw [Bool.eq_iff_iff, slice_MCSPAt_eq_true_iff, ← isSubcubeCert_nil_iff,
+      (GapMCSP.yesSet s).slice (2 ^ n) T := by
+  rw [Bool.eq_iff_iff, GapMCSP.slice_yesSet_eq_true_iff, ← isSubcubeCert_nil_iff,
     ← exists_isMinSubcubeCert_iff, subcubeState_eq_true_iff]
   simp
 
@@ -999,15 +896,19 @@ private theorem length_frame_encHeader_add_le {n s : ℕ} {p : List Bool} (hp : 
     encBits_apply]
   nlinarith
 
-/-! ### Main theorems: MMW19 Lemma 3.1 and Theorem 1.4 (third bullet) -/
+/-! ### Main theorems: MMW19 circuit upper bound and hardness magnification -/
 
-/-- **McKay–Murray–Williams, Lemma 3.1** [McKayMurrayWilliams2019]: if `NP ⊆ P/poly`, then there
-is a constant `c > 0` such that for every size schedule `s : ℕ → ℕ` and every `n`, the `2 ^ n`-bit
-slice of `MCSP[s]` has circuit complexity at most `2 ^ n * c * (n + s n + 1) ^ c`. -/
-theorem exists_complexity_MCSPAt_le_of_NP_subset_PPoly
+/-- **McKay–Murray–Williams circuit upper bound for `MCSP[s]` under `NP ⊆ P/poly`**
+[McKayMurrayWilliams2019, Lemma 3.1 and Section 5 (proof of Theorem 1.4, `C = P/poly` case)]: if
+`NP ⊆ P/poly`, then there is a constant `c > 0` such that for every size schedule `s : ℕ → ℕ` and
+every `n`, the `2 ^ n`-bit slice of `GapMCSP.yesSet s` has circuit complexity at most
+`2 ^ n * c * (n + s n + 1) ^ c`. The proof composes the `P/poly` circuit for
+`CircuitMinMergeLanguage` across a binary merge tree over the `2 ^ n` subcubes of `{0, 1} ^ n`
+(rather than a `d`-ary tree with `ℓ = s³`). -/
+theorem exists_complexity_yesSet_le_of_NP_subset_PPoly
     (hNP : NP encBits ⊆ PPolyOn encBits) :
     ∃ c > 0, ∀ (s : ℕ → ℕ) (n : ℕ),
-      complexity interpretation (single ((MCSPAt s).slice (2 ^ n))) ≤
+      complexity interpretation (single ((GapMCSP.yesSet s).slice (2 ^ n))) ≤
         2 ^ n * c * (n + s n + 1) ^ c := by
   obtain ⟨L, hL_PPoly, hL⟩ := circuitMinMergeLanguage_mem_PPolyOn hNP
   obtain ⟨c₀, hc₀⟩ := mem_PPoly_iff_exists_mem_SIZE.1 hL_PPoly
@@ -1034,13 +935,13 @@ theorem exists_complexity_MCSPAt_le_of_NP_subset_PPoly
     have hle : 2 ^ n - 1 ≤ 2 ^ n := Nat.sub_le _ _
     have hmul := Nat.mul_le_mul_right (stateWidth n (s n) * (M + 2)) hle
     nlinarith
-  have hslice : single ((MCSPAt s).slice (2 ^ n)) =
+  have hslice : single ((GapMCSP.yesSet s).slice (2 ^ n)) =
       (single fun v : BitString (stateWidth n (s n)) => v ⟨0, Nat.succ_pos _⟩) ∘
         fun T => subcubeState n (s n) ((truthTable n).symm T) [] := by
     funext T i
     rw [Subsingleton.elim i 0]
-    exact (subcubeState_nil_zero_eq_slice_MCSPAt s n T).symm
-  have hcomp : complexity interpretation (single ((MCSPAt s).slice (2 ^ n))) ≤
+    exact (subcubeState_nil_zero_eq_slice_yesSet s n T).symm
+  have hcomp : complexity interpretation (single ((GapMCSP.yesSet s).slice (2 ^ n))) ≤
       2 ^ n * (stateWidth n (s n) * (M + 3)) := by
     rw [hslice]
     have h0 := complexity_comp_le (I := interpretation)
@@ -1068,20 +969,21 @@ theorem exists_complexity_MCSPAt_le_of_NP_subset_PPoly
         exact Nat.mul_le_mul_right _ (by unfold C₁; omega)
   have hCD : C₁ * N ^ D₁ ≤ c * N ^ c :=
     Nat.mul_le_mul (le_max_left C₁ D₁) (Nat.pow_le_pow_right hN_pos (le_max_right C₁ D₁))
-  calc complexity interpretation (single ((MCSPAt s).slice (2 ^ n)))
+  calc complexity interpretation (single ((GapMCSP.yesSet s).slice (2 ^ n)))
       ≤ 2 ^ n * (stateWidth n (s n) * (M + 3)) := hcomp
     _ ≤ 2 ^ n * (c * N ^ c) := Nat.mul_le_mul_left (2 ^ n) (hprod.trans hCD)
     _ = 2 ^ n * c * (n + s n + 1) ^ c := by rw [Nat.mul_assoc]
 
-/-- **McKay–Murray–Williams, Lemma 3.1 for polynomial schedules**: if `NP ⊆ P/poly`, then for every
-degree `k`, there is `c > 0` such that the `2 ^ n`-bit slice of `MCSP[n ^ k]` has circuit
-complexity at most `2 ^ n * c * (n + 1) ^ c`. -/
-theorem exists_complexity_MCSPAt_pow_le_of_NP_subset_PPoly
+/-- **McKay–Murray–Williams circuit upper bound for `MCSP[n ^ k]` under `NP ⊆ P/poly`**
+[McKayMurrayWilliams2019, Lemma 3.1 and Section 5 (proof of Theorem 1.4, `C = P/poly` case)]: if
+`NP ⊆ P/poly`, then for every degree `k`, there is `c > 0` such that the `2 ^ n`-bit slice of
+`GapMCSP.yesSet (fun m => m ^ k)` has circuit complexity at most `2 ^ n * c * (n + 1) ^ c`. -/
+theorem exists_complexity_yesSet_pow_le_of_NP_subset_PPoly
     (hNP : NP encBits ⊆ PPolyOn encBits) (k : ℕ) :
     ∃ c > 0, ∀ n : ℕ,
-      complexity interpretation (single ((MCSPAt fun m => m ^ k).slice (2 ^ n))) ≤
+      complexity interpretation (single ((GapMCSP.yesSet fun m => m ^ k).slice (2 ^ n))) ≤
         2 ^ n * c * (n + 1) ^ c := by
-  obtain ⟨c₀, hc₀_pos, hc₀⟩ := exists_complexity_MCSPAt_le_of_NP_subset_PPoly hNP
+  obtain ⟨c₀, hc₀_pos, hc₀⟩ := exists_complexity_yesSet_le_of_NP_subset_PPoly hNP
   let C₁ : ℕ := c₀ * 2 ^ c₀
   let D₁ : ℕ := (k + 1) * c₀
   let c : ℕ := max C₁ (max D₁ 1)
@@ -1099,7 +1001,7 @@ theorem exists_complexity_MCSPAt_pow_le_of_NP_subset_PPoly
       _ = 2 ^ c₀ * (n + 1) ^ D₁ := by rw [Nat.mul_pow, ← Nat.pow_mul]
   have hC : C₁ ≤ c := le_max_left _ _
   have hD : D₁ ≤ c := (le_max_left _ _).trans (le_max_right _ _)
-  calc complexity interpretation (single ((MCSPAt fun m => m ^ k).slice (2 ^ n)))
+  calc complexity interpretation (single ((GapMCSP.yesSet fun m => m ^ k).slice (2 ^ n)))
       ≤ 2 ^ n * c₀ * (n + n ^ k + 1) ^ c₀ := hc₀ (fun m => m ^ k) n
     _ ≤ 2 ^ n * c₀ * (2 ^ c₀ * (n + 1) ^ D₁) := Nat.mul_le_mul_left _ hpow
     _ = 2 ^ n * (C₁ * (n + 1) ^ D₁) := by unfold C₁; ring
@@ -1109,57 +1011,73 @@ theorem exists_complexity_MCSPAt_pow_le_of_NP_subset_PPoly
 
 /-- **Hardness magnification for `MCSP[s]` against `NP ⊆ P/poly`**
 [McKayMurrayWilliams2019, Theorem 1.4, third bullet]: if for every `c > 0` there exist a schedule
-`s` and input arity `n` such that the `2 ^ n`-bit slice of `MCSP[s]` requires more than
-`2 ^ n * c * (n + s n + 1) ^ c` gates, then `NP ⊄ P/poly`. -/
-theorem not_NP_subset_PPoly_of_MCSPAt_hard
+`s` and input arity `n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet s` requires more than
+`2 ^ n * c * (n + s n + 1) ^ c` gates, then `NP ⊄ P/poly`.
+
+Relative to the paper's statement, this specializes `search-MCSP^A[s]` to decision
+`GapMCSP.yesSet s` (`MCSP[s]`), sets `A = ∅`, uses fan-in-2 De Morgan circuits counting all gates,
+and assumes a size-only lower bound rather than a combined size-and-depth lower bound. -/
+theorem not_NP_subset_PPoly_of_yesSet_hard
     (h : ∀ c > 0, ∃ (s : ℕ → ℕ) (n : ℕ),
       2 ^ n * c * (n + s n + 1) ^ c <
-        complexity interpretation (single ((MCSPAt s).slice (2 ^ n)))) :
+        complexity interpretation (single ((GapMCSP.yesSet s).slice (2 ^ n)))) :
     ¬ (NP encBits ⊆ PPolyOn encBits) := by
   intro hNP
-  obtain ⟨c, hc_pos, hub⟩ := exists_complexity_MCSPAt_le_of_NP_subset_PPoly hNP
+  obtain ⟨c, hc_pos, hub⟩ := exists_complexity_yesSet_le_of_NP_subset_PPoly hNP
   obtain ⟨s, n, hlb⟩ := h c hc_pos
   exact (lt_irrefl _) ((hub s n).trans_lt hlb)
 
 /-- **Hardness magnification for `MCSP[s]` to `P ≠ NP`**
 [McKayMurrayWilliams2019, Theorem 1.4, third bullet]: if for every `c > 0` there exist a schedule
-`s` and input arity `n` such that the `2 ^ n`-bit slice of `MCSP[s]` requires more than
-`2 ^ n * c * (n + s n + 1) ^ c` gates, then `P ≠ NP`. -/
-theorem P_ne_NP_of_MCSPAt_hard
+`s` and input arity `n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet s` requires more than
+`2 ^ n * c * (n + s n + 1) ^ c` gates, then `P ≠ NP`.
+
+Relative to the paper's statement, this specializes `search-MCSP^A[s]` to decision
+`GapMCSP.yesSet s` (`MCSP[s]`), sets `A = ∅`, uses fan-in-2 De Morgan circuits counting all gates,
+and assumes a size-only lower bound rather than a combined size-and-depth lower bound. -/
+theorem P_ne_NP_of_yesSet_hard
     (h : ∀ c > 0, ∃ (s : ℕ → ℕ) (n : ℕ),
       2 ^ n * c * (n + s n + 1) ^ c <
-        complexity interpretation (single ((MCSPAt s).slice (2 ^ n)))) :
+        complexity interpretation (single ((GapMCSP.yesSet s).slice (2 ^ n)))) :
     P encBits ≠ NP encBits := by
   intro hEq
-  refine not_NP_subset_PPoly_of_MCSPAt_hard h ?_
+  refine not_NP_subset_PPoly_of_yesSet_hard h ?_
   rw [← hEq]
   exact P_subset_PPolyOn
 
 /-- **Hardness magnification for `MCSP[n ^ k]` against `NP ⊆ P/poly`**
 [McKayMurrayWilliams2019, Theorem 1.4, third bullet]: if for some `k` and every `c > 0`, there is
-`n` such that the `2 ^ n`-bit slice of `MCSP[n ^ k]` requires more than
-`2 ^ n * c * (n + 1) ^ c` gates, then `NP ⊄ P/poly`. -/
-theorem not_NP_subset_PPoly_of_MCSPAt_pow_hard (k : ℕ)
+`n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet (fun m => m ^ k)` requires more than
+`2 ^ n * c * (n + 1) ^ c` gates, then `NP ⊄ P/poly`.
+
+Relative to the paper's statement, this specializes `search-MCSP^A[s]` to decision `GapMCSP.yesSet`
+(`MCSP[n ^ k]`), sets `A = ∅`, uses fan-in-2 De Morgan circuits counting all gates, and assumes a
+size-only lower bound rather than a combined size-and-depth lower bound. -/
+theorem not_NP_subset_PPoly_of_yesSet_pow_hard (k : ℕ)
     (h : ∀ c > 0, ∃ n : ℕ,
       2 ^ n * c * (n + 1) ^ c <
-        complexity interpretation (single ((MCSPAt fun m => m ^ k).slice (2 ^ n)))) :
+        complexity interpretation (single ((GapMCSP.yesSet fun m => m ^ k).slice (2 ^ n)))) :
     ¬ (NP encBits ⊆ PPolyOn encBits) := by
   intro hNP
-  obtain ⟨c, hc_pos, hub⟩ := exists_complexity_MCSPAt_pow_le_of_NP_subset_PPoly hNP k
+  obtain ⟨c, hc_pos, hub⟩ := exists_complexity_yesSet_pow_le_of_NP_subset_PPoly hNP k
   obtain ⟨n, hlb⟩ := h c hc_pos
   exact (lt_irrefl _) ((hub n).trans_lt hlb)
 
 /-- **Hardness magnification for `MCSP[n ^ k]` to `P ≠ NP`**
 [McKayMurrayWilliams2019, Theorem 1.4, third bullet]: if for some `k` and every `c > 0`, there is
-`n` such that the `2 ^ n`-bit slice of `MCSP[n ^ k]` requires more than
-`2 ^ n * c * (n + 1) ^ c` gates, then `P ≠ NP`. -/
-theorem P_ne_NP_of_MCSPAt_pow_hard (k : ℕ)
+`n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet (fun m => m ^ k)` requires more than
+`2 ^ n * c * (n + 1) ^ c` gates, then `P ≠ NP`.
+
+Relative to the paper's statement, this specializes `search-MCSP^A[s]` to decision `GapMCSP.yesSet`
+(`MCSP[n ^ k]`), sets `A = ∅`, uses fan-in-2 De Morgan circuits counting all gates, and assumes a
+size-only lower bound rather than a combined size-and-depth lower bound. -/
+theorem P_ne_NP_of_yesSet_pow_hard (k : ℕ)
     (h : ∀ c > 0, ∃ n : ℕ,
       2 ^ n * c * (n + 1) ^ c <
-        complexity interpretation (single ((MCSPAt fun m => m ^ k).slice (2 ^ n)))) :
+        complexity interpretation (single ((GapMCSP.yesSet fun m => m ^ k).slice (2 ^ n)))) :
     P encBits ≠ NP encBits := by
   intro hEq
-  refine not_NP_subset_PPoly_of_MCSPAt_pow_hard k h ?_
+  refine not_NP_subset_PPoly_of_yesSet_pow_hard k h ?_
   rw [← hEq]
   exact P_subset_PPolyOn
 
