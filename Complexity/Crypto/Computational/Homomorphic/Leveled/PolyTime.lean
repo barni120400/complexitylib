@@ -90,7 +90,6 @@ theorem isPPTOn_keyGen
   apply (Scheme.isPPTOn_generateKeyChain hkeyGen hencrypt (.of_tidy hn)
     (.of_tidy (show ComputableTidilyInPolyTime (fun a => 2 * budget a) input encUnary by
       fun_prop))).map_with
-  apply ComputableInPolyTime.tidy
   apply computableInPolyTime_keyPair <;> exact .of_tidy (by fun_prop)
 
 include hencrypt in
@@ -104,7 +103,7 @@ theorem isPPTOn_encrypt {bit : α → Bool}
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hn
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hpk
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hbit
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   have hfirst := (ComputableTidilyInPolyTime.listGetD (encA := encBits) []).comp
     (hpublic.fst'.prod (ComputableTidilyInPolyTime.const 0))
   exact (hencrypt.preprocess (.of_tidy (hn.prod (hfirst.prod hbit)))).map (by fun_prop)
@@ -128,7 +127,7 @@ theorem computableInPolyTime_decrypt
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hsk
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hc
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
-  have hendpoints := secretKeyDecoder.computableTidilyInPolyTime.comp hsk
+  have hendpoints := secretKeyDecoder.computableInPolyTime.tidy.comp hsk
   have hhead := (ComputableTidilyInPolyTime.headD (encA := encBool) false).comp hc
   have hsecret := hhead.cond hendpoints.snd' hendpoints.fst'
   exact (Boolean.computableInPolyTime_evalCircuit (.of_tidy (hD.tidy.comp hn))
@@ -191,7 +190,7 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hpk
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hc
   simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hinputs
-  have hpublic := publicKeyDecoder.computableTidilyInPolyTime.comp hpk
+  have hpublic := publicKeyDecoder.computableInPolyTime.tidy.comp hpk
   have hview : ComputableTidilyInPolyTime
       (fun C : Σ m, Circuit Boolean.signature m 1 => (C.1, C.2.code))
       (Boolean.encCircuit 1) (encPair encUnary Boolean.encCode) := .of_eq fun _ => rfl
@@ -200,8 +199,8 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
     (.of_tidy ((ComputableTidilyInPolyTime.listTail encBits).comp hpublic.fst'))
     (.of_tidy hpublic.snd') (.of_tidy (ComputableTidilyInPolyTime.bitsTail.map.comp hinputs))
     (.of_tidy hparts.fst') (.of_tidy hparts.snd')).map
-  exact ComputableTidilyInPolyTime.bitsCons (by fun_prop)
-    (ComputableTidilyInPolyTime.headD [])
+  exact ComputableInPolyTime.bitsCons (by fun_prop)
+    (ComputableInPolyTime.headD [])
 
 include hD in
 /-- The circuit generator emits its input arity in unary. Its native runtime certificate
