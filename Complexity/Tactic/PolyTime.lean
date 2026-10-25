@@ -724,7 +724,13 @@ attribute [aesop norm simp (rule_sets := [PolyTime])] forall_and
 -- duplicating those alternatives while retaining decomposition if a local certificate fails.
 @[aesop safe -25 tactic (rule_sets := [PolyTime])]
 private meta def polytimeConstructFast : Lean.Elab.Tactic.TacticM Unit :=
-  polytimeConstruct withoutLocalCall
+  Lean.Elab.Tactic.withMainContext do
+    -- A raw constructor may also have an ordinary raw compositional proof. Preserve it as
+    -- an alternative instead of committing to plain premises with no plain provider.
+    if (← polytimePredicate (← Lean.Elab.Tactic.getMainTarget)) ==
+        ``ComputableTidilyInPolyTime then
+      throwError "raw construction retains compositional alternatives"
+    polytimeConstruct withoutLocalCall
 
 @[aesop safe -20 tactic (rule_sets := [PolyTime])]
 private meta def polytimeFunPropFast : Lean.Elab.Tactic.TacticM Unit :=
