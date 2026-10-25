@@ -94,8 +94,9 @@ attribute [aesop unsafe 80% apply (rule_sets := [PPT])]
   IsPPTOn.iterateWith_of_bounded_growth
 
 /-- Certify a probabilistic program using proved sampling, composition and deterministic rules. -/
-macro "ppt" : tactic => `(tactic| solve |
-  aesop (config := { terminal := true, assumptionTransparency := .reducible })
-    (rule_sets := [PPT, PolyTime]))
+elab "ppt" : tactic => Cslib.Tactic.PolyTime.Internal.withPlainRuleMemo do
+  evalTactic (← `(tactic| solve |
+    aesop (config := { terminal := true, assumptionTransparency := .reducible })
+      (rule_sets := [PPT, PolyTime])))
 
 end Cslib.Tactic.PPT

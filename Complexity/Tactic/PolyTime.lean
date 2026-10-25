@@ -255,14 +255,14 @@ private meta def rawTransitionPremise (type : Expr) : MetaM Bool := do
 open Lean in
 private meta structure PlainRuleCache where
   premises : Std.HashMap Name Bool := {}
-  rawProperties : Option (Std.HashSet Name) := none
+  properties : Std.HashMap Name Bool := {}
 
 /-- Empty per-invocation classification state. -/
 private meta instance : Inhabited PlainRuleCache := ⟨{}⟩
 
 open Lean in
-private meta initialize rawPremiseCache : EnvExtension PlainRuleCache ←
-  registerEnvExtension (pure {}) (asyncMode := .local)
+private meta initialize rawPremiseCache : EnvExtension (Option PlainRuleCache) ←
+  registerEnvExtension (pure none) (asyncMode := .local)
 
 open Lean Meta in
 /-- Inspect premises under their data parameters; a complete certificate has no raw premise. -/
@@ -275,7 +275,8 @@ private meta def typeHasRawPremise (type : Expr) : MetaM Bool :=
 open Lean Meta in
 /-- Inspect a registered rule's hypotheses, including reducible proposition aliases. -/
 private meta def hasRawPremise (name : Name) : MetaM Bool := do
-  if let some result := (rawPremiseCache.getState (← getEnv)).premises.get? name then return result
+  if let some result := (rawPremiseCache.getState (← getEnv)).bind
+      (fun memo => memo.premises.get? name) then return result
   let some info := (← getEnv).find? name | return true
   typeHasRawPremise info.type
 
@@ -293,6 +294,8 @@ private meta def searchRuleState {α β σ : Type} (ext : ScopedEnvExtension α 
 open Lean Meta in
 /-- Recognize raw properties themselves, including full-arity reducible aliases. -/
 private meta def isRawProperty (name : Name) : MetaM Bool := do
+  if let some result := (rawPremiseCache.getState (← getEnv)).bind
+      (fun memo => memo.properties.get? name) then return result
   let some info := (← getEnv).find? name | return true
   forallTelescope info.type fun xs _ => do
     rawTransitionPremise (mkAppN (← mkConstWithLevelParams name) xs)
@@ -323,12 +326,9 @@ private meta def plainRuleEnvironment (env : Environment) : MetaM Environment :=
   let env := searchRuleState lambdaTheoremsExt env fun s =>
     { s with theorems := s.theorems.map fun _ rules =>
         rules.filter fun rule => !blocked.contains rule.thmName }
-  let rawProperties ← match (rawPremiseCache.getState env).rawProperties with
-    | some names => pure names
-    | none => do
-      let decls := (funPropDeclsExt.getState env).decls
-      decls.foldValuesM (init := ({} : Std.HashSet Name)) fun names decl => do
-        return if ← isRawProperty decl.funPropName then names.insert decl.funPropName else names
+  let rawProperties ← (funPropDeclsExt.getState env).decls.foldValuesM
+    (init := ({} : Std.HashSet Name)) fun names decl => do
+      return if ← isRawProperty decl.funPropName then names.insert decl.funPropName else names
   -- Local implications are enumerated independently of the theorem tables. Their raw premises
   -- may use supplied assumptions, but cannot initiate raw function-property proof search.
   return searchRuleState funPropDeclsExt env fun s =>
@@ -388,10 +388,9 @@ private meta def plainBuiltinEnvironment (env : Environment) : MetaM Environment
   unless matched.size == 1 do throwError "expected one builtin local-application rule"
   return searchRuleState ext env fun state => { state with unsafeRules := index }
 
-open Lean Meta Elab Tactic Mathlib.Meta.FunProp in
-/-- Classify global rules once for this tactic invocation. Aesop alternatives reuse these
-immutable answers; each backend still receives fresh rule tables and dynamic local evidence. -/
-meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := do
+open Lean Meta Mathlib.Meta.FunProp in
+/-- Prepare only immutable global declaration classifications, never proofs or local evidence. -/
+private meta def preparePlainRuleMemo : MetaM PlainRuleCache := do
   let env ← getEnv
   let mut names : Std.HashSet Name := {}
   for (_, properties) in (functionTheoremsExt.getState env).theorems do
@@ -424,23 +423,40 @@ meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit := d
       | some i => rawModules.getD env.header.moduleNames[i.toNat]! true
       | none => true
     cache := cache.insert name (← if mayUseRaw then hasRawPremise name else pure false)
-  let rawProperties ← (funPropDeclsExt.getState env).decls.foldValuesM
-    (init := ({} : Std.HashSet Name)) fun names decl => do
+  let properties ← (funPropDeclsExt.getState env).decls.foldValuesM
+    (init := ({} : Std.HashMap Name Bool)) fun properties decl => do
       let mayUseRaw := match env.getModuleIdxFor? decl.funPropName with
         | some i => rawModules.getD env.header.moduleNames[i.toNat]! true
         | none => true
-      return if mayUseRaw && (← isRawProperty decl.funPropName) then
-        names.insert decl.funPropName else names
-  -- Named certificate lookup is independent of FunProp's rule tables. Keep eager obligations
-  -- and explicit raw construction entries, but do not introduce raw premises in public search.
-  let env := searchRuleState Cslib.Tactic.certificateExt env fun certificates =>
-    certificates.map fun key entries =>
-      if key.1 == ``ComputableTidilyInPolyTime then entries
-      else entries.filter fun (name, _) => !cache.getD name true
-  let env ← plainBuiltinEnvironment env
-  -- The cache and projected rule sets are confined to this invocation.
-  withEnv (rawPremiseCache.setState env { premises := cache, rawProperties := some rawProperties })
+      let raw ← if mayUseRaw then isRawProperty decl.funPropName else pure false
+      return properties.insert decl.funPropName raw
+  return { premises := cache, properties }
+
+open Lean Meta Elab Tactic in
+/-- Reuse only global classification answers across one invocation. Rule tables, certificate
+lookup, matching and local evidence are not projected or cached by this wrapper. -/
+meta def Internal.withPlainRuleMemo (action : TacticM Unit) : TacticM Unit := do
+  let env ← getEnv
+  if (rawPremiseCache.getState env).isSome then
     action
+  else
+    let memo ← preparePlainRuleMemo
+    withEnv (rawPremiseCache.setState env (some memo)) action
+
+open Lean Meta Elab Tactic in
+/-- Apply the deterministic boundary using the current tables and scoped classification memo.
+Explicit raw construction entries and all named-certificate metadata retain their old policy. -/
+meta def Internal.withPlainRuleCache (action : TacticM Unit) : TacticM Unit :=
+  Internal.withPlainRuleMemo do
+    let env ← getEnv
+    let certificates ← (Cslib.Tactic.certificateExt.getState env).foldM (init := {})
+      fun certificates key entries => do
+        let entries ← if key.1 == ``ComputableTidilyInPolyTime then pure entries
+          else entries.filterM fun (name, _) => return !(← hasRawPremise name)
+        return certificates.insert key entries
+    let env := searchRuleState Cslib.Tactic.certificateExt env fun _ => certificates
+    let env ← plainBuiltinEnvironment env
+    withEnv env action
 
 open Lean Meta in
 /-- Apply an existing fact only when matching its conclusion determines every argument. -/
