@@ -33,15 +33,17 @@ real tuple `(d, encode (α • g), encode (β • g), encode ((α * β) • g))`
 
 We prove the implications `DDH ⇒ CDH ⇒ DiscreteLog` between the assumptions, the distributional
 rerandomisation lemma underlying the random self-reducibility of DDH ([BonehShoup2023],
-Section 10.5, Exercises 10.8–10.9, pp. 425–426; `ddhRerandomizeLaw_real` and
+Section 10.11, Exercises 10.8–10.9, pp. 425–426; `ddhRerandomizeLaw_real` and
 `ddhRerandomizeLaw_ideal`), its word-level and game-level consequences
 (`encodeDDHRerandomize`, `ddhRerandomizeGame`, `ddhRerandomizeGame_real`,
 `ddhRerandomizeGame_ideal`, `advantage_ddhRerandomizeGame_eq`, `DDH.ddhRerandomizeGame`), and an
 original single-invocation worst-case-to-average-case DDH distinguishing reduction using
 `ProbComp.sampleModNat` (`ddhSampleModExponents`, `ddhSelfReduceDistinguisher`,
 `ddhWorstCaseGame`, `advantage_ddhRerandomizeGame_ddhWorstCaseGame_le`,
-`advantage_ddhRealGame_le_ddhWorstCaseGame`, `ddh_of_worstCase`). The Diffie–Hellman assumptions
-are hypotheses, not theorems.
+`advantage_ddhRealGame_le_ddhWorstCaseGame`, `ddh_of_worstCase`). That reduction makes one call
+to the distinguisher and does not amplify it: the worst-case decider of Exercise 10.10 (p. 426),
+which amplifies an average-case distinguisher with a Chernoff bound, is not formalized. The
+Diffie–Hellman assumptions are hypotheses, not theorems.
 
 ## Main definitions
 
@@ -94,8 +96,8 @@ are hypotheses, not theorems.
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 10.5 (Attack Games 10.5–10.6, pp. 409–410;
-  Exercises 10.7–10.9, pp. 425–426).
+  Version 0.6][BonehShoup2023], Section 10.5 (Attack Games 10.5–10.6, pp. 409–410) and
+  Section 10.11 (Exercises 10.7–10.9, pp. 425–426).
 -/
 
 @[expose] public section
