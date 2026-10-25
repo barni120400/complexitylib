@@ -149,6 +149,39 @@ example : (zeroLinkAdversary fixture (fun _ => 0) adversary).IsPPT :=
 example : (zeroLinkAdversary fixture (fun n => n + 2) adversary).IsPPT :=
   isPPT_zeroLinkAdversary encrypt_ppt adversary_ppt keyGen_ppt (by fun_prop)
 
+example : (leveledAdversary fixture (fun n => 2 * (n + 1)) (fun _ => 2) adversary).IsPPT :=
+  isPPT_leveledAdversary encrypt_ppt adversary_ppt keyGen_ppt (by fun_prop) (by fun_prop)
+
+example (n : ℕ) :
+    Game.advantage
+      (ProbComp.eval (Encryption.game (fun n => keyGen fixture n 1) (encrypt fixture)
+        adversary false n))
+      (ProbComp.eval (Encryption.game (fun n => keyGen fixture n 1) (encrypt fixture)
+        adversary true n)) =
+    4 * (dyadicSize (2 * 1) : NNReal) * dyadicSize 2 *
+      Game.advantage
+        (ProbComp.eval (Encryption.game fixture.keyGen fixture.encrypt
+          (leveledAdversary fixture (fun _ => 2 * 1) (fun _ => 2) adversary) false n))
+        (ProbComp.eval (Encryption.game fixture.keyGen fixture.encrypt
+          (leveledAdversary fixture (fun _ => 2 * 1) (fun _ => 2) adversary) true n)) :=
+  advantage_game_eq_leveledAdversary fixture (fun _ => 1) (fun _ => 2) adversary n 2
+    (secret_width n) le_rfl
+
+example (n : ℕ) :
+    Game.advantage
+      (ProbComp.eval (Encryption.game (fun n => keyGen fixture n 1) (encrypt fixture)
+        adversary false n))
+      (ProbComp.eval (Encryption.game (fun n => keyGen fixture n 1) (encrypt fixture)
+        adversary true n)) ≤
+    16 * (2 * (1 : ℕ) + 1 : NNReal) * ((2 : ℕ) + 1) *
+      Game.advantage
+        (ProbComp.eval (Encryption.game fixture.keyGen fixture.encrypt
+          (leveledAdversary fixture (fun _ => 2 * 1) (fun _ => 2) adversary) false n))
+        (ProbComp.eval (Encryption.game fixture.keyGen fixture.encrypt
+          (leveledAdversary fixture (fun _ => 2 * 1) (fun _ => 2) adversary) true n)) :=
+  advantage_game_le_mul_leveledAdversary fixture (fun _ => 1) (fun _ => 2) adversary n 2
+    (secret_width n) le_rfl
+
 example (bit : Bool) : IsPPTOn (encPair encUnary encPublicKey) encBool
     (fun p => publicKeyGame fixture adversary bit p.1 p.2) :=
   isPPTOn_publicKeyGame encrypt_ppt adversary_ppt bit
