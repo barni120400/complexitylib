@@ -36,6 +36,24 @@ example : measureProb (Circuit.run [h₀, h₀] (fun _ => false)) {fun _ => true
   have hne : (fun _ : Fin 1 => true) ≠ fun _ => false := fun h => by simpa using congrFun h 0
   simp [this, measureProb, hne]
 
+/-- The NOT gate on the only qubit of a one-qubit register. -/
+noncomputable def x₀ : PlacedGate 1 := ⟨1, Gate.not, Function.Embedding.refl _⟩
+
+-- Gates act first to last: `run [X, H] |0⟩ = H X |0⟩ = H |1⟩ = (|0⟩ - |1⟩)/√2`, whose amplitude on
+-- `|1⟩` is `-1/√2`; in the other order, `X H |0⟩ = (|0⟩ + |1⟩)/√2` would give `+1/√2`.
+example : (Circuit.run [x₀, h₀] fun _ => false).ofLp (fun _ => true) =
+    -((Real.sqrt 2)⁻¹ : ℝ) := by
+  have hx : x₀.eval (ket fun _ => false) = ket fun _ => true := by
+    simp only [x₀, Gate.not, Gate.ofInvolutive, PlacedGate.eval_ofPerm_ket]
+    congr 1
+    funext j
+    exact (splitEquiv_symm_apply_wire (Function.Embedding.refl _) _ _ j).trans (by
+      fin_cases j; rfl)
+  simp only [Circuit.run, Circuit.eval_cons, Circuit.eval_nil, hx, PlacedGate.eval_ket_apply,
+    PlacedGate.matrix_apply, h₀, Function.Embedding.refl_apply, exists_eq, not_true_eq_false,
+    IsEmpty.forall_iff, implies_true, ite_true, Gate.hadamard_apply]
+  simp
+
 /-- The Toffoli gate on the three qubits of a three-qubit register, in order. -/
 noncomputable def toffoli₀ : PlacedGate 3 := ⟨3, Gate.toffoli, Function.Embedding.refl _⟩
 
