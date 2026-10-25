@@ -12,6 +12,7 @@ public import Mathlib.Data.Fintype.Option
 public import Mathlib.Data.Fintype.Prod
 public import Complexity.Computability.Machines.Turing.MultiTape.Map
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Basic
+import Complexity.Foundations.Data.List.Lookup
 
 /-!
 # The simulation is correct
@@ -145,8 +146,8 @@ lemma applyTapes_ofFn (ts : Fin k → Tape) (as : Fin k → Option (Option ℕ) 
   | zero => rfl
   | succ k ih => simp [List.ofFn_succ, applyTapes, ih]
 
-lemma getD_ofFn (ts : Fin k → Tape) (i : Fin k) : (List.ofFn ts).getD i .blank = ts i := by
-  simp [List.getD_eq_getElem?_getD]
+lemma getD_ofFn (ts : Fin k → Tape) (i : Fin k) : (List.ofFn ts).getD i .blank = ts i :=
+  List.getD_ofFn ts i _
 
 lemma inputSymbol_val (c : Cfg k ℕ ℕ x) : inputSymbol x c.inputPos.val = c.inputSymbol := by
   unfold inputSymbol Cfg.inputSymbol
