@@ -285,4 +285,9 @@ theorem bool_or :
   (encPair encBool encBool)
   encBool := of_finite _
 
+/-- Boolean exclusive disjunction on its fixed finite input domain. -/
+@[fun_prop]
+theorem bool_xor : ComputableInPolyTime (fun p : Bool × Bool => p.1 ^^ p.2)
+    (encPair encBool encBool) encBool := of_finite _
+
 end Turing.MultiTapeTM.ComputableInPolyTime

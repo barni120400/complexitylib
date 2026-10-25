@@ -107,3 +107,15 @@ example {α : Type} {_input : α ↪ List Bool} (_unknown : α → List Bool) : 
   fail_if_success
     have : ComputableInPolyTime (fun a => unframe (_unknown a)) _input encBits := by fun_prop
   trivial
+
+-- XOR retains the whole caller encoding and requires both computed Boolean callbacks.
+example {α : Type} {enc : α ↪ List Bool} {left right : α → Bool}
+    (hl : ComputableInPolyTime left enc encBool)
+    (hr : ComputableInPolyTime right enc encBool) :
+    ComputableInPolyTime (fun a => left a ^^ right a) enc encBool := by fun_prop
+
+example {α : Type} {enc : α ↪ List Bool} (left _right : α → Bool)
+    (_hl : ComputableInPolyTime left enc encBool) : True := by
+  fail_if_success
+    have : ComputableInPolyTime (fun a => left a ^^ _right a) enc encBool := by fun_prop
+  trivial
