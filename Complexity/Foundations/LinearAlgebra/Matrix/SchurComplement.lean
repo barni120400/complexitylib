@@ -69,28 +69,26 @@ theorem isUnit_fromBlocks_diagonal_iff (A : Matrix ι ι R) (D : Matrix κ κ R)
     rw [hu] at hh hh'
     refine ⟨isUnit_iff_exists.mpr ⟨(↑u⁻¹ : Matrix (ι ⊕ κ) (ι ⊕ κ) R).toBlocks₁₁, ?_, ?_⟩,
       isUnit_iff_exists.mpr ⟨(↑u⁻¹ : Matrix (ι ⊕ κ) (ι ⊕ κ) R).toBlocks₂₂, ?_, ?_⟩⟩
-    all_goals
-      first
-      | have h := congrArg Matrix.toBlocks₁₁ hh
-        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-        ext i j
-        have hx := congrFun (congrFun h i) j
-        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
-      | have h := congrArg Matrix.toBlocks₁₁ hh'
-        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-        ext i j
-        have hx := congrFun (congrFun h i) j
-        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
-      | have h := congrArg Matrix.toBlocks₂₂ hh
-        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-        ext i j
-        have hx := congrFun (congrFun h i) j
-        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
-      | have h := congrArg Matrix.toBlocks₂₂ hh'
-        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-        ext i j
-        have hx := congrFun (congrFun h i) j
-        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+    · have h := congrArg Matrix.toBlocks₁₁ hh
+      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+      ext i j
+      have hx := congrFun (congrFun h i) j
+      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+    · have h := congrArg Matrix.toBlocks₁₁ hh'
+      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+      ext i j
+      have hx := congrFun (congrFun h i) j
+      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+    · have h := congrArg Matrix.toBlocks₂₂ hh
+      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+      ext i j
+      have hx := congrFun (congrFun h i) j
+      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+    · have h := congrArg Matrix.toBlocks₂₂ hh'
+      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+      ext i j
+      have hx := congrFun (congrFun h i) j
+      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
   · rintro ⟨⟨u, rfl⟩, ⟨v, rfl⟩⟩
     apply isUnit_iff_exists.mpr
     refine ⟨fromBlocks (↑u⁻¹) 0 0 (↑v⁻¹), ?_, ?_⟩ <;>
