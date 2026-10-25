@@ -3358,7 +3358,7 @@ theorem OneWay.exists_condEPPRG {f : List Bool → List Bool} (hf : OneWay f) (�
     have hparam_tendsto := GeneratorReindex.parameter_tendsto (coreSeedLen imgLen d γ_core)
     have hev_k : ∀ᶠ k : ℕ in atTop,
         (2 * d + γ_core + γ + 8 ≤ k) ∧
-        (2 * d * Nat.log 2 k + 0 ≤ k) ∧
+        (0 + 2 * d * Nat.log 2 k ≤ k) ∧
         ((r k).val + d * Nat.log 2 k ≤ k) ∧
         (coreSeedLen imgLen d γ_core (k + 1) ≤ k ^ E) ∧
         ((Game.succProbability (ProbComp.eval
@@ -3366,7 +3366,7 @@ theorem OneWay.exists_condEPPRG {f : List Bool → List Bool} (hf : OneWay f) (�
             (condInverter g imgLen evaluate d γ_core γ c_eval d_eval deg) k)) : ℝ) ≤
           1 / ((k + 1 : ℝ) ^ D_inv)) := by
       filter_upwards [eventually_ge_atTop (2 * d + γ_core + γ + 8),
-        Nat.eventually_mul_log_add_le (2 * d) 0 Nat.one_lt_two,
+        Nat.eventually_add_mul_log_le 0 (2 * d) Nat.one_lt_two,
         eventually_regularity_gap hg himgLen r hdense d,
         eventually_coreSeedLen_succ_le_pow himg_le d γ_core,
         hinv_neg] with k hk1 hk2 hk3 hk4 hk5
@@ -3453,11 +3453,11 @@ theorem OneWay.exists_condEPPRG {f : List Bool → List Bool} (hf : OneWay f) (�
   · have hparam_tendsto := GeneratorReindex.parameter_tendsto (coreSeedLen imgLen d γ_core)
     have hev_k : ∀ᶠ k : ℕ in atTop,
         (8 ≤ k) ∧
-        (2 * d * Nat.log 2 k + 0 ≤ k) ∧
+        (0 + 2 * d * Nat.log 2 k ≤ k) ∧
         ((r k).val + d * Nat.log 2 k ≤ k) ∧
         (coreSeedLen imgLen d γ_core (k + 1) ≤ k ^ E) := by
       filter_upwards [eventually_ge_atTop 8,
-        Nat.eventually_mul_log_add_le (2 * d) 0 Nat.one_lt_two,
+        Nat.eventually_add_mul_log_le 0 (2 * d) Nat.one_lt_two,
         eventually_regularity_gap hg himgLen r hdense d,
         eventually_coreSeedLen_succ_le_pow himg_le d γ_core] with k hk1 hk2 hk3 hk4
       exact ⟨hk1, hk2, hk3, hk4⟩

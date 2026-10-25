@@ -393,7 +393,7 @@ theorem eventually_overhead_le (hnd : num < den) (hX : 0 < X) (P A E : ℕ) :
   set c := (X + 1) * den * dimension num den X with hc
   have hcpos : 0 < c := Nat.mul_pos (Nat.mul_pos (by omega) (by omega))
     (by have := three_le_dimension (num := num) (den := den) (X := X); omega)
-  filter_upwards [Nat.eventually_mul_succ_pow_le_pow_div (8 * P * den * A) (E + 1) c one_lt_two
+  filter_upwards [Nat.eventually_mul_add_one_pow_le_pow_div (8 * P * den * A) (E + 1) c one_lt_two
       hcpos]
     with n hn
   set p := prefixWidth num den X n

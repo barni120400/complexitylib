@@ -57,8 +57,8 @@ open Filter Explicit
 `L`. -/
 private theorem eventually_chebyshevFactor_le :
     ∀ᶠ L : ℕ in atTop, 64 * (3 * L + 3) * (4 * L + 1) ^ (8 * Nat.sqrt L + 10) ≤ 2 ^ L := by
-  obtain ⟨Q, hQ⟩ := eventually_atTop.1 (Nat.eventually_mul_succ_pow_le_pow 500 2 one_lt_two)
-  obtain ⟨S, hS⟩ := eventually_atTop.1 (Nat.eventually_mul_succ_pow_le_pow 384 2 one_lt_two)
+  obtain ⟨Q, hQ⟩ := eventually_atTop.1 (Nat.eventually_mul_add_one_pow_le_pow 500 2 one_lt_two)
+  obtain ⟨S, hS⟩ := eventually_atTop.1 (Nat.eventually_mul_add_one_pow_le_pow 384 2 one_lt_two)
   filter_upwards [eventually_ge_atTop ((10 * Q + S + 10) ^ 2)] with L hL
   set s := Nat.sqrt L
   have hs : 10 * Q + S + 10 ≤ s := Nat.le_sqrt'.2 hL
@@ -172,7 +172,7 @@ private theorem four_mul_numBlocks_le_of_prod_le {N : ℕ}
 `4 * ((⌊log₂ N⌋ + 1) * (numBlocks N * (numBlocks N + 1))) ≤ N`. -/
 private theorem eventually_four_mul_numBlocks_le :
     ∀ᶠ N in atTop, 4 * ((Nat.log 2 N + 1) * (numBlocks N * (numBlocks N + 1))) ≤ N := by
-  obtain ⟨ℓ₁, hℓ₁⟩ := eventually_atTop.1 (Nat.eventually_mul_succ_pow_le_pow 16 7 one_lt_two)
+  obtain ⟨ℓ₁, hℓ₁⟩ := eventually_atTop.1 (Nat.eventually_mul_add_one_pow_le_pow 16 7 one_lt_two)
   obtain ⟨L₂, hL₂⟩ := eventually_atTop.1 eventually_chebyshevFactor_le
   filter_upwards [Nat.eventually_le_log (ℓ₁ + 3 * L₂ + 3) one_lt_two] with N hN
   set ℓ := Nat.log 2 N
@@ -221,7 +221,7 @@ private theorem eventually_four_mul_numBlocks_le :
 `(⌊log₂ N⌋ + 1) * explicitThreshold N ≤ 6 N` for all large `N`. -/
 theorem eventually_explicitThreshold_le :
     ∀ᶠ N in atTop, (Nat.log 2 N + 1) * explicitThreshold N ≤ 6 * N := by
-  obtain ⟨ℓ₁, hℓ₁⟩ := eventually_atTop.1 (Nat.eventually_mul_succ_pow_le_pow 1 2 one_lt_two)
+  obtain ⟨ℓ₁, hℓ₁⟩ := eventually_atTop.1 (Nat.eventually_mul_add_one_pow_le_pow 1 2 one_lt_two)
   filter_upwards [eventually_four_mul_numBlocks_le,
     Nat.eventually_le_log (ℓ₁ + 1) one_lt_two] with N hkey hN
   set ℓ := Nat.log 2 N

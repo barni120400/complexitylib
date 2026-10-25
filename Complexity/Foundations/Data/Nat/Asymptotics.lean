@@ -18,18 +18,18 @@ import Mathlib.Tactic.Linarith
 For any natural base `b > 1`, `Nat.log b` tends to infinity at infinity (`Nat.tendsto_log_atTop`),
 every affine function of a shifted logarithm `a + c * log b (n + d)` is eventually at most `n`
 (`Nat.eventually_add_mul_log_add_le`), and every fixed multiple of `(n + 1) ^ k` is eventually at
-most `b ^ n` (`Nat.eventually_mul_succ_pow_le_pow`) and at most `b ^ (n / m)` for `m > 0`
-(`Nat.eventually_mul_succ_pow_le_pow_div`).
+most `b ^ n` (`Nat.eventually_mul_add_one_pow_le_pow`) and at most `b ^ (n / m)` for `m > 0`
+(`Nat.eventually_mul_add_one_pow_le_pow_div`).
 
 ## Main results
 
 * `Nat.tendsto_log_atTop`: `Tendsto (Nat.log b) atTop atTop` for `1 < b`.
 * `Nat.eventually_le_log`: `∀ᶠ n in atTop, k ≤ Nat.log b n` for `1 < b`.
 * `Nat.eventually_add_mul_log_add_le`: `∀ᶠ n in atTop, a + c * Nat.log b (n + d) ≤ n` for `1 < b`.
-* `Nat.eventually_mul_log_add_le`: `∀ᶠ n in atTop, c * Nat.log b n + a ≤ n` for `1 < b`.
-* `Nat.eventually_mul_succ_pow_le_pow`: `∀ᶠ n in atTop, c * (n + 1) ^ k ≤ b ^ n` for `1 < b`.
-* `Nat.eventually_mul_succ_pow_le_pow_div`:
+* `Nat.eventually_add_mul_log_le`: `∀ᶠ n in atTop, a + c * Nat.log b n ≤ n` for `1 < b`.
+* `Nat.eventually_mul_add_one_pow_le_pow_div`:
   `∀ᶠ n in atTop, c * (n + 1) ^ k ≤ b ^ (n / m)` for `1 < b` and `0 < m`.
+* `Nat.eventually_mul_add_one_pow_le_pow`: `∀ᶠ n in atTop, c * (n + 1) ^ k ≤ b ^ n` for `1 < b`.
 * `Nat.eventually_mul_pow_le_pow_div`:
   `∀ᶠ n in atTop, c * n ^ k ≤ b ^ (n / m)` for `1 < b` and `0 < m`.
 -/
@@ -64,24 +64,14 @@ theorem eventually_add_mul_log_add_le (a c d : ℕ) {b : ℕ} (hb : 1 < b) :
       _ = log b n + 1 := log_mul_base hb hn0.ne'
   nlinarith
 
-/-- Every affine function of `log b n` is eventually at most `n` for `1 < b`. -/
-theorem eventually_mul_log_add_le (c a : ℕ) {b : ℕ} (hb : 1 < b) :
-    ∀ᶠ n : ℕ in atTop, c * log b n + a ≤ n := by
-  simpa only [add_comm a, add_zero] using eventually_add_mul_log_add_le a c 0 hb
-
-/-- Every fixed multiple of `(n + 1) ^ k` is eventually at most `b ^ n` for `1 < b`. -/
-theorem eventually_mul_succ_pow_le_pow (c k : ℕ) {b : ℕ} (hb : 1 < b) :
-    ∀ᶠ n : ℕ in atTop, c * (n + 1) ^ k ≤ b ^ n := by
-  filter_upwards [eventually_mul_pow_le_pow (c * 2 ^ k) k hb,
-    eventually_ge_atTop 1] with n hn hn1
-  calc c * (n + 1) ^ k ≤ c * (2 * n) ^ k :=
-        Nat.mul_le_mul_left _ (Nat.pow_le_pow_left (by omega) k)
-    _ = c * 2 ^ k * n ^ k := by rw [mul_pow, mul_assoc]
-    _ ≤ b ^ n := hn
+/-- Every affine function `a + c * log b n` is eventually at most `n` for `1 < b`. -/
+theorem eventually_add_mul_log_le (a c : ℕ) {b : ℕ} (hb : 1 < b) :
+    ∀ᶠ n : ℕ in atTop, a + c * log b n ≤ n := by
+  simpa only [add_zero] using eventually_add_mul_log_add_le a c 0 hb
 
 /-- Every fixed multiple of `(n + 1) ^ k` is eventually at most `b ^ (n / m)` for `1 < b`
 and `0 < m`. -/
-theorem eventually_mul_succ_pow_le_pow_div (c k m : ℕ) {b : ℕ} (hb : 1 < b) (hm : 0 < m) :
+theorem eventually_mul_add_one_pow_le_pow_div (c k m : ℕ) {b : ℕ} (hb : 1 < b) (hm : 0 < m) :
     ∀ᶠ n : ℕ in atTop, c * (n + 1) ^ k ≤ b ^ (n / m) := by
   have htend : Tendsto (fun n : ℕ => n / m) atTop atTop :=
     tendsto_atTop_atTop.mpr fun j => ⟨m * j, fun n hn =>
@@ -97,10 +87,15 @@ theorem eventually_mul_succ_pow_le_pow_div (c k m : ℕ) {b : ℕ} (hb : 1 < b) 
     _ = c * (2 * m) ^ k * (n / m) ^ k := by rw [mul_pow, mul_assoc]
     _ ≤ b ^ (n / m) := hn
 
+/-- Every fixed multiple of `(n + 1) ^ k` is eventually at most `b ^ n` for `1 < b`. -/
+theorem eventually_mul_add_one_pow_le_pow (c k : ℕ) {b : ℕ} (hb : 1 < b) :
+    ∀ᶠ n : ℕ in atTop, c * (n + 1) ^ k ≤ b ^ n := by
+  simpa only [Nat.div_one] using eventually_mul_add_one_pow_le_pow_div c k 1 hb one_pos
+
 /-- Every fixed multiple of `n ^ k` is eventually at most `b ^ (n / m)` for `1 < b` and `0 < m`. -/
 theorem eventually_mul_pow_le_pow_div (c k m : ℕ) {b : ℕ} (hb : 1 < b) (hm : 0 < m) :
     ∀ᶠ n : ℕ in atTop, c * n ^ k ≤ b ^ (n / m) :=
-  (eventually_mul_succ_pow_le_pow_div c k m hb hm).mono fun n =>
+  (eventually_mul_add_one_pow_le_pow_div c k m hb hm).mono fun n =>
     (Nat.mul_le_mul_left c (Nat.pow_le_pow_left (Nat.le_succ n) k)).trans
 
 end Nat
