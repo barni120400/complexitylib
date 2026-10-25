@@ -30,6 +30,13 @@ resistance with no loss.
   over `leaves` are accepted at depth `Nat.clog 2 leaves.length` (`merkleVerify_merklePath`). An
   opening has one label per level, each of at most `k.length` bits when `H k` returns `k.length`
   bits (`length_le_of_mem_merklePath`).
+* Binding holds for openings that `merkleVerify` accepts at the same depth and position
+  (`isCollision_of_merkleVerify`): `extractMerkleCollision` then finds a collision of `H k`. Both
+  checks of `merkleVerify` are needed. Leaves and internal nodes are hashed with the same `H k`,
+  so without the length check the pair of a node's child labels opens as a leaf one level up;
+  and `merkleRootOfPath` reads only the low `path.length` bits of `i`, so without the range check
+  position `i + 2 ^ d` reuses the opening of `i`. The root does not fix the number of leaves, so
+  binding is per depth; a verifier that knows the vector length `N` uses depth `Nat.clog 2 N`.
 * In the position-binding game (`merkleBindingGame`) the adversary receives the security
   parameter and a uniform key `k`, and outputs a root, a position and two openings. It wins when
   both openings are accepted at the depth of the first path and their leaves differ
@@ -63,6 +70,8 @@ it separately; the game here is this library's statement of it.
 * `Cslib.Crypto.length_le_of_mem_merklePath`: the labels of an opening have at most `k.length`
   bits.
 * `Cslib.Crypto.computableInPolyTime_merkleVerify`: verification takes polynomial time.
+* `Cslib.Crypto.isCollision_of_merkleVerify`: two accepted openings of one position to different
+  leaves yield a collision.
 * `Cslib.Crypto.isCollision_of_merkleBreaksBinding`,
   `Cslib.Crypto.succProbability_merkleBindingGame_le`,
   `Cslib.Crypto.isPPT_merkleCollisionFinder`: the certified reduction, with no loss.
@@ -128,6 +137,20 @@ theorem length_le_of_mem_merklePath (hlen : ∀ k x, (H k x).length = k.length)
   cases h : (merkleLevel H k leaves t)[merkleSibling (i / 2 ^ t)]? with
   | none => simp
   | some y => exact (length_of_mem_merkleLevel hlen (List.mem_of_getElem? h)).le
+
+/-- **Binding of the verifier**: two openings of position `i` to different leaves, both accepted
+against `root` at depth `d`, contain a collision of `H k`, which `extractMerkleCollision` finds.
+The length check makes the two paths equally long, as `isCollision_extractMerkleCollision`
+requires. -/
+theorem isCollision_of_merkleVerify {d : ℕ} {root : List Bool} {i : ℕ}
+    {leaf₁ leaf₂ : List Bool} {path₁ path₂ : List (List Bool)}
+    (h₁ : merkleVerify H k d root i leaf₁ path₁ = true)
+    (h₂ : merkleVerify H k d root i leaf₂ path₂ = true) (hne : leaf₁ ≠ leaf₂) (n : ℕ) :
+    isCollision H (fun _ _ => true) n k (extractMerkleCollision H k leaf₁ leaf₂ i path₁ path₂).1
+      (extractMerkleCollision H k leaf₁ leaf₂ i path₁ path₂).2 = true := by
+  simp only [merkleVerify, Bool.and_eq_true, beq_iff_eq, decide_eq_true_eq] at h₁ h₂
+  exact isCollision_extractMerkleCollision n (h₁.1.1.trans h₂.1.1.symm) hne
+    (h₁.2.trans h₂.2.symm)
 
 /-- Verifying an opening takes polynomial time: the key, the depth in unary, the root, the
 position in unary, the leaf and the path. -/
@@ -240,10 +263,8 @@ theorem isCollision_of_merkleBreaksBinding {k : List Bool} {out : MerkleBindingO
     isCollision H (fun _ _ => true) n k
       (extractMerkleCollision H k out.2.1.1 out.2.2.1 out.1.2 out.2.1.2 out.2.2.2).1
       (extractMerkleCollision H k out.2.1.1 out.2.2.1 out.1.2 out.2.1.2 out.2.2.2).2 = true := by
-  simp only [merkleBreaksBinding, merkleVerify, Bool.and_eq_true, beq_iff_eq, bne_iff_ne,
-    ne_eq, decide_eq_true_eq] at h
-  obtain ⟨⟨⟨⟨-, -⟩, hroot₁⟩, ⟨⟨hlength, -⟩, hroot₂⟩⟩, hne⟩ := h
-  exact isCollision_extractMerkleCollision n hlength.symm hne (hroot₁.trans hroot₂.symm)
+  simp only [merkleBreaksBinding, Bool.and_eq_true, bne_iff_ne, ne_eq] at h
+  exact isCollision_of_merkleVerify h.1.1 h.1.2 h.2 n
 
 /-- **The reduction loses nothing**: at every security parameter, a position-binding adversary
 succeeds at most as often as its collision finder. -/

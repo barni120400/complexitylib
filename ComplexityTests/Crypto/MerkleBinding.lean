@@ -11,7 +11,8 @@ import Complexity.Crypto.Computational.MerkleTree.Binding
 # Tests for Merkle-tree verification and position binding
 
 Under a hash that returns its message, the three-leaf tree's honest openings are accepted, while a
-wrong leaf, a short path and an out-of-range position are rejected. Under a toy XOR hash, which
+wrong leaf, a short path and an out-of-range position are rejected, and the length check rejects a
+pair of child labels posing as a leaf one level up. Under a toy XOR hash, which
 reads only a prefix of its input, an honest path also opens a position to a wrong leaf; this
 binding break yields a collision through the reduction. Under a hash that ignores its message, an
 efficient adversary breaks position binding at every parameter, so `MerklePositionBinding` is not
@@ -53,6 +54,18 @@ example : merkleRootOfPath idHash key [true] 4 (merklePath idHash key leaves 0) 
 
 example : merkleVerify idHash key 2 (merkleRoot idHash key leaves) 4 [true]
     (merklePath idHash key leaves 0) = false := by decide
+
+/-- The pair of the two leaf labels of the tree over `[[true], [false]]`, as one word. -/
+abbrev pairLeaf : List Bool := encPair encBits encBits (idHash key [true], idHash key [false])
+
+-- Leaves and internal nodes share the hash, so this pair, as a leaf with the empty path,
+-- recomputes the root of the depth-one tree over `[[true], [false]]`.
+example : merkleRootOfPath idHash key pairLeaf 0 [] = merkleRoot idHash key [[true], [false]] := by
+  decide
+
+-- The length check rejects it at depth one, the depth of that tree.
+example : merkleVerify idHash key 1 (merkleRoot idHash key [[true], [false]]) 0 pairLeaf [] =
+    false := by decide
 
 /-! ### A binding break and its collision -/
 
