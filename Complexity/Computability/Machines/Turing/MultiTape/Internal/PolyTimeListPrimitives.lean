@@ -362,5 +362,11 @@ theorem listReverseWithInput {γ α : Type} {encIn : γ ↪ List Bool} {encA : �
     simpa only [foldlReverse, List.append_nil, id_eq] using hfold
   exact hreverse.comp hlist
 
+/-- Enumerate `0, …, n a - 1` for a computed unary bound, fixing the intermediate encoding. -/
+theorem unary_range' {α : Type} {input : α ↪ List Bool} {n : α → ℕ}
+    (hn : ComputableInPolyTime n input encUnary) :
+    ComputableInPolyTime (fun a => List.range (n a)) input (encList encUnary) :=
+  range.comp hn
+
 end ComputableInPolyTime
 end Turing.MultiTapeTM

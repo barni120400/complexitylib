@@ -7,6 +7,7 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeNatFrontends
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Mathlib.Algebra.Polynomial.Eval.Defs
@@ -236,13 +237,5 @@ theorem unary_pow (d : ℕ) :
     ComputableInPolyTime (fun (n : ℕ) => n ^ d)
   encUnary encUnary :=
   .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_pow d)
-
-/-- Truncated subtraction of unary naturals. -/
-@[fun_prop]
-theorem unary_sub :
-    ComputableInPolyTime (fun (p : ℕ × ℕ) => p.1 - p.2)
-  (encPair encUnary encUnary)
-  encUnary :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.unary_sub
 
 end Turing.MultiTapeTM.ComputableInPolyTime
