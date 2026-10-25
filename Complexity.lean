@@ -680,6 +680,7 @@ public import Complexity.Computability.Complexity.Classes.Space.Closure
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Membership
 public import Complexity.Computability.Complexity.Classes.Space.GeneralizedGeography.Reduction
+public import Complexity.Computability.Complexity.Classes.Space.Nondeterministic
 public import Complexity.Computability.Complexity.Classes.Space.Savitch
 public import Complexity.Computability.Complexity.Classes.Space.TM2
 public import Complexity.Computability.Complexity.Classes.Space.TQBF
