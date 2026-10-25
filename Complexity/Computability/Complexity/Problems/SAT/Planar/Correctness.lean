@@ -171,6 +171,38 @@ theorem signals_eq_of_straight {φ : CNF ℕ} {σ : Variable → Bool}
     · rw [hprev, hnext]
       exact (vertical_signal_eq hraw hp).symm
 
+/-- A selected crossing is traversed straight along one coordinate axis by each occupying path. -/
+theorem occurrencePath_crossing_straight {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ)
+    {p : Point} (hp : p ∈ crossingSites φ) (hpi : p ∈ occurrencePath φ o) :
+    StraightThrough (occurrencePath φ o) p (1, 0) ∨
+      StraightThrough (occurrencePath φ o) p (0, 1) := by
+  have hsite := (mem_crossingSites φ p).1 hp
+  let G := SAT.incidenceGraph φ
+  have hG : ∀ e ∈ G.2, e.1 ∈ G.1 ∧ e.2 ∈ G.1 :=
+    fun _ he => SAT.incidenceGraph_endpoints he
+  have hloop : ∀ e ∈ G.2, e.1 ≠ e.2 := fun _ he => SAT.incidenceGraph_loopless he
+  have hdeg : ∀ v, G.incidenceVertices.count v ≤ 3 := SAT.incidenceGraph_degree_le hw hv
+  have hi := occurrence_index_lt ho
+  obtain ⟨j, hj, hji, hpj⟩ := other_path_index (paths φ) p
+    ((Cslib.Logic.PL.occurrences φ).idxOf o)
+    (by simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi) hsite.2.2
+  have hj' : j < G.2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hj
+  have hpi' : p ∈ G.unitPath ((Cslib.Logic.PL.occurrences φ).idxOf o) := by
+    simpa only [occurrencePath_eq_unitPath] using hpi
+  have hpj' : p ∈ G.unitPath j := by
+    unfold Graph.unitPath
+    change p ∈ (SAT.incidenceGraph φ).unitPaths.getD j []
+    rw [← paths_eq_unitPaths, List.getD_eq_getElem _ _ hj]
+    exact hpj
+  have hnb := Graph.unitPath_crossing_neighbors G hG hloop hdeg hi hj' (Ne.symm hji)
+    hsite.2.1 hpi' hpj'
+  rcases hnb with ⟨h, _⟩ | ⟨h, _⟩
+  · exact Or.inl (by simpa only [occurrencePath_eq_unitPath] using h)
+  · exact Or.inr (by simpa only [occurrencePath_eq_unitPath] using h)
+
 /-- Actual cell entry/exit values agree: ordinary cells share one variable, while selected
 crossings use the certified opposite ports of the fixed crossover. -/
 theorem wire_cells_agree {φ : CNF ℕ}
@@ -193,31 +225,8 @@ theorem wire_cells_agree {φ : CNF ℕ}
     rw [← heq']
     exact List.getElem_mem hk'
   by_cases hp : p ∈ crossingSites φ
-  · have hsite := (mem_crossingSites φ p).1 hp
-    let G := SAT.incidenceGraph φ
-    have hG : ∀ e ∈ G.2, e.1 ∈ G.1 ∧ e.2 ∈ G.1 :=
-      fun _ he => SAT.incidenceGraph_endpoints he
-    have hloop : ∀ e ∈ G.2, e.1 ≠ e.2 := fun _ he => SAT.incidenceGraph_loopless he
-    have hdeg : ∀ v, G.incidenceVertices.count v ≤ 3 := SAT.incidenceGraph_degree_le hw hv
-    have hi := occurrence_index_lt ho
-    obtain ⟨j, hj, hji, hpj⟩ := other_path_index (paths φ) p
-      ((Cslib.Logic.PL.occurrences φ).idxOf o)
-      (by simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi) hsite.2.2
-    have hj' : j < G.2.length := by
-      simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hj
-    have hpi' : p ∈ G.unitPath ((Cslib.Logic.PL.occurrences φ).idxOf o) := by
-      simpa only [occurrencePath_eq_unitPath] using hpi
-    have hpj' : p ∈ G.unitPath j := by
-      unfold Graph.unitPath
-      change p ∈ (SAT.incidenceGraph φ).unitPaths.getD j []
-      rw [← paths_eq_unitPaths, List.getD_eq_getElem _ _ hj]
-      exact hpj
-    have hnb := Graph.unitPath_crossing_neighbors G hG hloop hdeg hi hj' (Ne.symm hji)
-      hsite.2.1 hpi' hpj'
-    apply signals_eq_of_straight hraw hp (occurrencePath_nodup ho) hk' heq'
-    rcases hnb with ⟨h, _⟩ | ⟨h, _⟩
-    · exact Or.inl (by simpa only [occurrencePath_eq_unitPath] using h)
-    · exact Or.inr (by simpa only [occurrencePath_eq_unitPath] using h)
+  · exact signals_eq_of_straight hraw hp (occurrencePath_nodup ho) hk' heq'
+      (occurrencePath_crossing_straight hw hv ho hp hpi)
   · simp only [signal, hp, ite_false]
 
 /-- The initial source center is excluded from the actual selected crossing list. -/
