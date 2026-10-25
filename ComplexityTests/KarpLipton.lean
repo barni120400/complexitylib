@@ -161,7 +161,7 @@ example : [false, true] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) fun _ => le_rfl).
       (by decide))
 
 example : [true, false] ∈ (GapMCSP (fun _ => 0) (fun _ => 0) fun _ => le_rfl).no := by
-  refine (GapMCSP.ofFn_mem_noSet_iff_not_mem_MCSP (n := 1) (T := ![true, false])).mpr ?_
+  refine (GapMCSP.ofFn_mem_noSet_iff_notMem_MCSP (n := 1) (T := ![true, false])).mpr ?_
   intro hx
   obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := MCSP.exists_verifier_append hx
   · revert hu; decide

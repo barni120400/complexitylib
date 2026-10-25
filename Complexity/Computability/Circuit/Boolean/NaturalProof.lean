@@ -62,7 +62,6 @@ in `P/poly` (`truthTableLanguage_setOf_lt_complexity_notMem_PPoly`) [KabanetsCai
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.truthTableTest`: the test deciding a property from truth tables.
-* `Cslib.Circuits.Boolean.truthTableLanguage`: the truth tables of a property, as a language.
 * `Cslib.Circuits.Boolean.NaturalProof.IsLarge`, `Cslib.Circuits.Boolean.NaturalProof.IsNatural`,
   `Cslib.Circuits.Boolean.NaturalProof.IsUseful`: large, natural and useful properties.
 

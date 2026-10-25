@@ -50,6 +50,9 @@ cslib's `computableFunctions n s`, so there are as many of them as such function
 * `Cslib.MCSP.mem_iff_exists_circuit`, `Cslib.MCSP.mem_iff_mem_computableFunctions`: the yes-
   instances of MCSP, as circuits and as computable functions.
 * `Cslib.MCSP.ncard_setOf_mem`: the number of yes-instances of a given arity and threshold.
+* `Cslib.GapMCSP.ofFn_mem_yesSet_iff_mem_MCSP`,
+  `Cslib.GapMCSP.ofFn_mem_noSet_iff_notMem_MCSP`: characterization of truth tables of length `2^n`
+  in the yes and no sets.
 * `Cslib.GapMCSP.disjoint_yesSet_noSet`: the promise of `GapMCSP[s₁, s₂]` is consistent when
   `s₁ n ≤ s₂ n` for all `n`.
 
@@ -223,7 +226,7 @@ if and only if its circuit complexity is strictly greater than `s₂ n`. -/
 
 /-- A `2 ^ n`-bit string `T`, viewed as a list via `List.ofFn`, belongs to `noSet s₂`
 if and only if `⟨n, T, s₂ n⟩ ∉ MCSP`. -/
-theorem ofFn_mem_noSet_iff_not_mem_MCSP {n : ℕ} {T : BitString (2 ^ n)} :
+theorem ofFn_mem_noSet_iff_notMem_MCSP {n : ℕ} {T : BitString (2 ^ n)} :
     List.ofFn T ∈ noSet s₂ ↔ (⟨n, T, s₂ n⟩ : MCSP.Instance) ∉ MCSP := by
   rw [ofFn_mem_noSet_iff]
   exact not_le.symm
@@ -253,7 +256,8 @@ end GapMCSP
 /-- **`GapMCSP[s₁, s₂]`** [OliveiraPichSanthanam2019, Definition 2.4]: the promise problem whose
 yes-instances are truth tables of functions with circuits of at most `s₁ n` gates and whose
 no-instances are truth tables of functions that need more than `s₂ n` gates, when `s₁ n ≤ s₂ n`
-for all `n`. -/
+for all `n`. Following OPS19, the hypothesis `∀ n, s₁ n ≤ s₂ n` is bundled to guarantee
+disjointness of the promise problem by construction. -/
 def GapMCSP (s₁ s₂ : ℕ → ℕ) (h : ∀ n, s₁ n ≤ s₂ n) :
     Complexity.PromiseProblem (List Bool) where
   yes := GapMCSP.yesSet s₁

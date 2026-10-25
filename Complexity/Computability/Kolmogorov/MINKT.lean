@@ -397,7 +397,8 @@ end GapMINKT
 
 /-- **Hirahara's `GapMINKT` promise problem** ([Hirahara, Definition II.6][Hirahara2018]):
 the promise problem whose yes-instances are `MINKT`, and whose no-instances are
-`GapMINKT.noSet σ τ`, when `s ≤ σ n s` and `t ≤ τ n t`. -/
+`GapMINKT.noSet σ τ`, when `s ≤ σ n s` and `t ≤ τ n t`. Following Hirahara, the gap hypotheses
+`hσ` and `hτ` are bundled to ensure disjointness of yes- and no-instances by construction. -/
 def GapMINKT (σ τ : ℕ → ℕ → ℕ)
     (hσ : ∀ n s, s ≤ σ n s) (hτ : ∀ n t, t ≤ τ n t) :
     PromiseProblem MINKT.Instance where
