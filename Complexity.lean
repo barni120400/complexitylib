@@ -834,6 +834,7 @@ public import Complexity.Computability.GenericRAM.Simulation.Turing
 public import Complexity.Computability.GenericRAM.SparseMemory.Basic
 public import Complexity.Computability.GenericRAM.SparseMemory.Turing
 public import Complexity.Computability.Interactive.Basic
+public import Complexity.Computability.Interactive.GKR.Layered
 public import Complexity.Computability.Interactive.Plain
 public import Complexity.Computability.Interactive.Security
 public import Complexity.Computability.Interactive.Sequential
