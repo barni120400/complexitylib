@@ -46,6 +46,24 @@ example :
   · intro v
     exact List.count_le_length.trans (by decide)
 
+example : (positions [[(7, true), (7, false), (7, true)]]).Nodup := by
+  apply positions_nodup
+  · intro c hc
+    obtain rfl := List.mem_singleton.mp hc
+    decide
+  · intro v
+    exact List.count_le_length.trans (by decide)
+
+-- Repeated empty clauses still produce different geometric clause vertices.
+example : (positions [[], []]).Nodup := by
+  apply positions_nodup
+  · intro c hc
+    have : c = [] := by simpa using hc
+    subst c
+    decide
+  · intro v
+    simp [CNF.vars]
+
 example :
     ((paths [[(7, true), (7, false), (7, true)]]).flatMap fun r =>
       r.consecutivePairs.map fun e => cellPort 120 e.1 (side e.1 e.2)).Nodup := by
