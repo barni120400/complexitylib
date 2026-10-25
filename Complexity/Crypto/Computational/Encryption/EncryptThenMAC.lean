@@ -194,66 +194,54 @@ noncomputable def encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
     else
       none
   keyGen_ppt := by
-    have : IsPPTOn encUnary encBits (fun n : ℕ => E.keyGen n) := E.keyGen_ppt
-    have : IsPPTOn (encPair encUnary encBits) encBits
-        (fun p : ℕ × List Bool => M.keyGen p.1) :=
-      M.isPPTOn_keyGen_comp (ComputableInPolyTime.fst encUnary encBits)
-    simp only [encPair_apply, encBits_apply]
-    ppt
+    have hpost : ComputableInPolyTime
+        (fun p : (ℕ × List Bool) × List Bool => encPair encBits encBits (p.1.2, p.2))
+        (encPair (encPair encUnary encBits) encBits) encBits :=
+      ComputableInPolyTime.encoding_comp
+        (((ComputableInPolyTime.snd encUnary encBits).comp
+          (ComputableInPolyTime.fst (encPair encUnary encBits) encBits)).prod
+            (ComputableInPolyTime.snd (encPair encUnary encBits) encBits))
+    exact E.keyGen_ppt.bind_with
+      ((M.keyGen_ppt.preprocess (ComputableInPolyTime.fst encUnary encBits)).bind_with
+        hpost.isPPTOn)
   encrypt_ppt := by
-    have : IsPPTOn (encPair encUnary (encPair encBits encBits)) encBits
-        (fun p : ℕ × List Bool × List Bool => E.encrypt p.1 (unframe p.2.1) p.2.2) :=
-      E.isPPTOn_encrypt_comp ((by polytime)) ((by polytime))
-        ((by polytime))
-    have : IsPPTOn (encPair (encPair encUnary (encPair encBits encBits)) encBits) encBits
-        (fun p : (ℕ × List Bool × List Bool) × List Bool =>
-          M.sign (dropFrame p.1.2.1) p.2) :=
-      M.isPPTOn_sign_comp ((by polytime)) ((by polytime))
-    simp only [encPair_apply, encBits_apply]
-    ppt
+    let I := encPair encUnary (encPair encBits encBits)
+    have hn := ComputableInPolyTime.fst encUnary (encPair encBits encBits)
+    have hrest := ComputableInPolyTime.snd encUnary (encPair encBits encBits)
+    have hk := (ComputableInPolyTime.fst encBits encBits).comp hrest
+    have hm := (ComputableInPolyTime.snd encBits encBits).comp hrest
+    have hrun := E.isPPTOn_encrypt_comp hn (ComputableInPolyTime.unframe.comp hk) hm
+    have hsign := M.isPPTOn_sign_comp
+      (ComputableInPolyTime.dropFrame.comp (hk.comp (ComputableInPolyTime.fst I encBits)))
+      (ComputableInPolyTime.snd I encBits)
+    have hpost : ComputableInPolyTime
+        (fun p : ((ℕ × List Bool × List Bool) × List Bool) × List Bool =>
+          encPair encBits encBits (p.1.2, p.2))
+        (encPair (encPair I encBits) encBits) encBits :=
+      ComputableInPolyTime.encoding_comp
+        (((ComputableInPolyTime.snd I encBits).comp
+          (ComputableInPolyTime.fst (encPair I encBits) encBits)).prod
+            (ComputableInPolyTime.snd (encPair I encBits) encBits))
+    exact hrun.bind_with (hsign.bind_with hpost.isPPTOn)
   decrypt_polyTime := by
-    have hmsgLen : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool => M.msgLen p.1)
-        (encPair encUnary (encPair encBits encBits)) encUnary :=
-      (M.computableInPolyTime_msgLen_comp ((by polytime)))
-    have hver : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          M.verify (dropFrame p.2.1) (unframe p.2.2) (dropFrame p.2.2))
-        (encPair encUnary (encPair encBits encBits)) encBool :=
-      (M.computableInPolyTime_verify_comp ((by polytime))
-        ((by polytime)) ((by polytime)))
-    have hcond : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          (frame (unframe p.2.2) ++ dropFrame p.2.2 == p.2.2) &&
-            ((unframe p.2.2).length == M.msgLen p.1) &&
-            M.verify (dropFrame p.2.1) (unframe p.2.2) (dropFrame p.2.2))
-        (encPair encUnary (encPair encBits encBits)) encBool := by
-      have hroundTrip : ComputableInPolyTime
-          (fun p : ℕ × List Bool × List Bool =>
-            frame (unframe p.2.2) ++ dropFrame p.2.2 == p.2.2)
-          (encPair encUnary (encPair encBits encBits)) encBool :=
-        ComputableInPolyTime.beq (encB := encBits) (by polytime) (by polytime)
-      have hsize : ComputableInPolyTime
-          (fun p : ℕ × List Bool × List Bool => (unframe p.2.2).length == M.msgLen p.1)
-          (encPair encUnary (encPair encBits encBits)) encBool :=
-        ComputableInPolyTime.beq (encB := encUnary) (by polytime) hmsgLen
-      exact ComputableInPolyTime.bool_and.comp
-        ((ComputableInPolyTime.bool_and.comp (hroundTrip.prod hsize)).prod hver)
-    have hdecArg : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool => (p.1, unframe p.2.1, unframe p.2.2))
-        (encPair encUnary (encPair encBits encBits))
-        (encPair encUnary (encPair encBits encBits)) := by polytime
-    have hyes : ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          E.decrypt p.1 (unframe p.2.1) (unframe p.2.2))
-        (encPair encUnary (encPair encBits encBits)) (encOption encBits) :=
-      E.decrypt_polyTime.comp hdecArg
-    have hno : ComputableInPolyTime
-        (fun _ : ℕ × List Bool × List Bool => (none : Option (List Bool)))
-        (encPair encUnary (encPair encBits encBits)) (encOption encBits) :=
-      ComputableInPolyTime.const none
-    simp only [encPair_apply, encBits_apply]
-    exact ComputableInPolyTime.ite hcond hyes hno
+    have hn := ComputableInPolyTime.fst encUnary (encPair encBits encBits)
+    have hrest := ComputableInPolyTime.snd encUnary (encPair encBits encBits)
+    have hk := (ComputableInPolyTime.fst encBits encBits).comp hrest
+    have hct := (ComputableInPolyTime.snd encBits encBits).comp hrest
+    have hmsgLen := M.msgLen_polyTime.comp hn
+    have hmsg := ComputableInPolyTime.unframe.comp hct
+    have htag := ComputableInPolyTime.dropFrame.comp hct
+    have hver := M.computableInPolyTime_verify_comp
+      (ComputableInPolyTime.dropFrame.comp hk) hmsg htag
+    have hroundTrip := ComputableInPolyTime.beq (encB := encBits)
+      (ComputableInPolyTime.bitsAppend (ComputableInPolyTime.frame.comp hmsg) htag) hct
+    have hsize := ComputableInPolyTime.beq (encB := encUnary)
+      (ComputableInPolyTime.length_bits.comp hmsg) hmsgLen
+    have hcond := ComputableInPolyTime.bool_and.comp
+      ((ComputableInPolyTime.bool_and.comp (hroundTrip.prod hsize)).prod hver)
+    have hyes := E.decrypt_polyTime.comp
+      (hn.prod ((ComputableInPolyTime.unframe.comp hk).prod hmsg))
+    exact ComputableInPolyTime.ite hcond hyes (ComputableInPolyTime.const none)
   decrypt_encrypt := by
     intro n k hk msg hmsg ct hct
     simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.mem_support_bind_iff,
