@@ -107,11 +107,11 @@ theorem dropFrame_dropFrame_unframe_encPair_encDesc (d : schnorrGroups.Desc) (u 
   exact (SchnorrGroup.encode_generator d).symm
 
 /-- A word-message IND-CPA adversary that extracts the encoded generator `g` from the group
-description in the public key `pk`, chooses `(encode d 0, encode d g)`, and inspects the second
-component of the ciphertext `(dropFrame ct).isEmpty`. -/
+description in the public key `pk`, chooses `(encode d 0, encode d g)`, and tests whether the second
+component of the ciphertext equals `encode d 0 = (1 : ℕ).bits`. -/
 noncomputable def groupWordAdversary : Encryption.WordAdversary where
   choose _ pk := pure (((1 : ℕ).bits, dropFrame (dropFrame (unframe pk))), [])
-  guess _ _ ct := pure (dropFrame ct).isEmpty
+  guess _ _ ct := pure (decide (dropFrame ct = (1 : ℕ).bits))
 
 /-- `groupWordAdversary` is uniform strict PPT. -/
 theorem groupWordAdversary_isPPT : groupWordAdversary.IsPPT where
@@ -129,13 +129,12 @@ theorem groupWordAdversary_isPPT : groupWordAdversary.IsPPT where
   guess := by
     have hdrop : ComputableTidilyInPolyTime dropFrame encBits encBits :=
       ComputableTidilyInPolyTime.of_linear (.of_dropFrame fun _ => rfl)
-    have hemp : ComputableTidilyInPolyTime (fun w : List Bool => w.isEmpty) encBits encBool :=
-      ComputableTidilyInPolyTime.of_linear (.of_isEmpty fun _ => rfl)
     have hct : ComputableTidilyInPolyTime
-        (fun p : ℕ × List Bool × List Bool => p.2.2)
+        (fun p : ℕ × List Bool × List Bool => dropFrame p.2.2)
         (encPair encUnary (encPair encBits encBits)) encBits :=
-      (ComputableTidilyInPolyTime.snd _ _).comp (ComputableTidilyInPolyTime.snd _ _)
-    exact (hemp.comp (hdrop.comp hct)).isPPTOn
+      hdrop.comp ((ComputableTidilyInPolyTime.snd _ _).comp (ComputableTidilyInPolyTime.snd _ _))
+    exact (ComputableTidilyInPolyTime.decide_eq' (encB := encBits) hct
+      (ComputableTidilyInPolyTime.const (1 : ℕ).bits)).isPPTOn
 
 /-- Under DDH for any setup law `setup`, `groupWordAdversary` has negligible advantage in the
 group-element ElGamal IND-CPA game, because its chosen messages `(1 : ℕ).bits` and
@@ -160,10 +159,10 @@ example (setup : ℕ → PMF schnorrGroups.Desc) (hDDH : schnorrGroups.DDH setup
       (schnorrGroups.encode d (α • schnorrGroups.generator d))⟩⟩
 
 /-- A word-message IND-CPA adversary that chooses 2-bit message words
-`([false, false], [true, true])` with empty saved state and inspects `(dropFrame ct).isEmpty`. -/
+`([false, false], [true, true])` with empty saved state and uses `groupWordAdversary.guess`. -/
 noncomputable def hashedWordAdversary : Encryption.WordAdversary where
   choose _ _ := pure (([false, false], [true, true]), [])
-  guess _ _ ct := pure (dropFrame ct).isEmpty
+  guess := groupWordAdversary.guess
 
 /-- `hashedWordAdversary` is uniform strict PPT. -/
 theorem hashedWordAdversary_isPPT : hashedWordAdversary.IsPPT where

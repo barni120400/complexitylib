@@ -380,4 +380,29 @@ theorem indcpa_hybridEncrypt_idealEncaps_otpWordEncrypt :
     WordINDCPA toyKeyGen (hybridEncrypt idealEncaps otpWordEncrypt) :=
   kemINDCPA_idealEncaps.hybrid_otpWordEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
 
+/-- A toy length-only encryption scheme that outputs `List.replicate m.length false` satisfies
+`WordINDCPA` (`INDCPAWith encBits sameLength`), because `selectChallenge sameLength` encrypts equal-
+length messages in both experiments and `choice.1` when the challenge messages have different
+lengths. -/
+theorem wordINDCPA_lengthOnly :
+    WordINDCPA toyKeyGen (fun _ _ m => pure (List.replicate m.length false)) := by
+  intro adversary _ c
+  refine tendsto_const_nhds.congr' ?_
+  filter_upwards with n
+  have heq :
+      ProbComp.eval (wordGame toyKeyGen (fun _ _ m => pure (List.replicate m.length false))
+        adversary false n) =
+      ProbComp.eval (wordGame toyKeyGen (fun _ _ m => pure (List.replicate m.length false))
+        adversary true n) := by
+    simp only [wordGame, gameWith, toyKeyGen, ProbComp.eval_bind, ProbComp.eval_pure,
+      PMF.pure_bind]
+    congr 1; funext keys
+    congr 1; funext choice
+    by_cases hlen : choice.1.1.length = choice.1.2.length
+    · have hsame : sameLength choice.1.1 choice.1.2 = true := by simp [hlen]
+      simp [selectChallenge, hsame, hlen]
+    · have hdiff : sameLength choice.1.1 choice.1.2 = false := by simp [hlen]
+      simp [selectChallenge, hdiff]
+  simp [heq]
+
 end ComplexityTests.Crypto.HybridEncryption

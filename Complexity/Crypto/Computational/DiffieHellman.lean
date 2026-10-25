@@ -95,7 +95,7 @@ are hypotheses, not theorems.
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
   Version 0.6][BonehShoup2023], Section 10.5 (Attack Games 10.5–10.6, pp. 409–410;
-  Exercises 10.7–10.9, pp. 424–426).
+  Exercises 10.7–10.9, pp. 425–426).
 -/
 
 @[expose] public section

@@ -65,8 +65,10 @@ representation conventions:
 
 * `Cslib.Crypto.Encryption.kemRealGame`, `Cslib.Crypto.Encryption.kemIdealGame`,
   `Cslib.Crypto.Encryption.KEMINDCPA`: real and ideal KEM IND-CPA experiments and security.
-* `Cslib.Crypto.Encryption.demGame`, `Cslib.Crypto.Encryption.DEMOneTimeINDCPAOf`,
-  `Cslib.Crypto.Encryption.DEMOneTimeINDCPA`: one-time symmetric encryption experiment and
+* `Cslib.Crypto.Encryption.demGameWith`, `Cslib.Crypto.Encryption.demGame`,
+  `Cslib.Crypto.Encryption.DEMOneTimeINDCPAWith`, `Cslib.Crypto.Encryption.DEMOneTimeINDCPAOf`,
+  `Cslib.Crypto.Encryption.DEMOneTimeINDCPA`,
+  `Cslib.Crypto.Encryption.DEMOneTimeWordINDCPA`: one-time symmetric encryption experiments and
   security.
 * `Cslib.Crypto.Encryption.hybridEncrypt`, `Cslib.Crypto.Encryption.hybridDecrypt`: KEM–DEM
   hybrid encryption and deterministic decryption.
@@ -92,10 +94,12 @@ representation conventions:
 * `Cslib.Crypto.Encryption.advantage_hybridGame_le_two_mul`,
   `Cslib.Crypto.Encryption.advantage_hybridGame_le`: quantitative Boneh–Shoup Exercise 11.9(b)
   reduction and its two-distinguisher variant.
-* `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_indcpa`: asymptotic Boneh–Shoup Exercise 11.9(b).
+* `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_indcpa`,
+  `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_indcpaWith`: asymptotic Boneh–Shoup Exercise 11.9(b).
 * `Cslib.Crypto.Encryption.demOneTimeINDCPA_otpEncrypt`,
   `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_otpEncrypt_indcpa`,
   `Cslib.Crypto.Encryption.demOneTimeINDCPA_otpWordEncrypt`,
+  `Cslib.Crypto.Encryption.demOneTimeWordINDCPA_otpWordEncrypt`,
   `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_otpWordEncrypt_indcpa`: unconditional one-time pad DEM
   security and the KEM-to-PKE corollaries.
 
@@ -225,6 +229,19 @@ def KEMINDCPA (keyGen : ℕ → ProbComp (List Bool × List Bool))
 
 /-! ### One-Time Symmetric Encryption (DEM) -/
 
+/-- The one-time symmetric chosen-plaintext experiment over message space `Msg` under
+challenge-pair validity predicate `valid : Msg → Msg → Bool` ([BonehShoup2023], Section 2.2,
+Attack Game 2.1): sample a uniform `n`-bit key `k ← BitString.sampleList n`, invoke
+`adversary.choose n []` (no public key), encrypt `selectChallenge valid bit choice.1` under
+`encryptSym n k`, and pass the saved state and challenge ciphertext to `adversary.guess n`. -/
+noncomputable def demGameWith {Msg : Type} (valid : Msg → Msg → Bool)
+    (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool))
+    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) : ProbComp Bool := do
+  let k ← BitString.sampleList n
+  let choice ← adversary.choose n []
+  let ciphertext ← encryptSym n k (selectChallenge valid bit choice.1)
+  adversary.guess n choice.2 ciphertext
+
 /-- The one-time symmetric chosen-plaintext experiment over message space `Msg` ([BonehShoup2023],
 Section 2.2, Attack Game 2.1): sample a uniform `n`-bit key `k ← BitString.sampleList n`, invoke
 `adversary.choose n []` (no public key), encrypt the selected challenge message under
@@ -235,6 +252,16 @@ noncomputable def demGame {Msg : Type} (encryptSym : ℕ → List Bool → Msg �
   let choice ← adversary.choose n []
   let ciphertext ← encryptSym n k (if bit then choice.1.2 else choice.1.1)
   adversary.guess n choice.2 ciphertext
+
+/-- Running `demGame` on `adversary.clamp valid` has the exact same output distribution as running
+`demGameWith valid` on `adversary`. -/
+@[simp] theorem eval_demGame_clamp {Msg : Type} (valid : Msg → Msg → Bool)
+    (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool))
+    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
+    ProbComp.eval (demGame encryptSym (adversary.clamp valid) bit n) =
+      ProbComp.eval (demGameWith valid encryptSym adversary bit n) := by
+  simp only [demGame, demGameWith, AdversaryOf.clamp, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.bind_bind, PMF.pure_bind, selectChallenge_clamp]
 
 /-- The one-time symmetric experiment has a strict polynomial clock when symmetric encryption and
 both adversary stages have native certificates. -/
@@ -275,6 +302,16 @@ theorem isPPTOn_demGame {Msg : Type} {encMsg : Msg ↪ List Bool}
       ((hencrypt.preprocess h3.computableInPolyTime).bind_with
         (hadversary.guess.preprocess h4.computableInPolyTime)))
 
+/-- One-time symmetric IND-CPA / semantic security over message encoding `encMsg` and challenge-pair
+validity predicate `valid : Msg → Msg → Bool` ([BonehShoup2023], Section 2.2, Attack Game 2.1 and
+Definition 2.2). -/
+def DEMOneTimeINDCPAWith {Msg : Type} (encMsg : Msg ↪ List Bool) (valid : Msg → Msg → Bool)
+    (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
+  Game.Indistinguishable
+    (fun adversary n => ProbComp.eval (demGameWith valid encryptSym adversary false n))
+    (fun adversary n => ProbComp.eval (demGameWith valid encryptSym adversary true n))
+    (AdversaryOf.IsPPT encMsg)
+
 /-- One-time symmetric IND-CPA / semantic security over message encoding `encMsg` ([BonehShoup2023],
 Section 2.2, Attack Game 2.1 and Definition 2.2): every uniform strict PPT
 `Encryption.AdversaryOf Msg` has negligible distinguishing advantage between
@@ -286,9 +323,28 @@ def DEMOneTimeINDCPAOf {Msg : Type} (encMsg : Msg ↪ List Bool)
     (fun adversary n => ProbComp.eval (demGame encryptSym adversary true n))
     (AdversaryOf.IsPPT encMsg)
 
+/-- Unrestricted `DEMOneTimeINDCPAOf encMsg` implies `DEMOneTimeINDCPAWith encMsg valid` for any
+polynomial-time challenge-pair validity predicate `valid`. -/
+theorem DEMOneTimeINDCPAOf.demOneTimeINDCPAWith {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {valid : Msg → Msg → Bool}
+    {encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool)}
+    (h : DEMOneTimeINDCPAOf encMsg encryptSym)
+    (hvalid : ComputableInPolyTime (fun p : Msg × Msg => valid p.1 p.2)
+      (encPair encMsg encMsg) encBool) :
+    DEMOneTimeINDCPAWith encMsg valid encryptSym := by
+  intro adversary hadversary
+  simpa only [eval_demGame_clamp] using h (adversary.clamp valid) (hadversary.clamp hvalid)
+
 /-- One-time symmetric IND-CPA / semantic security for single-bit encryption. -/
 abbrev DEMOneTimeINDCPA (encryptSym : ℕ → List Bool → Bool → ProbComp (List Bool)) : Prop :=
   DEMOneTimeINDCPAOf encBool encryptSym
+
+/-- One-time symmetric IND-CPA / semantic security for bit-word encryption, enforcing the
+textbook equal-length challenge condition `m₀.length = m₁.length` ([BonehShoup2023], Section 2.2,
+Attack Game 2.1, p. 34) via `sameLength`. -/
+abbrev DEMOneTimeWordINDCPA
+    (encryptSym : ℕ → List Bool → List Bool → ProbComp (List Bool)) : Prop :=
+  DEMOneTimeINDCPAWith encBits sameLength encryptSym
 
 /-! ### Hybrid Encryption Construction and Correctness -/
 
@@ -898,6 +954,54 @@ theorem KEMINDCPA.hybrid_indcpa {Msg : Type} {encMsg : Msg ↪ List Bool}
   exact negligible_of_le ((hkemFalse.add hkemTrue).add hdemAdv)
     (advantage_hybridGame_le keyGen encaps encryptSym adversary)
 
+/-- Running `demGame` on `hybridToDEMAdversary keyGen encaps (adversary.clamp valid)` has the
+same output distribution as running `demGameWith valid` on
+`hybridToDEMAdversary keyGen encaps adversary`. -/
+theorem eval_demGame_hybridToDEMAdversary_clamp {Msg : Type} (valid : Msg → Msg → Bool)
+    (keyGen : ℕ → ProbComp (List Bool × List Bool))
+    (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool))
+    (encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool))
+    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
+    ProbComp.eval
+      (demGame encryptSym (hybridToDEMAdversary keyGen encaps (adversary.clamp valid)) bit n) =
+      ProbComp.eval
+        (demGameWith valid encryptSym (hybridToDEMAdversary keyGen encaps adversary) bit n) := by
+  simp only [demGame, demGameWith, hybridToDEMAdversary, AdversaryOf.clamp, ProbComp.eval_bind,
+    ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind,
+    selectChallenge_clamp]
+
+/-- **IND-CPA security of KEM–DEM hybrid encryption under a challenge-pair validity predicate**
+([BonehShoup2023], Exercise 11.9(b)): if `(keyGen, encaps)` is an IND-CPA secure KEM and
+`encryptSym` satisfies `DEMOneTimeINDCPAWith encMsg valid` for a polynomial-time challenge-pair
+validity predicate `valid`, then `hybridEncrypt encaps encryptSym` satisfies
+`INDCPAWith encMsg valid`. -/
+theorem KEMINDCPA.hybrid_indcpaWith {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {valid : Msg → Msg → Bool}
+    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
+    {encaps : ℕ → List Bool → ProbComp (List Bool × List Bool)}
+    {encryptSym : ℕ → List Bool → Msg → ProbComp (List Bool)}
+    (hkem : KEMINDCPA keyGen encaps)
+    (hdem : DEMOneTimeINDCPAWith encMsg valid encryptSym)
+    (hvalid : ComputableInPolyTime (fun p : Msg × Msg => valid p.1 p.2)
+      (encPair encMsg encMsg) encBool)
+    (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
+    (hencaps : IsPPTOn (encPair encUnary encBits) (encPair encBits encBits)
+      (fun p => encaps p.1 p.2))
+    (hencryptSym : IsPPTOn (encPair encUnary (encPair encBits encMsg)) encBits
+      (fun p => encryptSym p.1 p.2.1 p.2.2)) :
+    INDCPAWith encMsg valid keyGen (hybridEncrypt encaps encryptSym) := by
+  intro adversary hadversary
+  have hA' := hadversary.clamp hvalid
+  have hkemFalse := hkem (hybridToKEMDistinguisher encryptSym (adversary.clamp valid) false)
+    (isPPT_hybridToKEMDistinguisher hencryptSym hA' false)
+  have hkemTrue := hkem (hybridToKEMDistinguisher encryptSym (adversary.clamp valid) true)
+    (isPPT_hybridToKEMDistinguisher hencryptSym hA' true)
+  have hdemAdv := hdem (hybridToDEMAdversary keyGen encaps adversary)
+    (isPPT_hybridToDEMAdversary hkeyGen hencaps hadversary)
+  refine negligible_of_le ((hkemFalse.add hkemTrue).add hdemAdv) fun n => ?_
+  simpa only [eval_game_clamp, eval_demGame_hybridToDEMAdversary_clamp, Pi.add_apply] using
+    advantage_hybridGame_le keyGen encaps encryptSym (adversary.clamp valid) n
+
 /-! ### Non-vacuous One-Time Pad DEMs -/
 
 /-- One-time pad single-bit symmetric encryption: XOR the first key bit `k.headD false` with the
@@ -1049,6 +1153,11 @@ theorem demOneTimeINDCPA_otpWordEncrypt : DEMOneTimeINDCPAOf encBits otpWordEncr
   filter_upwards with n
   simp [advantage_demGame_otpWordEncrypt_eq_zero n adversary]
 
+/-- **The `n`-bit word one-time pad satisfies equal-length word DEM security**
+(`DEMOneTimeWordINDCPA otpWordEncrypt`). -/
+theorem demOneTimeWordINDCPA_otpWordEncrypt : DEMOneTimeWordINDCPA otpWordEncrypt :=
+  demOneTimeINDCPA_otpWordEncrypt.demOneTimeINDCPAWith computableInPolyTime_sameLength
+
 /-- **KEM-to-word-PKE corollary**: combining any IND-CPA secure KEM with the `n`-bit word one-time
 pad DEM yields an IND-CPA secure public-key word-encryption scheme (`WordINDCPA`). -/
 theorem KEMINDCPA.hybrid_otpWordEncrypt_indcpa
@@ -1059,6 +1168,7 @@ theorem KEMINDCPA.hybrid_otpWordEncrypt_indcpa
     (hencaps : IsPPTOn (encPair encUnary encBits) (encPair encBits encBits)
       (fun p => encaps p.1 p.2)) :
     WordINDCPA keyGen (hybridEncrypt encaps otpWordEncrypt) :=
-  hkem.hybrid_indcpa demOneTimeINDCPA_otpWordEncrypt hkeyGen hencaps isPPTOn_otpWordEncrypt
+  hkem.hybrid_indcpaWith demOneTimeWordINDCPA_otpWordEncrypt computableInPolyTime_sameLength
+    hkeyGen hencaps isPPTOn_otpWordEncrypt
 
 end Cslib.Crypto.Encryption
