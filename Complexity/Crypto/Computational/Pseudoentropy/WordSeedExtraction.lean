@@ -83,7 +83,7 @@ theorem isPPTOn_extractWordObservations {α : Type} {input : α ↪ List Bool}
   have hmapped := ComputableInPolyTime.mapWithInput (f := fun a word => padWord (bound a) word)
     hobservations hpad
   have hwords := ComputableInPolyTime.bitsFlatten hmapped
-  exact LinearHash.isPPTOn_extract houtput.tidy hwords.tidy
+  exact LinearHash.isPPTOn_extract houtput hwords
 
 attribute [program_certificate] isPPTOn_extractWordObservations
 
