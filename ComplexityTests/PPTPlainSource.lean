@@ -212,7 +212,8 @@ example (step : List Bool → List Bool → ProbComp (List Bool))
   fail_if_success (clear hgrowth; ppt)
   ppt
 
-/-- A distinct opaque result isolates implication application from direct raw-to-plain conversion. -/
+/-- A distinct opaque result separates implication application
+from direct certificate conversion. -/
 @[irreducible] def implicationResult (word : List Bool) : ProbComp (List Bool) := pure word
 
 -- Missing evidence cannot be recovered globally through a local full-arity alias implication.
@@ -250,5 +251,32 @@ example : IsPPTOn encBits encBits implicationResult := by
 example : IsPPTOn encBits encBits implicationResult := by
   fail_if_success ppt
   fun_prop
+
+-- Forced production dispatch retains every compatible supplied callback encoding.
+private meta def scanTwoLocalCallbacks : Aesop.RuleTac := fun input => do
+  let result ← Cslib.Tactic.applyScanWithLocalCallback ``ComputableInPolyTime
+    ``ComputableInPolyTime.anyWithInput input
+  unless result.applications.size ≥ 2 do
+    throwError "both compatible callback applications must survive"
+  return result
+
+example (test : List Bool × Bool × ℕ → Bool) (list : List Bool × Bool → List ℕ)
+    (_hu : ComputableInPolyTime test (encPair encBits (encPair encBool encUnary)) encBool)
+    (_hb : ComputableInPolyTime test (encPair encBits (encPair encBool encNat)) encBool)
+    (_hlu : ComputableInPolyTime list (encPair encBits encBool) (encList encUnary))
+    (_hlb : ComputableInPolyTime list (encPair encBits encBool) (encList encNat)) :
+    ComputableInPolyTime
+      (fun pair : List Bool × Bool => (list pair).any fun i => test (pair.1, pair.2, i))
+      (encPair encBits encBool) encBool := by
+  run_tac Cslib.Tactic.PolyTime.Internal.withPlainRuleCache do
+    Lean.Elab.Tactic.evalTactic (← `(tactic|
+      aesop (rule_sets := [-builtin, -default])
+        (add unsafe 100% tactic scanTwoLocalCallbacks)))
+
+-- Without local callback evidence, the ordinary generic scan alternative remains available.
+example : ComputableInPolyTime
+    (fun word : List Bool => [false, true].any fun bit => bit && word.isEmpty)
+    encBits encBool := by
+  polytime
 
 end ComplexityTests.PPTPlainSource
