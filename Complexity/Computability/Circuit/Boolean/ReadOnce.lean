@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.BinaryCost
 public import Complexity.Computability.Circuit.Monotone.Formula
+import Complexity.Computability.Circuit.FanIn
 
 /-!
 # Positive and read-once Boolean formulas from tight binary-cost circuits
@@ -673,11 +674,6 @@ end Boolean
 
 /-! ### Unfolding tight binary-cost De Morgan programs into formulas -/
 
-private theorem wire_castSucc_injective'' :
-    Function.Injective (Wire.castSucc : Wire n g → Wire n (g + 1)) := by
-  intro a b h
-  cases a <;> cases b <;> simp_all [Wire.castSucc]
-
 @[simp] private theorem wire_lastCases_last {α : Sort*} (last : α) (castSucc : Wire n g → α) :
     Wire.lastCases (motive := fun _ => α) last castSucc (.gate (Fin.last g)) = last := by
   simp [Wire.lastCases]
@@ -770,7 +766,7 @@ theorem Program.exists_litFormula_of_card_biUnion_wireSupport_ge (hn : 0 < n)
         | last => exact absurd rfl hne
         | castSucc w' => exact ⟨w', hw, rfl⟩
     have hprior_card : prior.card = (frontier.erase (Wire.gate (Fin.last g))).card := by
-      rw [← hprior_image, Finset.card_image_of_injective _ wire_castSucc_injective'']
+      rw [← hprior_image, Finset.card_image_of_injective _ Wire.castSucc_injective]
     have hopened_le : opened.card ≤ frontier.card + binaryCost op := by
       by_cases hlast : Wire.gate (Fin.last g) ∈ frontier
       · have herase := Finset.card_erase_of_mem hlast
@@ -838,7 +834,7 @@ theorem Program.exists_litFormula_of_card_biUnion_wireSupport_ge (hn : 0 < n)
     · have hsum_prior :
           ∑ w ∈ frontier.erase (Wire.gate (Fin.last g)), (F w).leafSize =
             ∑ w' ∈ prior, (F' w').leafSize := by
-        rw [← hprior_image, Finset.sum_image fun a _ b _ hab => wire_castSucc_injective'' hab]
+        rw [← hprior_image, Finset.sum_image fun a _ b _ hab => Wire.castSucc_injective hab]
         exact Finset.sum_congr rfl fun w' _ => by
           rw [show F w'.castSucc = F' w' from wire_lastCases_castSucc lastFormula F' w']
       by_cases hlast : Wire.gate (Fin.last g) ∈ frontier

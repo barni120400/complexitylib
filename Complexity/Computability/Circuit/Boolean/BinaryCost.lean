@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Circuit.FanIn
+import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Simulation
 public import Complexity.Computability.Circuit.Support
 public import Cslib.Computability.Circuit.Boolean.Basic

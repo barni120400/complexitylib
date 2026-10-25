@@ -18,15 +18,8 @@ Unfolding a frontier through a bounded-fan-in program controls how many
 original inputs can reach the outputs. Essential inputs therefore give a
 lower bound on circuit size.
 
-## Main definitions
-
-* `Cslib.Circuits.Program.reachableInputs`: the original circuit inputs reachable backwards from a
-  frontier of wires in a program.
-
 ## Main results
 
-* `Cslib.Circuits.Program.card_reachableInputs_le_cost`: reachable inputs are bounded by the
-  frontier size plus the program cost under any weight bounding arities by `1 + w op`.
 * `Cslib.Circuits.Program.card_biUnion_wireSupport_le_cost`: supporting inputs are bounded by the
   frontier size plus the program cost under any weight bounding arities by `1 + w op`.
 * `Cslib.Circuits.Circuit.card_inputSupport_le_size`: a circuit of fan-in `r` with `m` outputs has
@@ -44,7 +37,7 @@ namespace Cslib.Circuits
 variable {σ : Signature} {U V : Type*} {n m g : ℕ}
 
 /-- The original circuit inputs reachable backwards from a frontier of wires in a program. -/
-def Program.reachableInputs :
+private def Program.reachableInputs :
     ∀ {g : ℕ}, Program σ n g → Finset (Wire n g) → Finset (Fin n)
   | _, .empty, frontier => Finset.univ.filter fun input => Wire.input input ∈ frontier
   | _, @Program.gate _ _ g program line, frontier =>
@@ -78,7 +71,7 @@ private def Circuit.reachableInputs (c : Circuit σ n m) :
   c.program.reachableInputs c.frontier
 
 /-- Every input supporting a wire in the frontier is reachable from the frontier. -/
-theorem Program.support_subset_reachableInputs
+private theorem Program.support_subset_reachableInputs
     (program : Program σ n g) :
     ∀ frontier : Finset (Wire n g),
       frontier.biUnion program.wireSupport ⊆
@@ -134,7 +127,7 @@ private theorem Circuit.inputSupport_subset_reachableInputs
 /-- In any circuit program, the number of reachable inputs from a frontier of wires is bounded
 by the size of the frontier plus the cost of the program, for any weight function that bounds gate
 arities by `1 + w op`. -/
-theorem Program.card_reachableInputs_le_cost
+private theorem Program.card_reachableInputs_le_cost
     (program : Program σ n g)
     (w : σ.Op → ℕ)
     (hw : ∀ op, σ.Arity op ≤ 1 + w op)
