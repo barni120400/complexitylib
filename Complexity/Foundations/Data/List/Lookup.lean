@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Mathlib.Data.List.Basic
 public import Mathlib.Order.Lattice.Nat
+import Mathlib.Data.List.Forall2
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.OfFn
 
@@ -21,6 +22,9 @@ import Mathlib.Data.List.OfFn
 * `List.getD_mem_or`, `List.getD_idxOf`: a defaulted lookup returns a member or the default,
   and returns a member at its first index.
 * `List.getD_set_self`, `List.getD_set_ne`: reading an updated entry or an unchanged entry.
+* `List.Forall₂.getD`: related lists are related at every in-range defaulted lookup.
+* `List.getD_append_cons_length`, `List.getD_append_cons_of_ne`: reading the entry at index
+  `front.length` of `front ++ x :: back`, and the reads that do not depend on it.
 * `List.forall_mem_set_of_forall_mem`, `List.getD_le_of_forall_le`: preserve invariants under
   updates and bound defaulted reads of numeric register files.
 * `List.getD_map_range`: read a function tabulated over a bounded range.
@@ -31,6 +35,14 @@ import Mathlib.Data.List.OfFn
 
 @[expose] public section
 
+/-- Related lists are related at every in-range defaulted lookup, whatever the defaults. -/
+theorem List.Forall₂.getD {α β : Type*} {R : α → β → Prop} {l₁ : List α} {l₂ : List β}
+    (h : List.Forall₂ R l₁ l₂) {i : ℕ} (hi : i < l₁.length) (d₁ : α) (d₂ : β) :
+    R (l₁.getD i d₁) (l₂.getD i d₂) := by
+  have hi' : i < l₂.length := hi.trans_eq h.length_eq
+  simpa only [List.getD_eq_getElem _ _ hi, List.getD_eq_getElem _ _ hi',
+    List.get_eq_getElem] using h.get hi hi'
+
 /-- Reading the updated entry of a list. -/
 theorem List.getD_set_self {α : Type*} {l : List α} {i : ℕ} {x d : α} (h : i < l.length) :
     (l.set i x).getD i d = x := by
@@ -40,6 +52,20 @@ theorem List.getD_set_self {α : Type*} {l : List α} {i : ℕ} {x d : α} (h : 
 theorem List.getD_set_ne {α : Type*} {l : List α} {i j : ℕ} {x d : α} (h : i ≠ j) :
     (l.set i x).getD j d = l.getD j d := by
   simp only [List.getD_eq_getElem?_getD, List.getElem?_set_ne h]
+
+/-- The entry at index `front.length` of `front ++ x :: back` is `x`. -/
+theorem List.getD_append_cons_length {α : Type*} (front back : List α) (x d : α) :
+    (front ++ x :: back).getD front.length d = x := by
+  simp
+
+/-- Reads of `front ++ x :: back` away from index `front.length` do not depend on `x`. -/
+theorem List.getD_append_cons_of_ne {α : Type*} (front back : List α) (x y d : α) {i : ℕ}
+    (h : i ≠ front.length) : (front ++ x :: back).getD i d = (front ++ y :: back).getD i d := by
+  rcases lt_or_gt_of_ne h with hlt | hgt
+  · rw [List.getD_append _ _ _ _ hlt, List.getD_append _ _ _ _ hlt]
+  · rw [List.getD_append_right _ _ _ _ hgt.le, List.getD_append_right _ _ _ _ hgt.le]
+    obtain ⟨j, hj⟩ : ∃ j, i - front.length = j + 1 := ⟨i - front.length - 1, by omega⟩
+    rw [hj, List.getD_cons_succ, List.getD_cons_succ]
 
 /-- A property of all the entries of a list holds of all the entries of an update by a value
 having it. -/
