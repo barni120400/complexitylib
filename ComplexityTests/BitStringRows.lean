@@ -18,7 +18,7 @@ remain empty. The old public crypto name still has its original statement.
 
 namespace ComplexityTests.BitStringRows
 
-open Cslib Probability
+open Cslib
 
 -- The indexing rule needs no lower bound on the input length.
 example (word : List Bool) (row : ℕ) :
@@ -70,10 +70,6 @@ example :
       (List.zipWith xor [true, false, true] [false, true, true]) =
       [false, true, true] :=
   BitString.zipWith_xor_self_left [true, false, true] [false, true, true] rfl
-
-example (b : Bool) :
-    (PMF.uniformOfFintype Bool).map (fun bit => xor bit b) = PMF.uniformOfFintype Bool :=
-  BitString.uniformOfFintype_bool_map_xor b
 
 example :
     (BitString.uniformList 3).map (fun pad => List.zipWith xor pad [true, false, true]) =
