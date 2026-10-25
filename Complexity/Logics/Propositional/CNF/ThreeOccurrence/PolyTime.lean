@@ -14,16 +14,21 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
-# Polynomial-time finite occurrence splitting
+# Polynomial-time occurrence splitting
 
-Original variable labels keep their supplied encoding. The new clause and literal positions use
-unary encodings bounded by the input's literal and clause counts. In particular, binary natural
-labels are never expanded into unary labels.
+The occurrence-splitting construction of [Papadimitriou, Proposition 9.3][Papadimitriou94] is
+polynomial-time. Original variable labels keep their supplied encoding. The new clause and literal
+positions use unary encodings bounded by the input's literal and clause counts. In particular,
+binary natural labels are never expanded into unary labels.
 
 ## Main results
 
 * `Cslib.Logic.PL.CNF.computableInPolyTime_implicationCycle`: constructing binary cycles.
-* `Cslib.Logic.PL.CNF.computableInPolyTime_toThreeOccurrence`: certified finite splitting.
+* `Cslib.Logic.PL.CNF.computableInPolyTime_toThreeOccurrence`: certified splitting.
+
+## References
+
+* [C. H. Papadimitriou, *Computational Complexity*, Proposition 9.3][Papadimitriou94]
 -/
 
 @[expose] public section
@@ -68,7 +73,7 @@ theorem computableInPolyTime_occurrenceClauses :
   fun_prop
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
-/-- Finite splitting is polynomial-time, with no unary expansion of original variable labels. -/
+/-- Splitting is polynomial-time, with no unary expansion of original variable labels. -/
 @[fun_prop]
 theorem computableInPolyTime_toThreeOccurrence [DecidableEq V] :
     ComputableInPolyTime (toThreeOccurrence (V := V))

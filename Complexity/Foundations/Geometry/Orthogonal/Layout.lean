@@ -8,7 +8,13 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
-import Mathlib.Tactic
+import Aesop
+import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.Ring
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Diagonal boxes and upper tracks for finite orthogonal layouts
@@ -29,6 +35,8 @@ and then rise on columns `8v+2`, `8v+4`, and `8v+6`. Edge `e` travels horizontal
 * `Cslib.Orthogonal.Layout.route_simple`: continuous simplicity.
 * `Cslib.Orthogonal.Layout.route_contact`: shared endpoint or strict transverse crossing.
 * `Cslib.Orthogonal.Layout.center_mem_support_iff`: no incidental vertex contacts.
+
+## References
 
 The box/track construction and its proofs are original.
 -/
@@ -142,7 +150,10 @@ theorem mem_fan {v : ℕ} {s : Fin 3} {p : ℝ × ℝ} :
         8 * (v : ℝ) + 4 ≤ p.2 ∧ p.2 ≤ 8 * (v : ℝ) + 6) ∨
       (s = 2 ∧ p.2 = 8 * (v : ℝ) + 4 ∧
         8 * (v : ℝ) + 4 ≤ p.1 ∧ p.1 ≤ 8 * (v : ℝ) + 6) := by
-  fin_cases s <;> norm_num [fan, segment, realPoint, center, elbow, column]
+  fin_cases s <;> norm_num only [fan, segment, realPoint, center, elbow, column,
+    Fin.ext_iff, Fin.val_mk, Fin.val_zero, Fin.val_one, Fin.val_two, ↓reduceIte,
+    Int.cast_add, Int.cast_mul, Int.cast_natCast,
+    and_true, and_false, true_and, false_and, or_true, or_false, true_or, false_or]
   all_goals ring_nf
   all_goals first | rw [mem_horizontal] | rw [mem_vertical]
   all_goals simp only [Set.mem_uIcc]
@@ -162,7 +173,9 @@ theorem elbow_below_track {n e v : ℕ} (hv : v < n) (s : Fin 3) :
 
 /-- The fixed initial segment is proper and orthogonal. -/
 theorem center_elbow_axisAligned (v : ℕ) (s : Fin 3) : AxisAligned (center v) (elbow v s) := by
-  fin_cases s <;> norm_num [AxisAligned, center, elbow, column, Prod.mk.injEq]; omega
+  fin_cases s <;> norm_num only [AxisAligned, center, elbow, column, ne_eq, Prod.mk.injEq,
+    Fin.ext_iff, Fin.val_mk, Fin.val_zero, Fin.val_one, Fin.val_two, ↓reduceIte]
+  all_goals omega
 
 /-- The complete route has exactly five segments. -/
 theorem route_segments_length (n e u v : ℕ) (s t : Fin 3) :
@@ -260,7 +273,9 @@ theorem fan_stem_port_eq {n e u v : ℕ} (hv : v < n) {s t : Fin 3} {p : ℝ × 
   rw [mem_stem, Set.uIcc_of_le hhigh.le] at hq
   rw [mem_fan] at hp
   rcases hp with ⟨rfl, hy, hx⟩ | ⟨rfl, hx, hy⟩ | ⟨rfl, hy, hx⟩ <;>
-    fin_cases t <;> norm_num [column, elbow, center] at hq ⊢ <;> linarith
+    fin_cases t <;> norm_num only [column, elbow, center, Fin.ext_iff, Fin.val_mk, Fin.val_zero,
+      Fin.val_one, Fin.val_two, ↓reduceIte,
+      Int.cast_add, Int.cast_mul, Int.cast_natCast, Set.mem_Icc] at hq ⊢ <;> linarith
 
 /-- Different port columns give disjoint stems, independently of their edge heights. -/
 theorem stem_disjoint {n e f u v : ℕ} {s t : Fin 3} (h : (u, s) ≠ (v, t)) :
@@ -316,7 +331,9 @@ theorem fan_stem_endpointContacts {n e v : ℕ} (hv : v < n) (s : Fin 3) :
     apply Prod.ext hq.1
     rw [mem_fan] at hp
     rcases hp with ⟨rfl, hy, hx⟩ | ⟨rfl, hx, hy⟩ | ⟨rfl, hy, hx⟩ <;>
-      norm_num [realPoint, elbow, center, column] at hq ⊢ <;> linarith
+      norm_num only [realPoint, elbow, center, column, Fin.ext_iff, Fin.val_mk, Fin.val_zero,
+        Fin.val_one, Fin.val_two, ↓reduceIte,
+        Int.cast_add, Int.cast_mul, Int.cast_natCast, Set.mem_Icc] at hq ⊢ <;> linarith
   exact ⟨Or.inr heq, Or.inl heq⟩
 
 /-- A stem meets its own bridge only at their common upper endpoint. -/
@@ -332,7 +349,10 @@ theorem stem_bridge_endpointContacts (n e u v : ℕ) (s t : Fin 3) :
 theorem route_nodup {n e u v : ℕ} (hu : u < n) (hv : v < n) (huv : u ≠ v)
     (s t : Fin 3) : (route n e u v s t).Nodup := by
   fin_cases s <;> fin_cases t <;>
-    norm_num [route, center, elbow, column, track, List.nodup_cons, Prod.mk.injEq] <;> omega
+    norm_num only [route, center, elbow, column, track, List.nodup_cons, Prod.mk.injEq,
+      Fin.ext_iff, Fin.val_mk, Fin.val_zero, Fin.val_one, Fin.val_two, ↓reduceIte,
+      List.mem_cons, List.not_mem_nil, or_false,
+      not_false_eq_true, and_true, List.nodup_nil] <;> omega
 
 /-- The whole real polygonal route is simple: distinct consecutive segments contact only at
 their common listed endpoints, and no listed point is repeated. -/
@@ -472,24 +492,24 @@ theorem route_contact {n e f u v a b : ℕ}
   · exact False.elim (hubr (Prod.ext (fan_stem_port_eq hb hp hq).1 (fan_stem_port_eq hb hp hq).2))
   · exact Or.inl ⟨u, Or.inl rfl, Or.inr (fan_pair_contact hubr hp hq).1,
        (fan_pair_contact hubr hp hq).2⟩
-  · exact False.elim (huaq.symm 
+  · exact False.elim (huaq.symm
       (Prod.ext (fan_stem_port_eq hu hq hp).1 (fan_stem_port_eq hu hq hp).2))
   · exact False.elim (Set.disjoint_left.1 (stem_disjoint huaq) hp hq)
   · exact Or.inr (Or.inr (Or.inr (Or.inl (bridge_stem_transverse hu hef.symm huaq hubr hq hp))))
   · exact False.elim (Set.disjoint_left.1 (stem_disjoint hubr) hp hq)
-  · exact False.elim (hubr.symm 
+  · exact False.elim (hubr.symm
       (Prod.ext (fan_stem_port_eq hu hq hp).1 (fan_stem_port_eq hu hq hp).2))
   · exact False.elim (Set.disjoint_left.1 (fan_bridge_disjoint ha _ _ _) hq hp)
   · exact Or.inr (Or.inl (bridge_stem_transverse ha hef huaq.symm hvaq.symm hp hq))
   · exact False.elim (Set.disjoint_left.1 (bridge_disjoint hef _ _ _ _) hp hq)
   · exact Or.inr (Or.inr (Or.inl (bridge_stem_transverse hb hef hubr.symm hvbr.symm hp hq)))
   · exact False.elim (Set.disjoint_left.1 (fan_bridge_disjoint hb _ _ _) hq hp)
-  · exact False.elim (hvaq.symm 
+  · exact False.elim (hvaq.symm
       (Prod.ext (fan_stem_port_eq hv hq hp).1 (fan_stem_port_eq hv hq hp).2))
   · exact False.elim (Set.disjoint_left.1 (stem_disjoint hvaq) hp hq)
   · exact Or.inr (Or.inr (Or.inr (Or.inr (bridge_stem_transverse hv hef.symm hvaq hvbr hq hp))))
   · exact False.elim (Set.disjoint_left.1 (stem_disjoint hvbr) hp hq)
-  · exact False.elim (hvbr.symm 
+  · exact False.elim (hvbr.symm
       (Prod.ext (fan_stem_port_eq hv hq hp).1 (fan_stem_port_eq hv hq hp).2))
   · exact Or.inl ⟨v, Or.inr rfl, Or.inl (fan_pair_contact hvaq hp hq).1,
        (fan_pair_contact hvaq hp hq).2⟩

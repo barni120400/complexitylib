@@ -4,11 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine
 -/
 
-
 import Complexity.Computability.Complexity.Problems.ThreeSATThree
 
-/-! # Finite 3SAT-3: repetitions, empty inputs, and binary labels -/
-
+/-! # 3SAT-3: repetitions, empty inputs, and binary labels -/
 
 open Cslib.Logic.PL Cslib.Complexity
 
