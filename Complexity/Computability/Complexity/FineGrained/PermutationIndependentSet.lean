@@ -857,15 +857,6 @@ private theorem computableTidilyInPolyTime_listGetDWithInput
   (listGetD d).comp (hlist.prod hindex)
 
 @[fun_prop]
-private theorem computableTidilyInPolyTime_adjBoolWithInput
-    {γ : Type} {encIn : γ ↪ List Bool} {G : γ → Graph} {u v : γ → ℕ}
-    (hG : ComputableTidilyInPolyTime G encIn encGraph)
-    (hu : ComputableTidilyInPolyTime u encIn encNat)
-    (hv : ComputableTidilyInPolyTime v encIn encNat) :
-    ComputableTidilyInPolyTime (fun x => (G x).adjBool (u x) (v x)) encIn encBool :=
-  Graph.computableInPolyTime_adjBool.tidy.comp ((hG.prod hu).prod hv)
-
-@[fun_prop]
 private theorem computableTidilyInPolyTime_unary_div'
     {γ : Type} {encIn : γ ↪ List Bool} {a b : γ → ℕ}
     (ha : ComputableTidilyInPolyTime a encIn encUnary)
@@ -1053,6 +1044,7 @@ private theorem computableTidilyInPolyTime_pairConflictEdges
   unfold pairConflictEdges
   fun_prop
 
+attribute [local fun_prop] ComputableInPolyTime.tidy in
 @[fun_prop]
 private theorem computableTidilyInPolyTime_vertexConflictEdges
     {γ : Type} {encIn : γ ↪ List Bool} {H : γ → Graph} {r p : γ → ℕ}
