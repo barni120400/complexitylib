@@ -1188,29 +1188,6 @@ Jukna coverage below is an additional target beyond the V1 port:
   the [leftover hash lemma](Complexity/Probability/UniversalHash.lean) is proved over
   `ε`-universal families (`IsUniversalHash.leftover_hash`) with `IsTwoUniversal` as its
   `1 / |Output|` case and the pseudoentropy clients updated.
-  [Feistel networks and the Luby–Rackoff theorem](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean)
-  (#748, #834, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988), backed by the shared
-  [lazy bidirectional random-permutation sampler](Complexity/Languages/Probabilistic/RandomPermutation.lean)
-  (#834), prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
-  3-round adaptive CPA bound with Δ-universal Round 1
-  (`advantage_feistel3HashIdealGame_randomFunctionGame_le`), the `2 * Q.choose 2 / |G|`
-  uniform-random-round corollary (`advantage_feistel3RandomRoundsGame_randomFunctionGame_le`), the
-  3-round and 4-round PRF-to-Feistel hybrid bounds
-  (`advantage_feistel3KeyedGame_randomFunctionGame_le`,
-  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), the PRP-PRF switching
-  bound `Q.choose 2 / |G|²` and 3-round PRP bounds against a uniform random permutation
-  (`advantage_idealPermGame_randomFunctionGame_le`,
-  `advantage_feistel3RandomRoundsGame_idealPermGame_le`,
-  `advantage_feistel3KeyedGame_idealPermGame_le`), and the 3-query
-  chosen-ciphertext attack against 3-round Feistel (`eval_feistel3_feistel3CCAAttack`, with the
-  equal-input sanity check `advantage_feistel3CCAAttack_self`, the finite positive gap
-  `(|Equiv.Perm (G × G)|)⁻¹ ≤ advantage` against the true bidirectional random-permutation game
-  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, the
-  quantitative nonnegligible lower bound `1 - |G|⁻¹ - 4 / |G|² ≤ advantage` against
-  `idealStrongGame` for any `l₀ ≠ l₁` in `le_advantage_feistel3CCAAttack_idealStrongGame_of_ne`,
-  and the separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
-  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`). Open in #748:
-  the 4-round information-theoretic bidirectional random-round collision bound.
 * **Sigma protocols, Schnorr identification and Fiat–Shamir (#581).** Boneh–Shoup Chapter 19.
   The exact algebraic core is proved:
   [Sigma protocols](Complexity/Crypto/Protocols/SigmaProtocol/Basic.lean) with explicit
@@ -1292,8 +1269,8 @@ Jukna coverage below is an additional target beyond the V1 port:
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
   collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663),
   [Carter–Wegman MACs from Δ-universal hashing](Complexity/Crypto/Protocols/MAC/CarterWegman.lean)
-  (#736, including one-time, adaptive multi-query issued-counter, arbitrary-pad hybrid, and exact
-  single-query fixed-nonce `prfRealGame`/`prfIdealGame` reduction bounds), and the Even–Mansour
+  (#736, #746, #842, including one-time, adaptive multi-query issued-counter, arbitrary-pad hybrid,
+  and exact single-query fixed-nonce `prfRealGame`/`prfIdealGame` reduction bounds), the Even–Mansour
   cipher in the ideal-permutation model (algebraic permutations, one-query secrecy, one-sided query
   security, 2-query breaks when omitting either whitening key, the Boneh–Shoup Theorem 4.10
   bad-key transcript intersection bound `2 * Q_e * Q_π / |G|`, exact equivalence of the two-sided
@@ -1302,11 +1279,36 @@ Jukna coverage below is an additional target beyond the V1 port:
   coupling inequality `run_idealLazyHandler_good_le_realLazyHandler`, and the full two-sided PRP
   `Game.advantage` bounds `2 * Q_e * Q_π / |G|` in
   `advantage_evenMansourRealGame_evenMansourIdealGame_le` and
-  `advantage_singleKeyEvenMansourRealGame_evenMansourIdealGame_le`, #761, #834).
-  Open: `IsOraclePPT` admissibility, uniform word-level forger/hash families, the asymptotic
-  `PseudorandomFunction` corollary, and fresh-nonce multi-query Carter–Wegman MAC security;
-  the 4-round strong Feistel information-theoretic collision bound (#748); and the Naor–Reingold
-  PRF from the decisional Diffie–Hellman assumption.
+  `advantage_singleKeyEvenMansourRealGame_evenMansourIdealGame_le`, #761, #834), and
+  [Feistel networks and the Luby–Rackoff theorem](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean)
+  (#748, #752, #834, #853, Boneh–Shoup Section 4.4 / Luby–Rackoff 1988), backed by the shared
+  [lazy bidirectional random-permutation sampler](Complexity/Languages/Probabilistic/RandomPermutation.lean)
+  (#834, #853), prove the `Q.choose 2 * ε + Q.choose 2 / |G|`
+  3-round adaptive CPA bound with Δ-universal Round 1
+  (`advantage_feistel3HashIdealGame_randomFunctionGame_le`), the `2 * Q.choose 2 / |G|`
+  uniform-random-round corollary (`advantage_feistel3RandomRoundsGame_randomFunctionGame_le`), the
+  3-round and 4-round PRF-to-Feistel hybrid bounds
+  (`advantage_feistel3KeyedGame_randomFunctionGame_le`,
+  `advantage_feistel4StrongKeyedGame_feistel4StrongRandomRoundsGame_le`), the PRP-PRF switching
+  bound `Q.choose 2 / |G|²` and 3-round PRP bounds against a uniform random permutation
+  (`advantage_idealPermGame_randomFunctionGame_le`,
+  `advantage_feistel3RandomRoundsGame_idealPermGame_le`,
+  `advantage_feistel3KeyedGame_idealPermGame_le`), and the 3-query
+  chosen-ciphertext attack against 3-round Feistel (`eval_feistel3_feistel3CCAAttack`, with the
+  equal-input sanity check `advantage_feistel3CCAAttack_self`, the finite positive gap
+  `(|Equiv.Perm (G × G)|)⁻¹ ≤ advantage` against the true bidirectional random-permutation game
+  `idealStrongGame` for `|G| ≥ 3` in `le_advantage_feistel3CCAAttack_idealStrongGame`, the
+  quantitative nonnegligible lower bound `1 - |G|⁻¹ - 4 / |G|² ≤ advantage` against
+  `idealStrongGame` for any `l₀ ≠ l₁` in `le_advantage_feistel3CCAAttack_idealStrongGame_of_ne`,
+  and the separate exact `1 - |G|⁻¹` bound against the independent-table benchmark
+  `independentTableStrongGame` in `advantage_feistel3CCAAttack_independentTable`).
+  Open: `IsOraclePPT` admissibility of the PRF-pad reduction, uniform word-level forger/hash
+  families, the asymptotic `PseudorandomFunction` corollary, and fresh-nonce multi-query
+  Carter–Wegman MAC security (#736); the 4-round information-theoretic bidirectional random-round
+  collision bound (`feistel4StrongRandomRoundsGame` vs `idealStrongGame`, #748; the quantitative
+  ideal-strong-game bound and 3-round PRP switching are proved in
+  [LubyRackoff.lean](Complexity/Crypto/Protocols/Cipher/LubyRackoff.lean) via #834, #853); and
+  the Naor–Reingold PRF from the decisional Diffie–Hellman assumption.
 
 * **Lattice Sigma protocols and post-quantum signatures (#640, track B).** Proved (#645): the
   [SIS hypothesis](Complexity/Crypto/Computational/SIS/Basic.lean) for power-of-two moduli, exact
