@@ -12,6 +12,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 import Mathlib.Algebra.BigOperators.Ring.List
+import Mathlib.Data.List.GetD
 import Mathlib.Tactic
 
 /-!
@@ -20,6 +21,8 @@ import Mathlib.Tactic
 All bounds count literal positions, including repetitions within one clause. External incidences
 are compared with the directed halves of the actual canonical unit paths. The final clause-cell
 half is permitted in this comparison, so the comparison only overcounts the emitted variables.
+The existing `CNF.vars` counts literal positions; `CNF.occurrences` counts mentioning clauses
+and does not suffice when a source clause repeats a variable.
 
 ## Main definitions
 
@@ -28,6 +31,9 @@ half is permitted in this comparison, so the comparison only overcounts the emit
 
 ## Main results
 
+* `Cslib.Complexity.SAT.PlanarCompile.count_vars_rawFormula_le_three`,
+  `.count_vars_formula_le_three`: the actual structured and compact outputs preserve the bound
+  of three literal occurrences under the source width and literal-count bounds.
 * `Cslib.Complexity.SAT.PlanarCompile.count_links_lastLiteral_le`: every emitted external literal
   is bounded by the corresponding actual path halves.
 -/
@@ -127,6 +133,52 @@ theorem count_pathSignals_none_le_two (sites : List Point) (r : Route) (p : Poin
   have ht := List.nodup_iff_count_le_one.mp hn.tail p
   omega
 
+private theorem pathSignals_cell_mem {sites : List Point} {r : Route} {v : Variable}
+    (hv : v ∈ pathSignals sites r) : v.1 ∈ r := by
+  obtain ⟨e, he, rfl⟩ := List.mem_map.mp hv
+  obtain ⟨f, hf, he⟩ := List.mem_flatMap.mp he
+  have hm := List.of_mem_zip hf
+  simp only [List.mem_cons, List.not_mem_nil, or_false] at he
+  rcases he with rfl | rfl
+  · exact hm.1
+  · exact List.mem_of_mem_tail hm.2
+
+private theorem count_pathSignals_eq_zero_of_not_mem {sites : List Point} {r : Route}
+    {p : Point} (hp : p ∉ r) (v : Option Crossover.SplitVariable) :
+    (pathSignals sites r).count (p, v) = 0 := by
+  rw [List.count_eq_zero]
+  exact fun h => hp (pathSignals_cell_mem h)
+
+private theorem count_pathSignals_none_of_site {sites : List Point} {r : Route}
+    {p : Point} (hp : p ∈ sites) : (pathSignals sites r).count (p, none) = 0 := by
+  rw [List.count_eq_zero]
+  intro hm
+  obtain ⟨e, _, he⟩ := List.mem_map.mp hm
+  exact (signal_eq_none_iff sites e.1 e.2 p).mp he |>.2 hp
+
+private theorem count_pathSignals_none_head {sites : List Point} {r : Route} {p : Point}
+    (hp : p ∉ sites) (hn : r.Nodup) (hh : r.head? = some p) :
+    (pathSignals sites r).count (p, none) ≤ 1 := by
+  obtain ⟨tail, rfl⟩ := List.head?_eq_some_iff.mp hh
+  rw [count_pathSignals_none _ _ _ hp]
+  have ht : tail.count p = 0 := List.count_eq_zero.mpr (List.nodup_cons.mp hn).1
+  have hd := List.nodup_iff_count_le_one.mp
+    (hn.sublist (List.dropLast_sublist _)) p
+  simp only [List.tail_cons, ht, Nat.add_zero]
+  exact hd
+
+private theorem count_pathSignals_none_last {sites : List Point} {r : Route} {p : Point}
+    (hp : p ∉ sites) (hn : r.Nodup) (hh : r.getLast? = some p) :
+    (pathSignals sites r).count (p, none) ≤ 1 := by
+  obtain ⟨initial, rfl⟩ := List.getLast?_eq_some_iff.mp hh
+  rw [count_pathSignals_none _ _ _ hp]
+  have hm : p ∉ initial := by
+    have hdis := (List.nodup_append.mp hn).2.2
+    exact fun h => hdis p h p (by simp) rfl
+  have hd : (initial ++ [p]).dropLast.count p = 0 := by simp [List.count_eq_zero.mpr hm]
+  rw [hd, Nat.zero_add]
+  exact List.nodup_iff_count_le_one.mp hn.tail p
+
 private theorem vars_originalClauses (φ : CNF ℕ) (sites : List Point) :
     CNF.vars ((originalClauses φ sites).map Prod.fst) =
       (Cslib.Logic.PL.occurrences φ).map
@@ -177,6 +229,187 @@ def crossingSignals (φ : CNF ℕ) : List Variable :=
 def allPathSignals (φ : CNF ℕ) : List Variable :=
   (Cslib.Logic.PL.occurrences φ).flatMap fun o =>
     pathSignals (crossingSites φ) (occurrencePath φ o)
+
+/-- The path-half enumeration also follows the actual compiler path-list order. -/
+theorem allPathSignals_eq_flatMap (φ : CNF ℕ) :
+    allPathSignals φ = (paths φ).flatMap (pathSignals (crossingSites φ)) := by
+  rw [← occurrencePaths_eq_paths, List.flatMap_map]
+  rfl
+
+private theorem idxOf_range_of_lt {i n : ℕ} (hi : i < n) : (List.range n).idxOf i = i := by
+  have h := (List.nodup_range : (List.range n).Nodup).idxOf_getElem i
+    (by simpa only [List.length_range] using hi)
+  rw [List.getElem_range] at h
+  exact h
+
+/-- A source center belongs to an actual occurrence path exactly at one of its two endpoints. -/
+theorem occurrencePath_center_iff {φ : CNF ℕ} {o : Occurrence ℕ}
+    (ho : o ∈ Cslib.Logic.PL.occurrences φ) {w : ℕ}
+    (hw : w < φ.distinctVars.length + φ.length) :
+    Layout.center w ∈ occurrencePath φ o ↔
+      w = φ.distinctVars.idxOf o.2.2.1 ∨ w = φ.distinctVars.length + o.1 := by
+  have hi : (Cslib.Logic.PL.occurrences φ).idxOf o < (SAT.incidenceGraph φ).2.length := by
+    simpa only [SAT.incidenceGraph, List.length_map] using List.idxOf_lt_length_of_mem ho
+  have he : (SAT.incidenceGraph φ).2[(Cslib.Logic.PL.occurrences φ).idxOf o] =
+      (φ.distinctVars.idxOf o.2.2.1, φ.distinctVars.length + o.1) := by
+    simp only [SAT.incidenceGraph, List.getElem_map]
+    rw [List.getElem_idxOf (List.idxOf_lt_length_of_mem ho)]
+  have hb := SAT.incidenceGraph_bipartite (List.getElem_mem hi)
+  rw [he] at hb
+  have h := Graph.unitPath_center_iff (SAT.incidenceGraph φ)
+    (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) hi
+    (by simpa [SAT.incidenceGraph] using hw)
+  rw [he] at h
+  change Layout.center w ∈ occurrencePath φ o ↔
+    w = (List.range _).idxOf (φ.distinctVars.idxOf o.2.2.1) ∨
+      w = (List.range _).idxOf (φ.distinctVars.length + o.1) at h
+  rw [idxOf_range_of_lt (by omega), idxOf_range_of_lt hb.2.2] at h
+  exact h
+
+/-- At every source center, all path-half incidences are bounded by its actual graph degree. -/
+theorem count_allPathSignals_center_le (φ : CNF ℕ) {w : ℕ}
+    (hw : w < φ.distinctVars.length + φ.length) :
+    (allPathSignals φ).count (Layout.center w, none) ≤
+      (SAT.incidenceGraph φ).incidenceVertices.count w := by
+  have hsite : Layout.center w ∉ crossingSites φ := by
+    intro hm
+    have hc := (mem_crossingSites φ _).mp hm |>.2.1
+    apply hc
+    simp only [Graph.orthogonalPositions, List.mem_map]
+    exact ⟨w, by simpa [SAT.incidenceGraph] using hw, rfl⟩
+  have hpath (o : Occurrence ℕ) (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
+      (pathSignals (crossingSites φ) (occurrencePath φ o)).count (Layout.center w, none) ≤
+        [φ.distinctVars.idxOf o.2.2.1, φ.distinctVars.length + o.1].count w := by
+    by_cases hm : Layout.center w ∈ occurrencePath φ o
+    · rcases (occurrencePath_center_iff ho hw).mp hm with he | he
+      · have hc := count_pathSignals_none_head hsite (occurrencePath_nodup ho)
+          (he.symm ▸ (occurrencePath_endpoints ho).1)
+        have hpos : 0 < [φ.distinctVars.idxOf o.2.2.1, φ.distinctVars.length + o.1].count w :=
+          List.count_pos_iff.mpr (by simp [he])
+        omega
+      · have hc := count_pathSignals_none_last hsite (occurrencePath_nodup ho)
+          (he.symm ▸ (occurrencePath_endpoints ho).2)
+        have hpos : 0 < [φ.distinctVars.idxOf o.2.2.1, φ.distinctVars.length + o.1].count w :=
+          List.count_pos_iff.mpr (by simp [he])
+        omega
+    · rw [count_pathSignals_eq_zero_of_not_mem hm]
+      exact Nat.zero_le _
+  simp only [allPathSignals, Graph.incidenceVertices, SAT.incidenceGraph, List.flatMap_map,
+    List.count_flatMap]
+  exact List.sum_le_sum hpath
+
+private theorem two_paths_of_filter_length (rs : List Route) (p : Point)
+    (hlen : 2 ≤ (rs.filter fun r => r.contains p).length) :
+    ∃ (i j : ℕ) (hi : i < rs.length) (hj : j < rs.length),
+      i ≠ j ∧ p ∈ rs[i] ∧ p ∈ rs[j] := by
+  induction rs with
+  | nil => simp at hlen
+  | cons r rs ih =>
+    by_cases hp : p ∈ r
+    · have hne : (rs.filter fun r => r.contains p) ≠ [] := by
+        intro h
+        have hf : ((r :: rs).filter fun r => r.contains p) = [r] := by
+          have hpred : r.contains p = true := by simpa using hp
+          simp only [List.filter_cons, hpred, ↓reduceIte, h]
+        rw [hf] at hlen
+        simp at hlen
+      cases hf : rs.filter (fun r => r.contains p) with
+      | nil => exact False.elim (hne hf)
+      | cons t ts =>
+        have ht : t ∈ rs.filter (fun r => r.contains p) := by rw [hf]; simp
+        obtain ⟨htmem, htp⟩ := List.mem_filter.mp ht
+        obtain ⟨j, hj, rfl⟩ := List.mem_iff_getElem.mp htmem
+        exact ⟨0, j + 1, by simp, by simpa using hj, by omega, hp, by simpa using htp⟩
+    · have hf : ((r :: rs).filter fun r => r.contains p) = rs.filter (fun r => r.contains p) := by
+        simp [hp]
+      rw [hf] at hlen
+      obtain ⟨i, j, hi, hj, hij, hpi, hpj⟩ := ih hlen
+      exact ⟨i + 1, j + 1, by simpa using hi, by simpa using hj, by omega, hpi, hpj⟩
+
+private theorem paths_nodup {φ : CNF ℕ} {r : Route} (hr : r ∈ paths φ) : r.Nodup := by
+  obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+  have hi' : i < (SAT.incidenceGraph φ).2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+  have h := Graph.unitPath_nodup (SAT.incidenceGraph φ)
+    (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless) hi'
+  change ((paths φ).getD i []).Nodup at h
+  rwa [List.getD_eq_getElem _ _ hi] at h
+
+private theorem count_pathSignals_filter_le (sites : List Point) (rs : List Route)
+    (hn : ∀ r ∈ rs, r.Nodup) (p : Point) (hp : p ∉ sites) :
+    (rs.flatMap (pathSignals sites)).count (p, none) ≤
+      2 * (rs.filter fun r => r.contains p).length := by
+  induction rs with
+  | nil => simp
+  | cons r rs ih =>
+    have ht := ih (fun s hs => hn s (List.mem_cons_of_mem _ hs))
+    rw [List.flatMap_cons, List.count_append]
+    by_cases hm : p ∈ r
+    · have hc := count_pathSignals_none_le_two sites r p hp (hn r List.mem_cons_self)
+      have hf : ((r :: rs).filter fun r => r.contains p) =
+          r :: rs.filter (fun r => r.contains p) := by simp [hm]
+      rw [hf, List.length_cons]
+      omega
+    · rw [count_pathSignals_eq_zero_of_not_mem hm, Nat.zero_add]
+      have hf : ((r :: rs).filter fun r => r.contains p) = rs.filter (fun r => r.contains p) := by
+        simp [hm]
+      rwa [hf]
+
+/-- Away from source centers, an unselected ordinary cell belongs to at most one path. -/
+theorem paths_filter_length_le_one {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) {p : Point}
+    (hp : p ∉ crossingSites φ) (hc : p ∉ (SAT.incidenceGraph φ).orthogonalPositions) :
+    ((paths φ).filter fun r => r.contains p).length ≤ 1 := by
+  by_contra h
+  have ht : 2 ≤ ((paths φ).filter fun r => r.contains p).length := by omega
+  obtain ⟨i, j, hi, hj, hij, hpi, hpj⟩ := two_paths_of_filter_length (paths φ) p ht
+  have hi' : i < (SAT.incidenceGraph φ).2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hi
+  have hj' : j < (SAT.incidenceGraph φ).2.length := by
+    simpa only [paths_eq_unitPaths, Graph.unitPaths_length] using hj
+  have hpi' : p ∈ (SAT.incidenceGraph φ).unitPath i := by
+    change p ∈ (paths φ).getD i []
+    rwa [List.getD_eq_getElem _ _ hi]
+  have hpj' : p ∈ (SAT.incidenceGraph φ).unitPath j := by
+    change p ∈ (paths φ).getD j []
+    rwa [List.getD_eq_getElem _ _ hj]
+  have hcand := Graph.unitPath_shared_mem_crossingCandidates (SAT.incidenceGraph φ)
+    (fun _ => SAT.incidenceGraph_endpoints) (fun _ => SAT.incidenceGraph_loopless)
+    (SAT.incidenceGraph_degree_le hw hv) hi' hj' hij hc hpi' hpj'
+  exact hp ((mem_crossingSites φ p).mpr ⟨hcand, hc, ht⟩)
+
+/-- An ordinary nonvertex cell contributes at most two actual path halves in total. -/
+theorem count_allPathSignals_nonvertex_le_two {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) {p : Point}
+    (hp : p ∉ crossingSites φ) (hc : p ∉ (SAT.incidenceGraph φ).orthogonalPositions) :
+    (allPathSignals φ).count (p, none) ≤ 2 := by
+  rw [allPathSignals_eq_flatMap]
+  have h := count_pathSignals_filter_le (crossingSites φ) (paths φ)
+    (fun _ => paths_nodup) p hp
+  have hf := paths_filter_length_le_one hw hv hp hc
+  omega
+
+private theorem count_allPathSignals_none_of_site {φ : CNF ℕ} {p : Point}
+    (hp : p ∈ crossingSites φ) : (allPathSignals φ).count (p, none) = 0 := by
+  rw [allPathSignals_eq_flatMap]
+  induction paths φ with
+  | nil => rfl
+  | cons r rs ih =>
+    rw [List.flatMap_cons, List.count_append, count_pathSignals_none_of_site hp, ih]
+
+/-- Ordinary variables in the actual output path list have at most three literal incidences. -/
+theorem count_allPathSignals_none_le_three {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) (p : Point) :
+    (allPathSignals φ).count (p, none) ≤ 3 := by
+  by_cases hs : p ∈ crossingSites φ
+  · rw [count_allPathSignals_none_of_site hs]
+    decide
+  · by_cases hc : p ∈ (SAT.incidenceGraph φ).orthogonalPositions
+    · obtain ⟨w, hwmem, rfl⟩ := List.mem_map.mp hc
+      have hw' : w < φ.distinctVars.length + φ.length := by
+        simpa [SAT.incidenceGraph] using List.mem_range.mp hwmem
+      exact (count_allPathSignals_center_le φ hw').trans (SAT.incidenceGraph_degree_le hw hv w)
+    · exact (count_allPathSignals_nonvertex_le_two hw hv hs hc).trans (by decide)
 
 /-- Every directed cell side in the actual source paths, including clause endpoints. -/
 def allPathPorts (φ : CNF ℕ) : List (Point × Fin 4) :=
@@ -284,5 +517,62 @@ theorem count_vars_splitFormula : ∀ v, Crossover.splitFormula.vars.count v ≤
 theorem count_vars_splitTerminal :
     ∀ i, Crossover.splitFormula.vars.count (Crossover.splitTerminal i) = 2 := by
   decide +kernel
+
+private theorem count_allPathSignals_nonterminal {φ : CNF ℕ} (p : Point)
+    (v : Crossover.SplitVariable) (hv : ¬ ∃ i, Crossover.splitTerminal i = v) :
+    (allPathSignals φ).count (p, some v) = 0 := by
+  rw [List.count_eq_zero]
+  intro hm
+  obtain ⟨o, _, hm⟩ := List.mem_flatMap.mp hm
+  obtain ⟨e, _, he⟩ := List.mem_map.mp hm
+  have hs := congrArg Prod.snd he
+  by_cases hp : e.1 ∈ crossingSites φ
+  · have heq : Crossover.splitTerminal (side e.1 e.2) = v := by
+      simpa [signal, hp] using hs
+    exact hv ⟨_, heq⟩
+  · simp [signal, hp] at hs
+
+private theorem count_allPathSignals_some_of_not_site {φ : CNF ℕ} {p : Point}
+    (hp : p ∉ crossingSites φ) (v : Crossover.SplitVariable) :
+    (allPathSignals φ).count (p, some v) = 0 := by
+  rw [List.count_eq_zero]
+  intro hm
+  obtain ⟨o, _, hm⟩ := List.mem_flatMap.mp hm
+  obtain ⟨e, _, he⟩ := List.mem_map.mp hm
+  have hcell : e.1 = p := congrArg Prod.fst he
+  have hs := congrArg Prod.snd he
+  simp [signal, hcell, hp] at hs
+
+/-- The actual structured planarization formula has at most three literal occurrences of
+any variable, counting repetitions within clauses. No drawing or degree certificate is assumed. -/
+theorem count_vars_rawFormula_le_three {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ∀ v, (rawFormula φ).vars.count v ≤ 3 := by
+  rintro ⟨p, v⟩
+  have hcompare := count_vars_rawFormula_le φ (p, v)
+  cases v with
+  | none =>
+    rw [count_crossingSignals_none, Nat.zero_add] at hcompare
+    exact hcompare.trans (count_allPathSignals_none_le_three hw hv p)
+  | some v =>
+    have hsite : (crossingSites φ).count p ≤ 1 :=
+      List.nodup_iff_count_le_one.mp (crossingSites_nodup φ) p
+    rw [count_crossingSignals_some] at hcompare
+    by_cases ht : ∃ i, Crossover.splitTerminal i = v
+    · obtain ⟨i, rfl⟩ := ht
+      rw [count_vars_splitTerminal] at hcompare
+      by_cases hp : p ∈ crossingSites φ
+      · have hext := count_allPathSignals_terminal_le_one hw hv p i hp
+        omega
+      · rw [List.count_eq_zero.mpr hp, count_allPathSignals_some_of_not_site hp] at hcompare
+        omega
+    · rw [count_allPathSignals_nonterminal p v ht, Nat.add_zero] at hcompare
+      exact hcompare.trans ((Nat.mul_le_mul hsite (count_vars_splitFormula v)).trans (by simp))
+
+/-- Injective compaction preserves the actual three-literal-occurrence bound. -/
+theorem count_vars_formula_le_three {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    ∀ v, (formula φ).vars.count v ≤ 3 :=
+  CNF.count_vars_compact_le (rawFormula φ) (count_vars_rawFormula_le_three hw hv)
 
 end Cslib.Complexity.SAT.PlanarCompile
