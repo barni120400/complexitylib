@@ -17,16 +17,16 @@ public import Complexity.Foundations.Data.BitString.CoverCoding
 When every gate of a weighted threshold program `p` reads the original inputs along a single
 direction `w : Fin n → ℝ` (`∀ j, ∃ c : ℝ, inputWeight p j = c • w`), fixing the restricted
 input-reading transcript `transcript p x` turns every gate condition into a half-line condition on
-the scalar score `scalarScore w x = ∑ i, w i * (x i).toNat`. Consequently, the fibers of
+the weighted sum `weightedSum w x = ∑ i, w i * (x i).toNat`. Consequently, the fibers of
 `transcript p` (and of the full gate evaluation `p.eval interpretation`) are order-convex along
-`scalarScore w` (`eval_eq_of_scalarScore_between`, `transcript_eq_of_scalarScore_between`).
+`weightedSum w` (`eval_eq_of_scalarScore_between`, `transcript_eq_of_scalarScore_between`).
 
 Extending the evaluation from the finite set of realized scalar scores to all of `ℝ` produces a
 one-dimensional step function `scalarEval p w : ℝ → (Fin g → Bool)` whose level sets are indexed
 by the monotone count of transcripts realized up to `t`. This yields at most
 `(attainableTranscripts p).card` pieces (`piecesAtMost_scalarEval`, `piecesAtMost_scalarTranscript`,
 `piecesAtMost_scalarReadout`) and at most `(attainableTranscripts p).card - 1` changes
-(`changesAtMost_scalarReadout`), bounding the length of any score-ordered alternating run of
+`(changesAtMost_scalarReadout`), bounding the length of any score-ordered alternating run of
 outputs by `(attainableTranscripts p).card` and hence by the Hamming-ball sums at `inputActivity p`
 and `gateActivity p` (Theorem 4.1 of `[ThresholdCircuitRepresentations2026]`). Combining this
 one-dimensional representation with the multilevel rectangle-free capacity bound gives the scalar
@@ -36,21 +36,19 @@ enumerative coding for weight-bounded words (Theorem 4.3) is in
 
 ## Main definitions
 
-* `Cslib.Circuits.Boolean.WeightedThreshold.scalarScore`: directional projection
-  `∑ i, w i * (x i).toNat`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.leInputs`,
   `Cslib.Circuits.Boolean.WeightedThreshold.scalarRep`: inputs with scalar score at most `t` and a
   canonical representative input for `t`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.scalarEval`,
   `Cslib.Circuits.Boolean.WeightedThreshold.scalarTranscript`,
   `Cslib.Circuits.Boolean.WeightedThreshold.scalarReadout`: extension of gate evaluation,
-  input-reading transcripts, and readouts to `ℝ` along `scalarScore w`.
+  input-reading transcripts, and readouts to `ℝ` along `weightedSum w`.
 
 ## Main results
 
 * `Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_scalarScore_between`,
   `Cslib.Circuits.Boolean.WeightedThreshold.transcript_eq_of_scalarScore_between`: order-convexity
-  of gate evaluations and transcripts along `scalarScore w`.
+  of gate evaluations and transcripts along `weightedSum w`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarTranscript`,
   `Cslib.Circuits.Boolean.WeightedThreshold.piecesAtMost_scalarReadout`,
   `Cslib.Circuits.Boolean.WeightedThreshold.changesAtMost_scalarReadout`: piece and change bounds
@@ -58,7 +56,7 @@ enumerative coding for weight-bounded words (Theorem 4.3) is in
 * `Cslib.Circuits.Boolean.WeightedThreshold.length_le_card_attainableTranscripts_of_isChain`,
   `Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_of_isChain`,
   `Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_gateActivity_of_isChain`:
-  alternating-run capacity bounds along `scalarScore w`.
+  alternating-run capacity bounds along `weightedSum w`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_card_attainableTranscripts_of_direction`,
   `WeightedThreshold.two_pow_lt_mul_max_card_attainableTranscripts_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_of_direction`,
@@ -81,27 +79,23 @@ variable {n g : ℕ}
 
 /-! ### Section 4.1: Order-convexity of scalar-direction transcripts and run capacity -/
 
-/-- The scalar score `∑ i, w i * (x i).toNat` of a Boolean input `x` along direction `w`. -/
-def scalarScore (w : Fin n → ℝ) (x : Fin n → Bool) : ℝ :=
-  ∑ i : Fin n, w i * (x i).toNat
-
-private theorem sum_inputWeight_eq_mul_scalarScore {p : Program signature n g} {w : Fin n → ℝ}
+private theorem sum_inputWeight_eq_mul_weightedSum {p : Program signature n g} {w : Fin n → ℝ}
     {j : Fin g} {c : ℝ} (hc : inputWeight p j = c • w) (x : Fin n → Bool) :
-    (∑ i : Fin n, inputWeight p j i * (x i).toNat) = c * scalarScore w x := by
+    (∑ i : Fin n, inputWeight p j i * (x i).toNat) = c * weightedSum w x := by
   have hfun := fun i => congrFun hc i
   simp only [Pi.smul_apply, smul_eq_mul] at hfun
-  simp only [scalarScore, mul_sum]
+  simp only [weightedSum, mul_sum]
   refine sum_congr rfl fun i _ => ?_
   rw [hfun i, mul_assoc]
 
 /-- **Order-convexity of gate evaluations along a scalar direction**: if every gate's input weight
-vector is a multiple of `w`, `scalarScore w x₁ ≤ scalarScore w x₂ ≤ scalarScore w x₃`, and
+vector is a multiple of `w`, `weightedSum w x₁ ≤ weightedSum w x₂ ≤ weightedSum w x₃`, and
 `transcript p x₁ = transcript p x₃`, then `p.eval interpretation x₂ = p.eval interpretation x₁`. -/
 theorem eval_eq_of_scalarScore_between (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
     {x₁ x₂ x₃ : Fin n → Bool}
-    (h₁₂ : scalarScore w x₁ ≤ scalarScore w x₂)
-    (h₂₃ : scalarScore w x₂ ≤ scalarScore w x₃)
+    (h₁₂ : weightedSum w x₁ ≤ weightedSum w x₂)
+    (h₂₃ : weightedSum w x₂ ≤ weightedSum w x₃)
     (htr : transcript p x₁ = transcript p x₃) :
     p.eval interpretation x₂ = p.eval interpretation x₁ := by
   have heval₁₃ : p.eval interpretation x₁ = p.eval interpretation x₃ :=
@@ -113,7 +107,7 @@ theorem eval_eq_of_scalarScore_between (p : Program signature n g) (w : Fin n �
     have hgate₁ := eval_gate_eq p x₁ j
     have hgate₂ := eval_gate_eq p x₂ j
     have hgate₃ := eval_gate_eq p x₃ j
-    rw [sum_inputWeight_eq_mul_scalarScore hc] at hgate₁ hgate₂ hgate₃
+    rw [sum_inputWeight_eq_mul_weightedSum hc] at hgate₁ hgate₂ hgate₃
     have hsum₂₁ : (∑ k : Fin g, gateWeight p j k * (p.eval interpretation x₂ k).toNat) =
         ∑ k : Fin g, gateWeight p j k * (p.eval interpretation x₁ k).toNat := by
       refine sum_congr rfl fun k _ => ?_
@@ -132,14 +126,14 @@ theorem eval_eq_of_scalarScore_between (p : Program signature n g) (w : Fin n �
     rw [hgate₂, hgate₁, Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff]
     rw [Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff] at hj₁₃
     rcases le_total 0 c with hc0 | hc0
-    · have hle₁₂ : c * scalarScore w x₁ ≤ c * scalarScore w x₂ :=
+    · have hle₁₂ : c * weightedSum w x₁ ≤ c * weightedSum w x₂ :=
         mul_le_mul_of_nonneg_left h₁₂ hc0
-      have hle₂₃ : c * scalarScore w x₂ ≤ c * scalarScore w x₃ :=
+      have hle₂₃ : c * weightedSum w x₂ ≤ c * weightedSum w x₃ :=
         mul_le_mul_of_nonneg_left h₂₃ hc0
       exact ⟨fun h₂ => hj₁₃.mpr (by linarith), fun h₁ => by linarith⟩
-    · have hle₂₁ : c * scalarScore w x₂ ≤ c * scalarScore w x₁ :=
+    · have hle₂₁ : c * weightedSum w x₂ ≤ c * weightedSum w x₁ :=
         mul_le_mul_of_nonpos_left h₁₂ hc0
-      have hle₃₂ : c * scalarScore w x₃ ≤ c * scalarScore w x₂ :=
+      have hle₃₂ : c * weightedSum w x₃ ≤ c * weightedSum w x₂ :=
         mul_le_mul_of_nonpos_left h₂₃ hc0
       exact ⟨fun h₂ => by linarith, fun h₁ => by linarith [hj₁₃.mp h₁]⟩
 
@@ -147,8 +141,8 @@ theorem eval_eq_of_scalarScore_between (p : Program signature n g) (w : Fin n �
 theorem transcript_eq_of_scalarScore_between (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
     {x₁ x₂ x₃ : Fin n → Bool}
-    (h₁₂ : scalarScore w x₁ ≤ scalarScore w x₂)
-    (h₂₃ : scalarScore w x₂ ≤ scalarScore w x₃)
+    (h₁₂ : weightedSum w x₁ ≤ weightedSum w x₂)
+    (h₂₃ : weightedSum w x₂ ≤ weightedSum w x₃)
     (htr : transcript p x₁ = transcript p x₃) :
     transcript p x₂ = transcript p x₁ := by
   funext j
@@ -157,14 +151,14 @@ theorem transcript_eq_of_scalarScore_between (p : Program signature n g) (w : Fi
 /-- Inputs with equal scalar score have identical gate evaluations. -/
 theorem eval_eq_of_scalarScore_eq (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
-    {x₁ x₂ : Fin n → Bool} (h : scalarScore w x₁ = scalarScore w x₂) :
+    {x₁ x₂ : Fin n → Bool} (h : weightedSum w x₁ = weightedSum w x₂) :
     p.eval interpretation x₁ = p.eval interpretation x₂ := by
   funext j
   induction j using Fin.strong_induction_on with
   | h j ih =>
     obtain ⟨c, hc⟩ := hw j
-    rw [eval_gate_eq, eval_gate_eq, sum_inputWeight_eq_mul_scalarScore hc,
-      sum_inputWeight_eq_mul_scalarScore hc, h]
+    rw [eval_gate_eq, eval_gate_eq, sum_inputWeight_eq_mul_weightedSum hc,
+      sum_inputWeight_eq_mul_weightedSum hc, h]
     congr 3
     refine sum_congr rfl fun k _ => ?_
     by_cases hkj : k < j
@@ -175,7 +169,7 @@ theorem eval_eq_of_scalarScore_eq (p : Program signature n g) (w : Fin n → ℝ
 /-- Inputs with equal scalar score have identical input-reading transcripts. -/
 private theorem transcript_eq_of_scalarScore_eq (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
-    {x₁ x₂ : Fin n → Bool} (h : scalarScore w x₁ = scalarScore w x₂) :
+    {x₁ x₂ : Fin n → Bool} (h : weightedSum w x₁ = weightedSum w x₂) :
     transcript p x₁ = transcript p x₂ := by
   funext j
   exact congrFun (eval_eq_of_scalarScore_eq p w hw h) j.val
@@ -193,7 +187,7 @@ theorem card_attainableTranscripts_pos (p : Program signature n g) :
 
 /-- Boolean inputs with scalar score at most `t`. -/
 noncomputable def leInputs (w : Fin n → ℝ) (t : ℝ) : Finset (Fin n → Bool) :=
-  univ.filter fun x => scalarScore w x ≤ t
+  univ.filter fun x => weightedSum w x ≤ t
 
 open scoped Classical in
 /-- Input-reading transcripts realized by inputs with scalar score at most `t`. -/
@@ -224,26 +218,26 @@ private theorem card_leTranscripts_le (p : Program signature n g) (w : Fin n →
   card_le_card (leTranscripts_subset_attainableTranscripts p w t)
 
 /-- Representative input at scalar threshold `t`: an input in `leInputs w t` maximizing
-`scalarScore w` when `leInputs w t` is nonempty, and a global minimizer of `scalarScore w`
+`weightedSum w` when `leInputs w t` is nonempty, and a global minimizer of `weightedSum w`
 otherwise. -/
 noncomputable def scalarRep (w : Fin n → ℝ) (t : ℝ) : Fin n → Bool :=
   if h : (leInputs w t).Nonempty then
-    (exists_max_image (leInputs w t) (scalarScore w) h).choose
+    (exists_max_image (leInputs w t) (weightedSum w) h).choose
   else
-    (exists_min_image (univ : Finset (Fin n → Bool)) (scalarScore w)
+    (exists_min_image (univ : Finset (Fin n → Bool)) (weightedSum w)
       ⟨fun _ => false, mem_univ _⟩).choose
 
-/-- One-dimensional extension of gate evaluation along `scalarScore w`. -/
+/-- One-dimensional extension of gate evaluation along `weightedSum w`. -/
 noncomputable def scalarEval (p : Program signature n g) (w : Fin n → ℝ) (t : ℝ) :
     Fin g → Bool :=
   p.eval interpretation (scalarRep w t)
 
-/-- One-dimensional extension of the input-reading transcript along `scalarScore w`. -/
+/-- One-dimensional extension of the input-reading transcript along `weightedSum w`. -/
 noncomputable def scalarTranscript (p : Program signature n g) (w : Fin n → ℝ) (t : ℝ) :
     inputGates p → Bool :=
   transcript p (scalarRep w t)
 
-/-- One-dimensional extension of a gate readout along `scalarScore w`. -/
+/-- One-dimensional extension of a gate readout along `weightedSum w`. -/
 noncomputable def scalarReadout {β : Type*} (p : Program signature n g) (w : Fin n → ℝ)
     (readout : (Fin g → Bool) → β) (t : ℝ) : β :=
   readout (scalarEval p w t)
@@ -252,54 +246,51 @@ private theorem scalarRep_mem_of_nonempty {w : Fin n → ℝ} {t : ℝ}
     (h : (leInputs w t).Nonempty) :
     scalarRep w t ∈ leInputs w t := by
   simp only [scalarRep, h, ↓reduceDIte]
-  exact (exists_max_image (leInputs w t) (scalarScore w) h).choose_spec.1
+  exact (exists_max_image (leInputs w t) (weightedSum w) h).choose_spec.1
 
 private theorem le_scalarScore_scalarRep_of_mem {w : Fin n → ℝ} {t : ℝ} {x : Fin n → Bool}
     (hx : x ∈ leInputs w t) :
-    scalarScore w x ≤ scalarScore w (scalarRep w t) := by
+    weightedSum w x ≤ weightedSum w (scalarRep w t) := by
   have h : (leInputs w t).Nonempty := ⟨x, hx⟩
   simp only [scalarRep, h, ↓reduceDIte]
-  exact (exists_max_image (leInputs w t) (scalarScore w) h).choose_spec.2 x hx
+  exact (exists_max_image (leInputs w t) (weightedSum w) h).choose_spec.2 x hx
 
 private theorem scalarScore_scalarRep_eq (w : Fin n → ℝ) (x : Fin n → Bool) :
-    scalarScore w (scalarRep w (scalarScore w x)) = scalarScore w x := by
-  have hx : x ∈ leInputs w (scalarScore w x) := by simp [leInputs]
+    weightedSum w (scalarRep w (weightedSum w x)) = weightedSum w x := by
+  have hx : x ∈ leInputs w (weightedSum w x) := by simp [leInputs]
   have hrep := scalarRep_mem_of_nonempty ⟨x, hx⟩
   simp only [leInputs, mem_filter, mem_univ, true_and] at hrep
   exact le_antisymm hrep (le_scalarScore_scalarRep_of_mem hx)
 
-/-- Evaluating `scalarEval p w` at `scalarScore w x` recovers `p.eval interpretation x`. -/
-@[simp]
+/-- Evaluating `scalarEval p w` at `weightedSum w x` recovers `p.eval interpretation x`. -/
 theorem scalarEval_scalarScore (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w) (x : Fin n → Bool) :
-    scalarEval p w (scalarScore w x) = p.eval interpretation x :=
+    scalarEval p w (weightedSum w x) = p.eval interpretation x :=
   eval_eq_of_scalarScore_eq p w hw (scalarScore_scalarRep_eq w x)
 
-/-- Evaluating `scalarTranscript p w` at `scalarScore w x` recovers `transcript p x`. -/
-@[simp]
+/-- Evaluating `scalarTranscript p w` at `weightedSum w x` recovers `transcript p x`. -/
 theorem scalarTranscript_scalarScore (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w) (x : Fin n → Bool) :
-    scalarTranscript p w (scalarScore w x) = transcript p x :=
+    scalarTranscript p w (weightedSum w x) = transcript p x :=
   transcript_eq_of_scalarScore_eq p w hw (scalarScore_scalarRep_eq w x)
 
-/-- Evaluating `scalarReadout p w readout` at `scalarScore w x` recovers
+/-- Evaluating `scalarReadout p w readout` at `weightedSum w x` recovers
 `readout (p.eval interpretation x)`. -/
-@[simp]
 theorem scalarReadout_scalarScore {β : Type*} (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
     (readout : (Fin g → Bool) → β) (x : Fin n → Bool) :
-    scalarReadout p w readout (scalarScore w x) = readout (p.eval interpretation x) := by
-  simp [scalarReadout, scalarEval_scalarScore p w hw x]
+    scalarReadout p w readout (weightedSum w x) = readout (p.eval interpretation x) := by
+  rw [scalarReadout, scalarEval_scalarScore p w hw x]
 
 private theorem scalarEval_eq_of_le_of_rank_eq (p : Program signature n g) (w : Fin n → ℝ)
     (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w) {t t' : ℝ} (htt' : t ≤ t')
     (hcard : (leTranscripts p w t).card - 1 = (leTranscripts p w t').card - 1) :
     scalarEval p w t = scalarEval p w t' := by
   classical
-  let xmin := (exists_min_image (univ : Finset (Fin n → Bool)) (scalarScore w)
+  let xmin := (exists_min_image (univ : Finset (Fin n → Bool)) (weightedSum w)
     ⟨fun _ => false, mem_univ _⟩).choose
-  have hxmin : ∀ x : Fin n → Bool, scalarScore w xmin ≤ scalarScore w x := fun x =>
-    (exists_min_image (univ : Finset (Fin n → Bool)) (scalarScore w)
+  have hxmin : ∀ x : Fin n → Bool, weightedSum w xmin ≤ weightedSum w x := fun x =>
+    (exists_min_image (univ : Finset (Fin n → Bool)) (weightedSum w)
       ⟨fun _ => false, mem_univ _⟩).choose_spec.2 x (mem_univ x)
   have hsub : leTranscripts p w t ⊆ leTranscripts p w t' := leTranscripts_subset htt'
   by_cases h1 : (leTranscripts p w t').card ≤ 1
@@ -333,9 +324,9 @@ private theorem scalarEval_eq_of_le_of_rank_eq (p : Program signature n g) (w : 
       rw [htr_set_eq]
       exact mem_image_of_mem _ hrep_t'
     obtain ⟨x₁, hx₁, htr₁⟩ := mem_image.mp hmem_tr'
-    have h₁₂ : scalarScore w x₁ ≤ scalarScore w (scalarRep w t) :=
+    have h₁₂ : weightedSum w x₁ ≤ weightedSum w (scalarRep w t) :=
       le_scalarScore_scalarRep_of_mem hx₁
-    have h₂₃ : scalarScore w (scalarRep w t) ≤ scalarScore w (scalarRep w t') :=
+    have h₂₃ : weightedSum w (scalarRep w t) ≤ weightedSum w (scalarRep w t') :=
       le_scalarScore_scalarRep_of_mem (leInputs_subset htt' hrep_t)
     unfold scalarEval
     exact (eval_eq_of_scalarScore_between p w hw h₁₂ h₂₃ htr₁).trans
@@ -389,11 +380,11 @@ nondecreasing scalar scores along `w` and alternating readout values, then
 theorem length_le_card_attainableTranscripts_of_isChain {β : Type*} (p : Program signature n g)
     (w : Fin n → ℝ) (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
     (readout : (Fin g → Bool) → β) {xs : List (Fin n → Bool)}
-    (hmono : (xs.map (scalarScore w)).IsChain (· ≤ ·))
+    (hmono : (xs.map (weightedSum w)).IsChain (· ≤ ·))
     (halt : (xs.map fun x => readout (p.eval interpretation x)).IsChain (· ≠ ·)) :
     xs.length ≤ (attainableTranscripts p).card := by
   have hpos := card_attainableTranscripts_pos p
-  have hmap : (xs.map (scalarScore w)).map (scalarReadout p w readout) =
+  have hmap : (xs.map (weightedSum w)).map (scalarReadout p w readout) =
       xs.map fun x => readout (p.eval interpretation x) := by
     rw [List.map_map]
     refine List.map_congr_left fun x _ => ?_
@@ -408,7 +399,7 @@ alternating readout values has length at most `∑ j ∈ range (inputActivity p 
 theorem length_le_sum_choose_of_isChain {β : Type*} (p : Program signature n g)
     (w : Fin n → ℝ) (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
     (readout : (Fin g → Bool) → β) {xs : List (Fin n → Bool)}
-    (hmono : (xs.map (scalarScore w)).IsChain (· ≤ ·))
+    (hmono : (xs.map (weightedSum w)).IsChain (· ≤ ·))
     (halt : (xs.map fun x => readout (p.eval interpretation x)).IsChain (· ≠ ·)) :
     xs.length ≤ ∑ j ∈ range (inputActivity p + 1), (inputGates p).card.choose j :=
   (length_le_card_attainableTranscripts_of_isChain p w hw readout hmono halt).trans
@@ -419,7 +410,7 @@ alternating readout values has length at most `∑ j ∈ range (gateActivity p +
 theorem length_le_sum_choose_gateActivity_of_isChain {β : Type*} (p : Program signature n g)
     (w : Fin n → ℝ) (hw : ∀ j : Fin g, ∃ c : ℝ, inputWeight p j = c • w)
     (readout : (Fin g → Bool) → β) {xs : List (Fin n → Bool)}
-    (hmono : (xs.map (scalarScore w)).IsChain (· ≤ ·))
+    (hmono : (xs.map (weightedSum w)).IsChain (· ≤ ·))
     (halt : (xs.map fun x => readout (p.eval interpretation x)).IsChain (· ≠ ·)) :
     xs.length ≤ ∑ j ∈ range (gateActivity p + 1), g.choose j :=
   (length_le_card_attainableTranscripts_of_isChain p w hw readout hmono halt).trans
@@ -439,7 +430,7 @@ theorem two_pow_lt_mul_max_card_attainableTranscripts_of_direction
     2 ^ n < 4 * K ^ 2 * max 1 (4 * ((attainableTranscripts p).card - 1)) := by
   refine two_pow_lt_of_multilevel w (scalarReadout p w readout)
     (changesAtMost_scalarReadout p w hw readout) (fun x => ?_) hf
-  rw [← hreadout x, ← scalarReadout_scalarScore p w hw readout x, scalarScore]
+  rw [← hreadout x, ← scalarReadout_scalarScore p w hw readout x]
 
 /-- **Corollary 4.2 (Attainable-transcript capacity bound)**: if a single-direction threshold
 program computes a two-sided `K`-rectangle-free Boolean function `f`, then

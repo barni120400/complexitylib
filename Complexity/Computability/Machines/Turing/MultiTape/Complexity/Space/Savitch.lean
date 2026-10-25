@@ -39,6 +39,8 @@ theorem; the quadratic bound `NSPACE(s) ⊆ DSPACE(s ^ 2)` for sublinear `s` is 
 ## Main definitions
 
 * `Turing.MultiTapeNTM.codeWidth`: the width of the codes of the views.
+* `Turing.MultiTapeNTM.viewCodeWidth`: the bit-length `2 * codeWidth + 2` of the codes of the
+  views.
 * `Turing.MultiTapeNTM.savitchDecide`: the deterministic decider of acceptance.
 
 ## Main results
@@ -67,12 +69,18 @@ noncomputable def codeWidth (c d : ℕ) (input : List Bool) : ℕ :=
   (encFiniteCfg (ntm.initView input)).length +
     viewLengthBound k State input.length (c * (input.length + 1) ^ d)
 
+/-- The bit-length `2 * ntm.codeWidth c d input + 2` of the codes (`Turing.MultiTapeNTM.viewCode`
+and `Turing.MultiTapeNTM.acceptCode`) of the views on `input`, under the space bound
+`c * (input.length + 1) ^ d`. -/
+noncomputable def viewCodeWidth (c d : ℕ) (input : List Bool) : ℕ :=
+  2 * ntm.codeWidth c d input + 2
+
 /-- **Savitch's decider**: whether the accepting code is reachable from the code of the initial
-view, by Savitch's midpoint recursion on words of `2 * W + 2` bits at depth `2 * W + 2`, for the
-width `W` of the codes. -/
+view, by Savitch's midpoint recursion on words of `ntm.viewCodeWidth c d input` bits at depth
+`ntm.viewCodeWidth c d input`. -/
 noncomputable def savitchDecide (c d : ℕ) (input : List Bool) : Bool :=
-  Cslib.Reachability.savitch ntm.codeEdge (2 * ntm.codeWidth c d input + 2)
-    (2 * ntm.codeWidth c d input + 2) (viewCode (ntm.codeWidth c d input) (ntm.initView input))
+  Cslib.Reachability.savitch ntm.codeEdge (ntm.viewCodeWidth c d input)
+    (ntm.viewCodeWidth c d input) (viewCode (ntm.codeWidth c d input) (ntm.initView input))
     (acceptCode (ntm.codeWidth c d input))
 
 variable {ntm}
@@ -98,7 +106,7 @@ theorem savitchDecide_eq_true_iff {c d s : ℕ} {input : List Bool} (hs : ntm.Ru
     induction hcode with
     | refl => exact hsrc
     | tail _ hstep _ => exact hstep.2.1
-  rw [savitchDecide, ← hwidth_def, Cslib.Reachability.savitch_iff hsrc hdst,
+  rw [savitchDecide, viewCodeWidth, ← hwidth_def, Cslib.Reachability.savitch_iff hsrc hdst,
     accepts_iff_reflTransGen_codeStep hwidth]
   exact (Relation.reflTransGen_iff_relatesWithinSteps_of_encard_le hcard).symm
 
@@ -119,15 +127,16 @@ theorem exists_polyBounded_space_savitchDecide {α : Type} (enc : α ↪ List Bo
       ComputableTidilyInTimeAndSpace (fun a => ntm.savitchDecide c d (enc a)) enc encBool t s := by
   have hwidth := computableTidilyInPolyTime_codeWidth (ntm := ntm) (enc := enc) c d
   have hcodes : ComputableTidilyInPolyTime
-      (fun a => 2 * ntm.codeWidth c d (enc a) + 2) enc encUnary :=
-    by fun_prop
+      (fun a => ntm.viewCodeWidth c d (enc a)) enc encUnary := by
+    unfold viewCodeWidth
+    fun_prop
   have hedge : ComputableTidilyInPolyTime
       (fun q : Unit × List Bool × List Bool => (fun _ => ntm.codeEdge) q.1 q.2.1 q.2.2)
       (encPair (encFinEnum Unit) (encPair encBits encBits)) encBool :=
     ntm.computableTidilyInPolyTime_codeEdge ((ComputableTidilyInPolyTime.fst _ _).comp (.snd _ _))
       ((ComputableTidilyInPolyTime.snd _ _).comp (.snd _ _))
   have hin : ComputableTidilyInPolyTime
-      (fun a => ((), 2 * ntm.codeWidth c d (enc a) + 2, 2 * ntm.codeWidth c d (enc a) + 2,
+      (fun a => ((), ntm.viewCodeWidth c d (enc a), ntm.viewCodeWidth c d (enc a),
         viewCode (ntm.codeWidth c d (enc a)) (ntm.initView (enc a)),
         acceptCode (ntm.codeWidth c d (enc a)))) enc
       (Cslib.Reachability.encArgs (encFinEnum Unit)) :=

@@ -29,6 +29,9 @@ certificate, in terms of the input.
 
 namespace Turing.MultiTapeTM
 
+/-- The framed binary encoding of triples of natural numbers. -/
+abbrev encNat3 : ℕ × ℕ × ℕ ↪ List Bool := encPair encNat (encPair encNat encNat)
+
 variable {α : Type*} (enc : α ↪ List Bool)
 
 theorem length_encList (l : List α) :
