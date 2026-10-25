@@ -1962,6 +1962,8 @@ public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.Parity
+public import Complexity.Logics.Propositional.CNF.Planar.Crossover
+public import Complexity.Logics.Propositional.CNF.Planar.CrossoverSplit
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
