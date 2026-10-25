@@ -35,10 +35,10 @@ ALIAS = {"alias": "Cslib.MCSP.MCSPAt", "am": "Complexity.MCSP.Magnification", "a
 
 class ChangedLinesTests(unittest.TestCase):
     def test_added_ranges(self) -> None:
-        diff = ("diff --git a/X.lean b/X.lean\n@@ -3 +3 @@\n-a\n+b\n"
+        diff = ("diff --git a/X.lean b/X.lean\n@@ -1,2 +0,0 @@\n-x\n-y\n@@ -3 +3 @@\n-a\n+b\n"
                 "@@ -10,0 +11,2 @@\n+c\n+d\n@@ -20,2 +22,0 @@\n-e\n-f\n@@ -30,2 +31 @@\n")
-        # A pure deletion (`+22,0`) adds no line.
-        self.assertEqual(p.added_ranges(diff), [(3, 3), (11, 12), (31, 31)])
+        # A pure deletion (`+22,0`, `+0,0`) marks the lines around the place of the deleted text.
+        self.assertEqual(p.added_ranges(diff), [(1, 1), (3, 3), (11, 12), (22, 23), (31, 31)])
 
     def test_requests(self) -> None:
         stdin = p.requests(["Complexity.A", "Complexity.B", "Complexity.C"],
@@ -61,6 +61,8 @@ class ChangedLinesTests(unittest.TestCase):
             git("init", "-q")
             git("config", "user.name", "Fixture")
             git("config", "user.email", "fixture@example.invalid")
+            # Review 6400055370: forced colour must not hide the hunk headers.
+            git("config", "color.ui", "always")
             write("Complexity/Old.lean", "".join(f"line {i}\n" for i in range(1, 11)))
             write("Complexity/Gone.lean", "x\n")
             write("Complexity/Deleted.lean", "a\nb\nc\n")
@@ -76,10 +78,21 @@ class ChangedLinesTests(unittest.TestCase):
             write("Complexity/New.lean", "def x := 1\n")
             write("ComplexityTests/New.lean", "example : True := trivial\n")
             (root / "Complexity/Gone.lean").unlink()
-            # Untracked files count as added; deleted files and pure deletions are not examined.
+            # Untracked files count as added; deleted files and files outside `Complexity/` are
+            # not examined, and a pure deletion marks the lines around it.
             self.assertEqual(p.changed_ranges(root, "origin/main"),
                              {"Complexity/New.lean": None,
+                              "Complexity/Deleted.lean": [(1, 2)],
                               "Complexity/Old.lean": [(4, 4), (8, 8)]})
+
+    def test_reader_output_ignores_other_lines(self) -> None:
+        # Review 6400055370: an elaboration message from `lean --run` must not break parsing.
+        stdout = ("ParallelDefs.lean:1:0: warning: something new in this toolchain\n"
+                  '{"examined": 0, "modules": 1, "missing": []}\n')
+        done = subprocess.CompletedProcess([], 0, stdout=stdout, stderr="")
+        with mock.patch.object(p.subprocess, "run", return_value=done):
+            self.assertEqual(p.run_reader(pathlib.Path("build"), "env A\n", 120, 4),
+                             [{"examined": 0, "modules": 1, "missing": []}])
 
 
 class SelectionTests(unittest.TestCase):
@@ -275,6 +288,7 @@ class CompiledFixtureTests(unittest.TestCase):
                        cwd=p.ROOT, check=True, capture_output=True)
         first = FIXTURE.splitlines().index("-- new") + 1
         last = len(FIXTURE.splitlines())
+        cls.build = build
         cls.rows = p.run_reader(build, f"lines ParallelFixture {first}-{last}\n", 20, 4)
         cls.pairs = {(r["a"], r["b"]): r for r in cls.rows if "pair" in r}
 
@@ -298,6 +312,18 @@ class CompiledFixtureTests(unittest.TestCase):
     def test_private_counterparts_are_compared(self) -> None:
         self.assertTrue(self.pairs[("newBounded", "hiddenBounded")]["bp"])
         self.assertFalse([b for _, b in self.pairs if b == "oldBounded'"])
+
+    def test_docstring_edits_are_not_examined(self) -> None:
+        lines = FIXTURE.splitlines()
+        doc = next(i for i, text in enumerate(lines, 1)
+                   if text.startswith("/-- The same notion for a promise problem"))
+        build = self.build
+
+        def examined(spec: str) -> int:
+            return p.run_reader(build, f"lines ParallelFixture {spec}\n", 20, 4)[-1]["examined"]
+
+        self.assertEqual(examined(f"{doc}-{doc}"), 0)
+        self.assertEqual(examined(f"{doc + 1}-{doc + 1}"), 1)
 
     def test_alias(self) -> None:
         lines = FIXTURE.splitlines()

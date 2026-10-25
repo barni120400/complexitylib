@@ -9,8 +9,8 @@ defined again for another carrier type, or a copied verifier or game. This tool 
 reviewers at candidates. It examines the public `def`s, `abbrev`s, `structure`s, `class`es and
 `inductive`s that a change adds or modifies: those of the `Complexity/` files changed since the
 merge base of REF (default `origin/main`) whose code, from the declared name to its end, contains
-an added or modified line (an edit to a docstring alone does not count). With `--decl`, it examines
-the named declarations instead, for audits and calibration.
+an added or modified line or the place of a deleted one (an edit to a docstring alone does not
+count). With `--decl`, it examines the named declarations instead, for audits and calibration.
 
 `scripts/ParallelDefs.lean` compares each examined declaration with every definition and
 inductive type of the built `Complexity` library (instances excluded, private declarations
@@ -109,12 +109,13 @@ def path_of(module: str) -> str:
 
 
 def added_ranges(diff: str) -> list[tuple[int, int]]:
-    """The 1-based line ranges that a `git diff -U0` adds or modifies on its new side."""
+    """The 1-based line ranges that a `git diff -U0` adds or modifies on its new side. A pure
+    deletion (`+N,0`) contributes the lines `N` and `N + 1` around the place of the deleted text,
+    so that a deletion inside a declaration marks that declaration."""
     ranges = []
     for start, count in HUNK.findall(diff):
-        count = 1 if count == "" else int(count)
-        if count:
-            ranges.append((int(start), int(start) + count - 1))
+        start, count = int(start), 1 if count == "" else int(count)
+        ranges.append((start, start + count - 1) if count else (max(start, 1), start + 1))
     return ranges
 
 
@@ -131,7 +132,8 @@ def changed_ranges(root: Path, ref: str) -> dict[str, list[tuple[int, int]] | No
         if rel in added:
             out[rel] = None
             continue
-        diff = ccf.git(root, "diff", "--no-ext-diff", "--no-renames", "-U0", base, "--", rel)
+        diff = ccf.git(root, "diff", "--no-ext-diff", "--no-renames", "--no-color", "-U0", base,
+                       "--", rel)
         ranges = added_ranges(diff.stdout)
         if ranges:
             out[rel] = ranges
@@ -163,12 +165,14 @@ def requests(modules: list[str], changed: dict[str, list[tuple[int, int]] | None
 # --- Running the reader and choosing what to report ---------------------------------------------
 
 def run_reader(build_dir: Path, stdin: str, min_size: int, max_shared: int) -> list[dict]:
+    """The reader's JSON rows. Other lines on its standard output, such as an elaboration message
+    about `scripts/ParallelDefs.lean` itself after a toolchain update, are ignored."""
     out = subprocess.run(["lake", "env", "lean", "--run", str(READER), str(build_dir),
                           str(min_size), str(max_shared)],
                          cwd=ROOT, input=stdin, capture_output=True, text=True)
     if out.returncode:
         raise RuntimeError(f"scripts/ParallelDefs.lean failed: {out.stderr.strip()[-2000:]}")
-    return [json.loads(line) for line in out.stdout.splitlines() if line.strip()]
+    return [json.loads(line) for line in out.stdout.splitlines() if line.startswith("{")]
 
 
 def parse_tiers(spec: str) -> list[tuple[int, float]]:
