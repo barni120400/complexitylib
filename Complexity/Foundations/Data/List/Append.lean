@@ -58,10 +58,8 @@ theorem List.replicate_true_append_false_inj {m m' : ℕ} {l l' : List Bool}
 theorem List.idxOf_replicate_append_cons_of_ne {α : Type*} [DecidableEq α] {a b : α}
     (hab : a ≠ b) (k : ℕ) (l : List α) :
     (List.replicate k a ++ b :: l).idxOf b = k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [List.replicate_succ, List.cons_append, List.idxOf_cons_ne _ hab, ih]
+  rw [List.idxOf_append_of_notMem (by simp [hab.symm]), List.length_replicate,
+    List.idxOf_cons_self, Nat.add_zero]
 
 /-- The first occurrence of `false` in a list beginning with `k` `true`s is at index `k`. -/
 @[simp]
