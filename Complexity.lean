@@ -804,9 +804,6 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths.Occupancy
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
-public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
-public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
-public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
@@ -823,6 +820,7 @@ public import Complexity.Computability.Complexity.Problems.TQBF.Closed
 public import Complexity.Computability.Complexity.Problems.TSP
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Computability.Complexity.Problems.ThreeSATThree
+public import Complexity.Computability.Complexity.Problems.ThreeSATThree.Size
 public import Complexity.Computability.Complexity.Problems.TwoSAT
 public import Complexity.Computability.Complexity.Problems.TwoSAT.Completeness
 public import Complexity.Computability.Complexity.Problems.TwoSAT.Layout
