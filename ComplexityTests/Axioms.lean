@@ -10271,3 +10271,38 @@ info: 'Cslib.Probability.PMF.entropy_append_uniform' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Probability.PMF.entropy_append_uniform
+
+/--
+info: 'Cslib.Complexity.MildlyHardOnAverageToOneSidedApprox.mildlyHardOnAverageToApprox'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.MildlyHardOnAverageToOneSidedApprox.mildlyHardOnAverageToApprox
+
+/--
+info: 'Cslib.Complexity.MildlyHardOnAverageToOneSidedApproxDet.mildlyHardOnAverageToApproxDet'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.MildlyHardOnAverageToOneSidedApproxDet.mildlyHardOnAverageToApproxDet
+
+/--
+info: 'Cslib.Complexity.MildlyHardOnAverageToApprox.eventually_real_abs_sub_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.MildlyHardOnAverageToApprox.eventually_real_abs_sub_le
+
+/--
+info: 'Cslib.Complexity.not_mildlyHardOnAverage_zero' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.not_mildlyHardOnAverage_zero
+
+/--
+info: 'Cslib.Complexity.not_mildlyHardOnAverageToApprox_zero' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Complexity.not_mildlyHardOnAverageToApprox_zero

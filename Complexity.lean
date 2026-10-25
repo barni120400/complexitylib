@@ -529,6 +529,7 @@ public import Complexity.Computability.Complexity.AffineDisperser.BinaryPolynomi
 public import Complexity.Computability.Complexity.AffineDisperser.Coordinates
 public import Complexity.Computability.Complexity.AffineDisperser.PolyTime
 public import Complexity.Computability.Complexity.AffineDisperser.Program
+public import Complexity.Computability.Complexity.AverageCase
 public import Complexity.Computability.Complexity.Classes.AWPP
 public import Complexity.Computability.Complexity.Classes.AWPP.Amplification
 public import Complexity.Computability.Complexity.Classes.AWPP.Closure
