@@ -79,7 +79,7 @@ As with `MINKT` and `MINKTAt`, both threshold conventions are provided and bridg
 ## References
 
 * [S. Hirahara, *Non-Black-Box Worst-Case to Average-Case Reductions within NP*][Hirahara2018]
-* [K.-I. Ko, *On the Notion of Infinite Pseudorandom Sequences*][Ko1991]
+* [K.-I. Ko, *On the Complexity of Learning Minimum Time-Bounded Turing Machines*][Ko1991]
 -/
 
 @[expose] public section

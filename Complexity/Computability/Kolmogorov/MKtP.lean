@@ -52,12 +52,14 @@ Kolmogorov complexity `Cslib.Kolmogorov.levinKt` ($\mathrm{Kt}$):
   `R_Kt ∈ E` in
   [Allender et al., Definitions 1 and 6][AllenderBuhrmanKouckyVanMelkebeekRonneburger2006]).
   While [Liu and Pass, Section 2.2][LiuPass2021Crypto] encode the threshold $k$ in binary as a
-  $\lceil \log_2 n \rceil$-bit integer (since $\mathrm{Kt}(x) \le |x| + O(\log |x|)$ makes larger
-  thresholds trivial), here `MKtP` is paired with the unary threshold encoding
-  `encPair encBits encUnary` so that $k + 1 \le |(x, 1^k)|$ holds unconditionally for arbitrary
-  $k \in \mathbb{N}$ without a syntactic $k < 2 |x|$ side condition; for nontrivial thresholds
-  $k \le O(|x|)$ and for every polynomial-time unary threshold $s$ in `MKtPAt s`, the unary
-  encoding has polynomial length and `EXP` membership transfers via `PolyTimeReducible.mem_EXP`.
+  $\lceil \log_2 n \rceil$-bit integer (in their model Fact 2.1 gives $\mathrm{Kt}(x) \le |x| + c$,
+  and in ours `levinKt_le_length_add` gives
+  $\mathrm{Kt}(x) \le |x| + \mathrm{copyOverhead} + \lceil \log_2(|x| + 1) \rceil$), here `MKtP` is
+  paired with the unary threshold encoding `encPair encBits encUnary` so that
+  $k + 1 \le |(x, 1^k)|$ holds unconditionally for arbitrary $k \in \mathbb{N}$ without a syntactic
+  $k < 2 |x|$ side condition; for nontrivial thresholds $k \le O(|x|)$ and for every
+  polynomial-time unary threshold $s$ in `MKtPAt s`, the unary encoding has polynomial length and
+  `EXP` membership transfers via `PolyTimeReducible.mem_EXP`.
   Enumerating candidate programs `Ladner.word j` of length at most `k` and running
   `universalTMRunFor` for $2^{k - |p|}$ steps places `MKtP` in `E (encPair encBits encUnary)` and
   `EXP (encPair encBits encUnary)`, and places `MKtPAt s` in `EXP encBits` whenever `s` is
@@ -433,12 +435,12 @@ end MKtPAt
 namespace GapMKtP
 
 /-- The yes-instances of `GapMKtP[s₁, s₂]`: strings `x` with `levinKt x ≤ s₁ x.length`
-([Oliveira and Santhanam, Section A, Definition 44][OliveiraSanthanam2018]). -/
+([Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018]). -/
 def yesSet (s₁ : ℕ → ℕ) : Set (List Bool) :=
   MKtPAt s₁
 
 /-- The no-instances of `GapMKtP[s₁, s₂]`: strings `x` with `s₂ x.length < levinKt x`
-([Oliveira and Santhanam, Section A, Definition 44][OliveiraSanthanam2018]). -/
+([Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018]). -/
 def noSet (s₂ : ℕ → ℕ) : Set (List Bool) :=
   {x : List Bool | (s₂ x.length : ℕ∞) < levinKt x}
 
@@ -473,7 +475,7 @@ theorem noSet_eq_compl (s : ℕ → ℕ) : noSet s = (MKtPAt s)ᶜ := by
 end GapMKtP
 
 /-- **The `GapMKtP` promise problem**
-([Oliveira and Santhanam, Section A, Definition 44, p. 34][OliveiraSanthanam2018]):
+([Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018]):
 separates `MKtPAt s₁` (`levinKt x ≤ s₁ |x|`) from `GapMKtP.noSet s₂` (`levinKt x > s₂ |x|`)
 whenever `s₁ n ≤ s₂ n`. -/
 def GapMKtP (s₁ s₂ : ℕ → ℕ) (hs : ∀ n, s₁ n ≤ s₂ n) : PromiseProblem (List Bool) where
