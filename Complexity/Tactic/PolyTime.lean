@@ -525,39 +525,54 @@ private meta def polytimePlainFunProp : TacticM Unit :=
   Internal.funPropWithPlainBoundary 256
 
 open Lean Meta Elab Tactic in
-/-- An explicit raw construction goal may use a plain certificate and its existing PT normal
-form. The nested search stays in the plain calculus; this rule never applies to a plain goal. -/
+/-- Check existing finite-domain or supplied-table recipes without retaining a proof,
+encoding choice or metavariable assignment. The actual search keeps all alternatives. -/
+private meta def hasPlainConstructionRecipe (goal : MVarId) : TacticM Bool := do
+  let saved ← saveState
+  try
+    replaceMainGoal (← goal.applyConst ``ComputableInPolyTime.tidy)
+    try polytimeKnownFacts catch _ => pure ()
+    let plainGoal ← getMainGoal
+    let before ← saveState
+    try
+      if (← plainGoal.applyConst ``ComputableInPolyTime.of_finite).isEmpty then return true
+    catch _ => pure ()
+    before.restore
+    for rule in [``ComputableInPolyTime.pi_apply', ``ComputableInPolyTime.pi_update'] do
+      let before ← saveState
+      try
+        let goals ← plainGoal.applyConst rule
+        if let some values ← goals.findM? fun g => return (`hvalues).isSuffixOf (← g.getTag) then
+          let known ← values.withContext do
+            knownLocalCertificate (← values.getType)
+          if known.isSome then return true
+      catch _ => pure ()
+      before.restore
+    return false
+  finally saved.restore
+
+open Lean Meta Elab Tactic in
+/-- An explicit raw construction goal may use an indexed plain certificate, an existing finite
+recipe or a table recipe supported by complete local evidence. Nested search remains plain;
+this rule never applies to a plain goal. -/
 @[aesop unsafe 70% tactic (rule_sets := [PolyTime])]
 private meta def polytimeRawFromPlain : TacticM Unit :=
   withMainContext <| Term.withoutErrToSorry <| withoutRecover do
     let goal ← getMainGoal
     let target := (← instantiateMVars (← goal.getType)).consumeMData
     unless target.isAppOf ``ComputableTidilyInPolyTime do
-      throwError "expected an internal raw polynomial-time goal"
-    -- Do not launch a second search for every unresolved construction atom. A real plain
-    -- certificate for this program head must be indexed before entering the plain backend.
-    let key ← Cslib.Tactic.efficiencyKey target
-    let plainKey := (``ComputableInPolyTime, key.2.1, key.2.2)
-    let named := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD plainKey #[]
-    let functions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1 ``ComputableInPolyTime
-    unless !named.isEmpty || !functions.isEmpty do
-      throwError "no indexed plain certificate for this internal raw goal"
-    let rawNamed := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD key #[]
-    let rawFunctions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1
-      ``ComputableTidilyInPolyTime
-    -- Sharing a program head does not make a specialized raw rule applicable: for example,
-    -- Boolean-state word folds cannot handle a generic captured fold. Probe only application,
-    -- without solving any premise, and restore all metavariables before trying the plain rules.
-    let applicable (origin : Mathlib.Meta.FunProp.Origin) : TacticM Bool := do
-      let saved ← saveState
-      try
-        discard <| goal.apply (← origin.getValue)
-        return true
-      catch _ => return false
-      finally saved.restore
-    if (← rawNamed.anyM fun (name, _) => applicable (.decl name)) ||
-        (← rawFunctions.anyM fun rule => applicable rule.thmOrigin) then
-      throwError "an applicable raw certificate family already handles this program"
+      throwError "expected an explicit raw polynomial-time goal"
+    let indexed ← try
+      let key ← Cslib.Tactic.efficiencyKey target
+      let plainKey := (``ComputableInPolyTime, key.2.1, key.2.2)
+      let named := (Cslib.Tactic.certificateExt.getState (← getEnv)).getD plainKey #[]
+      let functions ← Mathlib.Meta.FunProp.getTheoremsForFunction key.2.1 ``ComputableInPolyTime
+      pure (!named.isEmpty || !functions.isEmpty)
+    catch _ => pure false
+    unless indexed || (← hasPlainConstructionRecipe goal) do
+      throwError "no indexed or locally supported plain construction for this raw goal"
+    -- Unification with a raw rule alone does not prove its premises. Retain this plain
+    -- alternative after raw search fails, rather than vetoing it on application alone.
     replaceMainGoal (← goal.applyConst ``ComputableInPolyTime.tidy)
     evalTactic (← `(tactic| solve |
       aesop (config := { terminal := true, assumptionTransparency := .reducible })
