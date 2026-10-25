@@ -746,7 +746,12 @@ private meta def polytimeIterateFast : Lean.Elab.Tactic.TacticM Unit :=
 
 @[aesop unsafe 95% tactic (rule_sets := [PolyTime])]
 private meta def polytimeConstructAlternative : Lean.Elab.Tactic.TacticM Unit :=
-  polytimeConstruct withLocalCall
+  Lean.Elab.Tactic.withMainContext do
+    if (← polytimePredicate (← Lean.Elab.Tactic.getMainTarget)) ==
+        ``ComputableTidilyInPolyTime then
+      polytimeConstruct (fun action => action)
+    else
+      polytimeConstruct withLocalCall
 
 @[aesop unsafe 90% tactic (rule_sets := [PolyTime])]
 private meta def polytimeFunPropAlternative : Lean.Elab.Tactic.TacticM Unit :=
