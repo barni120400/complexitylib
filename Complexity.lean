@@ -655,6 +655,8 @@ public import Complexity.Computability.Complexity.Classes.ParityP
 public import Complexity.Computability.Complexity.Classes.ParityP.Closure
 public import Complexity.Computability.Complexity.Classes.Promise.Basic
 public import Complexity.Computability.Complexity.Classes.Promise.Circuit
+public import Complexity.Computability.Complexity.Classes.Promise.Probabilistic
+public import Complexity.Computability.Complexity.Classes.Promise.Randomized
 public import Complexity.Computability.Complexity.Classes.Promise.Reduction
 public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Complexity.Classes.RP.Closure
