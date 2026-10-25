@@ -87,9 +87,10 @@ def SolvesWithErrorExponent (enc : α ↪ List Bool) (q p : Polynomial ℕ)
 
 variable {enc : α ↪ List Bool} {Q : PromiseProblem α}
 
-/-- **Error reduction for bounded error** [Arora and Barak, Section 7.4.1][AroraBarak09]. The
-strict majority of `12 q(n)` runs of a bounded-error solver, on independent blocks of random bits,
-errs on at most a `2 ^ (-q(n))` fraction of the random strings. -/
+/-- **Error reduction for bounded error**: the majority-vote argument of
+[Arora and Barak, Section 7.4.1][AroraBarak09], which the book states for languages, applied to
+promise problems. The strict majority of `12 q(n)` runs of a bounded-error solver, on independent
+blocks of random bits, errs on at most a `2 ^ (-q(n))` fraction of the random strings. -/
 theorem SolvesWithBoundedError.repeatMajority {p : Polynomial ℕ} {V : α × List Bool → Bool}
     (h : Q.SolvesWithBoundedError enc p V) (q : Polynomial ℕ) :
     Q.SolvesWithErrorExponent enc q (12 * q * p) (Complexity.repeatMajority enc (6 * q) p V) := by
@@ -151,9 +152,9 @@ def DecidesWithErrorExponent (enc : α ↪ List Bool) (q p : Polynomial ℕ)
 
 variable {enc : α ↪ List Bool}
 
-/-- **Error reduction for `PromiseBPP`** [Arora and Barak, Section 7.4.1][AroraBarak09]: a promise
-problem is in `PromiseBPP` exactly when, for every polynomial `q`, it is solved in polynomial time
-with error at most `2 ^ (-q(n))`. -/
+/-- **Error reduction for `PromiseBPP`**, the promise-problem form of the `BPP` error reduction of
+[Arora and Barak, Section 7.4.1][AroraBarak09]: a promise problem is in `PromiseBPP` exactly when,
+for every polynomial `q`, it is solved in polynomial time with error at most `2 ^ (-q(n))`. -/
 theorem mem_PromiseBPP_iff_forall_solvesWithErrorExponent {Q : PromiseProblem α} :
     Q ∈ PromiseBPP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧ Q.SolvesWithErrorExponent enc q p V :=

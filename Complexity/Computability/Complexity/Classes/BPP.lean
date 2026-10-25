@@ -56,6 +56,7 @@ The probability is written as a count over the random strings, which are functio
   with bounded error.
 * `Cslib.Complexity.compl_mem_PromiseBPP`, `Cslib.Complexity.compl_mem_BPP`,
   `Cslib.Complexity.BPP_eq_preimage_compl_BPP`: closure under complement.
+* `Cslib.Complexity.mem_PromiseBPP_iff`: unfolding `PromiseBPP` to a polynomial-time verifier.
 * `Cslib.Complexity.ofSet_mem_PromiseBPP`: `PromiseBPP` agrees with `BPP` on decision problems.
 * `Cslib.Complexity.P_subset_BPP`: a decider is a bounded-error verifier ignoring its random string.
 

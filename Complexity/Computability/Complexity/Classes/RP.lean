@@ -52,6 +52,7 @@ never accepted. Two runs reject a yes-instance with probability at most `1 / 4`,
 
 ## Main results
 
+* `Cslib.Complexity.mem_PromiseRP_iff`: unfolding `PromiseRP` to a polynomial-time verifier.
 * `Cslib.Complexity.ofSet_mem_PromiseRP`, `Cslib.Complexity.ofSet_mem_PromiseCoRP`.
 * `Cslib.Complexity.PromiseProblem.SolvesWithOneSidedError.exists_certificate`,
   `Cslib.Complexity.DecidesWithOneSidedError.isVerifier`, `Cslib.Complexity.RP_subset_NP`,
@@ -187,8 +188,8 @@ theorem PromiseRP_subset_PromiseNP : PromiseRP enc ⊆ PromiseNP enc := fun _ �
   mem_PromiseNP_iff.2 ⟨p, V, hV, h.exists_certificate⟩
 
 /-- `RP ⊆ NP`: a random string accepted by a one-sided-error decider is a certificate. -/
-theorem RP_subset_NP : RP enc ⊆ NP enc := fun A hA =>
-  ofSet_mem_PromiseNP.1 (PromiseRP_subset_PromiseNP (a := ofSet A) hA)
+theorem RP_subset_NP : RP enc ⊆ NP enc := fun _ hA =>
+  ofSet_mem_PromiseNP.1 (PromiseRP_subset_PromiseNP (ofSet_mem_PromiseRP.2 hA))
 
 /-- `coRP ⊆ coNP`. -/
 theorem coRP_subset_coNP : coRP enc ⊆ coNP enc := fun _ hA => RP_subset_NP hA
@@ -208,10 +209,11 @@ def SolvesWithOneSidedErrorExponent (enc : α ↪ List Bool) (q p : Polynomial �
         V (a, List.ofFn r) = false).card ≤ 2 ^ p.eval (enc a).length) ∧
     (a ∈ Q.no → ∀ r : Fin (p.eval (enc a).length) → Bool, V (a, List.ofFn r) = false)
 
-/-- **Error reduction for one-sided error** [Arora and Barak, Chapter 7][AroraBarak09]. The
-disjunction of `q(n)` runs of a one-sided-error solver, on independent blocks of random bits,
-rejects a yes-instance on at most a `2 ^ (-q(n))` fraction of the random strings, and never accepts
-a no-instance. -/
+/-- **Error reduction for one-sided error**: the repetition argument of
+[Arora and Barak, Chapter 7][AroraBarak09], which the book states for languages, applied to promise
+problems. The disjunction of `q(n)` runs of a one-sided-error solver, on independent blocks of
+random bits, rejects a yes-instance on at most a `2 ^ (-q(n))` fraction of the random strings, and
+never accepts a no-instance. -/
 theorem SolvesWithOneSidedError.repeatAny {p : Polynomial ℕ} {V : α × List Bool → Bool}
     (h : Q.SolvesWithOneSidedError enc p V) (q : Polynomial ℕ) :
     Q.SolvesWithOneSidedErrorExponent enc q (q * p) (Complexity.repeatAny enc q p V) := by
@@ -284,9 +286,9 @@ def DecidesWithOneSidedErrorExponent (enc : α ↪ List Bool) (q p : Polynomial 
     (V : α × List Bool → Bool) (A : Set α) : Prop :=
   (ofSet A).SolvesWithOneSidedErrorExponent enc q p V
 
-/-- **Error reduction for `PromiseRP`** [Arora and Barak, Chapter 7][AroraBarak09]: a promise
-problem is in `PromiseRP` exactly when, for every polynomial `q`, it is solved in polynomial time
-with one-sided error at most `2 ^ (-q(n))`. -/
+/-- **Error reduction for `PromiseRP`**, the promise-problem form of the `RP` error reduction of
+[Arora and Barak, Chapter 7][AroraBarak09]: a promise problem is in `PromiseRP` exactly when, for
+every polynomial `q`, it is solved in polynomial time with one-sided error at most `2 ^ (-q(n))`. -/
 theorem mem_PromiseRP_iff_forall_solvesWithOneSidedErrorExponent :
     Q ∈ PromiseRP enc ↔ ∀ q : Polynomial ℕ, ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
       ComputableInPolyTime V (encPair enc encBits) encBool ∧
@@ -304,8 +306,9 @@ theorem mem_RP_iff_forall_decidesWithOneSidedErrorExponent :
         DecidesWithOneSidedErrorExponent enc q p V A :=
   mem_PromiseRP_iff_forall_solvesWithOneSidedErrorExponent (Q := ofSet A)
 
-/-- **`PromiseRP ⊆ PromiseBPP`** [Arora and Barak, Chapter 7][AroraBarak09]: two runs of a
-one-sided-error solver reject a yes-instance with probability at most `1 / 4`. -/
+/-- **`PromiseRP ⊆ PromiseBPP`**, the promise-problem form of `RP ⊆ BPP`
+[Arora and Barak, Chapter 7][AroraBarak09]: two runs of a one-sided-error solver reject a
+yes-instance with probability at most `1 / 4`. -/
 theorem PromiseRP_subset_PromiseBPP : PromiseRP enc ⊆ PromiseBPP enc := fun _ hQ => by
   obtain ⟨p, V, hV, h⟩ := mem_PromiseRP_iff_forall_solvesWithOneSidedErrorExponent.1 hQ 2
   exact ⟨p, V, hV, h.solvesWithErrorExponent.solvesWithBoundedError fun _ => by simp⟩
@@ -316,8 +319,8 @@ theorem PromiseCoRP_subset_PromiseBPP : PromiseCoRP enc ⊆ PromiseBPP enc := fu
 
 /-- **`RP ⊆ BPP`** [Arora and Barak, Chapter 7][AroraBarak09]: two runs of a one-sided-error
 decider reject a member with probability at most `1 / 4`. -/
-theorem RP_subset_BPP : RP enc ⊆ BPP enc := fun A hA =>
-  PromiseRP_subset_PromiseBPP (a := ofSet A) hA
+theorem RP_subset_BPP : RP enc ⊆ BPP enc := fun _ hA =>
+  ofSet_mem_PromiseBPP.1 (PromiseRP_subset_PromiseBPP (ofSet_mem_PromiseRP.2 hA))
 
 /-- **`coRP ⊆ BPP`**: `BPP` is closed under complement. -/
 theorem coRP_subset_BPP : coRP enc ⊆ BPP enc := fun A hA => by

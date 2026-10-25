@@ -13,7 +13,6 @@ public import Complexity.Computability.Complexity.Classes.RP
 public import Complexity.Computability.Probabilistic.PPT
 public import Complexity.Languages.Probabilistic.Notation
 import Complexity.Computability.Complexity.Classes.RP.Closure
-import Complexity.Computability.Complexity.Classes.SharpP.Combinators
 import Complexity.Computability.Complexity.Classes.SharpP.Probability
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
