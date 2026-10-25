@@ -1971,6 +1971,7 @@ public import Complexity.Probability.Chernoff
 public import Complexity.Probability.Collision
 public import Complexity.Probability.Concentration
 public import Complexity.Probability.Conditioning
+public import Complexity.Probability.CorrelatedSampling
 public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
 public import Complexity.Probability.EntropyConcentration
