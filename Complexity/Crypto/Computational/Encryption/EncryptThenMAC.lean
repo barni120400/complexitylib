@@ -17,7 +17,7 @@ import Complexity.Computability.Probabilistic.Oracle.Tidy
 import Complexity.Crypto.Game.Hybrid
 import Complexity.Crypto.Negligible.Basic
 import Complexity.Languages.Probabilistic.Oracle.Simulation
-import Complexity.Probability.BitString
+import Complexity.Probability.BitString.List
 import Complexity.Probability.PMF.Bind
 import Complexity.Probability.PMF.Event
 import Complexity.Probability.PMF
@@ -76,8 +76,12 @@ and Theorem 5.2, printed pp. 183–189) that witnesses joint non-vacuity of all 
 
 * **Ciphertext-length compatibility (`c.length = M.msgLen n`)**: in Section 9.4.1 (printed p. 367),
   `E` is defined over `(Ke, M, C)` and `I` over `(Km, C, T)`. Here plaintexts at security parameter
-  `n` have length `n` and ciphertexts under supported keys have length `M.msgLen n` (satisfied for
-  any cipher with ciphertext-length schedule `ctLen` by reindexing `M` via `M.reindex ctLen _`).
+  `n` have length `n` and ciphertexts under supported keys have length `M.msgLen n`. Because
+  `(M.reindex ctLen hctLen).msgLen n = M.msgLen (ctLen n)`, reindexing `M` by `ctLen` supplies
+  message length `ctLen n` when the base MAC has `M.msgLen = id` (as holds for `prfMAC`), while
+  transferring `M.SUFCMA` to `(M.reindex ctLen hctLen).SUFCMA` via `MACScheme.SUFCMA.reindex`
+  additionally requires `StrictMono ctLen` (both hold for `prfEncryptThenMAC` with
+  `ctLen := fun n => 2 * n`).
 * **Omitted 1AE half and query-count preservation in Theorem 9.2**: Theorem 9.2 in
   [BonehShoup2023] (printed p. 367) also states that "Also, EEtM is 1AE-secure assuming E is
   semantically secure and I is a one-time secure MAC system." and that `Bmac` (resp. `Bcpa`)
@@ -1086,15 +1090,6 @@ theorem indcca_encryptThenMAC_prfMAC (E : SymmetricCipher)
 
 /-! ### Concrete Non-Vacuous PRF-Based Cipher (Boneh–Shoup Example 5.2 & Theorem 5.2) -/
 
-private theorem zipWith_xor_self_left :
-    ∀ pad msg : List Bool, pad.length = msg.length →
-      List.zipWith xor pad (List.zipWith xor pad msg) = msg
-  | [], [], _ => rfl
-  | b :: pad, m :: msg, h => by
-    simp only [List.length_cons, Nat.add_right_cancel_iff] at h
-    simp only [List.zipWith_cons_cons, zipWith_xor_self_left pad msg h]
-    cases b <;> cases m <;> rfl
-
 /-- **Randomized PRF-based symmetric cipher** ([BonehShoup2023], Section 5.4.1, Example 5.2 and
 Theorem 5.2, printed pp. 183–189): given a keyed function family
 `family : List Bool → List Bool → List Bool` computable in plain polynomial time that maps `n`-bit
@@ -1157,7 +1152,8 @@ noncomputable def prfCipher (family : List Bool → List Bool → List Bool)
     have hdrop : (r ++ List.zipWith xor (family k r) msg).drop n =
         List.zipWith xor (family k r) msg := by
       rw [← hrLen, List.drop_left]
-    simp [hctLen, htake, hdrop, zipWith_xor_self_left (family k r) msg (by rw [hpadLen, hmsg])]
+    simp [hctLen, htake, hdrop,
+      BitString.zipWith_xor_self_left (family k r) msg (by rw [hpadLen, hmsg])]
 
 /-- Every supported ciphertext of `prfCipher family hpoly hlen` on an `n`-bit plaintext under a
 supported key at security parameter `n` has length `2 * n`. -/
@@ -1501,45 +1497,6 @@ private theorem eval_prfIdealGame_cpaToPrfDistinguisher (adversary : OracleDisti
   simp only [PMF.map_comp, Function.comp_def] at h1 h2
   exact h1.trans h2.symm
 
-private theorem uniformOfFintype_bool_map_xor (b : Bool) :
-    (PMF.uniformOfFintype Bool).map (fun bit => xor bit b) = PMF.uniformOfFintype Bool := by
-  ext x
-  cases b <;> cases x <;>
-    simp [PMF.map_apply, tsum_fintype, PMF.uniformOfFintype_apply]
-
-private theorem uniformList_map_zipWith_xor :
-    ∀ msg : List Bool,
-      (BitString.uniformList msg.length).map (fun pad => List.zipWith xor pad msg) =
-        BitString.uniformList msg.length
-  | [] => by simp [PMF.map]
-  | b :: tail => by
-    rw [List.length_cons, BitString.uniformList_succ, PMF.map_bind]
-    simp only [PMF.map_comp, Function.comp_def, List.zipWith_cons_cons]
-    have htail (bit : Bool) :
-        (BitString.uniformList tail.length).map
-          (fun pad => xor bit b :: List.zipWith xor pad tail) =
-        ((BitString.uniformList tail.length).map
-          (fun pad => List.zipWith xor pad tail)).map (List.cons (xor bit b)) := by
-      simp [PMF.map_comp, Function.comp_def]
-    simp_rw [htail, uniformList_map_zipWith_xor tail]
-    have hcomp :
-        (fun a => PMF.map (List.cons (xor a b)) (BitString.uniformList tail.length)) =
-          (fun bit' => (BitString.uniformList tail.length).map (List.cons bit')) ∘
-            (fun bit => xor bit b) := rfl
-    rw [hcomp, ← PMF.bind_map, uniformOfFintype_bool_map_xor b]
-
-private theorem uniformList_map_take_zipWith_xor {n : ℕ} {msg : List Bool} (hmsg : msg.length = n) :
-    (BitString.uniformList n).map (fun pad => List.zipWith xor (pad.take n) msg) =
-      BitString.uniformList n := by
-  have hcongr :
-      (BitString.uniformList n).map (fun pad => List.zipWith xor (pad.take n) msg) =
-        (BitString.uniformList n).map (fun pad => List.zipWith xor pad msg) := by
-    rw [PMF.map, PMF.map]
-    refine PMF.bind_congr_on_support _ _ _ fun pad hpad => ?_
-    dsimp only [Function.comp_def]
-    rw [List.take_of_length_le (BitString.length_of_mem_support_uniformList hpad).le]
-  rw [hcongr, ← hmsg, uniformList_map_zipWith_xor]
-
 private theorem run_prfCipherForgetfulWithBadOracle_map_fst (adversary : OracleDistinguisher)
     (bit : Bool) (n : ℕ) (cache : List (List Bool × List Bool)) (bad : Bool) :
     ((OracleComp.interpret
@@ -1572,7 +1529,7 @@ private theorem run_prfCipherForgetfulWithBadOracle_map_fst (adversary : OracleD
                 (if bit then dropFrame payload else unframe payload))).map
               (fun otp => (r ++ otp, ())) := by
           simp [PMF.map_comp, Function.comp_def]
-        rw [hpad, uniformList_map_take_zipWith_xor hmsgLen]
+        rw [hpad, BitString.uniformList_map_take_zipWith_xor hmsgLen]
       · simp [hlenEq])
     (adversary n []) (cache, bad)
   have h := congrArg (PMF.map Prod.fst) hsim
@@ -1657,47 +1614,6 @@ private theorem identicalUntilBad_prfCipherFaithful_forgetful (n : ℕ) (bit : B
         subst x
         rfl
 
-private theorem uniformList_apply_le (n : ℕ) (r : List Bool) :
-    BitString.uniformList n r ≤ (1 : ℝ≥0∞) / 2 ^ n := by
-  have h := BitString.uniformList_map_apply id n r
-  simp only [PMF.map_id, id_eq] at h
-  rw [h]
-  gcongr
-  norm_cast
-  exact Finset.card_le_one.mpr fun a ha b hb =>
-    List.ofFn_injective ((Finset.mem_filter.mp ha).2.trans (Finset.mem_filter.mp hb).2.symm)
-
-private theorem toOuterMeasure_lookup_uniformList_le (n : ℕ)
-    (cache : List (List Bool × List Bool)) :
-    (BitString.uniformList n).toOuterMeasure {r | (cache.lookup r).isSome} ≤
-      (cache.length : ℝ≥0∞) * ((1 : ℝ≥0∞) / 2 ^ n) := by
-  induction cache with
-  | nil => simp
-  | cons entry rest ih =>
-    rcases entry with ⟨r₀, pad₀⟩
-    calc (BitString.uniformList n).toOuterMeasure
-          {r | (((r₀, pad₀) :: rest).lookup r).isSome}
-        ≤ (BitString.uniformList n).toOuterMeasure
-          ({r | r = r₀} ∪ {r | (rest.lookup r).isSome}) := by
-          refine (BitString.uniformList n).toOuterMeasure.mono fun r hr => ?_
-          have hr' : (((r₀, pad₀) :: rest).lookup r).isSome = true := hr
-          rw [List.lookup_cons] at hr'
-          by_cases h : r = r₀
-          · exact Or.inl h
-          · rw [beq_false_of_ne h] at hr'
-            exact Or.inr hr'
-      _ ≤ (BitString.uniformList n).toOuterMeasure {r | r = r₀} +
-          (BitString.uniformList n).toOuterMeasure {r | (rest.lookup r).isSome} :=
-          MeasureTheory.measure_union_le _ _
-      _ ≤ (1 : ℝ≥0∞) / 2 ^ n + (rest.length : ℝ≥0∞) * ((1 : ℝ≥0∞) / 2 ^ n) := by
-          refine add_le_add ?_ ih
-          rw [show {r : List Bool | r = r₀} = {r₀} from Set.ext fun _ => Set.mem_singleton_iff.symm,
-            PMF.toOuterMeasure_apply_singleton]
-          exact uniformList_apply_le n r₀
-      _ = (((r₀, pad₀) :: rest).length : ℝ≥0∞) * ((1 : ℝ≥0∞) / 2 ^ n) := by
-          rw [List.length_cons, Nat.cast_add, Nat.cast_one]
-          ring
-
 private theorem step_bad_prfCipherForgetfulWithBadOracle_le (n : ℕ) (bit : Bool)
     (request : Unit × List Bool) (cache : List (List Bool × List Bool)) :
     (prfCipherForgetfulWithBadOracle n bit request (cache, false)).toOuterMeasure
@@ -1739,7 +1655,7 @@ private theorem step_bad_prfCipherForgetfulWithBadOracle_le (n : ℕ) (bit : Boo
               Set.indicator_of_notMem
               (show r ∉ {r : List Bool | (cache.lookup r).isSome} from hr), mul_zero]
       _ ≤ (cache.length : ℝ≥0∞) * ((1 : ℝ≥0∞) / 2 ^ n) :=
-          toOuterMeasure_lookup_uniformList_le n cache
+          BitString.toOuterMeasure_lookup_uniformList_le n cache
   · simp [hlenEq]
 
 private theorem length_cache_prfCipherForgetfulWithBadOracle_le (n : ℕ) (bit : Bool)
