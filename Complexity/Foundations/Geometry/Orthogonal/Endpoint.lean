@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Geometry.Orthogonal.Neighborhood
-public import Complexity.Foundations.Geometry.OrthogonalLayout
+public import Complexity.Foundations.Geometry.Orthogonal.Layout
 
 /-!
 # Unit neighbors at canonical endpoint ports
