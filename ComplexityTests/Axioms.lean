@@ -10369,3 +10369,59 @@ info: 'Cslib.Crypto.exists_mildlyHardOnAverage_of_exists_oneWay' depends on axio
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Crypto.exists_mildlyHardOnAverage_of_exists_oneWay
+
+/--
+info: 'Cslib.Crypto.weakOneWay_iff_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.weakOneWay_iff_le
+
+/--
+info: 'Cslib.Crypto.WeakOneWay.exists_monotone_poly' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.WeakOneWay.exists_monotone_poly
+
+/--
+info: 'Cslib.Crypto.OneWay.weakOneWay' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.weakOneWay
+
+/--
+info: 'Cslib.Crypto.not_weakOneWay_const' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.not_weakOneWay_const
+
+/--
+info: 'Cslib.Crypto.WeakOneWay.exists_fixedOutputLength' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.WeakOneWay.exists_fixedOutputLength
+
+/--
+info: 'Cslib.Crypto.OneWayReindex.exists_familyInverter_inversion_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWayReindex.exists_familyInverter_inversion_le
+
+/--
+info: 'Cslib.Crypto.OneWayReindex.weakOneWay' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWayReindex.weakOneWay
+
+/--
+info: 'Cslib.Crypto.OneWayReindex.oneWay' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWayReindex.oneWay
