@@ -41,7 +41,7 @@ not use Boyack's convention assigning zero to disconnected vertices.
 
 * `Cslib.Circuits.Circuit.ComputesFrom.map`,
   `Cslib.Circuits.Circuit.computesFrom_map_iff`:
-  homomorphism mapping and reflection of ComputesFrom.
+  homomorphism mapping, and reflection under injective homomorphisms, of `ComputesFrom`.
 * `Cslib.Circuits.ecomplexityFrom_le_iff`: every finite budget has a circuit witness.
 * `Cslib.Circuits.ecomplexityFrom_comp_le`: composition through an intermediate supplied family.
 * `Cslib.Circuits.ecomplexityFrom_map_le`: homomorphisms cannot increase source complexity;

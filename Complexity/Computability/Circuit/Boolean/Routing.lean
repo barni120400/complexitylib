@@ -42,7 +42,7 @@ for batched lookup are separate clients.
 
 * `Cslib.Circuits.Boolean.routeCircuit.headers_perm`,
   `Cslib.Circuits.Boolean.routeCircuit.value_eq_true_iff`: header preservation and
-  matching OR values.
+  matching OR values of the matching-and-broadcast stage.
 * `Cslib.Circuits.Boolean.monotone_routeCircuit`,
   `Cslib.Circuits.Boolean.eval_routeCircuit_header_of_rank`,
   `Cslib.Circuits.Boolean.eval_routeCircuit_value_eq_true_iff_of_rank`: sorted restored headers and
