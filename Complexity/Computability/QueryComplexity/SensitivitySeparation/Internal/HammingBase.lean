@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.QueryComplexity.SensitivitySeparation.Internal.Defs
-public import Complexity.Foundations.Data.Hamming
 public import Mathlib.InformationTheory.Hamming
+import Complexity.Foundations.Data.BitString.Hamming
 
 /-!
 # Superquadratic sensitivity separation: hamming base
@@ -46,6 +46,9 @@ namespace Cslib.QueryComplexity.SensitivitySeparation
 noncomputable section
 
 namespace Internal
+
+open Cslib.BitString (hammingDist_le_flip_add_one hammingDist_flip_le_add_one
+  hammingDist_flip_eq_add_one)
 
 variable {I C : Type} [Fintype I]
 
