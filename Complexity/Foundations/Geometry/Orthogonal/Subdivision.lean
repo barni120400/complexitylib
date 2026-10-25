@@ -10,7 +10,10 @@ module
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 import Complexity.Foundations.Data.List.Counting
 import Mathlib.Data.List.Nodup
-import Mathlib.Tactic
+import Mathlib.Tactic.Abel
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Unit subdivision of finite orthogonal routes
@@ -36,6 +39,10 @@ import Mathlib.Tactic
 * `Cslib.Orthogonal.subdivideWithin_eq_of_wireLength_le`: recover full subdivision from a
   sufficient total-wire budget.
 * `Cslib.Orthogonal.subdivideWithin_length_le`: explicit bounded output size.
+
+## References
+
+The unit-walk construction and bounded enumeration are original.
 -/
 
 @[expose] public section
@@ -88,7 +95,10 @@ private theorem segment_step_union (a d : Point) (k : ℕ) (hd : UnitVector d) :
   rcases a with ⟨x, y⟩
   rcases hd with rfl | rfl | rfl | rfl
   all_goals ext p
-  all_goals norm_num [segment, realPoint, Prod.smul_mk, nsmul_eq_mul]
+  all_goals norm_num only [segment, realPoint, Prod.smul_mk, nsmul_eq_mul,
+    Prod.fst_add, Prod.snd_add, mul_one, mul_zero, mul_neg_one, add_zero, Int.cast_add,
+    Int.cast_one, Int.cast_zero, Int.cast_neg, Int.cast_natCast, Nat.cast_add, Nat.cast_one,
+    Set.mem_union]
   all_goals
     first
     | rw [mem_horizontal, mem_horizontal, mem_horizontal]
@@ -161,7 +171,10 @@ theorem add_length_direction {a b : Point} (h : a.1 = b.1 ∨ a.2 = b.2) :
   rcases a with ⟨ax, ay⟩
   rcases b with ⟨bx, by'⟩
   unfold direction
-  split_ifs <;> ext <;> norm_num [length, nsmul_eq_mul] <;>
+  split_ifs <;> ext <;>
+    norm_num only [length, Prod.smul_mk, Int.nsmul_eq_mul, Nat.cast_add, Nat.cast_natAbs,
+    Int.cast_abs, Int.cast_sub, Int.cast_eq, mul_one, nsmul_zero, mul_neg_one,
+    Prod.mk_add_mk, add_zero] <;>
     (try simp only [abs_eq_max_neg]) <;> omega
 
 /-- Unit subdivision of one segment, including both endpoints. -/
@@ -467,7 +480,8 @@ theorem walk_nodup (a d : Point) (k : ℕ) (hd : UnitVector d) : (walk a d k).No
   all_goals
     have hx := congrArg Prod.fst hij
     have hy := congrArg Prod.snd hij
-    norm_num [nsmul_eq_mul] at hx hy
+    simp only [Prod.smul_mk, Int.nsmul_eq_mul, mul_one, nsmul_zero, Prod.fst_add,
+      Prod.snd_add, add_zero, mul_neg_one, add_right_inj, Nat.cast_inj, neg_inj] at hx hy
     omega
 
 /-- The unit walk along one segment has no repeated listed point. -/

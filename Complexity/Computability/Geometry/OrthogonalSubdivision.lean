@@ -10,7 +10,7 @@ module
 public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary
+public import Complexity.Computability.Geometry.Orthogonal.Encoding
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -25,13 +25,16 @@ enumerating an unbounded binary-coordinate segment can require exponentially man
 
 ## Main definitions
 
-* `Cslib.Orthogonal.encPoint`: pair of binary signed coordinates.
-* `Cslib.Orthogonal.encRoute`: framed list of such points.
+Uses the point and route encodings from `Orthogonal.Encoding`.
 
 ## Main results
 
 * `Cslib.Orthogonal.computableInPolyTime_subdivideWithin`: native plain polynomial-time
   computation of bounded subdivision with binary coordinates and unary budget.
+
+## References
+
+This bounded compiler is an original construction.
 -/
 
 @[expose] public section
@@ -39,12 +42,6 @@ enumerating an unbounded binary-coordinate segment can require exponentially man
 namespace Cslib.Orthogonal
 
 open Turing.MultiTapeTM
-
-/-- A point is encoded by its two binary signed integer coordinates. -/
-def encPoint : Point ↪ List Bool := encPair encIntBin encIntBin
-
-/-- A route is encoded by a framed finite list of binary-coordinate points. -/
-def encRoute : Route ↪ List Bool := encList encPoint
 
 private theorem computable_length :
     ComputableInPolyTime (fun p : Point × Point => length p.1 p.2)
