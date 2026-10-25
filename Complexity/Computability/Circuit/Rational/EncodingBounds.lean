@@ -71,8 +71,8 @@ private lemma encodeNat_le (a L : ℕ) (ha : a < 2 ^ L) : (encodeNat a).length �
 private lemma encodeRat_ratio_le (a b : ℤ) (hb : b ≠ 0) (L : ℕ)
     (ha : a.natAbs < 2 ^ L) (hb' : b.natAbs < 2 ^ L) :
     (encodeRat (Rat.divInt a b)).length ≤ 4 * L + 3 := by
-  have hn := encodeNat_le _ L (lt_of_le_of_lt (Rat.divInt_num_natAbs_le a b hb) ha)
-  have hd := encodeNat_le _ L (lt_of_le_of_lt (Rat.divInt_den_le a b hb) hb')
+  have hn := encodeNat_le _ L (lt_of_le_of_lt (Rat.natAbs_num_divInt_le a b hb) ha)
+  have hd := encodeNat_le _ L (lt_of_le_of_lt (Rat.den_divInt_le a b hb) hb')
   simp only [encodeRat, List.length_append, List.length_singleton]
   omega
 
