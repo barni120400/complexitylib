@@ -23,6 +23,8 @@ the FHE industrial context, the first-order design decisions and the repository'
 | Consolidation: duplicates, accurate statements and docs, less churn | [#949], [#939] |
 | A concrete LWE-based fully homomorphic scheme | [#486] |
 | Boneh–Shoup cryptography tracks; zero-knowledge architecture | [#640], [#643] |
+| Crypto frontier tracks: Kilian's succinct arguments, chosen-ciphertext security, signatures from one-way functions | [#999], [#1000], [#1001] |
+| OpenAI math TCS results: review Fortnow's rewrites and extract in-scope results | [#1002] |
 | A Verso guide with a chapter per area | [#585] |
 
 ### Landmark theorems, in priority order
@@ -30,7 +32,7 @@ the FHE industrial context, the first-order design decisions and the repository'
 Priorities live in this list and in the tiers of [#897].
 
 1. [Goldreich–Micali–Wigderson zero knowledge in full](#cryptographic-landmarks)
-2. [Rompel's signature theorem](#cryptographic-landmarks)
+2. [Rompel's signature theorem](#cryptographic-landmarks) ([#1001])
 3. [Gentry's bootstrapping, instantiated](#cryptographic-landmarks) ([#486])
 4. [Completeness of oblivious transfer](#cryptographic-landmarks)
 5. [Håstad's optimal MAX-E3SAT hardness](#approximation-and-pcp) ([#886])
@@ -53,9 +55,10 @@ Priorities live in this list and in the tiers of [#897].
   Goldreich does (*Foundations of Cryptography*, Vol. 1, Section 4.4), and derive the
   nonuniform (advice-secure) PRG premise of the auxiliary-input theorem from that; uniform
   one-wayness is not known to give such a generator.
-- **Rompel's signature theorem.** One-way functions imply digital signatures that are
+- **Rompel's signature theorem** ([#1001]). One-way functions imply digital signatures that are
   existentially unforgeable under adaptive chosen-message attacks, for arbitrary
-  polynomial-length messages: universal one-way hash functions and authentication trees.
+  polynomial-length messages. The stepping stones are authentication trees from one-time
+  signatures and collision-resistant hashing, then universal one-way hash functions.
 - **Gentry's bootstrapping, instantiated** ([#486]). A concrete LWE-based scheme satisfying the
   correctness, security, bootstrappability and native-efficiency hypotheses of the generic
   theorem: full native evaluation of the augmented GSW decryption circuit, bootstrappability
@@ -70,6 +73,10 @@ Priorities live in this list and in the tiers of [#897].
   `α` with `αq > 2√n`, an efficient search-LWE algorithm yields a quantum polynomial-time
   algorithm for worst-case GapSVP and SIVP within `Õ(n/α)`. The noise distribution, modulus
   restrictions and quantum reduction are part of the theorem.
+- **Kilian's succinct arguments** ([#999]). If collision-resistant hash families exist, every
+  language in NP has an interactive argument with polylogarithmic communication, by committing
+  to a PCP with Merkle trees; Micali's CS proofs and the BCS transform give the random-oracle
+  versions.
 
 ### Modern fully homomorphic encryption
 
@@ -114,7 +121,9 @@ families and full-input native runtime.
   statistical-distance term from sampling `ZMod q`.
 - **Diffie–Hellman and ElGamal:** group-element messages, efficient key generation and
   encryption, the efficient DDH random self-reduction (Boneh–Shoup Ex. 10.10), hashed ElGamal,
-  Cramer–Shoup CCA security, and Pedersen commitments.
+  Cramer–Shoup CCA security ([#1000]), and Pedersen commitments.
+- **Chosen-ciphertext security** ([#1000]): KEM–DEM hybrid encryption ([#881]), authenticated
+  encryption by encrypt-then-MAC, and Cramer–Shoup from DDH.
 - **Lattices** ([#645]): Fiat–Shamir with aborts and signatures from SIS (Lyubashevsky 2009,
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
@@ -391,6 +400,16 @@ reuse is demonstrated.
 - Factor indicator-expectation identities from PCP's second-moment calculation, and recurring
   cardinality and logarithm conversions, once a second client benefits.
 
+### OpenAI math results ([#1002])
+
+Review Lance Fortnow's [expository rewrites](https://github.com/fortnow/AI-Papers) of the OpenAI
+math papers and his [TCS catalogue](https://lance.fortnow.com/openai-math-tcs.htm) of the
+openai/math release, and extract the results in scope: the headline theorems and also the minor
+lemmas useful in their own right. Prove each against Complexitylib's own definitions, from the
+cited manuscript's exact statement with its version pinned; a source formalization is a
+reference, not evidence. Label unrefereed results as such. No license is stated for the release
+or the rewrites, so no code is copied; they are read for their mathematics and credited.
+
 ## Documentation and repository
 
 - **The guide** ([#585]): a chapter per area, including Foundations (bit strings, Fourier
@@ -433,6 +452,7 @@ not planned, not as proved.
 [#748]: https://github.com/cslib-community/complexitylib/issues/748
 [#798]: https://github.com/cslib-community/complexitylib/issues/798
 [#862]: https://github.com/cslib-community/complexitylib/issues/862
+[#881]: https://github.com/cslib-community/complexitylib/issues/881
 [#884]: https://github.com/cslib-community/complexitylib/issues/884
 [#886]: https://github.com/cslib-community/complexitylib/issues/886
 [#888]: https://github.com/cslib-community/complexitylib/issues/888
@@ -447,3 +467,7 @@ not planned, not as proved.
 [#897]: https://github.com/cslib-community/complexitylib/issues/897
 [#939]: https://github.com/cslib-community/complexitylib/issues/939
 [#949]: https://github.com/cslib-community/complexitylib/issues/949
+[#999]: https://github.com/cslib-community/complexitylib/issues/999
+[#1000]: https://github.com/cslib-community/complexitylib/issues/1000
+[#1001]: https://github.com/cslib-community/complexitylib/issues/1001
+[#1002]: https://github.com/cslib-community/complexitylib/issues/1002
