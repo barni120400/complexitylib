@@ -21,7 +21,7 @@ or bridge participates in their statements or derivations.
 
 ## Main results
 
-* `ComputableInPolyTime.comp`, `.pair`, `.ite`, `.foldl`: direct closure rules.
+* `ComputableInPolyTime.comp`, `.trans`, `.pair`, `.ite`, `.foldl`: direct closure rules.
 * `ComputableInPolyTime.fst`, `.snd`: ordinary encoded-pair projections.
 -/
 
@@ -247,5 +247,12 @@ theorem bool_and : ComputableInPolyTime (fun p : Bool × Bool => p.1 && p.2)
 /-- Boolean negation on its fixed finite input domain. -/
 @[fun_prop]
 theorem bool_not : ComputableInPolyTime Bool.not encBool encBool := of_finite _
+
+/-- Boolean disjunction is polynomial-time in the standard Boolean encoding. -/
+@[fun_prop]
+theorem bool_or :
+    ComputableInPolyTime (fun (p : Bool × Bool) => p.1 || p.2)
+  (encPair encBool encBool)
+  encBool := of_finite _
 
 end Turing.MultiTapeTM.ComputableInPolyTime
