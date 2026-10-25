@@ -32,13 +32,17 @@ Santhanam [OliveiraSanthanam2018]:
   lemma connecting `Cslib.SuccinctMCSP` and `Cslib.PartialMCSP` to approximate MCSP
   (`Cslib.ApproxMCSP`, corresponding to `(1, 1 - δ)-MCSP[s]` in
   [OliveiraSanthanam2018, Appendix A, Definition 41, p. 34]) and `Cslib.GapMCSP`.
-* **Theorem 1 (i)–(iii) and Theorem 17** ([OliveiraSanthanam2018, Section 1.2, Theorem 1, pp. 5–6;
-  Section 3.1, Theorem 17, p. 15]): packaging Lemma 16 with `SuccinctMCSP ∈ NP`
+* **Contrapositive of Lemma 16 and Theorem 1(i) / Theorem 17(i)**
+  ([OliveiraSanthanam2018, Section 1.2, Theorem 1 (i), p. 5; Section 3.1, Lemma 16 and
+  Theorem 17 (i), pp. 14–15]): packaging Lemma 16 with `SuccinctMCSP ∈ NP`
   (`Cslib.SuccinctMCSP.mem_NP`) into `SuccinctMCSP ∉ FormulaPolyOn SuccinctMCSP.enc` and
-  `NP SuccinctMCSP.enc ⊄ FormulaPolyOn SuccinctMCSP.enc` (`NP ⊄ Formula[poly]`).
-* **Lemma 26, Theorem 5, and Theorem 27** ([OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8;
-  Section 3.3, Lemma 26 and Theorem 27, pp. 20–21]): zero-error average-case De Morgan formula
-  magnification from `MCSP[s]` to `SuccinctMCSP` and `NP ⊄ FormulaPolyOn`.
+  `NP SuccinctMCSP.enc ⊄ FormulaPolyOn SuccinctMCSP.enc` (`NP ⊄ Formula[poly]`), both in the
+  general-parameter form underlying Theorem 17(i)/(iii) and specialized to polynomially bounded
+  parameters `s₂, k` for Theorem 1(i) / Theorem 17(i).
+* **Lemma 26 and one-sided Theorem 27** ([OliveiraSanthanam2018, Section 3.3, Lemma 26 and
+  Theorem 27, p. 21]; compare [OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8]): deterministic
+  counting form of Lemma 26 and one-sided zero-error average-case De Morgan formula magnification
+  from `MCSP[s]` to `SuccinctMCSP` and `NP ⊄ FormulaPolyOn`.
 
 ## Source Statements (ECCC TR18-139)
 
@@ -66,8 +70,9 @@ Verbatim from [OliveiraSanthanam2018, Section 3.1, Theorem 17, p. 15] (also stat
 > (iii) Let s(n) = 2^{o(n)} and δ(n) = 2^{−o(n)}. If Π[s, δ] ∉ Formula[N^{1+ε}] for some ε > 0,
 >     then there is L ∈ NP over m-bit inputs such that L ∉ Formula[poly(m)].
 
-Verbatim from [OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8] and
-[OliveiraSanthanam2018, Section 3.3, Lemma 26 and Theorem 27, pp. 20–21]:
+Verbatim from [OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8],
+[OliveiraSanthanam2018, Section 3.3, Lemma 26 and Theorem 27, p. 21], and
+[OliveiraSanthanam2018, Appendix A, Definition 43, p. 34]:
 
 > **Theorem 5.** If MCSP[2^{√n}] on N-bit inputs cannot be solved on average with zero error by
 > formulas of size o(N), then NP does not have polynomial size formulas.
@@ -83,12 +88,27 @@ Verbatim from [OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8] and
 > of size Ω(N^δ). Then there is a language L in NP such that L on inputs of length
 > m = Θ(n · s(n) · log s(n)) requires C-circuits of size ℓ(m) = 2^{Ω(n)}.
 
+> **Definition 43** (Average-case MCSP [HS17]). We say that MCSP-C[s] is computed on average by a
+> device D (an algorithm or a family of circuits) if for every large enough n, the following holds:
+> • D is never incorrect. For each y ∈ {0, 1}^{2^n}, D(y) ∈ {MCSP-C[s](y), “?”}.
+> • D rarely outputs “?”. Pr_{z∼{0,1}^{2^n}}[D(z) ∈ {0, 1}] ≥ 1 − 1/n.
+> We say that MCSP-C[s] is average-case hard for a class of devices A if no D ∈ A computes
+> MCSP-C[s] on average.
+
 Here [OliveiraSanthanam2018, Appendix A, Definition 41, p. 34] defines `(α, β)-MCSP[s]` for
 `α, β ∈ (1/2, 1]` using "`γ`-approximates" to mean `Pr_x[ψ(x) = f(x)] ≥ γ`, so `(1, 1 - δ)-MCSP[s]`
-is the `α = 1`, `β = 1 - δ` specialization, and [OliveiraSanthanam2018, Section 3.3, p. 20] defines
-zero-error average-case algorithms for `MCSP[s]` as algorithms that always accept `y ∈ MCSP[s]`
-(never falsely rejecting a Yes-instance) while rejecting at least a `1 - 2^{-n}` fraction of all
-`N`-bit truth tables.
+is the `α = 1`, `β = 1 - δ` specialization. For average-case MCSP, Section 1.2 (p. 8) discusses
+zero-error average-case algorithms informally (never wrong, `Pr[A(x) = ?] ≤ 1/2`), Definition 43
+(Appendix A, p. 34) formalizes three-valued devices `D(y) ∈ {MCSP-C[s](y), "?"}` with
+`Pr_z[D(z) ∈ {0, 1}] ≥ 1 - 1/n`, and the proof of Theorem 27 (Section 3.3, p. 21) constructs such a
+device `C_n` from a `{0, 1}`-valued circuit `D_m` for `Succinct-MCSP[s, t]` by outputting `0` when
+`D_m` outputs `0` and `"?"` otherwise. Our Lean hypotheses
+(`exists_formula_zero_error_average_case_of_sample`,
+`not_NP_subset_FormulaPolyOn_of_zero_error_average_case_hard`) are stated directly in terms of these
+one-sided `{0, 1}`-valued formulas `F` (accepting all yes-instances in `GapMCSP.yesSet s` and
+accepting at most `2 ^ (2 ^ n - r)` truth tables overall): any three-valued Definition 43 device `D`
+induces the one-sided predicate `F(T) = decide (D(T) ≠ 0)` with `r = 1` once `1/n` plus the
+yes-instance fraction is at most `1/2`, modulo the formula encoding of three-valued outputs.
 
 ## Comparison Between ECCC TR18-139 and This Module
 
@@ -187,19 +207,22 @@ zero-error average-case algorithms for `MCSP[s]` as algorithms that always accep
   `Cslib.Circuits.Boolean.not_succinctMCSP_mem_FormulaPolyOn_of_approxMCSP_poly_hard`,
   `Cslib.Circuits.Boolean.not_NP_subset_FormulaPolyOn_of_approxMCSP_poly_hard`: packaging Lemma 16
   with `SuccinctMCSP.mem_NP` into `SuccinctMCSP ∉ FormulaPolyOn SuccinctMCSP.enc` and
-  `NP ⊄ FormulaPolyOn` [OliveiraSanthanam2018, Section 1.2, Theorem 1 (i)–(iii), pp. 5–6;
-  Section 3.1, Theorem 17, p. 15].
+  `NP ⊄ FormulaPolyOn` (general-parameter contrapositive of Lemma 16 underlying Theorem 17(i)/(iii),
+  and Theorem 1(i) / Theorem 17(i) for polynomially bounded parameters)
+  [OliveiraSanthanam2018, Section 1.2, Theorem 1 (i), p. 5; Section 3.1, Lemma 16 and
+  Theorem 17 (i), pp. 14–15].
 * `Cslib.Circuits.Boolean.card_filter_agreesOn_eq_two_pow`,
   `Cslib.Circuits.Boolean.card_filter_ofFunction_mem_succinctMCSP_le`,
   `Cslib.Circuits.Boolean.card_filter_ofFunction_mem_succinctMCSP_le_two_pow`,
+  `Cslib.Circuits.Boolean.exists_formula_zero_error_average_case_of_sample`,
   `Cslib.Circuits.Boolean.exists_formula_zero_error_average_case_of_agrees`,
   `Cslib.Circuits.Boolean.exists_formula_zero_error_average_case_of_succinctMCSP`,
   `Cslib.Circuits.Boolean.lt_formulaSize_succinctMCSP_of_zero_error_average_case`,
   `Cslib.Circuits.Boolean.not_succinctMCSP_mem_FormulaPolyOn_of_zero_error_average_case_hard`,
   `Cslib.Circuits.Boolean.not_NP_subset_FormulaPolyOn_of_zero_error_average_case_hard`:
-  zero-error average-case formula magnification from `MCSP[s]` to `SuccinctMCSP` and
-  `NP ⊄ FormulaPolyOn` [OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8; Section 3.3, Lemma 26
-  and Theorem 27, pp. 20–21].
+  one-sided zero-error average-case formula magnification from `MCSP[s]` to `SuccinctMCSP` and
+  `NP ⊄ FormulaPolyOn` [OliveiraSanthanam2018, Section 3.3, Lemma 26 and Theorem 27, p. 21;
+  compare Section 1.2, Theorem 5, p. 8].
 
 ## References
 
@@ -1170,19 +1193,12 @@ parameter `k`:
 def approxMCSPQueryEncLength (n s k : ℕ) : ℕ :=
   SuccinctMCSP.ofFunctionEncLength n (k * (computableFunctionsLogBound n s + 2)) s
 
-/-- `SuccinctMCSP.ofFunctionEncLength` is monotone in the number of samples `m`. -/
-theorem ofFunctionEncLength_mono_samples (n s : ℕ) :
-    Monotone (fun m => SuccinctMCSP.ofFunctionEncLength n m s) := by
-  intro m₁ m₂ hm
-  simp only [SuccinctMCSP.ofFunctionEncLength]
-  exact Nat.add_le_add_right (Nat.add_le_add_left (Nat.mul_le_mul_right _ hm) _) _
-
 /-- Any query with `m ≤ k * (computableFunctionsLogBound n s + 2)` samples has encoded bit length at
 most `approxMCSPQueryEncLength n s k`. -/
 theorem ofFunctionEncLength_le_approxMCSPQueryEncLength {n m s k : ℕ}
     (hm : m ≤ k * (computableFunctionsLogBound n s + 2)) :
     SuccinctMCSP.ofFunctionEncLength n m s ≤ approxMCSPQueryEncLength n s k :=
-  ofFunctionEncLength_mono_samples n s hm
+  SuccinctMCSP.ofFunctionEncLength_mono n s hm
 
 /-- **End-to-end Oliveira–Santhanam formula construction for any language agreeing with
 `SuccinctMCSP` [OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14].**
@@ -1265,8 +1281,8 @@ theorem exists_formula_separating_approxMCSP_of_mem_FormulaSIZEOn
     (card_computableFunctions_le_two_pow n (s₂ n)) fun m hm => ?_
   exact (hL _).trans (hr (ofFunctionEncLength_le_approxMCSPQueryEncLength hm))
 
-/-- **Oliveira–Santhanam Theorem 1 / Theorem 17 (for `SuccinctMCSP`)**
-[OliveiraSanthanam2018, Section 1.2, Theorem 1 (i)–(iii), pp. 5–6; Section 3.1, Theorem 17, p. 15].
+/-- **Contrapositive of Oliveira–Santhanam Lemma 16 (general parameters, for `SuccinctMCSP`)**
+[OliveiraSanthanam2018, Section 3.1, Lemma 16 and Theorem 17 (i)/(iii), pp. 14–15].
 If `s₁ n ≤ s₂ n` and `1 ≤ k n` for all `n`, and for every polynomial degree `c : ℕ` there exists an
 input length `n` at which every De Morgan formula separating `GapMCSP.yesSet s₁` and
 `ApproxMCSP.noSet s₂ k` on `2 ^ n`-bit truth tables has leaf size strictly greater than
@@ -1290,8 +1306,9 @@ theorem not_succinctMCSP_mem_FormulaPolyOn_of_approxMCSP_hard
     exists_formula_separating_approxMCSP_of_mem_FormulaSIZEOn hs hk hmono hc n
   exact (hn F hyes hno).not_ge hFleaf
 
-/-- **Oliveira–Santhanam Theorem 1 / Theorem 17 (`NP ⊄ Formula[poly]`, general parameters)**
-[OliveiraSanthanam2018, Section 1.2, Theorem 1 (i)–(iii), pp. 5–6; Section 3.1, Theorem 17, p. 15].
+/-- **Contrapositive of Oliveira–Santhanam Lemma 16 (`NP ⊄ Formula[poly]`, general parameters
+underlying Theorem 17(i)/(iii))**
+[OliveiraSanthanam2018, Section 3.1, Lemma 16 and Theorem 17 (i)/(iii), pp. 14–15].
 Under the hypothesis of `not_succinctMCSP_mem_FormulaPolyOn_of_approxMCSP_hard`, combining Lemma 16
 with `SuccinctMCSP.mem_NP` yields
 `¬ (Complexity.NP SuccinctMCSP.enc ⊆ FormulaPolyOn SuccinctMCSP.enc)`. -/
@@ -1465,7 +1482,7 @@ theorem card_filter_agreesOn_eq_two_pow (n : ℕ) (S : Finset (BitString n))
 
 open Classical in
 /-- **Oliveira–Santhanam Lemma 26 (finite-counting form)**
-[OliveiraSanthanam2018, Section 3.3, Lemma 26, p. 20]: for any fixed subset
+[OliveiraSanthanam2018, Section 3.3, Lemma 26, p. 21]: for any fixed subset
 `S : Finset (BitString n)` of distinct `n`-bit inputs and any circuit-size threshold `s`, the number
 of truth tables `T : BitString (2 ^ n)` whose restriction to `S` is consistent with a circuit of
 size at most `s`
@@ -1501,7 +1518,7 @@ theorem card_filter_ofFunction_mem_succinctMCSP_le (n : ℕ) (S : Finset (BitStr
 
 open Classical in
 /-- **Oliveira–Santhanam Lemma 26 (exponential-tail form)**
-[OliveiraSanthanam2018, Section 3.3, Lemma 26, p. 20]: if `(computableFunctions n s).card ≤ 2 ^ M`
+[OliveiraSanthanam2018, Section 3.3, Lemma 26, p. 21]: if `(computableFunctions n s).card ≤ 2 ^ M`
 (in particular for `M = computableFunctionsLogBound n s`) and `M + r ≤ S.card`, then at most
 `2 ^ (2 ^ n - r)` truth tables `T : BitString (2 ^ n)` satisfy
 `SuccinctMCSP.Instance.ofFunction ((MCSP.truthTable n).symm T) S s ∈ SuccinctMCSP`
@@ -1535,7 +1552,7 @@ def avgCaseMCSPQueryEncLength (n s r : ℕ) : ℕ :=
 
 open Classical in
 /-- **Zero-error average-case formula projection for a given sample set `S`**
-([OliveiraSanthanam2018, Section 3.3, Lemma 26 and Theorem 27, pp. 20–21]).
+([OliveiraSanthanam2018, Section 3.3, Lemma 26 and Theorem 27, p. 21]).
 If `L : Language Bool` agrees with `SuccinctMCSP` along `SuccinctMCSP.enc` and
 `S : Finset (BitString n)` satisfies `computableFunctionsLogBound n (s n) + r ≤ S.card`, then the
 single-query projection formula `F` on `2 ^ n` variables has:
@@ -1641,10 +1658,11 @@ theorem lt_formulaSize_succinctMCSP_of_zero_error_average_case
   exact (hhard F hyes hcard).trans_le hFleaf
 
 open Classical in
-/-- **Oliveira–Santhanam Theorem 5 / Theorem 27 (for `SuccinctMCSP`)**
-[OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8; Section 3.3, Theorem 27, p. 21].
+/-- **One-sided zero-error average-case formula magnification (Oliveira–Santhanam Theorem 27, for
+`SuccinctMCSP`)**
+[OliveiraSanthanam2018, Section 3.3, Theorem 27, p. 21; compare Section 1.2, Theorem 5, p. 8].
 If for every polynomial degree `c : ℕ` there exists `n : ℕ` with
-`computableFunctionsLogBound n (s n) + r n ≤ 2 ^ n` such that every zero-error average-case De
+`computableFunctionsLogBound n (s n) + r n ≤ 2 ^ n` such that every one-sided De
 Morgan formula for `GapMCSP.yesSet s` on `2 ^ n` variables (accepting all `GapMCSP.yesSet s`
 instances and at most `2 ^ (2 ^ n - r n)` truth tables overall) has leaf size strictly greater than
 `c * (avgCaseMCSPQueryEncLength n (s n) (r n) + 1) ^ c`, then
@@ -1668,9 +1686,9 @@ theorem not_succinctMCSP_mem_FormulaPolyOn_of_zero_error_average_case_hard
   exact (hn F hyes hcard).not_ge (hFleaf.trans (hL _))
 
 open Classical in
-/-- **Oliveira–Santhanam Theorem 5 / Theorem 27 (`NP ⊄ Formula[poly]` from zero-error average-case
-formula lower bounds for `MCSP[s]`)**
-[OliveiraSanthanam2018, Section 1.2, Theorem 5, p. 8; Section 3.3, Theorem 27, p. 21].
+/-- **One-sided zero-error average-case formula magnification (Oliveira–Santhanam Theorem 27,
+`NP ⊄ Formula[poly]`)**
+[OliveiraSanthanam2018, Section 3.3, Theorem 27, p. 21; compare Section 1.2, Theorem 5, p. 8].
 Under the hypothesis of `not_succinctMCSP_mem_FormulaPolyOn_of_zero_error_average_case_hard`,
 combining Theorem 27 with `SuccinctMCSP.mem_NP` yields
 `¬ (Complexity.NP SuccinctMCSP.enc ⊆ FormulaPolyOn SuccinctMCSP.enc)`. -/

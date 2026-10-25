@@ -143,9 +143,9 @@ example :
   rw [hcard, Nat.sub_self, pow_zero, mul_one] at hle
   exact hle.trans card_computableFunctions_one_zero_le
 
--- Concrete check of `computableFunctionsLogBound_le_poly` at `n = 2, s = 3`.
-example : computableFunctionsLogBound 2 3 ≤ (3 + 1) * (2 * (2 + 3 + 1) + 3) :=
-  computableFunctionsLogBound_le_poly 2 3
+-- Concrete value check of `computableFunctionsLogBound` at `n = 2, s = 3`
+-- (`(3 + 1) * (2 * 3 + 3) = 36`).
+example : computableFunctionsLogBound 2 3 = 36 := by decide
 
 -- Genuine non-vacuity check for `exists_formula_zero_error_average_case_of_succinctMCSP` at
 -- `n = 4, s = 0, r = 1`, where `computableFunctionsLogBound 4 0 + 1 = 9 + 1 = 10 ≤ 16 = 2 ^ 4`.

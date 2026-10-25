@@ -343,7 +343,9 @@ each statement against the numbered result. Organize modules by subject, not cha
   polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`
   multi-tape steps for a constant `c < 1`; prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
-  circuitized anti-checker with an efficient generator; MINCKT and
+  circuitized anti-checker with an efficient generator; the subexponential-formula consequence
+  Theorem 17(ii) and asymptotic parameter instantiations of Theorem 17(iii) and Theorem 5 in
+  `MCSP/FormulaMagnification.lean`; MINCKT and
   hardness results for MINKT, as independently scoped developments; the reverse
   multi-tape-to-single-tape simulation and machine-backed Nisan–Wigderson decoding.
 - **Quantum computation** ([#896]): BQP ⊆ PP; reusable
