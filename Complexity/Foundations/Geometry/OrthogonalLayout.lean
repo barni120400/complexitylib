@@ -165,7 +165,7 @@ theorem center_elbow_axisAligned (v : ℕ) (s : Fin 3) : AxisAligned (center v) 
   fin_cases s <;> norm_num [AxisAligned, center, elbow, column, Prod.mk.injEq]; omega
 
 /-- The complete route has exactly five segments. -/
-@[simp] theorem route_segments_length (n e u v : ℕ) (s t : Fin 3) :
+theorem route_segments_length (n e u v : ℕ) (s t : Fin 3) :
     (route n e u v s t).consecutivePairs.length = 5 := by
   rfl
 
@@ -423,6 +423,16 @@ theorem bridge_stem_transverse {n e f u v w : ℕ} (hw : w < n) (hef : e ≠ f)
   · change min (elbow w q).2 (track n f) < track n e
     omega
   · change track n e < max (elbow w q).2 (track n f)
+    omega
+
+/-- A bridge/stem transverse crossing has its exact integer column/row coordinates. -/
+theorem bridge_stem_crossing_point {n e f u v w : ℕ} {s t q : Fin 3} {p : ℝ × ℝ}
+    (h : Transverse (column u s, track n e) (column v t, track n e)
+      (elbow w q) (column w q, track n f) p) :
+    p = realPoint (column w q, track n e) := by
+  rcases h with ⟨_, _, hp, _⟩ | ⟨_, _, _, hlo, hhi, _⟩
+  · exact hp
+  · simp only [elbow, min_self, max_self] at hlo hhi
     omega
 
 /-- Distinct ports' fans can contact only at their common graph endpoint. -/
