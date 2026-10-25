@@ -54,3 +54,28 @@ example : ([3, 4] : List ℕ).getD 1 7 = 4 := by decide
 /-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.idxOf' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInPolyTime.idxOf
+
+-- Optional lookup retains the complete arbitrary codec and captured-input telescope.
+example {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {encL : List α ↪ List Bool} {list : γ → List α} {index : γ → ℕ}
+    (hl : ComputableInPolyTime list encIn encL)
+    (hi : ComputableInPolyTime index encIn encUnary)
+    [ListEncoding encA encL] [SizedListEncoding encA encL] :
+    ComputableInPolyTime (fun x => (list x)[index x]?) encIn (encOption encA) := by
+  fail_if_success (clear hl; fun_prop)
+  fail_if_success (clear hi; fun_prop)
+  fun_prop
+
+-- No element inhabitant is required, including for an unbounded runtime index.
+example (enc : Empty ↪ List Bool) :
+    ComputableInPolyTime (fun n : ℕ => ([] : List Empty)[n]?) encUnary (encOption enc) := by
+  exact ComputableInPolyTime.getElem? (encL := encList enc)
+    (ComputableInPolyTime.const []) ComputableInPolyTime.id'
+
+example : ([] : List Bool)[100]? = none := by decide
+example : ([true, false] : List Bool)[100]? = none := by decide
+example : ([true, false] : List Bool)[1]? = some false := by decide
+
+/-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.getElem?' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.getElem?

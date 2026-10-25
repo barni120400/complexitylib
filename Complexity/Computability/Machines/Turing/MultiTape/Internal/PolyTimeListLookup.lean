@@ -74,9 +74,10 @@ theorem head? (enc : α ↪ List Bool) {encL : List α ↪ List Bool}
     cases values <;> rfl
 
 /-- Look up a computed unary index, returning `none` outside a computed list. The list certificate
- determines its encoding before proof search checks the corresponding operation and size rules. -/
+determines its encoding before proof search checks the corresponding operation and size rules. -/
 @[fun_prop]
-theorem getElem? {γ : Type} {encIn : γ ↪ List Bool} {encL : List α ↪ List Bool}
+theorem getElem? {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {encL : List α ↪ List Bool}
     {list : γ → List α} {index : γ → ℕ}
     (hlist : ComputableInPolyTime list encIn encL)
     (hindex : ComputableInPolyTime index encIn encUnary)
