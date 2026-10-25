@@ -7,9 +7,11 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Foundations.Data.BitString.Hamming
+public import Complexity.Foundations.Data.BitString.Flip
 public import Complexity.Logics.Propositional.CNF
+public import Mathlib.InformationTheory.Hamming
 public import Complexity.Probability.PMF
+import Complexity.Foundations.Data.BitString.Hamming
 import Complexity.Probability.PMF.Event
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Tactic.Linarith
@@ -47,7 +49,7 @@ Write `d = (k - 2) i + e` with `e < k - 2`. A path of `i + d` down-steps and `i`
 `C(ki, i) (k - 1)^{ki - i}` is the largest of the `ki + 1` terms of `((k - 1) + 1)^{ki}`
 (`pow_le_choose_mul`), which gives `hit k (3 d) d ≥ ((k - 1)/k)^{k - 3} (k - 1)^{-d} / (3 d + 1)`
 (`inv_le_hit`). Averaging `(k - 1)^{-dist}` over a uniform start gives `(k / (2(k - 1)))^n`, a
-product over the coordinates (`Cslib.BitString.sum_pow_hammingDist`).
+product over the coordinates (`sum_pow_hammingDist`).
 
 ## Main definitions
 
@@ -497,11 +499,11 @@ theorem hit_le_succeedProb (hk : 1 ≤ k) {φ : CNF V} {σs : V → Bool} (hs : 
       have hterm : ∀ i, hit k t (d + 2) ≤ f i := by
         intro i
         refine le_trans (hit_antitone hk t ?_) (ih _)
-        rw [hammingDist_flip_singleton, hd]
+        rw [hammingDist_flip, hd]
         split_ifs <;> omega
       have hterm₀ : hit k t d ≤ f i₀ := by
         refine le_trans (le_of_eq ?_) (ih _)
-        rw [hi₀, hammingDist_flip_singleton, hd]
+        rw [hi₀, hammingDist_flip, hd]
         simp [hne]
       have hsum : hit k t d + ((c.length : ℝ) - 1) * hit k t (d + 2) ≤ ∑ i, f i := by
         rw [← add_sum_erase _ _ (mem_univ i₀)]
@@ -524,6 +526,21 @@ theorem hit_le_succeedProb (hk : 1 ≤ k) {φ : CNF V} {σs : V → Bool} (hs : 
         _ ≤ (c.length : ℝ)⁻¹ * ∑ i, f i := by gcongr
 
 /-! ### Schöning's bound -/
+
+omit [DecidableEq V] in
+/-- Averaging `q^{dist(σ, τ)}` over all assignments `σ` gives `(1 + q)^n`, a product over the
+coordinates. -/
+theorem sum_pow_hammingDist [DecidableEq V] (q : ℝ) (τ : V → Bool) :
+    ∑ σ : V → Bool, q ^ hammingDist σ τ = (1 + q) ^ Fintype.card V := by
+  have hprod (σ : V → Bool) : q ^ hammingDist σ τ = ∏ i, if σ i = τ i then 1 else q := by
+    rw [prod_ite, prod_const_one, one_mul, prod_const]
+    rfl
+  simp only [hprod]
+  rw [← Fintype.prod_sum (fun i b => if b = τ i then (1 : ℝ) else q)]
+  have hb (i : V) : ∑ b : Bool, (if b = τ i then (1 : ℝ) else q) = 1 + q := by
+    rw [Fintype.sum_bool]
+    cases τ i <;> simp [add_comm]
+  simp only [hb, prod_const, card_univ]
 
 /-- **Schöning's theorem for k-SAT, one trial.** For `k ≥ 3` and a satisfiable CNF formula on `n`
 variables whose clauses have at most `k` literals, one trial of Schöning's algorithm finds a
