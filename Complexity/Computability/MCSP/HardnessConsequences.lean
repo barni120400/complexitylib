@@ -466,12 +466,25 @@ theorem NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly
       _ ≤ c_M * (2 * x.length + 1 + m_bound x.length + 1) ^ d_M + 2 :=
           Nat.add_le_add_right (Nat.mul_le_mul_left c_M
             (Nat.pow_le_pow_left (by omega) d_M)) 2
-  have hs_bound : ComputableInPolyTime s_bound encUnary encUnary := by
-    unfold s_bound m_bound f
-    fun_prop
+  -- Compose the unary bounds explicitly: one `fun_prop` over the unfolded nest is too slow.
+  have hid : ComputableInPolyTime (fun n : ℕ => n) encUnary encUnary := .id'
+  have hc (a : ℕ) : ComputableInPolyTime (fun _ : ℕ => a) encUnary encUnary := .const a
+  have hadd {u v : ℕ → ℕ} (hu : ComputableInPolyTime u encUnary encUnary)
+      (hv : ComputableInPolyTime v encUnary encUnary) :
+      ComputableInPolyTime (fun n => u n + v n) encUnary encUnary :=
+    ComputableInPolyTime.unary_add.comp (hu.prod hv)
+  have hmul {u v : ℕ → ℕ} (hu : ComputableInPolyTime u encUnary encUnary)
+      (hv : ComputableInPolyTime v encUnary encUnary) :
+      ComputableInPolyTime (fun n => u n * v n) encUnary encUnary :=
+    ComputableInPolyTime.unary_mul.comp (hu.prod hv)
+  have hm_bound : ComputableInPolyTime m_bound encUnary encUnary :=
+    hadd (hc c_R) (hmul (hadd hf (hc 2)) (hc d_R))
+  have hs_bound : ComputableInPolyTime s_bound encUnary encUnary :=
+    hadd (hmul (hc c_M) ((ComputableInPolyTime.unary_pow d_M).comp
+      (hadd (hadd (hadd (hmul (hc 2) hid) (hc 1)) hm_bound) (hc 1)))) (hc 2)
   have hg : ComputableInPolyTime g encUnary encUnary := by
-    unfold g certLength s_bound m_bound f
-    fun_prop
+    have hns := hadd hm_bound hs_bound
+    exact hadd (hadd (hadd hs_bound hns) (hmul hs_bound (hadd (hc 3) (hmul (hc 2) hns)))) hid
   let B_search : Set (List Bool × ℕ) :=
     {p : List Bool × ℕ |
       boundedMCSPSearch (List.ofFn (R p.1).table)
