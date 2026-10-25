@@ -101,7 +101,7 @@ and otherwise the forged message with a message signed at leaf `u` with the same
 def collisionOf (k : List Bool) (keys : List (List Bool × List Bool))
     (out : (ℕ × List Bool × List Bool) × List (ℕ × List Bool)) : List Bool × List Bool :=
   let u := out.1.1
-  let forged := decodeSignature out.1.2.2
+  let forged := signatureDecoder.decode out.1.2.2
   let vks := keys.map Prod.fst
   if forged.1 == vks.getD u [] then
     (out.1.2.1, (out.2.find? fun e => e.1 == u && H k e.2 == H k out.1.2.1).elim [] Prod.snd)
@@ -144,7 +144,7 @@ to `bound` bits. -/
 def plantedHandler (n : ℕ) (k : List Bool) (keys : List (List Bool × List Bool)) (i bound : ℕ)
     (request : Unit × List Bool) :
     StateT (List (ℕ × List Bool)) (WordOracleComp Unit) (List Bool) := fun signed =>
-  let r := IndexedSignatureScheme.decodeRequest request.2
+  let r := IndexedSignatureScheme.requestDecoder.decode request.2
   if r.1 < 2 ^ depth n ∧ r.1 ∉ signed.map Prod.fst then
     if r.1 = i then
       (fun ots => (encodeSignature (keys.getD i ([], [])).1 ots
@@ -163,7 +163,7 @@ noncomputable def oneTimeForgerAt (bound : ℕ → ℕ) (adversary : IndexedForg
     (ProbOracleComp.handler (fun j => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin j)))
       (plantedHandler S H depth n setup.1 setup.2 i (bound n)))
     (adversary n (publicKey H setup.1 setup.2))).run []
-  return (H setup.1 out.1.2.1, (decodeSignature out.1.2.2).2.1)
+  return (H setup.1 out.1.2.1, (signatureDecoder.decode out.1.2.2).2.1)
 
 /-- The one-time forger: plant the challenge at a uniform leaf. -/
 noncomputable def oneTimeForger (bound : ℕ → ℕ) (adversary : IndexedForger) : Forger :=
@@ -233,7 +233,7 @@ private theorem eval_run_plantedHandler
       rintro ⟨⟨⟩, w⟩ signed -
       unfold IndexedSignatureScheme.indexedSigningOracle plantedHandler
       simp only [scheme, StateT.run]
-      generalize IndexedSignatureScheme.decodeRequest w = r
+      generalize IndexedSignatureScheme.requestDecoder.decode w = r
       obtain ⟨u, m⟩ := r
       dsimp only
       by_cases hguard : u < 2 ^ depth n ∧ u ∉ signed.map Prod.fst
@@ -247,7 +247,7 @@ private theorem eval_run_plantedHandler
             simp only [otsLogOf, List.map_eq_nil_iff, List.filter_eq_nil_iff, beq_iff_eq]
             intro e he heq
             exact hguard.2 (List.mem_map.mpr ⟨e, he, heq⟩)
-          simp only [↓reduceIte, hempty, sign, decodeSecretKey_secretKey, signWith,
+          simp only [↓reduceIte, hempty, sign, secretKey, secretKeyDecoder.decode_enc, signWith,
             List.getD_append_cons_length, hkeys, OracleComp.interpret_map,
             ProbOracleComp.interpret_query, SignatureScheme.oneTimeSigningOracle, List.isEmpty_nil,
             ProbComp.eval_bind, ProbComp.eval_pure, PMF.map_bind, PMF.bind_bind, PMF.pure_bind,
@@ -260,7 +260,7 @@ private theorem eval_run_plantedHandler
         · have hots : otsLogOf H front.length k ((u, m) :: signed) =
               otsLogOf H front.length k signed := by
             simp [otsLogOf, hi]
-          simp only [hi, ↓reduceIte, sign, decodeSecretKey_secretKey, signWith, hkeys,
+          simp only [hi, ↓reduceIte, sign, secretKey, secretKeyDecoder.decode_enc, signWith, hkeys,
             List.getD_append_cons_of_ne front back x (x.1, []) ([], []) hi,
             OracleComp.interpret_map,
             ProbComp.eval_bind, ProbComp.eval_pure, PMF.map_bind, hmapApply, hsampleApply,
@@ -289,7 +289,7 @@ private noncomputable def realRun
 private def otsWin (n i : ℕ) (k : List Bool) (keys : List (List Bool × List Bool))
     (r : (ℕ × List Bool × List Bool) × List (ℕ × List Bool)) : Bool :=
   ((H k r.1.2.1).length == n) && !(otsLogOf H i k r.2).contains (H k r.1.2.1) &&
-    S.verify (keys.getD i ([], [])).1 (H k r.1.2.1) (decodeSignature r.1.2.2).2.1
+    S.verify (keys.getD i ([], [])).1 (H k r.1.2.1) (signatureDecoder.decode r.1.2.2).2.1
 
 variable {S H depth} in
 private theorem eval_eufOneTimeGame_oneTimeForgerAt
@@ -425,7 +425,7 @@ private theorem win_cases (hlen : ∀ k m, (H k m).length = k.length) {n : ℕ} 
   have hvks : (keys.map Prod.fst).getD u [] = (keys.getD u ([], [])).1 := by
     rw [List.getD_eq_getElem _ _ (by simpa using hu'), List.getD_eq_getElem _ _ hu',
       List.getElem_map]
-  by_cases hvk : (decodeSignature sig).1 = (keys.map Prod.fst).getD u []
+  by_cases hvk : (signatureDecoder.decode sig).1 = (keys.map Prod.fst).getD u []
   · by_cases hfound : ∃ e ∈ signed, e.1 = u ∧ H k e.2 = H k m
     · left
       obtain ⟨e, he, heu, hem⟩ := hfound
@@ -456,6 +456,11 @@ private theorem win_cases (hlen : ∀ k m, (H k m).length = k.length) {n : ℕ} 
       (merkleVerify_merklePath_of_clog_eq (H := H) (k := k) hdepth hu) hvk n
     simpa only [collisionOf, beq_iff_eq, hvk, ↓reduceIte] using hcol
 
+/-- **The leaf is exactly uniform** below `2 ^ depth n`, the law of
+`ProbComp.sampleBinaryNat (depth n)` (`ProbComp.eval_sampleBinaryNat`). `leafIndex` reads its bits
+with `BitString.boundedBinaryValue`, whose cap `2 ^ depth n` never binds, because the reduction
+needs the leaf in unary (`isPPTOn_leafIndex`), and `Probability.isPPTOn_sampleBinaryNat` outputs
+it in binary. -/
 theorem eval_leafIndex (n : ℕ) :
     ProbComp.eval (leafIndex depth n) =
       (PMF.uniformOfFintype (Fin (2 ^ depth n))).map Fin.val := by
@@ -586,9 +591,10 @@ private theorem computableTidilyInPolyTime_collisionOf :
   have hvks := (ComputableTidilyInPolyTime.map
     (ComputableTidilyInPolyTime.fst encBits encBits)).comp hkeys
   have hvku := (ComputableTidilyInPolyTime.listGetD (encA := encBits) []).comp (hvks.prod hu)
-  have hvk := ComputableTidilyInPolyTime.unframe.comp hsig
-  have hpath' := computableTidilyInDegree_frames.computableTidilyInPolyTime.comp
-    (ComputableTidilyInPolyTime.dropFrame.comp (ComputableTidilyInPolyTime.dropFrame.comp hsig))
+  have hdec := signatureDecoder.computableTidilyInPolyTime.comp hsig
+  have hvk := (ComputableTidilyInPolyTime.fst _ _).comp hdec
+  have hpath' := (ComputableTidilyInPolyTime.snd _ _).comp
+    ((ComputableTidilyInPolyTime.snd _ _).comp hdec)
   have hcond := ComputableTidilyInPolyTime.beq hvk hvku
   have htest : ComputableTidilyInPolyTime
       (fun p : (((ℕ × List Bool) × List (List Bool × List Bool)) ×
@@ -609,7 +615,7 @@ private theorem computableTidilyInPolyTime_collisionOf :
   have hpath := (computableInPolyTime_merklePath hH hlen).tidy.comp (hk.prod (hvks.prod hu))
   have hextract := (computableInPolyTime_extractMerkleCollision hH hlen).tidy.comp
     (hk.prod ((hvk.prod hvku).prod (hu.prod (hpath'.prod hpath))))
-  unfold collisionOf decodeSignature
+  unfold collisionOf
   exact ComputableTidilyInPolyTime.cond hcond (hm.prod hprev) hextract
 
 include hH hlen hcap in
@@ -754,12 +760,11 @@ private theorem isOraclePPTOn_plantedHandler {bound : ℕ → ℕ}
   have hw := (ComputableTidilyInPolyTime.snd _ _).comp
     ((ComputableTidilyInPolyTime.fst _ _).comp hrest)
   have hsigned := (ComputableTidilyInPolyTime.snd _ _).comp hrest
-  have hu := (ComputableTidilyInPolyTime.length encBool).comp
-    (ComputableTidilyInPolyTime.unframe.comp hw)
-  have hm := ComputableTidilyInPolyTime.dropFrame.comp hw
+  have hr := IndexedSignatureScheme.requestDecoder.computableTidilyInPolyTime.comp hw
+  have hu := (ComputableTidilyInPolyTime.fst _ _).comp hr
+  have hm := (ComputableTidilyInPolyTime.snd _ _).comp hr
   have hcapn := hcap.tidy.comp hn
   have hbn := hboundPoly.tidy.comp hn
-  have hr := hu.prod hm
   have hlog := ComputableTidilyInPolyTime.cons' hr hsigned
   have hvks := (ComputableTidilyInPolyTime.map
     (ComputableTidilyInPolyTime.fst encBits encBits)).comp hkeys
@@ -768,17 +773,15 @@ private theorem isOraclePPTOn_plantedHandler {bound : ℕ → ℕ}
   have hcond : ComputableTidilyInPolyTime
       (fun p : (((ℕ × List Bool) × ℕ) × (List Bool × List (List Bool × List Bool))) ×
           ((Unit × List Bool) × List (ℕ × List Bool)) =>
-        decide ((IndexedSignatureScheme.decodeRequest p.2.1.2).1 < 2 ^ depth p.1.1.1.1 ∧
-          (IndexedSignatureScheme.decodeRequest p.2.1.2).1 ∉ p.2.2.map Prod.fst))
+        decide ((IndexedSignatureScheme.requestDecoder.decode p.2.1.2).1 < 2 ^ depth p.1.1.1.1 ∧
+          (IndexedSignatureScheme.requestDecoder.decode p.2.1.2).1 ∉ p.2.2.map Prod.fst))
       encHandlerInput encBool := by
-    unfold IndexedSignatureScheme.decodeRequest
     polytime
   have hcondi : ComputableTidilyInPolyTime
       (fun p : (((ℕ × List Bool) × ℕ) × (List Bool × List (List Bool × List Bool))) ×
           ((Unit × List Bool) × List (ℕ × List Bool)) =>
-        decide ((IndexedSignatureScheme.decodeRequest p.2.1.2).1 = p.1.1.2))
+        decide ((IndexedSignatureScheme.requestDecoder.decode p.2.1.2).1 = p.1.1.2))
       encHandlerInput encBool := by
-    unfold IndexedSignatureScheme.decodeRequest
     polytime
   have hq := IsOraclePPTOn.query_take (input := encHandlerInput) () hdigest hbn
   have hvki := (ComputableTidilyInPolyTime.fst _ _).comp
@@ -795,7 +798,7 @@ private theorem isOraclePPTOn_plantedHandler {bound : ℕ → ℕ}
         ((Unit × List Bool) × List (ℕ × List Bool))) ots =>
       (encodeSignature (p.1.2.2.getD p.1.1.2 ([], [])).1 ots
         (merklePath H p.1.2.1 (p.1.2.2.map Prod.fst) p.1.1.2),
-        IndexedSignatureScheme.decodeRequest p.2.1.2 :: p.2.2)) hqpost
+        IndexedSignatureScheme.requestDecoder.decode p.2.1.2 :: p.2.2)) hqpost
   have hkeyu :=
     (ComputableTidilyInPolyTime.listGetD (encA := encPair encBits encBits) ([], [])).comp
       (hkeys.prod hu)
@@ -809,13 +812,13 @@ private theorem isOraclePPTOn_plantedHandler {bound : ℕ → ℕ}
     (second := fun (p : (((ℕ × List Bool) × ℕ) × (List Bool × List (List Bool × List Bool))) ×
         ((Unit × List Bool) × List (ℕ × List Bool))) ots =>
       pure (encodeSignature
-        (p.1.2.2.getD (IndexedSignatureScheme.decodeRequest p.2.1.2).1 ([], [])).1 ots
+        (p.1.2.2.getD (IndexedSignatureScheme.requestDecoder.decode p.2.1.2).1 ([], [])).1 ots
         (merklePath H p.1.2.1 (p.1.2.2.map Prod.fst)
-          (IndexedSignatureScheme.decodeRequest p.2.1.2).1))) hsignPost.isPPTOn
+          (IndexedSignatureScheme.requestDecoder.decode p.2.1.2).1))) hsignPost.isPPTOn
   have hsample := (hsign.isOraclePPTOn (Operation := Unit)).map_with
     (f := fun (p : (((ℕ × List Bool) × ℕ) × (List Bool × List (List Bool × List Bool))) ×
         ((Unit × List Bool) × List (ℕ × List Bool))) sig =>
-      (sig, IndexedSignatureScheme.decodeRequest p.2.1.2 :: p.2.2))
+      (sig, IndexedSignatureScheme.requestDecoder.decode p.2.1.2 :: p.2.2))
     ((ComputableTidilyInPolyTime.snd encHandlerInput encBits).prod (hlog.comp hfst))
   have hpure := ((ComputableTidilyInPolyTime.const (encMid := encBits) ([] : List Bool)).prod
     hsigned).isOraclePPTOn (Operation := Unit)
@@ -882,10 +885,12 @@ private theorem plantedHandler_bound (hlen : ∀ k m, (H k m).length = k.length)
   have hpath (u : ℕ) := length_encList_merklePath_le (u := u) hlen hkL hvks
   have hu := length_unframe_le w
   have hm := length_dropFrame_le w
+  have hdecode :
+      IndexedSignatureScheme.requestDecoder.decode w = ((unframe w).length, dropFrame w) := rfl
   have hlog : (encList (encPair encUnary encBits)
-      (IndexedSignatureScheme.decodeRequest w :: signed)).length ≤
+      (IndexedSignatureScheme.requestDecoder.decode w :: signed)).length ≤
       (encList (encPair encUnary encBits) signed).length + 6 * w.length + 3 := by
-    simp only [IndexedSignatureScheme.decodeRequest, encList_cons, encPair_apply, encUnary_apply,
+    simp only [hdecode, encList_cons, encPair_apply, encUnary_apply,
       encBits_apply, List.length_append, length_frame, List.length_replicate]
     omega
   unfold plantedHandler at hres
@@ -899,7 +904,7 @@ private theorem plantedHandler_bound (hlen : ∀ k m, (H k m).length = k.length)
     refine ⟨?_, ?_⟩
     · simp only [encodeSignature, encPair_apply, encBits_apply, List.length_append, length_frame]
       omega
-    · simp only [IndexedSignatureScheme.decodeRequest, encList_cons, encPair_apply, encUnary_apply,
+    · simp only [hdecode, encList_cons, encPair_apply, encUnary_apply,
         encBits_apply, List.length_append, length_frame, List.length_replicate]
       omega
   · obtain ⟨sig, hsig, rfl⟩ := ProbOracleComp.mem_support_map hres
@@ -909,7 +914,7 @@ private theorem plantedHandler_bound (hlen : ∀ k m, (H k m).length = k.length)
     obtain ⟨ots, hots, rfl⟩ := hsig
     have hotsLen := hsignLen (_, _) ots hots
     simp only [encBits_apply, encPair_apply, List.length_append, length_frame, hlen] at hotsLen
-    set u := (IndexedSignatureScheme.decodeRequest w).1
+    set u := (IndexedSignatureScheme.requestDecoder.decode w).1
     have hvk := hkeyLen u
     have hp := hpath u
     have hpow : cs * (2 * (keys.getD u ([], [])).2.length + 1 + k.length + 1) ^ ds ≤
@@ -919,7 +924,7 @@ private theorem plantedHandler_bound (hlen : ∀ k m, (H k m).length = k.length)
     refine ⟨?_, ?_⟩
     · simp only [encodeSignature, encPair_apply, encBits_apply, List.length_append, length_frame]
       omega
-    · simp only [IndexedSignatureScheme.decodeRequest, encList_cons, encPair_apply, encUnary_apply,
+    · simp only [hdecode, encList_cons, encPair_apply, encUnary_apply,
         encBits_apply, List.length_append, length_frame, List.length_replicate]
       omega
   · have h := ProbOracleComp.eq_of_mem_support_pure hres
@@ -980,7 +985,7 @@ theorem isOraclePPT_oneTimeForger {bound : ℕ → ℕ}
   have hfinal : ComputableTidilyInPolyTime
       (fun pair : (((ℕ × List Bool) × ℕ) × (List Bool × List (List Bool × List Bool))) ×
           ((ℕ × List Bool × List Bool) × List (ℕ × List Bool)) =>
-        (H pair.1.2.1 pair.2.1.2.1, (decodeSignature pair.2.1.2.2).2.1))
+        (H pair.1.2.1 pair.2.1.2.1, (signatureDecoder.decode pair.2.1.2.2).2.1))
       (encPair encCaller
         (encPair (encPair encUnary (encPair encBits encBits)) (encList (encPair encUnary encBits))))
       (encPair encBits encBits) := by
@@ -996,8 +1001,9 @@ theorem isOraclePPT_oneTimeForger {bound : ℕ → ℕ}
     have hms := (ComputableTidilyInPolyTime.snd encUnary (encPair encBits encBits)).comp hout
     have hm := (ComputableTidilyInPolyTime.fst encBits encBits).comp hms
     have hsig := (ComputableTidilyInPolyTime.snd encBits encBits).comp hms
-    exact (hH.tidy.comp (hk.prod hm)).prod
-      (ComputableTidilyInPolyTime.unframe.comp (ComputableTidilyInPolyTime.dropFrame.comp hsig))
+    exact (hH.tidy.comp (hk.prod hm)).prod ((ComputableTidilyInPolyTime.fst _ _).comp
+      ((ComputableTidilyInPolyTime.snd _ _).comp
+        (signatureDecoder.computableTidilyInPolyTime.comp hsig)))
   have hstage : IsOraclePPTOn (encPair (encPair encUnary encBits) encUnary)
       (encPair encBits encBits)
       (fun c : (ℕ × List Bool) × ℕ =>
@@ -1010,11 +1016,11 @@ theorem isOraclePPT_oneTimeForger {bound : ℕ → ℕ}
             (fun j => StateT.lift (ProbOracleComp.sample (ProbComp.unifFin j)))
             (plantedHandler S H depth c.1.1 setup.1 setup.2 c.2 (bound c.1.1)))
           (adversary c.1.1 (publicKey H setup.1 setup.2))).run []
-        return (H setup.1 out.1.2.1, (decodeSignature out.1.2.2).2.1))
+        return (H setup.1 out.1.2.1, (signatureDecoder.decode out.1.2.2).2.1))
       (hrun.bind_with
         (second := fun (c : ((ℕ × List Bool) × ℕ) × (List Bool × List (List Bool × List Bool)))
           (out : (ℕ × List Bool × List Bool) × List (ℕ × List Bool)) =>
-            (pure (H c.2.1 out.1.2.1, (decodeSignature out.1.2.2).2.1) :
+            (pure (H c.2.1 out.1.2.1, (signatureDecoder.decode out.1.2.2).2.1) :
               WordOracleComp Unit (List Bool × List Bool)))
         (hfinal.isOraclePPTOn (Operation := Unit)))
   exact hleaf.bind_with

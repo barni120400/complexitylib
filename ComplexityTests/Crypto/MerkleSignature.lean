@@ -13,7 +13,8 @@ import Complexity.Tactic.PolyTime
 
 Merkle signatures over Lamport's one-time scheme on the identity function, with a toy truncating
 hash and two leaves: an honest signature at each leaf verifies, and changing the message, the
-leaf, or naming an index outside the tree is rejected. The capacity hypothesis holds for constant
+leaf, or naming an index outside the tree is rejected. The indexed signing oracle signs at a fresh
+leaf and refuses a repeated leaf or one outside the tree. The capacity hypothesis holds for constant
 depth and for depth `Nat.clog 2 (n + 1)`, whose capacity grows linearly.
 -/
 
@@ -112,5 +113,35 @@ example : signWith lamportId truncHash key keys 0 msg = pure (sigAt 0 sk₀) := 
     List.getD_cons_zero, frames_encList, List.length_map,
     List.length_range, length_truncHash, sk₀]
   rfl
+
+/-! ### The indexed signing oracle -/
+
+/-- Merkle signatures with two leaves. -/
+noncomputable abbrev twoLeaves : IndexedSignatureScheme :=
+  scheme lamportId truncHash (fun _ => 1) computableInPolyTime_truncHash length_truncHash hcapOne
+
+/-- The request word for `msg` at leaf `u`. -/
+def request (u : ℕ) : Unit × List Bool := ((), encPair encUnary encBits (u, msg))
+
+-- A fresh leaf is signed, and the request is logged.
+example : twoLeaves.indexedSigningOracle 4 (secretKey key keys) (request 1) [(0, msg)] =
+    (fun sig => (sig, [(1, msg), (0, msg)])) <$> sign lamportId truncHash (secretKey key keys) 1
+      msg := by
+  simp only [IndexedSignatureScheme.indexedSigningOracle, request,
+    IndexedSignatureScheme.requestDecoder.decode_enc]
+  simp [scheme]
+
+-- A repeated leaf is refused, even for a new message: the reply is empty and the log is unchanged.
+example : twoLeaves.indexedSigningOracle 4 (secretKey key keys) (request 0) [(0, [false])] =
+    pure ([], [(0, [false])]) := by
+  simp only [IndexedSignatureScheme.indexedSigningOracle, request,
+    IndexedSignatureScheme.requestDecoder.decode_enc]
+  simp [scheme]
+
+-- So is a leaf outside the tree.
+example : twoLeaves.indexedSigningOracle 4 (secretKey key keys) (request 2) [] = pure ([], []) := by
+  simp only [IndexedSignatureScheme.indexedSigningOracle, request,
+    IndexedSignatureScheme.requestDecoder.decode_enc]
+  simp [scheme]
 
 end ComplexityTests.Crypto.MerkleSignature

@@ -49,10 +49,10 @@ a repeated leaf.
 
 ## Main definitions
 
-* `Cslib.Crypto.MerkleSignature.encodeSignature`, `Cslib.Crypto.MerkleSignature.decodeSignature`:
+* `Cslib.Crypto.MerkleSignature.encodeSignature`, `Cslib.Crypto.MerkleSignature.signatureDecoder`:
   the signature word.
 * `Cslib.Crypto.MerkleSignature.publicKey`, `Cslib.Crypto.MerkleSignature.secretKey`,
-  `Cslib.Crypto.MerkleSignature.decodeSecretKey`: the key words.
+  `Cslib.Crypto.MerkleSignature.secretKeyDecoder`: the key words.
 * `Cslib.Crypto.MerkleSignature.keyGen`, `Cslib.Crypto.MerkleSignature.signWith`,
   `Cslib.Crypto.MerkleSignature.sign`, `Cslib.Crypto.MerkleSignature.verify`: the algorithms.
 * `Cslib.Crypto.MerkleSignature.scheme`: the indexed signature scheme.
@@ -87,29 +87,16 @@ def encodeSignature (vk ots : List Bool) (path : List (List Bool)) : List Bool :
 
 /-- Read the one-time verification key, the one-time signature and the authentication path of a
 signature word. -/
-def decodeSignature (sig : List Bool) : List Bool × List Bool × List (List Bool) :=
-  (unframe sig, unframe (dropFrame sig), frames (dropFrame (dropFrame sig)))
-
-@[simp]
-theorem decodeSignature_encodeSignature (vk ots : List Bool) (path : List (List Bool)) :
-    decodeSignature (encodeSignature vk ots path) = (vk, ots, path) := by
-  simp only [decodeSignature, encodeSignature, encPair_apply, unframe_frame_append,
-    dropFrame_frame_append, frames_encList, encBits_apply]
-  exact congrArg _ (congrArg _ (List.map_id path))
+def signatureDecoder : Decoder (encPair encBits (encPair encBits (encList encBits))) :=
+  Decoder.bits.pair (Decoder.bits.pair Decoder.bits.list)
 
 /-- The secret key: the hash key and the one-time key pairs. -/
 def secretKey (k : List Bool) (keys : List (List Bool × List Bool)) : List Bool :=
   encPair encBits (encList (encPair encBits encBits)) (k, keys)
 
 /-- Read the hash key and the one-time key pairs of a secret key word. -/
-def decodeSecretKey (sk : List Bool) : List Bool × List (List Bool × List Bool) :=
-  (unframe sk, (frames (dropFrame sk)).map fun w => (unframe w, dropFrame w))
-
-@[simp]
-theorem decodeSecretKey_secretKey (k : List Bool) (keys : List (List Bool × List Bool)) :
-    decodeSecretKey (secretKey k keys) = (k, keys) := by
-  simp [decodeSecretKey, secretKey, encPair_apply, unframe_frame_append,
-    dropFrame_frame_append, frames_encList, Function.comp_def]
+def secretKeyDecoder : Decoder (encPair encBits (encList (encPair encBits encBits))) :=
+  Decoder.bits.pair (Decoder.bits.pair Decoder.bits).list
 
 variable (S : SignatureScheme) (H : List Bool → List Bool → List Bool) (depth : ℕ → ℕ)
 
@@ -135,7 +122,7 @@ def signWith (k : List Bool) (keys : List (List Bool × List Bool)) (u : ℕ)
 
 /-- Sign `msg` at leaf `u` with a secret key word. -/
 def sign (sk : List Bool) (u : ℕ) (msg : List Bool) : ProbComp (List Bool) :=
-  signWith S H (decodeSecretKey sk).1 (decodeSecretKey sk).2 u msg
+  signWith S H (secretKeyDecoder.decode sk).1 (secretKeyDecoder.decode sk).2 u msg
 
 /-- Verify a signature on `msg` at leaf `u` under the public key `pk = (k, root)`: the attached
 verification key opens leaf `u` of the depth-`depth k.length` tree with root `root`
@@ -143,7 +130,7 @@ verification key opens leaf `u` of the depth-`depth k.length` tree with root `ro
 signature verifies on `H k msg`. -/
 def verify (pk : List Bool) (u : ℕ) (msg sig : List Bool) : Bool :=
   let k := unframe pk
-  let forged := decodeSignature sig
+  let forged := signatureDecoder.decode sig
   merkleVerify H k (depth k.length) (dropFrame pk) u forged.1 forged.2.2 &&
     S.verify forged.1 (H k msg) forged.2.1
 
@@ -171,7 +158,7 @@ theorem verify_sign (hlen : ∀ k m, (H k m).length = k.length) (n : ℕ)
     (hsig : sig ∈ (ProbComp.eval (sign S H keys.2 u msg)).support) :
     verify S H depth keys.1 u msg sig = true := by
   obtain ⟨k, otsKeys, hk, hotsLen, hots, rfl⟩ := mem_support_keyGen hkeys
-  simp only [sign, decodeSecretKey_secretKey, signWith, ProbComp.eval_bind,
+  simp only [sign, secretKey, secretKeyDecoder.decode_enc, signWith, ProbComp.eval_bind,
     ProbComp.eval_pure, PMF.mem_support_bind_iff, PMF.mem_support_pure_iff] at hsig
   obtain ⟨ots, hots_sig, rfl⟩ := hsig
   have hu' : u < otsKeys.length := hotsLen ▸ hu
@@ -186,8 +173,9 @@ theorem verify_sign (hlen : ∀ k m, (H k m).length = k.length) (n : ℕ)
   have hopen := merkleVerify_merklePath_of_clog_eq (H := H) (k := k) hdepth hu
   rw [hvk] at hopen
   have hverify := S.verify_sign n _ hkey (H k msg) (by rw [hlen, hk]) ots hots_sig
-  simp only [verify, publicKey, encPair_apply, unframe_frame_append, dropFrame_frame_append,
-    encBits_apply, decodeSignature_encodeSignature, hk, hopen, hverify, Bool.and_self]
+  simp only [verify, encodeSignature, signatureDecoder.decode_enc]
+  simp only [publicKey, encPair_apply, unframe_frame_append, dropFrame_frame_append,
+    encBits_apply, hk, hopen, hverify, Bool.and_self]
 
 /-! ### Efficiency -/
 
@@ -256,18 +244,6 @@ theorem isPPTOn_keyGen :
         (encPair encBits (encList (encPair encBits encBits)))).comp (hkq.prod hkeysq))
   exact hk.bind_with (hkeys.bind_with hpost.isPPTOn)
 
-private theorem computableTidilyInPolyTime_decodeSecretKey :
-    ComputableTidilyInPolyTime decodeSecretKey encBits
-      (encPair encBits (encList (encPair encBits encBits))) := by
-  have hframes : ComputableTidilyInPolyTime (fun sk => frames (dropFrame sk)) encBits
-      (encList encBits) :=
-    computableTidilyInDegree_frames.computableTidilyInPolyTime.comp
-      ComputableTidilyInPolyTime.dropFrame
-  exact ComputableTidilyInPolyTime.unframe.prod
-    ((ComputableTidilyInPolyTime.map
-      (ComputableTidilyInPolyTime.unframe.prod ComputableTidilyInPolyTime.dropFrame)).comp
-        hframes)
-
 include hH hlen in
 /-- Merkle signing is uniformly strict PPT. -/
 theorem isPPTOn_sign :
@@ -275,8 +251,8 @@ theorem isPPTOn_sign :
       (fun p => sign S H p.1 p.2.1 p.2.2) := by
   let E := encPair encBits (encPair encUnary encBits)
   have hdec : ComputableTidilyInPolyTime (fun p : List Bool × ℕ × List Bool =>
-      decodeSecretKey p.1) E (encPair encBits (encList (encPair encBits encBits))) :=
-    computableTidilyInPolyTime_decodeSecretKey.comp (ComputableTidilyInPolyTime.fst _ _)
+      secretKeyDecoder.decode p.1) E (encPair encBits (encList (encPair encBits encBits))) :=
+    secretKeyDecoder.computableTidilyInPolyTime.comp (ComputableTidilyInPolyTime.fst _ _)
   have hk := (ComputableTidilyInPolyTime.fst _ _).comp hdec
   have hkeys := (ComputableTidilyInPolyTime.snd _ _).comp hdec
   have hu : ComputableTidilyInPolyTime (fun p : List Bool × ℕ × List Bool => p.2.1) E encUnary :=
@@ -284,23 +260,23 @@ theorem isPPTOn_sign :
   have hmsg : ComputableTidilyInPolyTime (fun p : List Bool × ℕ × List Bool => p.2.2) E encBits :=
     (ComputableTidilyInPolyTime.snd _ _).comp (ComputableTidilyInPolyTime.snd _ _)
   have hkey : ComputableTidilyInPolyTime (fun p : List Bool × ℕ × List Bool =>
-      (decodeSecretKey p.1).2.getD p.2.1 ([], [])) E (encPair encBits encBits) :=
+      (secretKeyDecoder.decode p.1).2.getD p.2.1 ([], [])) E (encPair encBits encBits) :=
     (ComputableTidilyInPolyTime.listGetD (encA := encPair encBits encBits) ([], [])).comp
       (hkeys.prod hu)
   have hsign : IsPPTOn E encBits (fun p : List Bool × ℕ × List Bool =>
-      S.sign ((decodeSecretKey p.1).2.getD p.2.1 ([], [])).2
-        (H (decodeSecretKey p.1).1 p.2.2)) :=
+      S.sign ((secretKeyDecoder.decode p.1).2.getD p.2.1 ([], [])).2
+        (H (secretKeyDecoder.decode p.1).1 p.2.2)) :=
     S.isPPTOn_sign_comp ((ComputableTidilyInPolyTime.snd _ _).comp hkey)
       (hH.tidy.comp (hk.prod hmsg))
   have hpath : ComputableTidilyInPolyTime (fun p : List Bool × ℕ × List Bool =>
-      merklePath H (decodeSecretKey p.1).1
-        ((decodeSecretKey p.1).2.map Prod.fst) p.2.1) E (encList encBits) :=
+      merklePath H (secretKeyDecoder.decode p.1).1
+        ((secretKeyDecoder.decode p.1).2.map Prod.fst) p.2.1) E (encList encBits) :=
     (computableInPolyTime_merklePath hH hlen).tidy.comp
       (hk.prod ((computableTidilyInPolyTime_keyMap.comp hkeys).prod hu))
   have hpost : ComputableTidilyInPolyTime (fun q : (List Bool × ℕ × List Bool) × List Bool =>
-      encodeSignature ((decodeSecretKey q.1.1).2.getD q.1.2.1 ([], [])).1 q.2
-        (merklePath H (decodeSecretKey q.1.1).1
-          ((decodeSecretKey q.1.1).2.map Prod.fst) q.1.2.1))
+      encodeSignature ((secretKeyDecoder.decode q.1.1).2.getD q.1.2.1 ([], [])).1 q.2
+        (merklePath H (secretKeyDecoder.decode q.1.1).1
+          ((secretKeyDecoder.decode q.1.1).2.map Prod.fst) q.1.2.1))
       (encPair E encBits) encBits := by
     have hfst := ComputableTidilyInPolyTime.fst E encBits
     exact (ComputableTidilyInPolyTime.encode
@@ -337,15 +313,11 @@ theorem computableInPolyTime_verify :
       (fun p : List Bool × ℕ × List Bool × List Bool => depth (unframe p.1).length) E encUnary :=
     (computableInPolyTime_depth hcap).tidy.comp
       ((ComputableTidilyInPolyTime.length encBool).comp hk)
-  have hvk := ComputableTidilyInPolyTime.unframe.comp hsig
-  have hots := ComputableTidilyInPolyTime.unframe.comp
-    (ComputableTidilyInPolyTime.dropFrame.comp hsig)
-  have hpath : ComputableTidilyInPolyTime
-      (fun p : List Bool × ℕ × List Bool × List Bool =>
-        frames (dropFrame (dropFrame p.2.2.2))) E (encList encBits) :=
-    computableTidilyInDegree_frames.computableTidilyInPolyTime.comp
-      (ComputableTidilyInPolyTime.dropFrame.comp
-        (ComputableTidilyInPolyTime.dropFrame.comp hsig))
+  have hdec := signatureDecoder.computableTidilyInPolyTime.comp hsig
+  have hvk := (ComputableTidilyInPolyTime.fst _ _).comp hdec
+  have hrest := (ComputableTidilyInPolyTime.snd _ _).comp hdec
+  have hots := (ComputableTidilyInPolyTime.fst _ _).comp hrest
+  have hpath := (ComputableTidilyInPolyTime.snd _ _).comp hrest
   have hopen := (computableInPolyTime_merkleVerify hH hlen).tidy.comp
     ((hk.prod hd).prod ((hroot.prod hu).prod (hvk.prod hpath)))
   have hots_verify := S.computableTidilyInPolyTime_verify_comp hvk (hH.tidy.comp (hk.prod hmsg))

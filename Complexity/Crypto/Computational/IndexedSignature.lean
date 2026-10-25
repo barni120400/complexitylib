@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Signature
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 import Complexity.Computability.Probabilistic.Oracle.Composition
@@ -36,16 +37,19 @@ The definition here differs from [BonehShoup2023], Definition 14.6, in four labe
 * Instead of forbidding the adversary to repeat an index, the signing oracle refuses a repeated
   index, and an index `u ≥ q`, by returning the empty word and recording nothing. Every oracle
   adversary is therefore admissible.
-* A forgery may name any index; a scheme must itself reject indices outside its capacity.
+* A forgery may name any index, whereas the source's message space is `{1, …, q} × M`. The
+  structure does not require verification to reject an index `u ≥ q`; the game does. The oracle
+  never signs at such an index, so a forger that finds a valid signature there wins. This
+  strengthens the source notion.
 
-A request to the signing oracle is the word `encPair encUnary encBits (u, msg)`; other words are
-read by `decodeRequest`.
+A request to the signing oracle is the word `encPair encUnary encBits (u, msg)`. The oracle reads
+every word with the total decoder `requestDecoder`.
 
 ## Main definitions
 
 * `Cslib.Crypto.IndexedForger`: adaptive oracle adversary outputting `(u, msg, sig)`.
 * `Cslib.Crypto.IndexedSignatureScheme`: indexed signature scheme with capacity `q(n)`.
-* `Cslib.Crypto.IndexedSignatureScheme.decodeRequest`: the index and message of a request word.
+* `Cslib.Crypto.IndexedSignatureScheme.requestDecoder`: the index and message of a request word.
 * `Cslib.Crypto.IndexedSignatureScheme.indexedSigningOracle`,
   `Cslib.Crypto.IndexedSignatureScheme.indexedEufCmaGame`,
   `Cslib.Crypto.IndexedSignatureScheme.IndexedEUFCMA`: the security game and predicate.
@@ -114,13 +118,7 @@ attribute [program_certificate] capacity_polyTime keyGen_ppt sign_ppt verify_pol
 
 /-- The index and message of a request word: `encPair encUnary encBits (u, msg)` decodes to
 `(u, msg)`, and every other word decodes to some pair. -/
-def decodeRequest (request : List Bool) : ℕ × List Bool :=
-  ((unframe request).length, dropFrame request)
-
-/-- A well-formed request word decodes to its index and message. -/
-theorem decodeRequest_encPair (u : ℕ) (msg : List Bool) :
-    decodeRequest (encPair encUnary encBits (u, msg)) = (u, msg) := by
-  simp [decodeRequest, encPair_apply, unframe_frame_append, dropFrame_frame_append]
+def requestDecoder : Decoder (encPair encUnary encBits) := Decoder.unary.pair Decoder.bits
 
 /-- The indexed signing oracle at security parameter `n`. Its state lists the signed pairs, most
 recent first. A request `(u, msg)` is signed when `u < capacity n` and `u` was never used, and then
@@ -128,7 +126,7 @@ recorded; any other request receives the empty word and changes nothing. -/
 def indexedSigningOracle (S : IndexedSignatureScheme) (n : ℕ) (sk : List Bool)
     (request : Unit × List Bool) : StateT (List (ℕ × List Bool)) ProbComp (List Bool) :=
   fun signed =>
-    let r := decodeRequest request.2
+    let r := requestDecoder.decode request.2
     if r.1 < S.capacity n ∧ r.1 ∉ signed.map Prod.fst then do
       let sig ← S.sign sk r.1 r.2
       return (sig, r :: signed)
@@ -168,7 +166,7 @@ theorem isPPTOn_run_indexedSigningOracle (S : IndexedSignatureScheme) {adversary
       (fun pair : (ℕ × (List Bool × List Bool)) ×
           ((Unit × List Bool) × List (ℕ × List Bool)) =>
         S.indexedSigningOracle pair.1.1 pair.1.2.2 pair.2.1 pair.2.2) := by
-    unfold indexedSigningOracle decodeRequest
+    unfold indexedSigningOracle
     ppt
   apply hadversary.run_interpret_preprocess
     (prepare := fun caller : ℕ × (List Bool × List Bool) => (caller.1, caller.2.1))
@@ -180,8 +178,11 @@ theorem isPPTOn_run_indexedSigningOracle (S : IndexedSignatureScheme) {adversary
   intro caller request signed _ result hresult
   have hu := length_unframe_le request.2
   have hmsg := length_dropFrame_le request.2
-  unfold indexedSigningOracle decodeRequest at hresult
+  have hdecode :
+      requestDecoder.decode request.2 = ((unframe request.2).length, dropFrame request.2) := rfl
+  unfold indexedSigningOracle at hresult
   dsimp only at hresult
+  rw [hdecode] at hresult
   split_ifs at hresult with hguard
   · simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.mem_support_bind_iff,
       PMF.mem_support_pure_iff] at hresult
@@ -222,7 +223,8 @@ theorem isPPTOn_indexedEufCmaGame (S : IndexedSignatureScheme) {adversary : Inde
   exact S.keyGen_ppt.bind_with (hrun.bind_with hpost.isPPTOn)
 
 /-- Existential unforgeability of an indexed scheme under adaptive chosen-message attack
-([BonehShoup2023], Definition 14.6) against uniform strict oracle-PPT forgers. -/
+([BonehShoup2023], Definition 14.6, with the differences listed in the module docstring) against
+uniform strict oracle-PPT forgers. -/
 def IndexedEUFCMA (S : IndexedSignatureScheme) : Prop :=
   Game.Indistinguishable
     (fun adversary n => ProbComp.eval (S.indexedEufCmaGame adversary n))
