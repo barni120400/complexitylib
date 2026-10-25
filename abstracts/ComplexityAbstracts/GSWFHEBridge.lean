@@ -17,11 +17,12 @@ elementary terms, and asserts that suitable bootstrapping machinery exists. This
 that the library's constructions are such machinery: `leveled_witness` for
 `Leveled.scheme GSW.DepthParameters.decryptionCircuits budget` and `fullyHomomorphic_witness` for
 `FixedKey.scheme GSW.DepthParameters.decryptionCircuits`. It identifies their encryption,
-decryption and fixed-key generation with the explicit GSW algorithms, identifies the assumptions
-with the library's decision-LWE and circular-security experiments, and derives the elementary
-properties from `Scheme.Correct`, `Scheme.FixedWidth`, the native certificates and
-`Encryption.INDCPA`. The leveled endpoint is assembled for every efficiently computable budget
-from the generic bootstrapping lemmas. The bridge introduces no notation or elaboration rules.
+decryption and fixed-key generation, and the law of the leveled chain's first key pair, with the
+explicit GSW algorithms, identifies the assumptions with the library's decision-LWE and
+circular-security experiments, and derives the elementary properties from `Scheme.Correct`,
+`Scheme.FixedWidth`, the native certificates and `Encryption.INDCPA`. The leveled endpoint is
+assembled for every efficiently computable budget from the generic bootstrapping lemmas. The
+bridge introduces no notation or elaboration rules.
 -/
 
 namespace ComplexityTests.Abstracts.GSWFHEBridge
@@ -493,6 +494,30 @@ theorem leveled_encryptsAndDecrypts (budget : ℕ → ℕ) :
     simp only [Leveled.scheme, Leveled.decrypt, hkey, eval_decryptionCircuit]
     rfl
 
+/-- The library's leveled key generation, for every budget, publishes the chain's first public key
+and keeps its secret as the first endpoint; that key pair has GSW's key-generation law. The rest
+of the chain is sampled after it and is projected away. -/
+theorem leveled_keyGen (budget : ℕ → ℕ) (security : ℕ) :
+    (ProbComp.eval ((Leveled.scheme GSW.DepthParameters.decryptionCircuits budget).keyGen
+        security)).map (fun keys => (Turing.MultiTapeTM.unframe
+          (Turing.MultiTapeTM.unframe keys.1), Turing.MultiTapeTM.unframe keys.2)) =
+      keyGeneration security := by
+  have hproj (first : List Bool × List Bool) (rest : List (List Bool × List Bool))
+      (links : List (List (List Bool))) :
+      (Turing.MultiTapeTM.unframe (Turing.MultiTapeTM.unframe
+          (Leveled.keyPair (2 * budget security) (first :: rest) links).1),
+        Turing.MultiTapeTM.unframe
+          (Leveled.keyPair (2 * budget security) (first :: rest) links).2) = first := by
+    simp only [Leveled.keyPair, Leveled.encPublicKey, Leveled.encSecretKey, encPair, encList,
+      encBits, Function.Embedding.coeFn_mk, Function.Embedding.refl_apply, List.map_cons,
+      List.flatMap_cons, Function.comp_apply, unframe_frame_append, List.getD_cons_zero]
+  change (ProbComp.eval ((fun chain => Leveled.keyPair (2 * budget security) chain.1 chain.2) <$>
+    GSW.DepthParameters.scheme.generateKeyChain security (2 * budget security))).map _ = _
+  simp only [Scheme.generateKeyChain, Scheme.generateKeys, OracleComp.replicate_succ,
+    ProbComp.eval_map, ProbComp.eval_bind, ProbComp.eval_pure, PMF.map_bind, PMF.bind_bind,
+    PMF.pure_map, PMF.bind_map, Function.comp_apply, hproj, PMF.bind_const, PMF.bind_pure,
+    (base_scheme security).1]
+
 /-- The library's fixed-key key generation is the self-loop key generation. -/
 theorem fixedKey_keyGen (security : ℕ) :
     ProbComp.eval ((FixedKey.scheme GSW.DepthParameters.decryptionCircuits).keyGen security) =
@@ -582,6 +607,10 @@ theorem leveled_witness (hLWE : DecisionLWE) :
       PolynomiallyBounded (fun security => 3 * secretWidth security + 1) ∧
       PolynomiallyBounded (fun security => ciphertextWidth security + 1) ∧
       ∀ budget : ℕ → ℕ, Computation.PolyTime budget Encoding.encUnary Encoding.encUnary →
+        (∀ security, (ProbComp.eval
+          ((Leveled.scheme GSW.DepthParameters.decryptionCircuits budget).keyGen security)).map
+            (fun keys => (Turing.MultiTapeTM.unframe (Turing.MultiTapeTM.unframe keys.1),
+              Turing.MultiTapeTM.unframe keys.2)) = keyGeneration security) ∧
         EncryptsAndDecrypts (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget)
           (leveledEncryption Turing.MultiTapeTM.unframe)
           (leveledDecryption Turing.MultiTapeTM.unframe Turing.MultiTapeTM.dropFrame) ∧
@@ -610,7 +639,8 @@ theorem leveled_witness (hLWE : DecisionLWE) :
     Leveled.correct_fixedWidth_indCPA D GSW.DepthParameters.correct
       GSW.DepthParameters.fixedWidth GSW.DepthParameters.bootstrappable
       (GSW.DepthParameters.indCPA_scheme (decisionLWE_iff.mp hLWE)) hkeyGen hencrypt hD hb
-  exact ⟨leveled_encryptsAndDecrypts budget, fun security => hcircuits budget security,
+  exact ⟨leveled_keyGen budget, leveled_encryptsAndDecrypts budget,
+    fun security => hcircuits budget security,
     homomorphic_of_correct hcorrect fun _ _ h => h,
     fixedWidths_of_fixedWidth hwidth fun _ _ h => h,
     native_of (Leveled.isPPTOn_scheme_keyGen hkeyGen hencrypt D budget hb)
@@ -662,6 +692,8 @@ theorem leveled {unframe dropFrame : List Bool → List Bool}
       PolynomiallyBounded (fun security => ciphertextWidth security + 1) ∧
       ∀ budget : ℕ → ℕ, Computation.PolyTime budget Encoding.encUnary Encoding.encUnary →
         ∃ S : Homomorphic.Scheme,
+          (∀ security, (ProbComp.eval (S.keyGen security)).map
+            (fun keys => (unframe (unframe keys.1), unframe keys.2)) = keyGeneration security) ∧
           EncryptsAndDecrypts S (leveledEncryption unframe)
             (leveledDecryption unframe dropFrame) ∧
           DecryptsWith S (fun security => 3 * secretWidth security + 1)

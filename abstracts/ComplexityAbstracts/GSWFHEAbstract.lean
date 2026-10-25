@@ -25,21 +25,24 @@ indistinguishable from an encryption of zeros.
 **The core is written out.** GSW key generation, encryption and decryption at the parameter
 family are stated below as explicit algorithms, and both assumptions are stated on them. The
 leveled scheme of `leveled` encrypts and decrypts exactly with these algorithms behind a one-bit
-tag and a framed pair of secret keys. The fully homomorphic scheme of `fullyHomomorphic` encrypts
-and decrypts exactly with them, and its key generation is exactly Gentry's self-loop key: a GSW
-key pair together with encryptions of its secret-key bits under its own public key.
+tag and a framed pair of secret keys, and the key pair for fresh ciphertexts, read from the first
+framed words of its keys, has exactly the GSW key-generation law. The fully homomorphic scheme of
+`fullyHomomorphic` encrypts and decrypts exactly with them, and its key generation is exactly
+Gentry's self-loop key: a GSW key pair together with encryptions of its secret-key bits under its
+own public key.
 
-**Only the bootstrapping machinery is existential:** homomorphic evaluation, the leveled scheme's
-key chain and the polynomial-size decryption circuits. The theorems state that such machinery
-exists with elementary properties: correctness for the allowed circuits, fixed key and ciphertext
-widths, one decryption circuit family for all depths, native efficiency and IND-CPA security.
-These properties exclude trivial witnesses. Decryption is the fixed GSW decryption, and
-evaluated ciphertexts have the fixed ciphertext width, so evaluation cannot leave the computation
-to decryption: it must output a word of that width that GSW decryption maps to the circuit's
-output. Nor can evaluation work in the clear. Evaluation is efficient and accepts the challenge
-ciphertext of the IND-CPA game, so if the public key revealed the secret key that decrypts
-evaluated ciphertexts, an adversary could evaluate a depth-zero circuit, whose output is its
-input, on the challenge and read the hidden bit.
+**Only the bootstrapping machinery is existential:** homomorphic evaluation, the rest of the leveled
+scheme's keys and the polynomial-size decryption circuits. For `leveled` only the marginal law of
+the fresh-ciphertext key pair is fixed; the later keys of the chain, the encrypted links and their
+joint law with that pair are not. The theorems state that such machinery exists with elementary
+properties: correctness for the allowed circuits, fixed key and ciphertext widths, one decryption
+circuit family for all depths, native efficiency and IND-CPA security. These properties exclude
+trivial witnesses. Decryption is the fixed GSW decryption, and evaluated ciphertexts have the fixed
+ciphertext width, so evaluation cannot leave the computation to decryption: it must output a word of
+that width that GSW decryption maps to the circuit's output. Nor can evaluation work in the clear.
+Evaluation is efficient and accepts the challenge ciphertext of the IND-CPA game, so if the public
+key revealed the secret key that decrypts evaluated ciphertexts, an adversary could evaluate a
+depth-zero circuit, whose output is its input, on the challenge and read the hidden bit.
 
 **Provenance (not part of the checked statements).** The library's constructions witness both
 theorems. In the namespace `Cslib.Crypto.Homomorphic`, write `D` for GSW's decryption circuits
@@ -60,9 +63,9 @@ each a foundational model:
   `Cslib.Circuits.Boolean.encCircuit`, the input format of native evaluation, explained before
   `Native`.
 * Under `Computability.Machines.Turing.MultiTape`, the encodings from which that code is
-  assembled: framing (`Encodings.Basic`), pairs (`Encodings.Pair`), lists (`Encodings.List`),
-  binary numbers (`Encodings.Nat`), and unary numbers, `n` written as `n` ones
-  (`Complexity.Primitives`; only `encUnary` is reached there, and no tidy notion is).
+  assembled: framing (`Encodings.Frame.Basic`), pairs (`Encodings.Pair`), lists
+  (`Encodings.List`), binary numbers (`Encodings.Nat.Bits`), and unary numbers, `n` written as
+  `n` ones (`Encodings.Unary`).
 Lean checks every proof through `GSWFHEBridge`.
 
 The claims are perfect correctness on supported fresh encryptions, fixed key and ciphertext
@@ -115,10 +118,15 @@ def ciphertextWidth (security : ℕ) : ℕ := rows security * rows security
 
 /-! ## Representation details
 
-Residues modulo `2 ^ w` are written with exactly `w` bits, least significant first. A public key
-is the matrix `[B t + e | B]` in row-major order, its noisy column first; a secret key lists the
-residues of `t`; a ciphertext lists every bit of `μ G + R A`, its rows indexed by `(i, k)` and its
-columns by `(j, l)`. These words are the actual inputs and outputs of the native algorithms.
+Residues modulo `2 ^ w` are written with exactly `w` bits, least significant first. GSW writes each
+coefficient with `ℓ` bits, one more than the floor of `log q` [GentrySahaiWaters2013, Section 3.1],
+which is `w + 1` for `q = 2 ^ w`, so its `N` is `(n + 1)(w + 1)`. This file omits the top digit
+position, whose power of two `2 ^ w` is zero modulo `q` and whose bit is zero in every canonical
+residue; decryption reads the same row in both layouts, the one whose gadget coefficient
+`2 ^ (w - 1)` lies in `(q / 4, q / 2]`. A public key is the matrix `[B t + e | B]` in row-major
+order, its noisy column first; a secret key lists the residues of `t`; a ciphertext lists every
+bit of `μ G + R A`, its rows indexed by `(i, k)` and its columns by `(j, l)`. These words are the
+actual inputs and outputs of the native algorithms.
 
 Keys of the bootstrapped schemes are framed words (`Encoding.frame` in the shared foundations).
 `unframe` reads the first framed word and `dropFrame` returns what follows it; both are defined
@@ -464,20 +472,25 @@ def ChosenMessageSecure (S : Cslib.Crypto.Homomorphic.Scheme) : Prop :=
 `Cslib.PolynomiallyBounded f` means that a fixed power bounds `f` eventually: some `d` has
 `f security ≤ security ^ d` for all large `security`.
 
-Gentry's Definition 3 asks for one decryption circuit shared by all depths, correctness for
-every circuit up to the depth, and algorithms polynomial in the parameter and the depth
-[Gentry2009, Definition 3]. In `leveled`, one polynomial-size circuit family is chosen first.
-Then for every depth budget computable in unary polynomial time, a scheme exists that encrypts
-and decrypts with the leveled algorithms above, decrypts with this circuit family, is correct for
-every circuit of depth at most the budget, has fixed polynomial widths, native algorithms and
-IND-CPA security. Any polynomially bounded depth `d(security) ≤ c (security + 1) ^ e` is covered
-by the budget `c (security + 1) ^ e`. The runtime polynomial may depend on the budget function,
-so it need not be one polynomial in the parameter and the depth.
+Gentry's Definition 3 asks for one decryption circuit shared by all depths, correctness for every
+circuit up to the depth, and algorithms polynomial in the parameter and the depth [Gentry2009,
+Definition 3]. In `leveled`, one polynomial-size circuit family is chosen first. Then for every
+depth budget computable in unary polynomial time, a scheme exists whose key pair for fresh
+ciphertexts has the GSW key-generation law, that encrypts and decrypts with the leveled algorithms
+above, decrypts with this circuit family, is correct for every circuit of depth at most the budget,
+has fixed polynomial widths, native algorithms and IND-CPA security. Any polynomially bounded depth
+`d(security) ≤ c (security + 1) ^ e` is covered by the budget `c (security + 1) ^ e`. The runtime
+polynomial may depend on the budget function, so it need not be one polynomial in the parameter and
+the depth.
 -/
 
-/-- **Leveled fully homomorphic encryption from decision LWE** [Gentry2009, Theorem 3]. Only the
-decision-LWE assumption for this family is used; there is no circular-security assumption.
-IND-CPA is the asymptotic consequence of [Gentry2009, Theorem 4], without its exact loss. -/
+/-- **Leveled fully homomorphic encryption from decision LWE** [Gentry2009, Theorem 3]. In each
+scheme, the first framed word of the first framed component of the public key and the first
+framed word of the secret key, the key pair under which fresh bits are encrypted and decrypted,
+are jointly distributed as `keyGeneration`. Only this marginal law is fixed; the rest of the key
+is not. Only the decision-LWE assumption for this family is used; there is no circular-security
+assumption. IND-CPA is the asymptotic consequence of [Gentry2009, Theorem 4], without its exact
+loss. -/
 theorem leveled (hLWE : DecisionLWE) :
     ∃ circuit : ∀ security, Cslib.Circuits.Circuit Cslib.Circuits.Boolean.signature
         ((3 * secretWidth security + 1) + (ciphertextWidth security + 1)) 1,
@@ -486,6 +499,8 @@ theorem leveled (hLWE : DecisionLWE) :
       Cslib.PolynomiallyBounded (fun security => ciphertextWidth security + 1) ∧
       ∀ budget : ℕ → ℕ, Computation.PolyTime budget Encoding.encUnary Encoding.encUnary →
         ∃ S : Cslib.Crypto.Homomorphic.Scheme,
+          (∀ security, (Cslib.ProbComp.eval (S.keyGen security)).map
+            (fun keys => (unframe (unframe keys.1), unframe keys.2)) = keyGeneration security) ∧
           EncryptsAndDecrypts S leveledEncryption leveledDecryption ∧
           DecryptsWith S (fun security => 3 * secretWidth security + 1)
             (fun security => ciphertextWidth security + 1) circuit ∧
@@ -499,10 +514,10 @@ theorem leveled (hLWE : DecisionLWE) :
     (GSWFHEBridge.dropFrame_eq_of rfl rfl (fun _ => rfl) (fun _ _ => rfl)) hLWE
 
 /-- **Fully homomorphic encryption from decision LWE and circular security** [Gentry2009,
-Definition 2 and Section 2]. A scheme whose key generation is the self-loop key and which
-encrypts and decrypts with GSW is correct for every circuit, keeps GSW's widths, decrypts with
-polynomial-size circuits, has native algorithms and is IND-CPA, assuming decision LWE for this
-family and, separately, one-key circular security of GSW. -/
+Definition 2 and Section 2]. There is a scheme whose key generation is the self-loop key and
+which encrypts and decrypts with GSW that is correct for every circuit, keeps GSW's widths,
+decrypts with polynomial-size circuits, has native algorithms and is IND-CPA, assuming decision
+LWE for this family and, separately, one-key circular security of GSW. -/
 theorem fullyHomomorphic (hLWE : DecisionLWE) (hcircular : CircularSecure) :
     ∃ circuit : ∀ security, Cslib.Circuits.Circuit Cslib.Circuits.Boolean.signature
         (secretWidth security + ciphertextWidth security) 1,
@@ -533,9 +548,9 @@ info: abstract audit passed for `ComplexityTests.Abstracts.GSWFHEAbstract`: 56 r
   Complexity.Languages.Probabilistic.Basic,
   -- the binary circuit code and the encodings it is assembled from
   Complexity.Computability.Circuit.Boolean.Encoding,
-  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic,
+  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame.Basic,
   Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair,
   Complexity.Computability.Machines.Turing.MultiTape.Encodings.List,
-  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat,
-  Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
+  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits,
+  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
 ]
