@@ -52,7 +52,10 @@ so they stay polynomially long in the length of the table.
 * `Cslib.MCSP.exists_circuit_of_checkCertificateOn`,
   `Cslib.MCSP.exists_checkCertificateOn_append`,
   `Cslib.MCSP.exists_circuit_of_checkCertificate`,
-  `Cslib.MCSP.exists_checkCertificate_append`: soundness and completeness of the generic verifiers.
+  `Cslib.MCSP.exists_checkCertificate_append`,
+  `Cslib.MCSP.exists_circuit_of_validCertificate`,
+  `Cslib.MCSP.exists_validCertificate_of_circuit`: soundness and completeness of the generic
+  verifiers and of `validCertificate` / `evalCertificate`.
 * `Cslib.MCSP.mem_of_verifier_eq_true`, `Cslib.MCSP.exists_verifier_append`: the verifier accepts
   some certificate exactly for the instances in MCSP, certificates of a fixed length suffice, and
   bits after them are ignored.
@@ -212,6 +215,34 @@ theorem exists_checkCertificate_append {accept : List Bool → Bool → Bool}
     ⟨fun i => y[i.val]'(by rw [BitString.mem_enumList.1 hy]; exact i.isLt),
       List.ext_getElem (by simp [BitString.mem_enumList.1 hy]) fun _ _ _ => by simp⟩
   exact ⟨y', rfl, haccept y'⟩
+
+/-- Soundness of `validCertificate`: a well-formed certificate for `(n, s)` decodes to a circuit of
+size at most `s` whose evaluation agrees with `evalCertificate`. -/
+theorem exists_circuit_of_validCertificate {n s : ℕ} {w : List Bool}
+    (hw : validCertificate n s w = true) :
+    ∃ C : Circuit signature n 1, C.size ≤ s ∧
+      ∀ x : BitString n, C.eval interpretation x 0 = evalCertificate n s w (List.ofFn x) := by
+  have hcheck : checkCertificate (fun y out => out == evalCertificate n s w y) n s w = true := by
+    simp [checkCertificate, checkCertificateOn, hw]
+  obtain ⟨C, hcS, heval⟩ := exists_circuit_of_checkCertificate hcheck
+  exact ⟨C, hcS, fun x => beq_iff_eq.1 (heval x)⟩
+
+/-- Completeness of `validCertificate`: every circuit of size at most `s` on `n` inputs has a
+canonical certificate of length `certLength n s` satisfying `validCertificate` whose
+`evalCertificate` agrees with the circuit on all `n`-bit inputs. -/
+theorem exists_validCertificate_of_circuit {n s : ℕ} (C : Circuit signature n 1)
+    (hcS : C.size ≤ s) :
+    ∃ w : List Bool, w.length = certLength n s ∧ validCertificate n s w = true ∧
+      ∀ x : BitString n, evalCertificate n s w (List.ofFn x) = C.eval interpretation x 0 := by
+  obtain ⟨w, hlen, hcheck⟩ := exists_checkCertificate_append
+    (accept := fun y out => out == C.eval interpretation (BitString.ofList n y) 0) hcS
+    (fun y => by simp)
+  have hw := hcheck []
+  rw [List.append_nil] at hw
+  simp only [checkCertificate, checkCertificateOn, Bool.and_eq_true, List.all_eq_true,
+    beq_iff_eq] at hw
+  refine ⟨w, hlen, hw.1, fun x => ?_⟩
+  simpa using hw.2 (List.ofFn x) (BitString.mem_enumList.2 List.length_ofFn)
 
 /-- The verifier for MCSP: the certificate must describe a circuit on `n` inputs with at most
 `budget n s` gates (`readCertificate`) that agrees with the truth table on all `2 ^ n` inputs. -/

@@ -31,9 +31,7 @@ example : validCertificate 1 0 [false] = true := by decide
 example : evalCertificate 1 0 [false] [false] = false := by decide
 example : evalCertificate 1 0 [false] [true] = true := by decide
 
--- Subcube prefix membership and point agreement on 2-bit inputs.
-example : [true].isPrefixOf [true, false] = true := by decide
-example : [true].isPrefixOf [false, false] = false := by decide
+-- Point agreement on 2-bit inputs.
 example : agreesOnPoint 2 0 [true] [false, false] [false, false] [false, false] [true, false] =
     true := by decide
 

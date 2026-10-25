@@ -34,7 +34,7 @@ and Section 5][McKayMurrayWilliams2019].
 
 Assuming `NP ⊆ P/poly`, the polynomial-hierarchy language `CircuitMinMergeLanguage`
 (`Cslib.MCSP.CircuitMinMergeLanguage`), adapted from `Circuit-Min-Merge` in
-[McKayMurrayWilliams2019, Proof of Lemma 3.1], has polynomial-size circuits: given two subcube
+[McKayMurrayWilliams2019, Section 2.1], has polynomial-size circuits: given two subcube
 circuit certificates `w₀` and `w₁` for the half-subcubes `p ++ [false]` and `p ++ [true]` of
 `{0, 1} ^ n` (rather than `t` intervals), it selects the `Cslib.BitString.wordLt`-least valid
 size-`≤ s` circuit certificate `w` of length `certLength n s` (rather than a minimum-size circuit)
@@ -46,17 +46,19 @@ size `2 ^ n · poly(n, s(n))` deciding the `2 ^ n`-bit slice of `GapMCSP.yesSet 
 (`Cslib.MCSP.exists_complexity_yesSet_le_of_NP_subset_PPoly`).
 
 Taking the contrapositive magnifies `2 ^ n · poly(n, s(n))` circuit lower bounds for
-`GapMCSP.yesSet s` to `NP ⊄ P/poly` and `P ≠ NP`
-(`Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_hard`). Relative
-to [McKayMurrayWilliams2019, Theorem 1.4, third bullet], these statements incorporate four
-specializations:
+`GapMCSP.yesSet s` to `NP ⊄ P/poly` (`Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_hard`) and, via
+`P ⊆ P/poly`, to `P ≠ NP` (`Cslib.MCSP.P_ne_NP_of_yesSet_hard`). Relative to
+[McKayMurrayWilliams2019, Theorem 1.4, third bullet], the `NP ⊄ P/poly` magnification statements
+incorporate four specializations:
 1. decision `GapMCSP.yesSet s` (`MCSP[s]`) instead of `search-MCSP^A[s]`;
 2. no oracle (`A = ∅`);
 3. fan-in-2 De Morgan circuits counting all gates (`Cslib.Circuits.Circuit.size`);
 4. a size-only lower bound, whereas the paper assumes no circuits of simultaneous size
    `N · poly(s)` and depth `poly(s)`.
-Each specialization makes the lower-bound hypothesis stronger (a decision lower bound implies a
-search lower bound, and a size-only lower bound implies a combined size-and-depth lower bound).
+Specializations (1) and (4) strengthen the lower-bound hypothesis (a decision lower bound implies a
+search lower bound, and a size-only lower bound implies a combined size-and-depth lower bound),
+while (2) and (3) fix parameters allowed by the source (`A ∈ PH`), making the Lean theorem a
+special case.
 
 ## Main definitions
 
@@ -73,14 +75,16 @@ search lower bound, and a size-only lower bound implies a combined size-and-dept
   `CircuitMinMergeLanguage ∈ PPolyOn encMerge`.
 * `Cslib.MCSP.exists_complexity_yesSet_le_of_NP_subset_PPoly`: under `NP ⊆ P/poly`,
   `GapMCSP.yesSet s` has circuits of size `2 ^ n · c · (n + s n + 1) ^ c` on `2 ^ n`-bit truth
-  tables (`[McKayMurrayWilliams2019, Lemma 3.1 and Section 5]`).
+  tables (`[McKayMurrayWilliams2019, Lemma 3.1 and Section 5 (proof of Theorem 1.4, C = P/poly
+  case)]`).
 * `Cslib.MCSP.exists_complexity_yesSet_pow_le_of_NP_subset_PPoly`: specialization to polynomial
   schedules `s(n) = n ^ k`.
-* `Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_hard`,
-  `Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_pow_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_pow_hard`:
-  circuit lower bounds for `GapMCSP.yesSet` imply `NP ⊄ P/poly` and `P ≠ NP`
-  (`[McKayMurrayWilliams2019, Theorem 1.4, third bullet]`, specialized to decision `MCSP[s]`
-  without oracle and size-only De Morgan circuit lower bounds).
+* `Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_hard`,
+  `Cslib.MCSP.not_NP_subset_PPoly_of_yesSet_pow_hard`: circuit lower bounds for `GapMCSP.yesSet`
+  imply `NP ⊄ P/poly` (`[McKayMurrayWilliams2019, Theorem 1.4, third bullet]`, specialized to
+  decision `MCSP[s]` without oracle and size-only De Morgan circuit lower bounds).
+* `Cslib.MCSP.P_ne_NP_of_yesSet_hard`, `Cslib.MCSP.P_ne_NP_of_yesSet_pow_hard`: immediate
+  corollaries concluding `P ≠ NP` via `P ⊆ P/poly`.
 
 ## References
 
@@ -133,46 +137,11 @@ private theorem eq_of_wordLt_eq_false {m : ℕ} {w₁ w₂ : List Bool}
     decide
   exact congrArg (List.ofFn ∘ ofLex) (le_antisymm (not_lt.1 h2) (not_lt.1 h1))
 
-/-! ### Soundness and completeness of `validCertificate` and `evalCertificate` -/
-
-/-- Soundness of `validCertificate`: a well-formed certificate for `(n, s)` decodes to a circuit of
-size at most `s` whose evaluation agrees with `evalCertificate`. -/
-private theorem exists_circuit_of_validCertificate {n s : ℕ} {w : List Bool}
-    (hw : validCertificate n s w = true) :
-    ∃ C : Circuit signature n 1, C.size ≤ s ∧
-      ∀ x : BitString n, C.eval interpretation x 0 = evalCertificate n s w (List.ofFn x) := by
-  have hcheck : checkCertificate (fun y out => out == evalCertificate n s w y) n s w = true := by
-    simp [checkCertificate, checkCertificateOn, hw]
-  obtain ⟨C, hcS, heval⟩ := exists_circuit_of_checkCertificate hcheck
-  exact ⟨C, hcS, fun x => beq_iff_eq.1 (heval x)⟩
-
-/-- Completeness of `validCertificate`: every circuit of size at most `s` on `n` inputs has a
-canonical certificate of length `certLength n s` satisfying `validCertificate` whose
-`evalCertificate` agrees with the circuit on all `n`-bit inputs. -/
-private theorem exists_validCertificate_of_circuit {n s : ℕ} (C : Circuit signature n 1)
-    (hcS : C.size ≤ s) :
-    ∃ w : List Bool, w.length = certLength n s ∧ validCertificate n s w = true ∧
-      ∀ x : BitString n, evalCertificate n s w (List.ofFn x) = C.eval interpretation x 0 := by
-  obtain ⟨w, hlen, hcheck⟩ := exists_checkCertificate_append
-    (accept := fun y out => out == C.eval interpretation (BitString.ofList n y) 0) hcS
-    (fun y => by simp)
-  have hw := hcheck []
-  rw [List.append_nil] at hw
-  simp only [checkCertificate, checkCertificateOn, Bool.and_eq_true, List.all_eq_true,
-    beq_iff_eq] at hw
-  refine ⟨w, hlen, hw.1, fun x => ?_⟩
-  simpa using hw.2 (List.ofFn x) (BitString.mem_enumList.2 List.length_ofFn)
-
 /-! ### Subcubes and child-agreement predicates -/
 
-private theorem isPrefixOf_eq_take_beq : ∀ p x : List Bool,
-    p.isPrefixOf x = (x.take p.length == p)
-  | [], _ => rfl
-  | _ :: _, [] => rfl
-  | a :: p, b :: x => by
-    simp only [List.isPrefixOf_cons_cons, List.length_cons, List.take_succ_cons,
-      isPrefixOf_eq_take_beq p x]
-    cases a <;> cases b <;> rfl
+private theorem isPrefixOf_eq_take_beq (p x : List Bool) :
+    p.isPrefixOf x = (x.take p.length == p) := by
+  rw [Bool.eq_iff_iff, List.isPrefixOf_iff_prefix, List.prefix_iff_eq_take, beq_iff_eq, eq_comm]
 
 private theorem isPrefixOf_of_length_eq {p x : List Bool} (hp : p.length = x.length) :
     p.isPrefixOf x = true ↔ x = p := by
@@ -284,7 +253,7 @@ def mergeCert₁ (a : MergeInput) : List Bool :=
   (a.2.drop (stateWidth a.1.1.1 a.1.1.2 + 1)).take (certLength a.1.1.1 a.1.1.2)
 
 /-- **The `CircuitMinMergeLanguage` decision problem**, adapted from `Circuit-Min-Merge` in
-[McKayMurrayWilliams2019, Proof of Lemma 3.1]: given parameters `((n, s), (p, j))` and
+[McKayMurrayWilliams2019, Section 2.1]: given parameters `((n, s), (p, j))` and
 concatenated child states `v` representing `(ok₀, w₀)` and `(ok₁, w₁)` for the two half-subcubes
 `p ++ [false]` and `p ++ [true]` (rather than `t` intervals), accepts when `ok₀ = true`,
 `ok₁ = true`, and there is a `BitString.wordLt`-least valid size-`≤ s` merged certificate `w`
@@ -448,7 +417,7 @@ open ComputableTidilyInPolyTime in
 /-- **Under `NP ⊆ P/poly`, `CircuitMinMergeLanguage` has polynomial-size circuits.** Since
 `CircuitMinMergeLanguage` is defined by bounded existential and universal quantifiers over
 polynomial-time predicates, nonuniform quantifier elimination puts it in `PPolyOn encMerge`
-[McKayMurrayWilliams2019, Proof of Lemma 3.1]. -/
+[McKayMurrayWilliams2019, Section 2.1 and Section 5 (proof of Theorem 1.4)]. -/
 theorem circuitMinMergeLanguage_mem_PPolyOn (hNP : NP encBits ⊆ PPolyOn encBits) :
     CircuitMinMergeLanguage ∈ PPolyOn encMerge := by
   let encQ := encPair encMerge encBits
@@ -1028,14 +997,12 @@ theorem not_NP_subset_PPoly_of_yesSet_hard
   obtain ⟨s, n, hlb⟩ := h c hc_pos
   exact (lt_irrefl _) ((hub s n).trans_lt hlb)
 
-/-- **Hardness magnification for `MCSP[s]` to `P ≠ NP`**
-[McKayMurrayWilliams2019, Theorem 1.4, third bullet]: if for every `c > 0` there exist a schedule
-`s` and input arity `n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet s` requires more than
-`2 ^ n * c * (n + s n + 1) ^ c` gates, then `P ≠ NP`.
+/-- **Hardness magnification for `MCSP[s]` to `P ≠ NP`**: if for every `c > 0` there exist a
+schedule `s` and input arity `n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet s` requires
+more than `2 ^ n * c * (n + s n + 1) ^ c` gates, then `P ≠ NP`.
 
-Relative to the paper's statement, this specializes `search-MCSP^A[s]` to decision
-`GapMCSP.yesSet s` (`MCSP[s]`), sets `A = ∅`, uses fan-in-2 De Morgan circuits counting all gates,
-and assumes a size-only lower bound rather than a combined size-and-depth lower bound. -/
+This follows immediately from `not_NP_subset_PPoly_of_yesSet_hard`
+([McKayMurrayWilliams2019, Theorem 1.4, third bullet]) and `P ⊆ P/poly` (`P_subset_PPolyOn`). -/
 theorem P_ne_NP_of_yesSet_hard
     (h : ∀ c > 0, ∃ (s : ℕ → ℕ) (n : ℕ),
       2 ^ n * c * (n + s n + 1) ^ c <
@@ -1064,14 +1031,12 @@ theorem not_NP_subset_PPoly_of_yesSet_pow_hard (k : ℕ)
   obtain ⟨n, hlb⟩ := h c hc_pos
   exact (lt_irrefl _) ((hub n).trans_lt hlb)
 
-/-- **Hardness magnification for `MCSP[n ^ k]` to `P ≠ NP`**
-[McKayMurrayWilliams2019, Theorem 1.4, third bullet]: if for some `k` and every `c > 0`, there is
-`n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet (fun m => m ^ k)` requires more than
-`2 ^ n * c * (n + 1) ^ c` gates, then `P ≠ NP`.
+/-- **Hardness magnification for `MCSP[n ^ k]` to `P ≠ NP`**: if for some `k` and every `c > 0`,
+there is `n` such that the `2 ^ n`-bit slice of `GapMCSP.yesSet (fun m => m ^ k)` requires more
+than `2 ^ n * c * (n + 1) ^ c` gates, then `P ≠ NP`.
 
-Relative to the paper's statement, this specializes `search-MCSP^A[s]` to decision `GapMCSP.yesSet`
-(`MCSP[n ^ k]`), sets `A = ∅`, uses fan-in-2 De Morgan circuits counting all gates, and assumes a
-size-only lower bound rather than a combined size-and-depth lower bound. -/
+This follows immediately from `not_NP_subset_PPoly_of_yesSet_pow_hard`
+([McKayMurrayWilliams2019, Theorem 1.4, third bullet]) and `P ⊆ P/poly` (`P_subset_PPolyOn`). -/
 theorem P_ne_NP_of_yesSet_pow_hard (k : ℕ)
     (h : ∀ c > 0, ∃ n : ℕ,
       2 ^ n * c * (n + 1) ^ c <
