@@ -1429,12 +1429,15 @@ public import Complexity.Crypto.Computational.Homomorphic.FixedKey.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Reduction
 public import Complexity.Crypto.Computational.Homomorphic.FixedKey.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Basic
+public import Complexity.Crypto.Computational.Homomorphic.GSW.CircuitEvaluation
+public import Complexity.Crypto.Computational.Homomorphic.GSW.CircuitEvaluation.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decoding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Decryption
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.Parameters
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.PolyTime
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters
+public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Scheme
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Security
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
