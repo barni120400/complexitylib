@@ -7,7 +7,7 @@ Authors: Erik Demaine, Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
@@ -596,18 +596,7 @@ theorem anyConst {ι : Type*} (l : List ι) {test : γ → ι → Bool}
   simpa only [Function.comp_def, List.any_eq_not_all_not] using
     bool_not.comp (allConst l fun i hi => bool_not.comp (htest i hi))
 
-private def idxStep [DecidableEq α] (v : α) (s : Bool × ℕ) (a : α) : Bool × ℕ :=
-  if s.1 || decide (a = v) then (true, s.2) else (false, s.2 + 1)
-
-private theorem foldl_idxStep [DecidableEq α] (v : α) (l : List α) (s : Bool × ℕ) :
-    (l.foldl (idxStep v) s).2 = s.2 + if s.1 then 0 else l.idxOf v := by
-  induction l generalizing s with
-  | nil => simp
-  | cons a l ih =>
-    rw [List.foldl_cons, ih]
-    rcases s with ⟨b, n⟩
-    cases b <;> by_cases ha : a = v <;>
-      simp [idxStep, ha, Nat.add_comm, Nat.add_left_comm]
+open Internal.ListIndex
 
 /-- The index of the first occurrence, or the list length if absent, computed in unary.
 The element itself can use any encoding. -/

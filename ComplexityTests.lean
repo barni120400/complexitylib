@@ -252,6 +252,7 @@ import ComplexityTests.MachineIOBuffer
 import ComplexityTests.MachinePrograms
 import ComplexityTests.MachineSequential
 import ComplexityTests.MachineStateMap
+import ComplexityTests.Machines.Turing.MultiTape.Internal.ListLookup
 import ComplexityTests.ManyOne
 import ComplexityTests.ManyOneKernel
 import ComplexityTests.MassProduction

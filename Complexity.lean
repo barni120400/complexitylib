@@ -992,6 +992,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBi
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.IntBinary.Decode
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Index
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.MultiPass
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
@@ -1017,6 +1018,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Partrec
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reduction
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceTable
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock
