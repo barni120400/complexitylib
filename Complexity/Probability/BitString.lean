@@ -33,6 +33,13 @@ this finite uniform distribution to a program drawing one independent fair bit a
 * `Cslib.BitString.uniformList_map_apply`,
   `Cslib.BitString.toOuterMeasure_map_uniformList_toReal`: the probability of a value or event
   under a map of a uniform word is the fraction of words of that length mapping into it.
+* `Cslib.BitString.zipWith_xor_self_left`, `Cslib.BitString.uniformOfFintype_bool_map_xor`,
+  `Cslib.BitString.uniformList_map_zipWith_xor`,
+  `Cslib.BitString.uniformList_map_take_zipWith_xor`: pointwise `List.zipWith xor` left-cancellation
+  and `uniformList` invariance under one-time-pad masking.
+* `Cslib.BitString.uniformList_apply_le`,
+  `Cslib.BitString.toOuterMeasure_lookup_uniformList_le`: point-mass bound `1 / 2 ^ n` and
+  finite-cache lookup union bound `cache.length * (1 / 2 ^ n)` for `uniformList n`.
 
 ## References
 
@@ -165,5 +172,104 @@ theorem toOuterMeasure_map_uniformList_toReal {β : Type*} (f : List Bool → β
   rw [uniformList, PMF.map_comp, PMF.toOuterMeasure_map_apply,
     PMF.toOuterMeasure_uniformOfFintype_toReal]
   simp [Function.comp_def, Set.mem_preimage]
+
+/-- Pointwise XOR of equal-length bit lists is left-involutive:
+`List.zipWith xor pad (List.zipWith xor pad msg) = msg`. -/
+theorem zipWith_xor_self_left :
+    ∀ pad msg : List Bool, pad.length = msg.length →
+      List.zipWith xor pad (List.zipWith xor pad msg) = msg
+  | [], [], _ => rfl
+  | b :: pad, m :: msg, h => by
+    simp only [List.length_cons, Nat.add_right_cancel_iff] at h
+    simp only [List.zipWith_cons_cons, zipWith_xor_self_left pad msg h]
+    cases b <;> cases m <;> rfl
+
+/-- XORing a uniformly random bit with a fixed bit `b` preserves `PMF.uniformOfFintype Bool`. -/
+theorem uniformOfFintype_bool_map_xor (b : Bool) :
+    (PMF.uniformOfFintype Bool).map (fun bit => xor bit b) = PMF.uniformOfFintype Bool := by
+  ext x
+  cases b <;> cases x <;>
+    simp [PMF.map_apply, tsum_fintype, PMF.uniformOfFintype_apply]
+
+/-- Pointwise XOR of a uniform `msg.length`-bit word with a fixed word `msg` preserves
+`uniformList msg.length`. -/
+theorem uniformList_map_zipWith_xor :
+    ∀ msg : List Bool,
+      (uniformList msg.length).map (fun pad => List.zipWith xor pad msg) =
+        uniformList msg.length
+  | [] => by simp [PMF.map]
+  | b :: tail => by
+    rw [List.length_cons, uniformList_succ, PMF.map_bind]
+    simp only [PMF.map_comp, Function.comp_def, List.zipWith_cons_cons]
+    have htail (bit : Bool) :
+        (uniformList tail.length).map
+          (fun pad => xor bit b :: List.zipWith xor pad tail) =
+        ((uniformList tail.length).map
+          (fun pad => List.zipWith xor pad tail)).map (List.cons (xor bit b)) := by
+      simp [PMF.map_comp, Function.comp_def]
+    simp_rw [htail, uniformList_map_zipWith_xor tail]
+    have hcomp :
+        (fun a => PMF.map (List.cons (xor a b)) (uniformList tail.length)) =
+          (fun bit' => (uniformList tail.length).map (List.cons bit')) ∘
+            (fun bit => xor bit b) := rfl
+    rw [hcomp, ← PMF.bind_map, uniformOfFintype_bool_map_xor b]
+
+/-- Pointwise XOR of `pad.take n` for a uniform `n`-bit word `pad` with an `n`-bit word `msg`
+preserves `uniformList n`. -/
+theorem uniformList_map_take_zipWith_xor {n : ℕ} {msg : List Bool} (hmsg : msg.length = n) :
+    (uniformList n).map (fun pad => List.zipWith xor (pad.take n) msg) =
+      uniformList n := by
+  have hcongr :
+      (uniformList n).map (fun pad => List.zipWith xor (pad.take n) msg) =
+        (uniformList n).map (fun pad => List.zipWith xor pad msg) := by
+    rw [PMF.map, PMF.map]
+    refine PMF.bind_congr_on_support _ _ _ fun pad hpad => ?_
+    dsimp only [Function.comp_def]
+    rw [List.take_of_length_le (length_of_mem_support_uniformList hpad).le]
+  rw [hcongr, ← hmsg, uniformList_map_zipWith_xor]
+
+/-- Every candidate word `r` has probability at most `1 / 2 ^ n` under `uniformList n`. -/
+theorem uniformList_apply_le (n : ℕ) (r : List Bool) :
+    uniformList n r ≤ (1 : ENNReal) / 2 ^ n := by
+  have h := uniformList_map_apply id n r
+  simp only [PMF.map_id, id_eq] at h
+  rw [h]
+  gcongr
+  norm_cast
+  exact Finset.card_le_one.mpr fun a ha b hb =>
+    List.ofFn_injective ((Finset.mem_filter.mp ha).2.trans (Finset.mem_filter.mp hb).2.symm)
+
+/-- Union bound on finite-cache lookups: a uniform `n`-bit word hits the domain of a finite
+association list `cache` with outer measure at most `cache.length * (1 / 2 ^ n)`. -/
+theorem toOuterMeasure_lookup_uniformList_le {V : Type*} (n : ℕ)
+    (cache : List (List Bool × V)) :
+    (uniformList n).toOuterMeasure {r | (cache.lookup r).isSome} ≤
+      (cache.length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
+  induction cache with
+  | nil => simp
+  | cons entry rest ih =>
+    rcases entry with ⟨r₀, pad₀⟩
+    calc (uniformList n).toOuterMeasure
+          {r | (((r₀, pad₀) :: rest).lookup r).isSome}
+        ≤ (uniformList n).toOuterMeasure
+          ({r | r = r₀} ∪ {r | (rest.lookup r).isSome}) := by
+          refine (uniformList n).toOuterMeasure.mono fun r hr => ?_
+          have hr' : (((r₀, pad₀) :: rest).lookup r).isSome = true := hr
+          rw [List.lookup_cons] at hr'
+          by_cases h : r = r₀
+          · exact Or.inl h
+          · rw [beq_false_of_ne h] at hr'
+            exact Or.inr hr'
+      _ ≤ (uniformList n).toOuterMeasure {r | r = r₀} +
+          (uniformList n).toOuterMeasure {r | (rest.lookup r).isSome} :=
+          MeasureTheory.measure_union_le _ _
+      _ ≤ (1 : ENNReal) / 2 ^ n + (rest.length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
+          refine add_le_add ?_ ih
+          rw [show {r : List Bool | r = r₀} = {r₀} from Set.ext fun _ => Set.mem_singleton_iff.symm,
+            PMF.toOuterMeasure_apply_singleton]
+          exact uniformList_apply_le n r₀
+      _ = (((r₀, pad₀) :: rest).length : ENNReal) * ((1 : ENNReal) / 2 ^ n) := by
+          rw [List.length_cons, Nat.cast_add, Nat.cast_one]
+          ring
 
 end Cslib.BitString
