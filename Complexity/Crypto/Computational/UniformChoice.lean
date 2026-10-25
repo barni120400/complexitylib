@@ -34,7 +34,10 @@ include the unary index, reference sample and challenge.
 
 ## Main results
 
+* `Cslib.Crypto.UniformChoice.isPPTOn_test`: strict PPT certificate for the calibrated reduction.
+* `Cslib.Crypto.UniformChoice.eval_bind_test`: challenge evaluation commutes with the index.
 * `Cslib.Crypto.UniformChoice.advantage_eq`: exact average of squared advantages.
+* `Cslib.Crypto.UniformChoice.advantage_sq_le`: single-index advantage bounded by dyadic size.
 * `Cslib.Crypto.ComputationallyIndistinguishable.uniform_bound`: one bound for every allowed index.
 
 ## References

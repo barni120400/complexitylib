@@ -34,6 +34,8 @@ security requires a further reduction.
 
 ## Main results
 
+* `Cslib.Crypto.GGM.frontierOracle_bounds`: each query preserves label widths and adds at most
+  one cache entry.
 * `Cslib.Crypto.GGM.hybridGame_zero`, `.hybridGame_self`: exact real and ideal endpoints.
 * `Cslib.Crypto.GGM.isPPTOn_hybridGame`: uniform strict PPT for the complete experiment.
 

@@ -60,7 +60,8 @@ assumptions are hypotheses, not theorems.
 ## Main results
 
 * `Cslib.Crypto.PrimeOrderGroupFamily.elGamalDecrypt_elGamalEncrypt`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.decodeElGamal_encode`: decryption correctness.
+  `Cslib.Crypto.PrimeOrderGroupFamily.decodeElGamal_encode`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.decodeElGamal_elGamalEncrypt`: decryption correctness.
 * `Cslib.Crypto.PrimeOrderGroupFamily.computableInPolyTime_decodeElGamal`: encoded decryption is
   computable in polynomial time.
 * `Cslib.Crypto.PrimeOrderGroupFamily.advantage_elGamalCPAGame_le`,

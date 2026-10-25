@@ -26,6 +26,7 @@ program. The implementation uses the shared row parser and polynomial-time combi
 
 ## Main results
 
+* `isPolyTime_hashSamples`: deterministic hashing composes efficient word operations.
 * `isPolyTime_generate`: runtime dimensions and a captured evaluator compose efficiently.
 * `eval_generate`, `eval_generate_of_realization`: equality with the sampled extractor.
 * `length_generate`: every correctly sized seed produces the declared number of output bits.

@@ -36,6 +36,8 @@ lengths. No nonuniform choice of a bad length is supplied to the reduction.
 ## Main results
 
 * `Cslib.Crypto.GeneratorReindex.isPolyTime_generate`: uniform machine-backed efficiency.
+* `Cslib.Crypto.GeneratorReindex.indistinguishable`: extending a secure family preserves
+  computational indistinguishability at every seed length.
 * `Cslib.Crypto.GeneratorReindex.pseudorandomGenerator`: one-bit stretch at every seed length.
 
 ## References

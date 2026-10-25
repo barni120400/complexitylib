@@ -110,6 +110,9 @@ We prove the **Luby–Rackoff theorem** ([BonehShoup2023], Section 4.4.1, Theore
   conjugation identity for Feistel decryption over groups of exponent two.
 * `Cslib.Crypto.LubyRackoff.isDeltaUniversalHash_uniformOfFintype`: a uniform random function into
   `G` is `|G|⁻¹`-Δ-universal.
+* `Cslib.Crypto.LubyRackoff.feistel3HashIdealGame_apply_le`,
+  `Cslib.Crypto.LubyRackoff.randomFunctionGame_apply_le_feistel3HashIdealGame`: two-sided
+  probability comparisons for 3-round Luby–Rackoff with Δ-universal Round 1.
 * `Cslib.Crypto.LubyRackoff.advantage_feistel3HashIdealGame_randomFunctionGame_le`,
   `Cslib.Crypto.LubyRackoff.advantage_feistel3HashIdealGame_idealPermGame_le`: 3-round
   Luby–Rackoff bounds with Δ-universal Round 1 against `randomFunctionGame` and `idealPermGame`.
@@ -1101,6 +1104,9 @@ theorem feistel3HashIdealGame_apply_le {seed₁ : PMF K₁} {h₁ : K₁ → G �
           (Q.choose 2 * ε + Q.choose 2 * (Fintype.card G : ℝ≥0∞)⁻¹) :=
         add_le_add le_rfl (tsum_seed_toOuterMeasure_hasCollision_le hh₁ hQ)
 
+/-- Reverse inequality for the 3-round Luby–Rackoff bound with Δ-universal Round 1:
+`randomFunctionGame` accept probability is bounded by `feistel3HashIdealGame` plus the collision
+term. -/
 theorem randomFunctionGame_apply_le_feistel3HashIdealGame {seed₁ : PMF K₁} {h₁ : K₁ → G → G}
     {ε : ℝ≥0∞} (hh₁ : IsDeltaUniversalHash seed₁ h₁ ε)
     {program : OracleComp (fun _ : G × G => G × G) Bool} {Q : ℕ}
