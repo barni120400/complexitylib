@@ -51,3 +51,18 @@ example : ¬ (formula [[]]).Satisfiable := by
   rw [satisfiable_formula_iff (by simp) (by simp [CNF.vars])]
   rintro ⟨τ, hτ⟩
   simp [CNF.eval, Clause.eval] at hτ
+
+-- At this actual selected crossing, horizontal true and vertical false coexist in one model.
+example : ∃ σ : Variable → Bool, (rawFormula crossedSource).eval σ = true ∧
+    σ ((10, 34), some Crossover.SplitVariable.aLeft) = true ∧
+    σ ((10, 34), some Crossover.SplitVariable.bTop) = false := by
+  let τ : ℕ → Bool := fun v => v == 0
+  obtain ⟨σ, hcompat, hcross⟩ := exists_compatible_assignment crossed_width crossed_count τ
+  have hh := hcompat (0, 0, (0, true)) (by decide)
+    (((10, 34), some Crossover.SplitVariable.aLeft),
+      ((10, 34), some Crossover.SplitVariable.aRight)) (by decide +kernel)
+  have hv := hcompat (0, 1, (1, true)) (by decide)
+    (((10, 34), some Crossover.SplitVariable.bTop),
+      ((10, 34), some Crossover.SplitVariable.bBottom)) (by decide +kernel)
+  exact ⟨σ, eval_rawFormula_complete_of_compatible crossedSource τ σ
+    (fun _ ho => occurrencePath_length_ge_two ho) hcompat hcross (by decide), hh.1, hv.1⟩
