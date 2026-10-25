@@ -64,12 +64,24 @@ def occurrencePath (φ : CNF ℕ) (o : Occurrence ℕ) : Route :=
   (paths φ).getD ((Cslib.Logic.PL.occurrences φ).idxOf o) []
 
 /-- Actual occupied crossing candidates, excluding every declared graph vertex center.
-Deduplication ensures exactly one local gadget per selected square. -/
+First-occurrence selection ensures exactly one local gadget per selected square. -/
 def crossingSites (φ : CNF ℕ) : List Point :=
   let G := SAT.incidenceGraph φ
-  ((G.crossingCandidates G.canonicalPorts).filter fun p =>
+  let occupied := (G.crossingCandidates G.canonicalPorts).filter fun p =>
     !(G.orthogonalPositions.contains p) &&
-      decide (2 ≤ ((paths φ).filter fun r => r.contains p).length)).dedup
+      decide (2 ≤ ((paths φ).filter fun r => r.contains p).length)
+  Cslib.Complexity.selectDistinct occupied (List.replicate occupied.length true)
+
+/-- The selected cells are exactly occupied nonvertex candidates. -/
+theorem mem_crossingSites (φ : CNF ℕ) (p : Point) :
+    p ∈ crossingSites φ ↔
+      p ∈ (SAT.incidenceGraph φ).crossingCandidates (SAT.incidenceGraph φ).canonicalPorts ∧
+        p ∉ (SAT.incidenceGraph φ).orthogonalPositions ∧
+          2 ≤ ((paths φ).filter fun r => r.contains p).length := by
+  simp [crossingSites, mem_selectDistinct_replicate, Bool.and_eq_true]
+
+/-- Every selected square receives exactly one template. -/
+theorem crossingSites_nodup (φ : CNF ℕ) : (crossingSites φ).Nodup := nodup_selectDistinct _ _
 
 /-- Side facing a neighboring square, in left/right/bottom/top order.
 Only unit neighbors are used by the correctness theorem. -/
