@@ -68,8 +68,6 @@ inner existential quantifier used in the Karp–Lipton argument.
   encoded witness that passes the check, followed by any bits.
 * `Cslib.Complexity.isVerifier_witnessVerifier`, `Cslib.Complexity.mem_NP_of_witness`: a relation
   with polynomially short witnesses decided in polynomial time defines a problem in `NP`.
-* `Cslib.Complexity.mem_NP_image`: the encodings of the members of a problem in `NP` form a
-  problem in `NP` on words, when the encoding has a decoder.
 * `Cslib.Complexity.isVerifier_subsetVerifier`, `Cslib.Complexity.mem_NP_of_subsetWitness`:
   subset problems over polynomial-time candidate lists with polynomial-time checks are in `NP`.
 * `Cslib.Complexity.PolyTimeReducible.mem_NP`: `NP` is closed under polynomial-time reductions.
@@ -171,29 +169,6 @@ theorem mem_NP_of_witness (D : Decoder encW) {check : α × β → Bool} {R : α
   exact mem_NP.mpr
     ⟨_, _, computableInPolyTime_witnessVerifier D (.of_tidy hcheck),
       isVerifier_witnessVerifier D hR hp⟩
-
-/-- **Images of problems in `NP`.** The encodings of the members of a problem in `NP` form a
-problem in `NP` on words, when the encoding has a decoder: the verifier decodes the word, checks
-that it encodes what was decoded, and runs the verifier of the problem. -/
-theorem mem_NP_image (D : Decoder encW) {B : Set β}
-    (hB : B ∈ NP encW) : encW '' B ∈ NP encBits := by
-  obtain ⟨p, V, hV, hBV⟩ := mem_NP.mp hB
-  obtain ⟨d, e, hD⟩ := D.computable
-  have hdec : ComputableTidilyInPolyTime (fun x : List Bool × List Bool => D.decode x.1)
-      (encPair encBits encBits) encW :=
-    hD.computableTidilyInPolyTime.comp (fst _ _)
-  refine mem_NP.mpr
-    ⟨p, fun x => decide (encW (D.decode x.1) = x.1) && V (D.decode x.1, x.2),
-      .of_tidy (bool_and' (decide_eq' ((encode encW).comp hdec) (fst _ _))
-        (hV.tidy.comp (hdec.prod (snd _ _)))),
-      fun w => ?_⟩
-  simp only [encBits_apply, Bool.and_eq_true, decide_eq_true_eq]
-  constructor
-  · rintro ⟨b, hb, rfl⟩
-    obtain ⟨c, hc, hVc⟩ := (hBV b).1 hb
-    exact ⟨c, hc, by rw [D.decode_enc], by rw [D.decode_enc]; exact hVc⟩
-  · rintro ⟨c, hc, hw, hVc⟩
-    exact ⟨D.decode w, (hBV _).2 ⟨c, by rw [hw]; exact hc, hVc⟩, hw⟩
 
 end Witness
 

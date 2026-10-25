@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Computability.Complexity.Classes.NP.Witness
+import Complexity.Computability.Complexity.Classes.PH.Kannan
 import Complexity.Computability.Complexity.Problems.Clique
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Complexity.Problems.ThreeSAT
