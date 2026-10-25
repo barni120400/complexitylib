@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.GenericRAM.Native
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
-public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OLoops
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree.Bounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Sum

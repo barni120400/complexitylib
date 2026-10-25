@@ -8,6 +8,7 @@ module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinarySizeFacts
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryCounter
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
@@ -78,6 +79,8 @@ lemma normFinish_deg :
 end Rounds
 
 namespace ComputableTidilyInO
+
+open Internal.BinaryCounter
 
 open NatPred
 
@@ -163,25 +166,6 @@ section Iterate
 
 variable {γ β : Type} [Inhabited β] {encIn : γ ↪ List Bool} {encB : β ↪ List Bool}
 
-/-- A round of the counted iteration: stop at zero, otherwise count down and apply `step`. -/
-@[expose] public def countStep (step : β → β) : Option (ℕ × β) → Option (ℕ × β)
-  | some (i + 1, b) => some (i, step b)
-  | _ => none
-
-lemma countStep_eq (step : β → β) (o : Option (ℕ × β)) : countStep step o =
-    if o.isSome && !decide ((o.getD default).1 = 0) then
-      some ((o.getD default).1 - 1, step (o.getD default).2) else none := by
-  rcases o with _ | ⟨_ | i, b⟩ <;> rfl
-
-omit [Inhabited β] in
-lemma iterate_countStep (step : β → β) (t : ℕ) (b : β) {k : ℕ} (hk : k ≤ t) :
-    (countStep step)^[k] (some (t, b)) = some (t - k, step^[k] b) := by
-  induction k with
-  | zero => rfl
-  | succ k ih =>
-    rw [Function.iterate_succ_apply', ih (by omega), show t - k = t - (k + 1) + 1 by omega,
-      countStep, Function.iterate_succ_apply']
-
 /-- A round of the counted iteration. -/
 lemma countStep_inO {step : β → β} {Ts Ss : β → ℕ}
     (hstep : ComputableTidilyInO step encB encB Ts Ss) :
@@ -210,18 +194,6 @@ lemma countStep_inO {step : β → β} {Ts Ss : β → ℕ}
       · simp only [Option.getD_some, encOption_some, List.length_cons, length_encPair]; omega
     simp only [Function.comp_apply]
     split_ifs <;> omega
-
-lemma sum_le {c₀ c₁ k k' A M X Y : ℕ} (hX : X ≤ k * (M + 1)) (hY : Y ≤ c₀ * (A + 1)) :
-    c₀ * (A + 1) + X + c₁ * (Y + 1) ≤ (c₀ + c₁ * (c₀ + 1) + k + k') * (A + M + 1) := by
-  have h₁ : c₁ * (Y + 1) ≤ c₁ * (c₀ + 1) * (A + M + 1) :=
-    calc c₁ * (Y + 1) ≤ c₁ * (c₀ * (A + 1) + 1) := Nat.mul_le_mul_left _ (by omega)
-      _ ≤ c₁ * ((c₀ + 1) * (A + M + 1)) := Nat.mul_le_mul_left _ (by nlinarith)
-      _ = _ := by ring
-  have h₂ : X ≤ k * (A + M + 1) := hX.trans (Nat.mul_le_mul_left _ (by omega))
-  have h₃ : c₀ * (A + 1) ≤ c₀ * (A + M + 1) := Nat.mul_le_mul_left _ (by omega)
-  have : (c₀ + c₁ * (c₀ + 1) + k + k') * (A + M + 1) = c₀ * (A + M + 1) +
-      c₁ * (c₀ + 1) * (A + M + 1) + k * (A + M + 1) + k' * (A + M + 1) := by ring
-  omega
 
 /-- **Iterating `n x` times, with `n x` in binary.** If the rounds are within the time `R x` and
 the space `Q x`, and the iterates have length at most `B x`, the iteration takes the time of the

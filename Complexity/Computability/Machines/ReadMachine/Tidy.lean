@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.ReadMachine.StepMachine
-public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryComparison
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeOptionPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpaceLib
@@ -225,7 +225,8 @@ theorem tidy_toStepMachine (hhalt : ComputableInO m.halt encS encBool T S)
     (haddr : ComputableInO m.addr encS (encOption encNat) T S)
     (hstep : ComputableInO (fun p : σ × Bool => m.step p.1 p.2) (encPair encS encBool)
       (encPair encS encBits) (fun p => T p.1) fun p => S p.1) :
-    (m.toStepMachine).ResourceCertificate (encPair encS encNat) (stateT encS T S) (stateS encS S) where
+    (m.toStepMachine).ResourceCertificate (encPair encS encNat)
+      (stateT encS T S) (stateS encS S) where
   computable_halt := by
     refine ((hhalt.comp (fst encS encNat)).mono_le (fun q => ?_) fun q => ?_)
     · simp only [stateT]
