@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Erik Demaine. All rights reserved.
+Copyright (c) 2026 Erik Demaine, Stefan Langerman, GPT 5.6. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Erik Demaine
+Authors: Erik Demaine, Stefan Langerman, GPT 5.6
 -/
 
 module
@@ -12,6 +12,8 @@ import Mathlib.Data.List.Sigma
 
 /-!
 # Uniqueness of indexed literal occurrences
+
+The proof follows the indexed-copy uniqueness argument in `CNF.ThreeOccurrence`.
 
 ## Main results
 
