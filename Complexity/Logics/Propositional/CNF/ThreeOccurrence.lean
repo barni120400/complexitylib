@@ -16,15 +16,17 @@ import Mathlib.Algebra.BigOperators.Group.List.Lemmas
 import Mathlib.Algebra.BigOperators.Ring.List
 
 /-!
-# Finite occurrence splitting
+# Occurrence splitting
 
 Each literal occurrence receives its own copy of its variable, indexed by its clause and literal
 positions. Binary implication cycles force all copies of an original variable to agree.
-Literal occurrences include repetitions within one clause.
+Literal occurrences include repetitions within one clause. This is the construction in
+[Papadimitriou, Proposition 9.3][Papadimitriou94]. Only the bound on occurrences of each variable
+is formalized here; the additional bound of two occurrences per signed literal is not claimed.
 
 Adapted from `lean-trominoes` at `6d5b36c15cec6cb18d30137b7f1c7fb92ea24332`,
 `LeanTrominoes/SAT/ThreeSAT/PeriodicThreeSATThree{,Correctness,ExactSize}.lean`.
-This construction uses ordinary finite CNF formulas and assignments.
+This construction uses ordinary CNF formulas and Boolean assignments.
 
 ## Main definitions
 
@@ -39,6 +41,10 @@ This construction uses ordinary finite CNF formulas and assignments.
 * `Cslib.Logic.PL.CNF.length_toThreeOccurrence`,
   `Cslib.Logic.PL.CNF.length_vars_toThreeOccurrence`,
   `Cslib.Logic.PL.CNF.numVars_toThreeOccurrence`: exact linear clause, literal and variable counts.
+
+## References
+
+* [C. H. Papadimitriou, *Computational Complexity*, Proposition 9.3][Papadimitriou94]
 -/
 
 @[expose] public section
@@ -47,7 +53,12 @@ namespace Cslib.Logic.PL.CNF
 
 variable {V : Type*}
 
-/-- Replace each literal by a copy named by its original variable and its two positions. -/
+/-- Replace each literal by a copy named by its original variable and its two positions.
+
+`Cslib.Logic.PL.occurrences` enumerates the same positions as a flat list of triples
+`(clause index, literal index, literal)`. This clause-preserving traversal instead names each
+copy `(original variable, clause index, literal index)`, retaining the original clause
+boundaries. -/
 def occurrenceClauses (φ : CNF V) : CNF (V × ℕ × ℕ) :=
   φ.zipIdx.map fun c => c.1.zipIdx.map fun l => ((l.1.1, c.2, l.2), l.1.2)
 
