@@ -13,6 +13,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+import Complexity.Foundations.Data.Nat.Log
 import Complexity.Tactic.PolyTime
 import Mathlib.Data.List.GetD
 
@@ -27,17 +28,32 @@ nodes `l` and `r` is `H k (encPair encBits encBits (l, r))`. The pairing `encPai
 so nodes of any length can be paired without ambiguity.
 
 The tree over `leaves` has depth `Nat.clog 2 leaves.length`, the least `d` with
-`leaves.length ≤ 2 ^ d`; missing leaves read as the empty word, which pads the tree to `2 ^ d`
-leaves as [BonehShoup2023] suggests.
+`leaves.length ≤ 2 ^ d`. Missing leaves read as the empty word, padding the tree to `2 ^ d` leaves
+as [BonehShoup2023] suggests. For `2 ^ d` leaves this is Merkle's `H(1, 2 ^ d, Y)`, with his
+`Y_i` as `leaves.getD (i - 1) []`. For other leaf counts it differs from Merkle's recursion, which
+splits at the midpoint without padding.
 
 An authentication path for position `i` lists the sibling of each node on the way from leaf `i`
 to the root. `merkleRootOfPath` recomputes a root from a leaf, a position and a path. Its
 correctness is `merkleRootOfPath_merklePath`. Binding is `isCollision_extractMerkleCollision`: two
 openings of the same position to different leaves, along paths of equal length and with the same
 recomputed root, contain a collision of `H k`, found deterministically by
-`extractMerkleCollision`. This is the reduction behind [BonehShoup2023], Theorem 8.8. Every
-function has a plain polynomial-time certificate for hash families whose digests have the length
-of the key.
+`extractMerkleCollision`. This is the reduction behind [BonehShoup2023], Theorem 8.8.
+
+**What a verifier must check.** Leaves and internal nodes are hashed with the same `H k`, with no
+domain separation, so a recomputed root alone binds nothing. A verifier must fix the path length
+to the depth `d` and check `i < 2 ^ d`:
+
+* with a shorter path, an internal node's hash input opens as a leaf; for leaves `[a, b]`, the
+  "leaf" `encPair encBits encBits (H k a, H k b)` at position `0` with path `[]` recomputes the
+  root;
+* `merkleRootOfPath` reads only the low `path.length` bits of `i`, so positions wrap modulo
+  `2 ^ path.length`;
+* the root does not fix the number of leaves: `[a, b, c]` and `[a, b, c, []]` have the same root.
+
+The root, the path, root recomputation and extraction have plain polynomial-time certificates for
+hash families whose digests have the length of the key. Positions are unary in these
+certificates, which suits trees with polynomially many leaves.
 
 ## Main definitions
 
@@ -127,7 +143,9 @@ def merkleInputs (leaf : List Bool) (i : ℕ) (path : List (List Bool)) : List (
   (path.foldl (merkleInputsStep H k) ([leaf], i)).1
 
 /-- The root recomputed from `leaf` at position `i` along the authentication path `path`
-([BonehShoup2023], (8.16)). -/
+([BonehShoup2023], (8.16)). Only the low `path.length` bits of `i` are read, and nothing checks
+the path length: a verifier must fix `path.length` to the depth `d` and check `i < 2 ^ d` (see
+the module documentation). -/
 def merkleRootOfPath (leaf : List Bool) (i : ℕ) (path : List (List Bool)) : List Bool :=
   H k ((merkleInputs H k leaf i path).headD [])
 
@@ -337,9 +355,11 @@ private theorem scanFinds_foldl {inputs₁ inputs₂ : List (List Bool)} {i : �
       have hstep := scanFinds_step (i := i) h sibling₁ sibling₂
       exact ih hstep path₂ (by simpa using hlen)
 
-/-- **Binding** ([BonehShoup2023], Theorem 8.8): two openings of position `i` to different leaves,
-along paths of equal length and with the same recomputed root, contain a collision of `H k`, which
-`extractMerkleCollision` finds. -/
+/-- **Binding**, the deterministic reduction behind [BonehShoup2023], Theorem 8.8: two openings
+of position `i` to different leaves, along paths of equal length and with the same recomputed
+root, contain a collision of `H k`, which `extractMerkleCollision` finds. Equal path lengths are
+essential, since leaves and internal nodes are not domain-separated; a verifier that fixes the
+path length to the depth `d` and checks `i < 2 ^ d` gives this hypothesis. -/
 theorem isCollision_extractMerkleCollision {leaf₁ leaf₂ : List Bool} {i : ℕ}
     {path₁ path₂ : List (List Bool)} (n : ℕ) (hlen : path₁.length = path₂.length)
     (hne : leaf₁ ≠ leaf₂)
@@ -362,28 +382,10 @@ section PolyTime
 
 variable {γ : Type} {encIn : γ ↪ List Bool}
 
-private theorem length_encList_le {l : List (List Bool)} {m : ℕ}
-    (h : ∀ x ∈ l, x.length ≤ m) : (encList encBits l).length ≤ l.length * (2 * m + 1) := by
-  rw [length_encList]
-  induction l with
-  | nil => simp
-  | cons x l ih =>
-    have hx := h x List.mem_cons_self
-    have hl := ih fun y hy => h y (List.mem_cons_of_mem _ hy)
-    simp only [List.map_cons, List.sum_cons, List.length_cons, encBits_apply] at hl ⊢
-    nlinarith
-
 private theorem pow_clog_two_le (L : ℕ) : 2 ^ Nat.clog 2 L ≤ 2 * L + 1 := by
-  rcases Nat.lt_or_ge L 2 with hL | hL
-  · interval_cases L <;> simp
-  · have hlt := Nat.pow_pred_clog_lt_self (b := 2) (by norm_num) (by omega : 1 < L)
-    rw [Nat.pred_eq_sub_one] at hlt
-    have hpos : 0 < Nat.clog 2 L := Nat.clog_pos (by norm_num) hL
-    have hsplit : 2 ^ Nat.clog 2 L = 2 * 2 ^ (Nat.clog 2 L - 1) := by
-      rw [← pow_succ']
-      congr 1
-      omega
-    omega
+  rcases eq_or_ne L 0 with rfl | hL
+  · simp
+  · exact (Nat.pow_clog_le_mul (by norm_num) hL).trans (Nat.le_succ _)
 
 private theorem computableTidilyInPolyTime_hash
     (hH : ComputableTidilyInPolyTime (fun p : List Bool × List Bool => H p.1 p.2)
@@ -487,7 +489,7 @@ private theorem computableTidilyInPolyTime_iterate_merkleParents
           gcongr
       _ ≤ 9 * (s + 1) ^ 2 := by nlinarith
   · intro p _ level _ hinv
-    refine (length_encList_le fun y hy => (hinv.1 y hy).le).trans ?_
+    refine (length_encList_le encBits _ fun y hy => (hinv.1 y hy).le).trans ?_
     exact Nat.mul_le_mul_right _ (hinv.2.trans (pow_clog_two_le _))
 
 private theorem computableTidilyInPolyTime_merkleRoot
@@ -604,10 +606,10 @@ private theorem computableTidilyInPolyTime_merklePath
       _ ≤ 40 * (s + 1) ^ 2 := by nlinarith
   · intro p j state hj hinv
     have hL := pow_clog_two_le p.2.1.length
-    have hlevel := (length_encList_le fun y hy => (hinv.1 y hy).le).trans
+    have hlevel := (length_encList_le encBits _ fun y hy => (hinv.1 y hy).le).trans
       (Nat.mul_le_mul_right (2 * p.1.length + 1) (hinv.2.1.trans hL))
     have hjL : j ≤ 2 * p.2.1.length + 1 := hj.trans ((Nat.lt_pow_self (by norm_num)).le.trans hL)
-    have hpath := (length_encList_le hinv.2.2.2.1).trans
+    have hpath := (length_encList_le encBits _ hinv.2.2.2.1).trans
       (Nat.mul_le_mul_right (2 * p.1.length + 1) (hinv.2.2.2.2.trans hjL))
     simp only [encPair_apply, encUnary_apply, List.length_append, length_frame,
       List.length_replicate]

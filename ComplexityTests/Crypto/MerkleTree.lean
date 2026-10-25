@@ -11,7 +11,8 @@ import Complexity.Tactic.PolyTime
 # Tests for Merkle trees
 
 Concrete runs of `merkleRoot`, `merklePath` and `merkleRootOfPath` on a three-leaf tree, padded to
-four leaves, under a truncating keyed hash; and collision extraction from two forged openings of one
+four leaves, under a truncating keyed hash; the two openings a verifier must reject by checking the
+path length and the position range; and collision extraction from two forged openings of one
 position, at the leaf level and one level up.
 -/
 
@@ -53,6 +54,20 @@ example : (merklePath truncHash key leaves 2).length = 2 := by decide
 example : ∀ i < 4,
     merkleRootOfPath truncHash key (leaves.getD i []) i (merklePath truncHash key leaves i) =
       merkleRoot truncHash key leaves := by
+  decide
+
+/-! ### What a verifier must check -/
+
+-- Without a fixed path length, the hash input of an internal node opens as a leaf: here the
+-- root's own input at position `0` with the empty path.
+example : merkleRootOfPath truncHash key
+    (encPair encBits encBits ((merkleLevel truncHash key leaves 1).getD 0 [],
+      (merkleLevel truncHash key leaves 1).getD 1 [])) 0 [] = merkleRoot truncHash key leaves := by
+  decide
+
+-- Without a range check, position `1 + 4` reuses the opening of position `1`.
+example : merkleRootOfPath truncHash key (leaves.getD 1 []) (1 + 4)
+    (merklePath truncHash key leaves 1) = merkleRoot truncHash key leaves := by
   decide
 
 /-! ### Collision extraction -/
