@@ -333,9 +333,9 @@ example :
         (2 + 1) / Fintype.card (ZMod 7) :=
   randomNonceStrongGame_xpolyHash_le 2 isQueryBounded_sampleRandomNonceForger
 
-/-- Zero-query nonce-based forger over `BitString n` that outputs `((0, 0), 0)` when `n = 0` (so
-that `verify` on the unique `0`-bit tag `0` is exercised) and queries `(0, 0)` twice at the same
-nonce `0` (so `Nodup` fails and `checkNonceSUF = false`). -/
+/-- Smoke-test nonce-based forger over `BitString n` that queries `(0, 0)` twice at the same
+nonce `0` (so `Nodup` fails and `checkNonceSUF = false`, giving a trivial distinguisher
+`nonceFnDistinguisher = fun _ => PMF.pure false`). -/
 noncomputable def repeatedNonceForger (n : ℕ) :
     NonceForger (BitString n) (BitString n) (BitString n) where
   Coins := Unit
@@ -355,8 +355,9 @@ theorem nonceFnDistinguisher_repeatedNonceForger {K : Type} (seed : PMF K) (n : 
     OracleComp.run_interpret_bind, OracleComp.run_interpret_query, OracleComp.run_interpret_pure]
   simp [nonceFnHandler, checkNonceSUF]
 
--- End-to-end check of `PseudorandomFunction.negligible_prfNonceStrongGame` and
--- `PseudorandomFunction.negligible_prfNonceGame`.
+-- Smoke test of `PseudorandomFunction.negligible_prfNonceStrongGame`: instantiates the asymptotic
+-- wrapper theorem on the trivial always-losing forger `repeatedNonceForger` matched against a
+-- constant-`false` `prfPadDistinguisher`.
 example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
     {ε : ℕ → NNReal}
     (hh : ∀ n, IsDeltaUniversalHash
@@ -376,9 +377,10 @@ example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFun
   · rw [eval_prfIdealGame_prfPadDistinguisher]
     simp
 
-/-- Single-query randomized forger over `BitString n` that queries `0`, receives `(x, t)`, and
-echoes the issued pair `((0, x), t)` (so `!tr.contains out = false` and
-`checkRandomNonceSUF = false`). -/
+/-- Smoke-test single-query randomized forger over `BitString n` that queries `0`, receives
+`(x, t)`, and echoes the issued pair `((0, x), t)` (so `!tr.contains out = false` and
+`checkRandomNonceSUF = false`, giving a trivial distinguisher
+`randomNonceFnDistinguisher = fun _ => PMF.pure false`). -/
 noncomputable def echoRandomNonceForger (n : ℕ) :
     RandomNonceForger (BitString n) (BitString n) (BitString n) where
   Coins := Unit
@@ -397,8 +399,9 @@ theorem randomNonceFnDistinguisher_echoRandomNonceForger {K : Type} (seed : PMF 
     OracleComp.run_interpret_bind, OracleComp.run_interpret_query, OracleComp.run_interpret_pure]
   simp [randomNonceFnHandler, checkRandomNonceSUF, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
 
--- End-to-end check of `PseudorandomFunction.negligible_prfRandomNonceStrongGame` and
--- `PseudorandomFunction.negligible_prfRandomNonceGame`.
+-- Smoke test of `PseudorandomFunction.negligible_prfRandomNonceStrongGame`: instantiates the
+-- asymptotic wrapper theorem on the trivial always-losing forger `echoRandomNonceForger` matched
+-- against a constant-`false` `prfPadDistinguisher`.
 example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
     {ε : ℕ → NNReal}
     (hh : ∀ n, IsDeltaUniversalHash
