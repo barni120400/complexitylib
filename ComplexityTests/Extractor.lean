@@ -71,6 +71,13 @@ info: 'Cslib.Probability.IsTwoUniversal.isStrongExtractor_of_logb_le' depends on
 #print axioms IsTwoUniversal.isStrongExtractor_of_logb_le
 
 /--
+info: 'Cslib.Probability.IsUniversalHash.isStrongExtractor' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms IsUniversalHash.isStrongExtractor
+
+/--
 info: 'Cslib.BitString.LinearHash.isStrongExtractor' depends on axioms:
 [propext, Classical.choice, Quot.sound]
 -/
