@@ -57,8 +57,9 @@ Priorities live in this list and in the tiers of [#897].
   one-wayness is not known to give such a generator.
 - **Rompel's signature theorem** ([#1001]). One-way functions imply digital signatures that are
   existentially unforgeable under adaptive chosen-message attacks, for arbitrary
-  polynomial-length messages. The stepping stones are authentication trees from one-time
-  signatures and collision-resistant hashing, then universal one-way hash functions.
+  polynomial-length messages. Authentication trees from one-time signatures and
+  collision-resistant hashing are an intermediate development step; for the theorem itself,
+  universal one-way hash functions replace the collision-resistance assumption.
 - **Gentry's bootstrapping, instantiated** ([#486]). A concrete LWE-based scheme satisfying the
   correctness, security, bootstrappability and native-efficiency hypotheses of the generic
   theorem: full native evaluation of the augmented GSW decryption circuit, bootstrappability
@@ -122,8 +123,9 @@ families and full-input native runtime.
 - **Diffie–Hellman and ElGamal:** group-element messages, efficient key generation and
   encryption, the efficient DDH random self-reduction (Boneh–Shoup Ex. 10.10), hashed ElGamal,
   Cramer–Shoup CCA security ([#1000]), and Pedersen commitments.
-- **Chosen-ciphertext security** ([#1000]): KEM–DEM hybrid encryption ([#881]), authenticated
-  encryption by encrypt-then-MAC, and Cramer–Shoup from DDH.
+- **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
+  Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
+  starting point (Boneh–Shoup Section 11.3).
 - **Lattices** ([#645]): Fiat–Shamir with aborts and signatures from SIS (Lyubashevsky 2009,
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
@@ -407,8 +409,11 @@ math papers and his [TCS catalogue](https://lance.fortnow.com/openai-math-tcs.ht
 openai/math release, and extract the results in scope: the headline theorems and also the minor
 lemmas useful in their own right. Prove each against Complexitylib's own definitions, from the
 cited manuscript's exact statement with its version pinned; a source formalization is a
-reference, not evidence. Label unrefereed results as such. No license is stated for the release
-or the rewrites, so no code is copied; they are read for their mathematics and credited.
+reference, not evidence. Label unrefereed results as such. The openai/math formalizations are
+Apache 2.0, as is Complexitylib, so adaptation with attribution is permitted. The practice is
+still to read them for the mathematics and write proofs against Complexitylib's definitions; any
+adapted code keeps its Apache 2.0 attribution. The rewrites state no license and are only read
+and credited.
 
 ## Documentation and repository
 
