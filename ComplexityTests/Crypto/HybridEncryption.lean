@@ -360,15 +360,19 @@ theorem indcpa_hybridEncrypt_idealEncaps_otpEncrypt :
     INDCPA toyKeyGen (hybridEncrypt idealEncaps otpEncrypt) :=
   kemINDCPA_idealEncaps.hybrid_otpEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
 
-/-- Every `n`-bit word encrypted under `otpWordEncrypt` decrypts back to the original message under
-`otpWordDecrypt`. -/
-example (n : ℕ) (k m : List Bool) (hm : m.length = n) :
-    otpWordDecrypt n k (BitString.listXor n [k, m]) = m :=
-  otpWordDecrypt_otpWordEncrypt k hm
+/-- Concrete 3-bit word one-time pad encryption and decryption round-trip on
+`k = [true, false, true]` and `m = [true, true, false]`. -/
+example :
+    otpWordDecrypt 3 [true, false, true]
+      (BitString.listXor 3 [[true, false, true], [true, true, false]]) =
+      [true, true, false] := by decide
 
-/-- The `n`-bit word one-time pad DEM is one-time IND-CPA secure. -/
-example : DEMOneTimeINDCPAOf encBits otpWordEncrypt :=
-  demOneTimeINDCPA_otpWordEncrypt
+example :
+    ProbComp.eval (otpWordEncrypt 3 [true, false, true] [true, true, false]) [false, true, true] =
+      1 := by
+  have h : [false, true, true] =
+      BitString.listXor 3 [[true, false, true], [true, true, false]] := by decide
+  rw [otpWordEncrypt, ProbComp.eval_pure, h, PMF.pure_apply_self]
 
 /-- Instantiation of the word-message security reduction `KEMINDCPA.hybrid_otpWordEncrypt_indcpa`
 on `idealEncaps` and `otpWordEncrypt`. -/

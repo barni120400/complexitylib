@@ -978,18 +978,6 @@ theorem KEMINDCPA.hybrid_otpEncrypt_indcpa
     INDCPA keyGen (hybridEncrypt encaps otpEncrypt) :=
   hkem.hybrid_indcpa demOneTimeINDCPA_otpEncrypt hkeyGen hencaps isPPTOn_otpEncrypt
 
-/-- XORing with the same mask twice on the left recovers the fixed-width view of the right word. -/
-@[simp] theorem _root_.Cslib.BitString.listXor_pair_self_left (m : ℕ) (k u : List Bool) :
-    BitString.listXor m [k, BitString.listXor m [k, u]] = List.ofFn (BitString.ofList m u) := by
-  rw [BitString.listXor_pair, BitString.ofList_listXor_pair, ← add_assoc,
-    BitString.add_self, zero_add]
-
-/-- XORing with the same mask twice on the left recovers a word of the declared width `m`. -/
-theorem _root_.Cslib.BitString.listXor_pair_self_left_of_length {m : ℕ} (k : List Bool)
-    {u : List Bool} (hu : u.length = m) :
-    BitString.listXor m [k, BitString.listXor m [k, u]] = u := by
-  rw [BitString.listXor_pair_self_left, BitString.ofFn_ofList hu]
-
 /-- One-time pad `n`-bit word symmetric encryption: XOR the `n`-bit key `k` with the plaintext
 word `m` at width `n` using `BitString.listXor n [k, m]`. -/
 def otpWordEncrypt (n : ℕ) (k m : List Bool) : ProbComp (List Bool) :=
