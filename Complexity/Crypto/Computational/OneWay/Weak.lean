@@ -31,8 +31,8 @@ This module defines $\alpha$-weak one-way functions (`Cslib.Crypto.WeakOneWayAt`
 functions (`Cslib.Crypto.WeakOneWay`) against uniform strict PPT inverters following
 [Y. Liu and R. Pass, *On One-Way Functions and Kolmogorov Complexity*][LiuPass2020] (Definition 2.2,
 §2.1, p. 7 of `arXiv:2009.11514v1`; FOCS 2020, p. 1246), originally due to [A. C. Yao][Yao1982] and
-treated in [O. Goldreich, *Foundations of Cryptography, Volume 1*][Goldreich2001] (Definition 2.3.1,
-§2.3, p. 42).
+treated in [O. Goldreich, *Foundations of Cryptography, Volume 1*][Goldreich2001] (§2.2.2,
+Definition 2.2.2).
 
 In addition to basic monotonicity, `<` vs. `≤` equivalence bridges, strong-implies-weak
 specialization (`Cslib.Crypto.OneWay.weakOneWay`), and negative nonvacuity witnesses
@@ -48,12 +48,15 @@ by Yao's direct-product hardness amplification and the Liu–Pass Section 4 conv
    time and a parameter-indexed family `core : ℕ → List Bool → List Bool` defined on inputs of
    length `m n`, `OneWayReindex.reindex m core` extends the family to all input lengths
    $M \in \mathbb{N}$ by finding the greatest parameter $n$ with $m(n) \le M$
-   (`GeneratorReindex.parameter`) and evaluating `core n` on the $m(n)$-bit prefix
-   ([Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020];
-   [Goldreich, Vol. 1, Proof of Theorem 2.3.2, p. 43][Goldreich2001]).
-   Both weak one-wayness (`OneWayReindex.weakOneWay`) and strong one-wayness
-   (`OneWayReindex.oneWay`) transfer from the parameter-indexed game `familyInversionGame` to all
-   input lengths.
+   (`GeneratorReindex.parameter`), evaluating `core n` on the $m(n)$-bit prefix, and pairing the
+   core output with the parameter $n$ in unary (`wrappedImage`). This is a library variant and
+   generalization of the input-truncation padding trick in
+   [Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020] (cf. the
+   length-extension convention of [Goldreich, Vol. 1, §2.2.3, Proposition 2.2.3][Goldreich2001]),
+   with the parameter $n$ appended to the output so images from distinct parameters are disjoint
+   and the reduction is lossless even for nonmonotone schedules. Both weak one-wayness
+   (`OneWayReindex.weakOneWay`) and strong one-wayness (`OneWayReindex.oneWay`) transfer from the
+   parameter-indexed game `familyInversionGame` to all input lengths.
 
 ## Main definitions
 
@@ -87,8 +90,8 @@ by Yao's direct-product hardness amplification and the Liu–Pass Section 4 conv
 
 * [Y. Liu and R. Pass, *On One-Way Functions and Kolmogorov Complexity*][LiuPass2020],
   full version `arXiv:2009.11514v1` (Section 2.1, Definition 2.2 and Section 4, Theorem 4.1).
-* [A. C. Yao, *Theory and Applications of Trapdoor Functions*][Yao1982].
-* [O. Goldreich, *Foundations of Cryptography, Volume 1*][Goldreich2001], Section 2.3.
+* [A. C. Yao, *Theory and Application of Trapdoor Functions*][Yao1982].
+* [O. Goldreich, *Foundations of Cryptography, Volume 1*][Goldreich2001], Sections 2.2.2–2.2.3.
 -/
 
 @[expose] public section
@@ -290,8 +293,9 @@ theorem WeakOneWay.exists_fixedOutputLength {f : List Bool → List Bool} (hf : 
   exact BitString.length_padWord (hsize input)
 
 /-! ### Schedule reindexing for parameter-indexed one-way families
-([Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020];
-[Goldreich, Vol. 1, Proof of Theorem 2.3.2, p. 43][Goldreich2001]) -/
+(Library variant of the padding trick in
+[Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020];
+cf. [Goldreich, Vol. 1, §2.2.3, Proposition 2.2.3][Goldreich2001]) -/
 
 namespace OneWayReindex
 
@@ -306,7 +310,11 @@ theorem wrappedImage_inj {n₁ n₂ : ℕ} {y₁ y₂ : List Bool} :
 
 /-- Extend a parameter-indexed family `core` on input lengths `m n` to all binary strings:
 find the greatest parameter `n` with `m n ≤ x.length` (`GeneratorReindex.parameter`), evaluate
-`core n` on the `m n`-bit prefix of `x`, and pair the result with `n` in unary. -/
+`core n` on the `m n`-bit prefix of `x`, and pair the result with `n` in unary (`wrappedImage`).
+This is a library variant of the input-truncation padding trick in
+[Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020] (cf.
+[Goldreich, Vol. 1, §2.2.3, Proposition 2.2.3][Goldreich2001]) that pairs the parameter `n` into
+the output so images from distinct parameters are disjoint. -/
 def reindex (m : ℕ → ℕ) (core : ℕ → List Bool → List Bool) (x : List Bool) : List Bool :=
   let n := GeneratorReindex.parameter m x.length
   wrappedImage n (core n (x.take (m n)))
@@ -340,7 +348,10 @@ theorem computableInPolyTime_reindex {m : ℕ → ℕ} {core : ℕ → List Bool
     ComputableInPolyTime (reindex m core) encBits encBits :=
   .of_tidy (computableTidilyInPolyTime_reindex hm.tidy hcore.tidy)
 
-/-- The parameter-indexed inversion game for `core` at input length `m n`. -/
+/-- The parameter-indexed inversion game for `core` at input length `m n`.
+Scores `core n (candidate.take (m n)) == core n input` by truncating the inverter's candidate to
+`m n` bits; since composing any inverter with `List.take (m n)` preserves PPT computability,
+bounding success in this game is no stronger a security hypothesis than the untruncated game. -/
 noncomputable def familyInversionGame (m : ℕ → ℕ) (core : ℕ → List Bool → List Bool)
     (adversary : Inverter) (n : ℕ) : ProbComp Bool := do
   let input ← BitString.sampleList (m n)
@@ -528,7 +539,9 @@ theorem exists_familyInverter_inversion_le {m : ℕ → ℕ} {core : ℕ → Lis
   · simp [h]
 
 /-- **Weak one-wayness under schedule reindexing
-([Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020]).**
+(library generalization of the padding trick in
+[Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020];
+cf. [Goldreich, Vol. 1, §2.2.3, Proposition 2.2.3][Goldreich2001]).**
 If a parameter-indexed family `core` on input lengths `m n` (with `m n ≥ n + 1`) satisfies the
 weak one-way bound `≤ 1 - 1 / q(n)` in `familyInversionGame` for a positive polynomial `q`, then
 `reindex m core` is a weak one-way function on all input lengths. -/
@@ -565,7 +578,9 @@ theorem weakOneWay {m : ℕ → ℕ} {core : ℕ → List Bool → List Bool}
   exact (h1.trans hM).trans h2
 
 /-- **Strong one-wayness under schedule reindexing
-([Goldreich, Vol. 1, Proof of Theorem 2.3.2, p. 43][Goldreich2001]).**
+(library generalization of the padding trick in
+[Liu and Pass, Proof of Theorem 4.1, §4, p. 10 of `arXiv:2009.11514v1`][LiuPass2020];
+cf. [Goldreich, Vol. 1, §2.2.3, Proposition 2.2.3][Goldreich2001]).**
 If every uniform strict PPT inverter has negligible success probability in
 `familyInversionGame m core`, then `reindex m core` is a strong one-way function on all input
 lengths. -/
