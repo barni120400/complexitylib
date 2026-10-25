@@ -89,7 +89,7 @@ open Finset BitString
 variable {n : ℕ}
 
 /-- Flipping the coordinates on which `y` differs from `x` turns `x` into `y`. -/
-private theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock
+theorem BitString.flipBlock_filter_ne (x y : BitString n) : flipBlock
     {i | y i ≠ x i} x = y := by
   funext i
   by_cases h : y i = x i
