@@ -5,6 +5,8 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Protocols.MAC.CarterWegman
+import Complexity.Tactic.PPT
+import Complexity.Tactic.PolyTime
 import Mathlib.Algebra.Field.ZMod
 
 /-!
@@ -196,5 +198,62 @@ example :
   simp only [padDistinguisher, OneTimeForger.ofProbComp, sampleBitStringQuery, sampleBitStringForge,
     sign, verify, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.pure_bind, ProbComp.eval_pure]
   congr 1
+
+-- Concrete `IsOraclePPT` admissibility check for `wordProbPadTest` and `prfPadDistinguisher`.
+example :
+    IsOraclePPT Turing.MultiTapeTM.encBool
+      (prfPadDistinguisher
+        (wordProbPadTest
+          (fun n => BitString.sampleList n)
+          (fun _ k _ => k)
+          (fun _ => pure [])
+          (fun _ _ t => pure ([true], t)))) :=
+  isOraclePPT_prfPadDistinguisher_wordProbPadTest (by ppt) (by polytime) (by ppt) (by ppt)
+
+/-- Two-slot `n`-bit nonce schedule: slot `0` has leading bit `false` and slot `1` has leading bit
+`true`, padded with `n - 1` `false` bits. For every `n ≥ 1`, both nonces have length `n` and are
+distinct on `{0, 1}`. -/
+def twoSlotNonce (n i : ℕ) : List Bool :=
+  decide (i = 1) :: List.replicate (n - 1) false
+
+/-- Trivial counter forger that makes `0 ≤ 2` signing queries and outputs `(0, (0, 0))`. -/
+noncomputable def zeroQueryCounterForger (n : ℕ) :
+    CounterForger (BitString n) (BitString n) where
+  Coins := Unit
+  coins := PMF.pure ()
+  forge _ := pure (0, (0, 0))
+
+-- Concrete `IsOraclePPT` admissibility check for `prfMultiPadDistinguisher` with `twoSlotNonce`.
+example :
+    IsOraclePPT Turing.MultiTapeTM.encBool
+      (prfMultiPadDistinguisher (fun _ => 2) twoSlotNonce (fun _ _ => pure false)) :=
+  isOraclePPT_prfMultiPadDistinguisher (by polytime) (by unfold twoSlotNonce; polytime) (by ppt)
+
+-- End-to-end check of `PseudorandomFunction.negligible_prfCounterGame` with `twoSlotNonce`,
+-- exercising `hforger`, `hnonce_len`, `hnonce_inj`, `htest_eval`, `hQ`, `hnonce`, and `htest_ppt`.
+example {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
+    {ε : ℕ → NNReal}
+    (hh : ∀ n, IsDeltaUniversalHash
+      (PMF.uniformOfFintype (Fin n → BitString n)) (BitString.LinearHash.hash (n := n) (m := n))
+      (ε n))
+    (hε : Negligible ε) :
+    Negligible (fun n =>
+      Game.succProbability
+        (prfCounterGame (PMF.uniformOfFintype (Fin n → BitString n)) family n (twoSlotNonce n)
+          BitString.LinearHash.hash (zeroQueryCounterForger n))) := by
+  refine hprf.negligible_prfCounterGame hh hε (Q := fun _ => 2) (nonce := twoSlotNonce)
+    zeroQueryCounterForger
+    (Filter.Eventually.of_forall fun _ _ => .pure _ _)
+    ?_ ?_ (fun _ _ => pure false) ?_
+    (by polytime) (by unfold twoSlotNonce; polytime) (by ppt)
+  · filter_upwards [Filter.eventually_ge_atTop 1] with n hn i _
+    simp [twoSlotNonce]
+    omega
+  · filter_upwards [Filter.eventually_ge_atTop 1] with n _ i hi j hj heq
+    have hhead : decide (i = 1) = decide (j = 1) := List.cons.inj heq |>.1
+    by_cases hi1 : i = 1 <;> by_cases hj1 : j = 1 <;> simp_all
+    omega
+  · intro n padSeq
+    simp [counterPadSeqDistinguisher, zeroQueryCounterForger, checkCounterSlot]
 
 end ComplexityTests.Crypto.CarterWegman

@@ -873,6 +873,7 @@ public import Complexity.Computability.MCSP.PartialETH
 public import Complexity.Computability.MCSP.PartialNP
 public import Complexity.Computability.MCSP.Shannon
 public import Complexity.Computability.MCSP.Succinct
+public import Complexity.Computability.MCSP.SuccinctNP
 public import Complexity.Computability.Machines.ReadMachine.Basic
 public import Complexity.Computability.Machines.ReadMachine.StepMachine
 public import Complexity.Computability.Machines.ReadMachine.Tidy
@@ -1384,6 +1385,7 @@ public import Complexity.Crypto.Computational.DiffieHellman
 public import Complexity.Crypto.Computational.DiscreteLog
 public import Complexity.Crypto.Computational.DiscreteLog.SchnorrGroup
 public import Complexity.Crypto.Computational.ElGamal
+public import Complexity.Crypto.Computational.Encryption.Authenticated
 public import Complexity.Crypto.Computational.Encryption.Basic
 public import Complexity.Crypto.Computational.Encryption.Circular
 public import Complexity.Crypto.Computational.Encryption.Hybrid
@@ -1475,6 +1477,7 @@ public import Complexity.Crypto.Computational.Hybrid.Sequence
 public import Complexity.Crypto.Computational.LWE.Basic
 public import Complexity.Crypto.Computational.MAC
 public import Complexity.Crypto.Computational.MerkleDamgard
+public import Complexity.Crypto.Computational.MerkleTree
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.Amplification
 public import Complexity.Crypto.Computational.OneWay.BPP

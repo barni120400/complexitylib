@@ -130,9 +130,9 @@ families and full-input native runtime.
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
-- **Symmetric:** `IsOraclePPT` admissibility of the PRF-pad reduction, uniform word-level
-  forger and hash families, the asymptotic `PseudorandomFunction` corollary and fresh-nonce
-  multi-query Carter–Wegman security ([#736]); the 4-round strong Feistel bound ([#748]); the
+- **Symmetric:** full nonce-based Carter–Wegman security with adversary-chosen distinct nonces and
+  forgeries at arbitrary nonces (Boneh–Shoup Attack Game 7.4, Theorem 7.10) and randomized
+  Carter–Wegman security (Theorem 7.9) ([#736]); the 4-round strong Feistel bound ([#748]); the
   Naor–Reingold PRF from DDH.
 - **General:** reusable adaptive reductions, public-key encryption, universal-instance zero
   knowledge, hard-core predicates and hardness amplification, and connections to learning and
@@ -339,8 +339,10 @@ each statement against the numbered result. Organize modules by subject, not cha
   PAC/agnostic/SQ learning, learning lower bounds, compression and refutation.
 - **Property and distribution testing:** access models, one/two-sided and tolerant testing,
   query and sample bounds, canonical testers and lower bounds.
-- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the converse direction of
-  Liu–Pass (`K^t` mildly hard on average implies one-way functions); prefix-free complexity,
+- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the near-linear threshold regime
+  of Liu–Pass Theorem 3.1 (c), hardness for every polynomial `t(n) ≥ (1 + ε)n` rather than above a
+  polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`
+  multi-tape steps for a constant `c < 1`; prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
   circuitized anti-checker with an efficient generator, hardness magnification, MINCKT and
   hardness results for MINKT, as independently scoped developments; the reverse

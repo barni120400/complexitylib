@@ -142,7 +142,7 @@ private theorem exists_circuit_of_validCertificate {n s : ℕ} {w : List Bool}
     ∃ C : Circuit signature n 1, C.size ≤ s ∧
       ∀ x : BitString n, C.eval interpretation x 0 = evalCertificate n s w (List.ofFn x) := by
   have hcheck : checkCertificate (fun y out => out == evalCertificate n s w y) n s w = true := by
-    simp [checkCertificate, hw]
+    simp [checkCertificate, checkCertificateOn, hw]
   obtain ⟨C, hcS, heval⟩ := exists_circuit_of_checkCertificate hcheck
   exact ⟨C, hcS, fun x => beq_iff_eq.1 (heval x)⟩
 
@@ -158,7 +158,8 @@ private theorem exists_validCertificate_of_circuit {n s : ℕ} (C : Circuit sign
     (fun y => by simp)
   have hw := hcheck []
   rw [List.append_nil] at hw
-  simp only [checkCertificate, Bool.and_eq_true, List.all_eq_true, beq_iff_eq] at hw
+  simp only [checkCertificate, checkCertificateOn, Bool.and_eq_true, List.all_eq_true,
+    beq_iff_eq] at hw
   refine ⟨w, hlen, hw.1, fun x => ?_⟩
   simpa using hw.2 (List.ofFn x) (BitString.mem_enumList.2 List.length_ofFn)
 
