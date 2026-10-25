@@ -86,7 +86,7 @@ theorem isPPTOn_selectSlope {α : Type} {input : α ↪ List Bool}
   have ha := ComputableInPolyTime.fst input encUnary
   have hi := ComputableInPolyTime.snd input encUnary
   have htrial := isPPTOn_clippedTrial (hprecision.comp ha) hi (hsource.preprocess ha)
-  exact IsPPTOn.selectBest htrial hcount.tidy htrials.tidy
+  exact IsPPTOn.selectBest htrial hcount htrials
 
 attribute [program_certificate] isPPTOn_selectSlope
 

@@ -133,3 +133,23 @@ example (evaluate : List Bool → List Bool → Bool)
   ppt
 
 end ComplexityTests.PseudoentropyTraining
+
+
+namespace ComplexityTests.PseudoentropyTraining
+open Cslib Cslib.Probability Turing.MultiTapeTM
+
+-- Selection retains arbitrary caller/output encodings and every supplied callback contract.
+example {α β : Type} {input : α ↪ List Bool} {output : β ↪ List Bool}
+    {values : α → List β} {trials : α → ℕ} {test : α → β → ProbComp Bool}
+    (fallback : β)
+    (hv : ComputableInPolyTime values input (encList output))
+    (hn : ComputableInPolyTime trials input encUnary)
+    (ht : IsPPTOn (encPair input output) encBool (fun p => test p.1 p.2)) :
+    IsPPTOn input output (fun a => OracleComp.selectFrom (values a) (trials a) (test a)
+      fallback) := by
+  fail_if_success (clear hv; ppt)
+  fail_if_success (clear hn; ppt)
+  fail_if_success (clear ht; ppt)
+  ppt
+
+end ComplexityTests.PseudoentropyTraining
