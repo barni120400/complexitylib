@@ -95,8 +95,51 @@ theorem isPPTOn_extract {α : Type} {input : α ↪ List Bool}
     (hremaining : ComputableInPolyTime remainingBits input encUnary) :
     IsPPTOn input encBits (fun a => extract (count a) (seedBits a) (bound a)
       (observationBits a) (labelBits a) (remainingBits a) (source a)) := by
-  unfold extract
-  ppt
+  let samplesEncoding := encList (encPair (encPair encBits encBool) encBits)
+  let thirdEncoding := encPair (encList (encPair encBits encBool)) (encPair encBits encBits)
+  let middleEncoding := encPair (encList encBits) (encPair encBits encBits)
+  have hsamples := hsource.replicate hcount.tidy
+  have hparam := ComputableInPolyTime.fst input samplesEncoding
+  have hsampleValue := ComputableInPolyTime.snd input samplesEncoding
+  have hthird := isPPTOn_extractWordSeeds (hcount.comp hparam) (hseed.comp hparam)
+    (hremaining.comp hparam) hsampleValue
+  have houter := ComputableInPolyTime.fst (encPair input samplesEncoding) thirdEncoding
+  have hthirdValue := ComputableInPolyTime.snd (encPair input samplesEncoding) thirdEncoding
+  have hroot := hparam.comp houter
+  have hmiddle := isPPTOn_extractWordLabels (hcount.comp hroot) (hlabel.comp hroot)
+    hthirdValue.fst'
+  have hretained := ComputableInPolyTime.fst
+    (encPair (encPair input samplesEncoding) thirdEncoding) middleEncoding
+  have hmiddleValue := ComputableInPolyTime.snd
+    (encPair (encPair input samplesEncoding) thirdEncoding) middleEncoding
+  have hfinish := isPPTOn_finish (hbound.comp (hroot.comp hretained))
+    (hobservation.comp (hroot.comp hretained)) hmiddleValue
+  have hlastOuter := ComputableInPolyTime.fst
+    (encPair (encPair (encPair input samplesEncoding) thirdEncoding) middleEncoding) encBits
+  have hfront := ComputableInPolyTime.snd
+    (encPair (encPair (encPair input samplesEncoding) thirdEncoding) middleEncoding) encBits
+  have hlastThird := (hthirdValue.comp hretained).comp hlastOuter
+  have hjoin := ComputableInPolyTime.bitsAppend hfront
+    (ComputableInPolyTime.bitsAppend hlastThird.snd'.fst' hlastThird.snd'.snd')
+  have hlast := hfinish.map_with
+    (f := fun p front => front ++ (p.1.2.2.1 ++ p.1.2.2.2)) hjoin
+  have hmiddleBody := hmiddle.bind_with
+    (second := fun p middle => do
+      let front ← finish (bound p.1.1) (observationBits p.1.1) middle
+      pure (front ++ (p.2.2.1 ++ p.2.2.2))) (by
+      simpa only [Function.comp_def, bind_pure_comp] using hlast)
+  have hthirdBody := hthird.bind_with
+    (second := fun p third => do
+      let middle ← extractWordLabels (count p.1) (labelBits p.1) third.1
+      let front ← finish (bound p.1) (observationBits p.1) middle
+      pure (front ++ (third.2.1 ++ third.2.2))) (by
+      simpa only [Function.comp_def] using hmiddleBody)
+  simpa only [extract, samplesEncoding, thirdEncoding, middleEncoding, Function.comp_def] using
+    hsamples.bind_with (second := fun a samples => do
+      let third ← extractWordSeeds (count a) (seedBits a) (remainingBits a) samples
+      let middle ← extractWordLabels (count a) (labelBits a) third.1
+      let front ← finish (bound a) (observationBits a) middle
+      pure (front ++ (third.2.1 ++ third.2.2))) hthirdBody
 
 attribute [program_certificate] isPPTOn_extract
 
