@@ -23,8 +23,9 @@ Exercises the KEM, DEM, and KEM–DEM hybrid encryption API in
 * exact decryption correctness of `hybridEncrypt` / `hybridDecrypt` instantiated with a concrete
   KEM and the one-time pad DEM (`otpEncrypt` / `otpDecrypt`);
 * quantitative advantage bounds (`advantage_hybridGame_le`, `advantage_hybridGame_le_two_mul`) and
-  an end-to-end instantiation of `KEMINDCPA.hybrid_otpEncrypt_indcpa` on `idealEncaps`
-  (`kemINDCPA_idealEncaps`, `indcpa_hybridEncrypt_idealEncaps_otpEncrypt`).
+  an instantiation of the security predicate / reduction `KEMINDCPA.hybrid_otpEncrypt_indcpa` on an
+  undecryptable security-game test fixture `idealEncaps` (`kemINDCPA_idealEncaps`,
+  `indcpa_hybridEncrypt_idealEncaps_otpEncrypt`).
 -/
 
 @[expose] public section
@@ -212,8 +213,10 @@ example (keyGen : ℕ → ProbComp (List Bool × List Bool))
   have h := advantage_hybridGame_le keyGen encaps otpEncrypt adversary n
   rwa [advantage_demGame_otpEncrypt_eq_zero hn, add_zero] at h
 
-/-- An ideal encapsulation sampler that draws a fresh uniform `n`-bit key and emits an empty
-ciphertext, making `kemRealGame` and `kemIdealGame` distributionally identical. -/
+/-- Undecryptable security-game test fixture that draws a fresh uniform `n`-bit key, discards any
+recovery information, and emits `[]`, making `kemRealGame` and `kemIdealGame` distributionally
+identical. No `decaps` can recover the encapsulated key on every supported output for `1 ≤ n`; this
+fixture exercises the `KEMINDCPA` security predicate and reduction only. -/
 noncomputable def idealEncaps (n : ℕ) (_ : List Bool) : ProbComp (List Bool × List Bool) := do
   let k ← BitString.sampleList n
   return (k, [])
@@ -241,8 +244,8 @@ theorem kemINDCPA_idealEncaps : KEMINDCPA toyKeyGen idealEncaps := by
   intro D _
   simpa only [eval_kemRealGame_idealEncaps_eq_ideal, Game.advantage_self] using negligible_zero
 
-/-- End-to-end instantiation of `KEMINDCPA.hybrid_otpEncrypt_indcpa` on `idealEncaps` and
-`otpEncrypt`. -/
+/-- Instantiation of the security reduction `KEMINDCPA.hybrid_otpEncrypt_indcpa` on the
+undecryptable security-game fixture `idealEncaps` and `otpEncrypt` (security predicate only). -/
 theorem indcpa_hybridEncrypt_idealEncaps_otpEncrypt :
     INDCPA toyKeyGen (hybridEncrypt idealEncaps otpEncrypt) :=
   kemINDCPA_idealEncaps.hybrid_otpEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
