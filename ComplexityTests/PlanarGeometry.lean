@@ -17,6 +17,17 @@ open SAT.PlanarCompile
 example : IsOrthogonal (access [] (-1, -2) (0, -2)) := access_orthogonal _ _ _
 example : IsSimple (access [(-1, -2)] (-1, -2) (-1, -3)) := access_simple _ _ _
 
+example : IsSimple (center (-1, -3) :: access [(-1, -2)] (-1, -2) (-1, -3)) :=
+  finalRoute_simple _ (by decide)
+
+example : ∀ r ∈ routes [[(7, true)]], IsOrthogonal r ∧ IsSimple r := routes_regular _
+
+example : (routes [[(7, true)]]).length =
+    (SAT.incidenceGraph (formula [[(7, true)]])).2.length := routes_length _
+
+example : (occurrencePath [[(7, true)]] (0, 0, (7, true))).Nodup :=
+  occurrencePath_nodup (by decide)
+
 example : cellPort 120 (-1, -2) (side (-1, -2) (0, -2)) =
     cellPort 120 (0, -2) (side (0, -2) (-1, -2)) := shared_cellPort (by decide)
 
