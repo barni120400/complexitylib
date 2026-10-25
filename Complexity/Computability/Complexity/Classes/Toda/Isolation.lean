@@ -311,7 +311,7 @@ private theorem two_pow_mul_card_filter_no_isolation_le {M E B : ℕ} {S : Finse
   exact Nat.le_of_mul_le_mul_left h2 (by positivity)
 
 /-- Union bound over `Fin M → Bool`: if each `x` fails with probability at most `2 ^ (-e')` for
-`E + M + 1 ≤ e'`, then some `x` fails with probability at most `2 ^ -(E + 1)`. -/
+`E + M + 1 ≤ e'`, then the event that some `x` fails has probability at most `2 ^ -(E + 1)`. -/
 private theorem two_pow_succ_mul_card_filter_exists_le {R M E e' : ℕ}
     {P : (Fin R → Bool) → (Fin M → Bool) → Prop} [DecidableRel P]
     (hc : ∀ x, 2 ^ e' * (univ.filter fun r => P r x).card ≤ 2 ^ R) (he : E + M + 1 ≤ e') :

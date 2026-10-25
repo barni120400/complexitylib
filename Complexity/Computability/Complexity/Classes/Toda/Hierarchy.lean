@@ -377,20 +377,16 @@ private theorem existsVerifier_append (ℓ m ρ ζ e : Polynomial ℕ) (W : α �
 /-- The number of witnesses accepted by `existsVerifier` for inner random bits `r` and trial seeds
 `σ` is `1 + ∏ j, (1 + ∑ x, acceptCount ...)`. -/
 private theorem acceptCount_existsVerifier (ℓ m ρ ζ e : Polynomial ℕ) (W : α × List Bool → Bool)
-    (a : α) (u : List Bool) (hu : u.length = ℓ.eval (enc a).length)
-    (r : Fin (ρ.eval (enc a).length) → Bool)
-    (σ : Fin (4 * (e.eval (enc a).length + 1) * (m.eval (enc a).length + 3) *
-      ((m.eval (enc a).length + 2) * (m.eval (enc a).length + 1))) → Bool) :
+    (a : α) (u : List Bool) (hu : u.length = ℓ.eval (enc a).length) {M R Z T B : ℕ}
+    (hM : m.eval (enc a).length = M) (hR : ρ.eval (enc a).length = R)
+    (hZ : ζ.eval (enc a).length = Z) (hT : 4 * (e.eval (enc a).length + 1) * (M + 3) = T)
+    (hB : (M + 2) * (M + 1) = B) (r : Fin R → Bool) (σ : Fin (T * B) → Bool) :
     acceptCount (fun x => existsVerifier enc ℓ m ρ ζ e W
-      (x.1, u ++ List.ofFn (Fin.append r σ) ++ x.2)) a
-      (4 * (e.eval (enc a).length + 1) * (m.eval (enc a).length + 3) *
-        (m.eval (enc a).length + ζ.eval (enc a).length + 1) + 1) =
-    1 + ∏ j : Fin (4 * (e.eval (enc a).length + 1) * (m.eval (enc a).length + 3)),
-      (1 + ∑ x : Fin (m.eval (enc a).length) → Bool with
-        hashesToZero (j % (m.eval (enc a).length + 3))
-          (List.ofFn (BitString.blocksEquiv σ j)) (List.ofFn x) = true,
-        acceptCount (fun y => W (y.1, u ++ List.ofFn x ++ List.ofFn r ++ y.2)) a
-          (ζ.eval (enc a).length)) := by
+      (x.1, u ++ List.ofFn (Fin.append r σ) ++ x.2)) a (T * (M + Z + 1) + 1) =
+    1 + ∏ j : Fin T, (1 + ∑ x : Fin M → Bool with
+      hashesToZero (j % (M + 3)) (List.ofFn (BitString.blocksEquiv σ j)) (List.ofFn x) = true,
+      acceptCount (fun y => W (y.1, u ++ List.ofFn x ++ List.ofFn r ++ y.2)) a Z) := by
+  subst hM hR hZ hT hB
   -- the count of witnesses for the inner random string `r` and the seeds `σ`
   rw [List.ofFn_fin_append, acceptCount_congr (W := fun x => succTest (trialsVerifier W a u
     (List.ofFn r) (List.ofFn σ) _ _ _ _) x.2) (fun w => existsVerifier_append ℓ m ρ ζ e W a u _ _
@@ -436,17 +432,18 @@ theorem IsRandomParityRep.exists {ℓ m ρ ζ e : Polynomial ℕ} {W : α × Lis
       simpa only [Polynomial.eval_add, Polynomial.eval_one, mem_filter, mem_univ, true_and, hS]
         using h a (u ++ List.ofFn x) (by simp [hu, hn, hM]))
     le_rfl le_rfl
-  -- random strings of length `R + T B` are pairs of an inner random string and `T` seeds
   rw [pow_add]
   refine le_of_eq_of_le ?_ hbad
   congr 1
+  -- random strings of length `R + T B` are pairs of an inner random string and `T` seeds
   let eqv : (Fin R → Bool) × (Fin T → BitString B) ≃ (Fin (R + T * B) → Bool) :=
     (Equiv.prodCongr (Equiv.refl _) BitString.blocksEquiv.symm).trans (Fin.appendEquiv R (T * B))
   refine Finset.card_equiv eqv.symm fun r' => ?_
   obtain ⟨⟨r, s⟩, rfl⟩ := eqv.surjective r'
   simp only [mem_filter, mem_univ, true_and, Equiv.symm_apply_apply]
   have : eqv (r, s) = Fin.append r (BitString.blocksEquiv.symm s) := rfl
-  rw [this, acceptCount_existsVerifier ℓ m ρ ζ e W a u hu r, Equiv.apply_symm_apply, hQ]
+  rw [this, acceptCount_existsVerifier ℓ m ρ ζ e W a u hu rfl rfl rfl rfl rfl r,
+    Equiv.apply_symm_apply, hQ]
 
 /-! ### Alternating quantifiers -/
 
