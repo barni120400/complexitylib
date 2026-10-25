@@ -131,8 +131,7 @@ families and full-input native runtime.
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
 - **Symmetric:** full nonce-based Carter–Wegman security with adversary-chosen distinct nonces and
   forgeries at arbitrary nonces (Boneh–Shoup Attack Game 7.4, Theorem 7.10) and randomized
-  Carter–Wegman security (Theorem 7.9) ([#736]); the 4-round strong Feistel bound ([#748]); the
-  Naor–Reingold PRF from DDH.
+  Carter–Wegman security (Theorem 7.9) ([#736]); the Naor–Reingold PRF from DDH.
 - **General:** reusable adaptive reductions, public-key encryption, universal-instance zero
   knowledge, hard-core predicates and hardness amplification, and connections to learning and
   average-case hardness.
@@ -458,7 +457,6 @@ not planned, not as proved.
 [#643]: https://github.com/cslib-community/complexitylib/issues/643
 [#645]: https://github.com/cslib-community/complexitylib/issues/645
 [#736]: https://github.com/cslib-community/complexitylib/issues/736
-[#748]: https://github.com/cslib-community/complexitylib/issues/748
 [#798]: https://github.com/cslib-community/complexitylib/issues/798
 [#862]: https://github.com/cslib-community/complexitylib/issues/862
 [#881]: https://github.com/cslib-community/complexitylib/issues/881
