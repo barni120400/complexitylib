@@ -8,6 +8,7 @@ module
 -- upstream: candidate (Mathlib `InformationTheory/Hamming.lean`)
 
 public import Cslib.Init
+public import Complexity.Foundations.Data.BitString.Flip
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Data.Finset.Density
 public import Mathlib.InformationTheory.Hamming
@@ -42,6 +43,8 @@ gives the same number (`card_hammingEdges_comm`, `card_hammingEdges_eq_sum_card_
 * `hammingDist_div_eq_expect`: the relative Hamming distance is a probability.
 * `exists_hammingDist_le_and_hammingDist_le`: splitting a distance.
 * `hammingDist_eq_one_iff`: Hamming distance one.
+* `hammingDist_flip_self`, `hammingDist_le_flip_add_one`, `hammingDist_flip_le_add_one`,
+  `hammingDist_flip_eq_add_one`: effect of flipping one coordinate on Hamming distance.
 * `card_hammingEdges_eq_sum_card_filter`: counting the edges of the Hamming graph.
 -/
 
@@ -49,6 +52,7 @@ gives the same number (`card_hammingEdges_comm`, `card_hammingEdges_eq_sum_card_
 
 open Finset Function
 open scoped BigOperators
+open Cslib
 
 variable {ι : Type*} [Fintype ι] {β : ι → Type*} [∀ i, DecidableEq (β i)]
 
@@ -120,6 +124,43 @@ theorem hammingDist_eq_one_iff {x y : ∀ i, β i} :
 theorem hammingDist_update_of_ne [DecidableEq ι] {x : ∀ i, β i} {i : ι} {v : β i}
     (h : x i ≠ v) : hammingDist x (update x i v) = 1 :=
   hammingDist_eq_one_iff.2 ⟨i, by simpa using h, fun j hj => (update_of_ne hj _ _).symm⟩
+
+/-- Flipping one coordinate yields an input at Hamming distance `1` from the original. -/
+theorem hammingDist_flip_self [DecidableEq ι] (x : ι → Bool) (i : ι) :
+    hammingDist x (BitString.flipOn {i} x) = 1 := by
+  rw [BitString.flipOn_singleton, hammingDist_update_of_ne (by simp)]
+
+/-- A one-bit flip decreases the Hamming distance to any `z` by at most one:
+`hammingDist x z ≤ hammingDist (BitString.flipOn {i} x) z + 1`. -/
+theorem hammingDist_le_flip_add_one [DecidableEq ι] (x z : ι → Bool) (i : ι) :
+    hammingDist x z ≤ hammingDist (BitString.flipOn {i} x) z + 1 := by
+  have h := hammingDist_triangle x (BitString.flipOn {i} x) z
+  rw [hammingDist_flip_self] at h
+  omega
+
+/-- A one-bit flip increases the Hamming distance to any `z` by at most one:
+`hammingDist (BitString.flipOn {i} x) z ≤ hammingDist x z + 1`. -/
+theorem hammingDist_flip_le_add_one [DecidableEq ι] (x z : ι → Bool) (i : ι) :
+    hammingDist (BitString.flipOn {i} x) z ≤ hammingDist x z + 1 := by
+  have h := hammingDist_triangle (BitString.flipOn {i} x) x z
+  rw [hammingDist_comm (BitString.flipOn {i} x) x, hammingDist_flip_self] at h
+  omega
+
+/-- If `x i = z i`, flipping coordinate `i` of `x` increases the Hamming distance to `z`
+by exactly one. -/
+theorem hammingDist_flip_eq_add_one [DecidableEq ι] (x z : ι → Bool) (i : ι)
+    (hi : x i = z i) :
+    hammingDist (BitString.flipOn {i} x) z = hammingDist x z + 1 := by
+  have h : (Finset.univ.filter fun j => BitString.flipOn {i} x j ≠ z j) =
+      insert i (Finset.univ.filter fun j => x j ≠ z j) := by
+    ext j
+    by_cases hj : j = i
+    · subst j
+      cases hx : x i <;> simp_all [BitString.flipOn_apply]
+    · simp [BitString.flipOn_apply, hj]
+  rw [hammingDist, h, Finset.card_insert_of_notMem]
+  · rfl
+  · simp [hi]
 
 /-- The pairs of `A × B` at Hamming distance one: the edges of the Hamming graph between `A` and
 `B`. -/
