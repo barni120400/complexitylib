@@ -667,11 +667,24 @@ theorem isPPTOn_gmwSampleSimCoins {α : Type} {input : α ↪ List Bool}
     (hch : ComputableInPolyTime ch_guess input encBits) :
     IsPPTOn input (encPair encBits (encList encBits))
       (fun a => gmwSampleSimCoins (s a) (φ a) (ch_guess a)) := by
-  have hs := hs.tidy
-  have hφ := hφ.tidy
-  have hch := hch.tidy
+  have hvars := Cslib.Logic.PL.CNF.computableInPolyTime_vars_length hφ
+  have htotal := computableInPolyTime_totalLen hφ
   dsimp only [gmwSampleSimCoins]
-  ppt
+  apply IsPPTOn.bind_with (left := encBits)
+  · exact hvars.sampleList
+  apply IsPPTOn.bind_with (left := encBits)
+  · apply ComputableInPolyTime.sampleList
+    fun_prop
+  apply IsPPTOn.bind_with (left := encBits)
+  · apply ComputableInPolyTime.sampleList
+    fun_prop
+  simp only [bind_pure_comp]
+  apply IsPPTOn.map_with
+  · apply IsPPTOn.replicate
+    · apply ComputableInPolyTime.sampleList
+      fun_prop
+    · exact ComputableInPolyTime.tidy (by fun_prop)
+  · fun_prop
 
 /-- Run one simulated GMW attempt with pre-sampled unopened pads `pads` (without any witness). -/
 noncomputable def gmwSimWithPads (generator : List Bool → List Bool) (s m : ℕ) (φ : CNF ℕ)
@@ -711,9 +724,18 @@ private theorem isPPTOn_gmwSimWithPads {α : Type} {enc : α ↪ List Bool}
       (fun p : (ℕ × α × List Bool) × List (List Bool) =>
         gmwSimWithPads generator (p.1.1 + 7) (length (p.1.1 + 7))
           (f p.1.2.1) (Vstar p.1.1 p.1.2.1 p.1.2.2) p.2) := by
-  have hlength := (PRG.polyTime_length (.of_tidy hg) hlen).tidy
+  have hgPlain := ComputableInPolyTime.of_tidy hg
+  have hfPlain := ComputableInPolyTime.of_tidy hf
+  have hlength := PRG.polyTime_length hgPlain hlen
   dsimp only [gmwSimWithPads]
-  ppt
+  apply IsPPTOn.bind_with (left := encBits)
+  · exact (ComputableInPolyTime.const 3).sampleList
+  apply IsPPTOn.bind_with (left := encPair encBits (encList encBits))
+  · apply isPPTOn_gmwSampleSimCoins <;> fun_prop
+  simp only [bind_pure_comp]
+  apply IsPPTOn.map_with
+  · apply isPPTOn_runTwoRound_prover hV hgPlain <;> fun_prop
+  · fun_prop
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 private theorem isPPTOn_gmwSimAttempt {α : Type} {enc : α ↪ List Bool}
@@ -728,10 +750,15 @@ private theorem isPPTOn_gmwSimAttempt {α : Type} {enc : α ↪ List Bool}
       (fun p : ℕ × α × List Bool =>
         gmwSimAttempt generator (p.1 + 7) (length (p.1 + 7))
           (f p.2.1) (Vstar p.1 p.2.1 p.2.2)) := by
-  have hlength := (PRG.polyTime_length (.of_tidy hg) hlen).tidy
+  have hlength := PRG.polyTime_length (.of_tidy hg) hlen
+  have hfPlain := ComputableInPolyTime.of_tidy hf
   have hpad := isPPTOn_gmwSimWithPads hg hlen hf hV
   dsimp only [gmwSimAttempt]
-  ppt
+  apply IsPPTOn.bind_with ?_ hpad
+  apply IsPPTOn.replicate
+  · apply ComputableInPolyTime.sampleList
+    fun_prop
+  · exact ComputableInPolyTime.tidy (by fun_prop)
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 theorem isPPTOn_gmwSimulator {α : Type} {enc : α ↪ List Bool}
@@ -749,7 +776,8 @@ theorem isPPTOn_gmwSimulator {α : Type} {enc : α ↪ List Bool}
   have hf := hf.tidy
   have hattempt := isPPTOn_gmwSimAttempt hg hlen hf hV
   dsimp only [gmwSimulator]
-  ppt
+  apply IsPPTOn.map (hattempt.replicate (ComputableInPolyTime.tidy (by fun_prop)))
+  exact computableInPolyTime_gmwFirstSuccess ComputableInPolyTime.id'
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 @[local fun_prop]
@@ -830,16 +858,34 @@ theorem isPPTOn_gmwInteract {α : Type} {enc : α ↪ List Bool}
       (fun p : ℕ × α × List Bool × List Bool =>
         gmwInteract generator (p.1 + 7) (length (p.1 + 7)) (f p.2.1) p.2.2.1
           (Vstar p.1 p.2.1 p.2.2.2)) := by
+  have hgPlain := hg
+  have hfPlain := hf
   have hg := hg.tidy
   have hf := hf.tidy
-  have hlength := (PRG.polyTime_length (.of_tidy hg) hlen).tidy
+  have hlengthPlain := PRG.polyTime_length hgPlain hlen
+  have hlength := hlengthPlain.tidy
   have hvars := (Cslib.Logic.PL.CNF.computableInPolyTime_vars_length (.of_tidy hf)).tidy
   have htotal := (computableInPolyTime_totalLen (.of_tidy hf)).tidy
   have hcoins : IsPPTOn (encPair encUnary (encPair enc (encPair encBits encBits)))
       (encPair encBits (encList encBits)) (fun p : ℕ × α × List Bool × List Bool =>
         sampleHonestCoins (p.1 + 7) (f p.2.1) p.2.2.1) := by
     dsimp only [sampleHonestCoins]
-    ppt
+    apply IsPPTOn.bind_with (left := encBits)
+    · apply ComputableInPolyTime.sampleList
+      fun_prop
+    apply IsPPTOn.bind_with (left := encBits)
+    · apply ComputableInPolyTime.sampleList
+      fun_prop
+    apply IsPPTOn.bind_with (left := encBits)
+    · apply ComputableInPolyTime.sampleList
+      fun_prop
+    simp only [bind_pure_comp]
+    apply IsPPTOn.map_with
+    · apply IsPPTOn.replicate
+      · apply ComputableInPolyTime.sampleList
+        fun_prop
+      · exact ComputableInPolyTime.tidy (by fun_prop)
+    · fun_prop
   dsimp only [gmwInteract]
   apply hcoins.bind_with
   simp only [bind_pure_comp]
