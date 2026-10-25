@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT
-public import Complexity.Computability.Geometry.OrthogonalSubdivision
+public import Complexity.Computability.Geometry.Orthogonal.Subdivision
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Logics.Propositional.CNF.PolyTime

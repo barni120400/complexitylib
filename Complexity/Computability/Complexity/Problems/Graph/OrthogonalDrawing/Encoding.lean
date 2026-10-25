@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing
-public import Complexity.Computability.Geometry.OrthogonalSubdivision
+public import Complexity.Computability.Geometry.Orthogonal.Encoding
 
 /-!
 # Binary encoding of supplied orthogonal drawings
