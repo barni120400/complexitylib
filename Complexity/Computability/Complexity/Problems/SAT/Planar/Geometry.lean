@@ -1349,4 +1349,499 @@ theorem routes_endpoints (φ : CNF ℕ) {i : ℕ}
   have h := (raw_routes_endpoints φ).get hi hir
   simpa only [List.get_eq_getElem, List.getD_eq_getElem _ _ hir] using h
 
+private theorem access_variable_contact {sites : List Point} {c q : Point} {v : Variable}
+    (hkind : v.2 = none ↔ v.1 ∉ sites)
+    (hp : realPoint (variablePosition v) ∈ support (access sites c q)) :
+    v = signal sites c q := by
+  have hcell : v.1 = c := cell_eq_of_mem_open_closed (by decide)
+    (variablePosition_mem_openCell v) (access_support_cell sites c q hp).1
+  rcases v with ⟨a, v⟩
+  change a = c at hcell
+  subst a
+  by_cases hc : c ∈ sites
+  · cases v with
+    | none => exact False.elim (hkind.mp rfl hc)
+    | some v =>
+      simp only [access, hc, ↓reduceIte, variablePosition, Option.elim_some,
+        realPoint_add, add_comm (realPoint (cellOrigin 120 c))] at hp
+      have hp' := (mem_support_translate_iff _ _ _).mp hp
+      have hv : v = Crossover.splitTerminal (side c q) := by
+        by_contra h
+        exact Crossover.access_variable_not_mem h hp'
+      simp [signal, hc, hv]
+  · have hv := hkind.mpr hc
+    simp only at hv
+    subst v
+    simp [signal, hc]
+
+private theorem core_variable_contact {sites : List Point} {c : Point}
+    (hc : c ∈ sites) {e : ℕ × Crossover.SplitVariable × Route}
+    (he : e ∈ Crossover.incidenceRoutes) {v : Variable}
+    (hkind : v.2 = none ↔ v.1 ∉ sites)
+    (hp : realPoint (variablePosition v) ∈
+      support (translate (cellOrigin 120 c) e.2.2)) : v = (c, some e.2.1) := by
+  have hcell : c = v.1 := cell_eq_of_mem_open_closed (by decide)
+    (crossingRoute_mem_openCell he c hp)
+    (let h := variablePosition_mem_openCell v
+     ⟨h.1.le, h.2.1.le, h.2.2.1.le, h.2.2.2.le⟩)
+  rcases v with ⟨a, v⟩
+  change c = a at hcell
+  subst a
+  cases v with
+  | none => exact False.elim (hkind.mp rfl hc)
+  | some v =>
+    simp only [variablePosition, Option.elim_some, realPoint_add,
+      add_comm (realPoint (cellOrigin 120 c))] at hp
+    have hp' := (mem_support_translate_iff _ _ _).mp hp
+    have hv : v = e.2.1 := by
+      by_contra h
+      exact Crossover.variable_not_mem_support he h hp'
+    exact congrArg (fun v => (c, some v)) hv
+
+/-- An actual route can meet a displayed variable only at its variable endpoint. -/
+theorem route_variable_contact (φ : CNF ℕ) {r : Route} (hr : r ∈ routes φ)
+    {v : Variable} (hv : v ∈ (rawFormula φ).vars)
+    (hp : realPoint (variablePosition v) ∈ support r) :
+    r.getLast? = some (variablePosition v) := by
+  obtain ⟨pc, hpc, hr⟩ := List.mem_flatMap.mp hr
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨c, hc, hpc⟩) | ⟨o, ho, hpc⟩
+  · obtain ⟨⟨c, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+    obtain ⟨lr, hlr, heq⟩ := List.mem_map.mp hr
+    obtain ⟨⟨l, j⟩, hlj, rfl⟩ := List.mem_map.mp hlr
+    have ho : (i, j, l) ∈ Cslib.Logic.PL.occurrences φ :=
+      List.mem_flatMap.mpr ⟨(c, i), hci, List.mem_map.mpr ⟨(l, j), hlj, rfl⟩⟩
+    dsimp only [lastLiteral] at heq
+    subst r
+    rw [support_finalRoute _ (occurrencePath_last_unit ho)] at hp
+    rcases hp with hp | hp
+    · have hcell : v.1 = (occurrencePath φ (i, j, l)).getLastD (0, 0) :=
+        cell_eq_of_mem_open_closed (by decide) (variablePosition_mem_openCell v)
+          (access_support_cell [] _ _ hp).1
+      have hend := (occurrencePath_endpoints ho).2
+      rw [List.getLastD_eq_getLast?, hend] at hcell
+      have hi : i < φ.length := by
+        simpa only [Nat.zero_add] using (List.mem_zipIdx hci).2.1
+      exact False.elim (raw_variable_not_clause_cell hv hi hcell)
+    · have heq := access_variable_contact (raw_variable_cell_kind φ hv) hp
+      exact heq ▸ (finalRoute_endpoints _ _ _).2
+  · obtain ⟨ci, _, rfl⟩ := List.mem_map.mp hpc
+    obtain ⟨e, he, rfl⟩ := List.mem_map.mp hr
+    have he' := (List.mem_filter.mp he).1
+    have heq := core_variable_contact hc he' (raw_variable_cell_kind φ hv) hp
+    subst v
+    simp only [translate, List.getLast?_map, (Crossover.incidence_endpoints _ he').2.2,
+      Option.map_some, variablePosition, Option.elim_some, add_comm]
+  · obtain ⟨e, _, rfl⟩ := List.mem_map.mp hpc
+    cases hpos : o.2.2.2 <;>
+      simp only [link, hpos, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+        List.not_mem_nil, or_false] at hr <;>
+      rcases hr with rfl | rfl <;>
+      have heq := access_variable_contact (raw_variable_cell_kind φ hv) hp <;>
+      rw [heq, access_eq_pair] <;> rfl
+
+private def lastStep (r : Route) : Point × Point :=
+  (r.getD (r.length - 2) (0, 0), r.getLastD (0, 0))
+
+private theorem lastStep_mem {φ : CNF ℕ} {o : Occurrence ℕ}
+    (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
+    lastStep (occurrencePath φ o) ∈ (occurrencePath φ o).consecutivePairs := by
+  let r := occurrencePath φ o
+  have hlen : 2 ≤ r.length := occurrencePath_length_ge_two ho
+  have hk : r.length - 2 < r.consecutivePairs.length := by
+    simp only [List.consecutivePairs, List.length_zip, List.length_tail]
+    omega
+  have heq : r.consecutivePairs[r.length - 2] = lastStep r := by
+    simp only [List.consecutivePairs, List.getElem_zip, List.getElem_tail, lastStep]
+    rw [List.getD_eq_getElem _ _ (by omega), List.getLastD_eq_getLast?,
+      List.getLast?_eq_getElem?, List.getElem?_eq_getElem (by omega), Option.getD_some]
+    congr 1
+    congr 1
+    omega
+  rw [← heq]
+  exact List.getElem_mem hk
+
+private theorem occurrence_step_unique {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {o t : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ)
+    (ht : t ∈ Cslib.Logic.PL.occurrences φ) {e f : Point × Point}
+    (he : e ∈ (occurrencePath φ o).consecutivePairs)
+    (hf : f ∈ (occurrencePath φ t).consecutivePairs)
+    (h : cellPort 120 e.1 (side e.1 e.2) = cellPort 120 f.1 (side f.1 f.2)) :
+    o = t ∧ e = f := by
+  let mids := fun o => (occurrencePath φ o).consecutivePairs.map fun e =>
+    cellPort 120 e.1 (side e.1 e.2)
+  have hn : ((Cslib.Logic.PL.occurrences φ).flatMap mids).Nodup := by
+    simpa only [← occurrencePaths_eq_paths φ, List.flatMap_map] using
+      pathMidpoints_nodup hw hv
+  have houter := (List.nodup_flatMap.mp hn).2
+  have hme : cellPort 120 e.1 (side e.1 e.2) ∈ mids o := List.mem_map_of_mem he
+  have hmf : cellPort 120 e.1 (side e.1 e.2) ∈ mids t := h ▸ List.mem_map_of_mem hf
+  have hot : o = t := by
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp ho
+    obtain ⟨j, hj, rfl⟩ := List.mem_iff_getElem.mp ht
+    rcases Nat.lt_trichotomy i j with hij | rfl | hji
+    · exact False.elim ((List.pairwise_iff_getElem.mp houter i j hi hj hij) hme hmf)
+    · rfl
+    · exact False.elim ((List.pairwise_iff_getElem.mp houter j i hj hi hji) hmf hme)
+  refine ⟨hot, ?_⟩
+  subst t
+  have hlocal := (List.nodup_flatMap.mp hn).1 o ho
+  obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp he
+  obtain ⟨j, hj, rfl⟩ := List.mem_iff_getElem.mp hf
+  have hi' : i < (mids o).length := by simpa only [mids, List.length_map] using hi
+  have hj' : j < (mids o).length := by simpa only [mids, List.length_map] using hj
+  have hij := hlocal.eq_of_getElem_eq hi' hj' (by simpa only [mids, List.getElem_map] using h)
+  subst j
+  rfl
+
+private theorem lastStep_not_prefix {φ : CNF ℕ} {o : Occurrence ℕ}
+    (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
+    lastStep (occurrencePath φ o) ∉ (occurrencePath φ o).dropLast.consecutivePairs := by
+  intro he
+  have hp : (occurrencePath φ o).getLastD (0, 0) ∈ (occurrencePath φ o).dropLast :=
+    List.mem_of_mem_tail (List.of_mem_zip he).2
+  rw [List.getLastD_eq_getLast?, (occurrencePath_endpoints ho).2] at hp
+  exact clause_cell_not_mem_path_dropLast ho (Cslib.Logic.PL.mem_occurrences.mp ho).1 hp
+
+private def RouteEnd (r : Route) (a : Point) : Prop :=
+  r.head? = some a ∨ r.getLast? = some a
+
+private inductive AccessPiece (φ : CNF ℕ) : Route → Point → Point → Prop where
+  | link {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ) {e : Point × Point}
+      (he : e ∈ (occurrencePath φ o).dropLast.consecutivePairs) :
+      AccessPiece φ (access (crossingSites φ) e.1 e.2) e.1 e.2
+  | reverseLink {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ)
+      {e : Point × Point} (he : e ∈ (occurrencePath φ o).dropLast.consecutivePairs) :
+      AccessPiece φ (access (crossingSites φ) e.2 e.1) e.2 e.1
+  | finalIn {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
+      AccessPiece φ
+        (center (lastStep (occurrencePath φ o)).2 ::
+          access (crossingSites φ) (lastStep (occurrencePath φ o)).1
+            (lastStep (occurrencePath φ o)).2)
+        (lastStep (occurrencePath φ o)).1 (lastStep (occurrencePath φ o)).2
+  | finalOut {o : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
+      AccessPiece φ
+        (center (lastStep (occurrencePath φ o)).2 ::
+          access (crossingSites φ) (lastStep (occurrencePath φ o)).1
+            (lastStep (occurrencePath φ o)).2)
+        (lastStep (occurrencePath φ o)).2 (lastStep (occurrencePath φ o)).1
+
+private theorem prefixStep_mem {φ : CNF ℕ} {o : Occurrence ℕ} {e : Point × Point}
+    (he : e ∈ (occurrencePath φ o).dropLast.consecutivePairs) :
+    e ∈ (occurrencePath φ o).consecutivePairs := by
+  rw [consecutivePairs_dropLast] at he
+  exact (List.dropLast_sublist _).subset he
+
+private theorem lastStep_target_not_crossing {φ : CNF ℕ} {o : Occurrence ℕ}
+    (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
+    (lastStep (occurrencePath φ o)).2 ∉ crossingSites φ := by
+  change (occurrencePath φ o).getLastD (0, 0) ∉ crossingSites φ
+  rw [List.getLastD_eq_getLast?, (occurrencePath_endpoints ho).2]
+  exact clause_cell_not_mem_crossingSites φ (Cslib.Logic.PL.mem_occurrences.mp ho).1
+
+private theorem AccessPiece.inner_endpoint {φ : CNF ℕ} {r : Route} {c q : Point}
+    (h : AccessPiece φ r c q) : RouteEnd r (variablePosition (signal (crossingSites φ) c q)) := by
+  cases h with
+  | link ho he => exact Or.inr (by rw [access_eq_pair]; rfl)
+  | reverseLink ho he => exact Or.inr (by rw [access_eq_pair]; rfl)
+  | finalIn ho => exact Or.inr (finalRoute_endpoints _ _ _).2
+  | finalOut ho =>
+    exact Or.inl (by simp [signal, lastStep_target_not_crossing ho, variablePosition, center])
+
+private theorem AccessPiece.source {φ : CNF ℕ} {r : Route} {c q : Point}
+    (h : AccessPiece φ r c q) :
+    ∃ o ∈ Cslib.Logic.PL.occurrences φ, ∃ e ∈ (occurrencePath φ o).consecutivePairs,
+      cellPort 120 c (side c q) = cellPort 120 e.1 (side e.1 e.2) ∧
+      ((e ∈ (occurrencePath φ o).dropLast.consecutivePairs ∧
+          r = access (crossingSites φ) c q) ∨
+        (e = lastStep (occurrencePath φ o) ∧
+          r = center e.2 :: access (crossingSites φ) e.1 e.2)) := by
+  cases h with
+  | link ho he => exact ⟨_, ho, _, prefixStep_mem he, rfl, Or.inl ⟨he, rfl⟩⟩
+  | reverseLink ho he =>
+    exact ⟨_, ho, _, prefixStep_mem he,
+      (shared_cellPort (occurrencePath_unit ho (prefixStep_mem he))).symm,
+      Or.inl ⟨he, rfl⟩⟩
+  | finalIn ho => exact ⟨_, ho, _, lastStep_mem ho, rfl, Or.inr ⟨rfl, rfl⟩⟩
+  | finalOut ho =>
+    exact ⟨_, ho, _, lastStep_mem ho, (shared_cellPort (occurrencePath_last_unit ho)).symm,
+      Or.inr ⟨rfl, rfl⟩⟩
+
+private theorem accessPieces_same_port {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {r s : Route} {c q d t : Point} (hr : AccessPiece φ r c q) (hs : AccessPiece φ s d t)
+    (h : cellPort 120 c (side c q) = cellPort 120 d (side d t)) :
+    (r = access (crossingSites φ) c q ∧ s = access (crossingSites φ) d t) ∨ r = s := by
+  obtain ⟨o, ho, e, he, hport, hr⟩ := hr.source
+  obtain ⟨u, hu, f, hf, hport', hs⟩ := hs.source
+  obtain ⟨rfl, rfl⟩ := occurrence_step_unique hw hv ho hu he hf
+    (hport.symm.trans (h.trans hport'))
+  rcases hr with ⟨hprefix, hr⟩ | ⟨hfinal, hr⟩ <;>
+    rcases hs with ⟨hprefix', hs⟩ | ⟨hfinal', hs⟩
+  · exact Or.inl ⟨hr, hs⟩
+  · exact False.elim (lastStep_not_prefix ho (hfinal' ▸ hprefix))
+  · exact False.elim (lastStep_not_prefix ho (hfinal ▸ hprefix'))
+  · exact Or.inr (hr.trans hs.symm)
+
+private theorem route_support_cases {φ : CNF ℕ} {r : Route} (hr : r ∈ routes φ)
+    {p : ℝ × ℝ} (hp : p ∈ support r) :
+    (∃ c ∈ crossingSites φ, ∃ e ∈ Crossover.incidenceRoutes,
+      r = translate (cellOrigin 120 c) e.2.2) ∨
+      ∃ c q, AccessPiece φ r c q ∧ p ∈ support (access (crossingSites φ) c q) := by
+  obtain ⟨pc, hpc, hr⟩ := List.mem_flatMap.mp hr
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨c, hc, hpc⟩) | ⟨o, ho, hpc⟩
+  · obtain ⟨ci, hci, rfl⟩ := List.mem_map.mp hpc
+    obtain ⟨lr, hlr, heq⟩ := List.mem_map.mp hr
+    obtain ⟨lj, hlj, rfl⟩ := List.mem_map.mp hlr
+    have ho : (ci.2, lj.2, lj.1) ∈ Cslib.Logic.PL.occurrences φ :=
+      List.mem_flatMap.mpr ⟨ci, hci, List.mem_map.mpr ⟨lj, hlj, rfl⟩⟩
+    dsimp only [lastLiteral] at heq
+    subst r
+    rw [support_finalRoute _ (occurrencePath_last_unit ho)] at hp
+    rcases hp with hp | hp
+    · have heq : access [] (lastStep (occurrencePath φ (ci.2, lj.2, lj.1))).2
+          (lastStep (occurrencePath φ (ci.2, lj.2, lj.1))).1 =
+        access (crossingSites φ) (lastStep (occurrencePath φ (ci.2, lj.2, lj.1))).2
+          (lastStep (occurrencePath φ (ci.2, lj.2, lj.1))).1 := by
+        simp [access, lastStep_target_not_crossing ho]
+      exact Or.inr ⟨_, _, AccessPiece.finalOut ho, heq ▸ hp⟩
+    · exact Or.inr ⟨_, _, AccessPiece.finalIn ho, hp⟩
+  · obtain ⟨ci, _, rfl⟩ := List.mem_map.mp hpc
+    obtain ⟨e, he, rfl⟩ := List.mem_map.mp hr
+    exact Or.inl ⟨c, hc, e, (List.mem_filter.mp he).1, rfl⟩
+  · obtain ⟨e, he, rfl⟩ := List.mem_map.mp hpc
+    cases hpos : o.2.2.2 <;>
+      simp only [link, hpos, Bool.false_eq_true, ↓reduceIte, List.mem_cons,
+        List.not_mem_nil, or_false] at hr <;> rcases hr with rfl | rfl
+    all_goals first
+      | exact Or.inr ⟨_, _, AccessPiece.link ho he, hp⟩
+      | exact Or.inr ⟨_, _, AccessPiece.reverseLink ho he, hp⟩
+
+private theorem accessPieces_contact {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {r s : Route} {c q d t : Point} (hr : AccessPiece φ r c q) (hs : AccessPiece φ s d t)
+    (hne : r ≠ s) {p : ℝ × ℝ}
+    (hp : p ∈ support (access (crossingSites φ) c q))
+    (hq : p ∈ support (access (crossingSites φ) d t)) :
+    ∃ a : Point, p = realPoint a ∧ RouteEnd r a ∧ RouteEnd s a := by
+  by_cases hcd : c = d
+  · subst d
+    by_cases hside : side c q = side c t
+    · have hport : cellPort 120 c (side c q) = cellPort 120 c (side c t) := congrArg _ hside
+      rcases accessPieces_same_port hw hv hr hs hport with ⟨hr', hs'⟩ | heq
+      · apply False.elim
+        apply hne
+        rw [hr', hs', access_eq_pair, access_eq_pair]
+        simp only [signal, hside]
+      · exact False.elim (hne heq)
+    · by_cases hc : c ∈ crossingSites φ
+      · exact False.elim (Set.disjoint_left.mp (crossing_access_disjoint hc q t hside) hp hq)
+      · have hp' := ordinary_access_contact hc q t hside hp hq
+        refine ⟨center c, hp', ?_, ?_⟩
+        · simpa only [signal, hc, ↓reduceIte, variablePosition, Option.elim_none, center] using
+            hr.inner_endpoint
+        · simpa only [signal, hc, ↓reduceIte, variablePosition, Option.elim_none, center] using
+            hs.inner_endpoint
+  · have hcontact := access_contact_of_distinct_cells (crossingSites φ) (crossingSites φ)
+      hcd q t hp hq
+    have hport := realPoint_injective (hcontact.1.symm.trans hcontact.2)
+    rcases accessPieces_same_port hw hv hr hs hport with ⟨hr', hs'⟩ | heq
+    · refine ⟨cellPort 120 c (side c q), hcontact.1, Or.inl ?_, Or.inl ?_⟩
+      · rw [hr', access_eq_pair]; rfl
+      · rw [hs', access_eq_pair, ← hport]; rfl
+    · exact False.elim (hne heq)
+
+private theorem RouteEnd.translate {r : Route} {a : Point} (h : RouteEnd r a) (v : Point) :
+    RouteEnd (translate v r) (a + v) := by
+  rcases h with h | h
+  · exact Or.inl (by simp only [Orthogonal.translate, List.head?_map, h, Option.map_some])
+  · exact Or.inr (by simp only [Orthogonal.translate, List.getLast?_map, h, Option.map_some])
+
+private theorem core_local_contact {e f : ℕ × Crossover.SplitVariable × Route}
+    (he : e ∈ Crossover.incidenceRoutes) (hf : f ∈ Crossover.incidenceRoutes) (hne : e ≠ f)
+    {p : ℝ × ℝ} (hp : p ∈ support e.2.2) (hq : p ∈ support f.2.2) :
+    ∃ a : Point, p = realPoint a ∧ RouteEnd e.2.2 a ∧ RouteEnd f.2.2 a := by
+  obtain ⟨a, ha, hpa⟩ := Crossover.routes_contact he hf hne hp hq
+  refine ⟨a, hpa, ?_⟩
+  simp only [Crossover.commonEndpoints, List.mem_append] at ha
+  rcases ha with ha | ha
+  · split_ifs at ha with hclause
+    · obtain rfl := List.mem_singleton.mp ha
+      exact ⟨Or.inl (Crossover.incidence_endpoints _ he).2.1,
+        Or.inl (by simpa only [hclause] using (Crossover.incidence_endpoints _ hf).2.1)⟩
+    · exact False.elim (List.not_mem_nil ha)
+  · split_ifs at ha with hvar
+    · obtain rfl := List.mem_singleton.mp ha
+      exact ⟨Or.inr (Crossover.incidence_endpoints _ he).2.2,
+        Or.inr (by simpa only [hvar] using (Crossover.incidence_endpoints _ hf).2.2)⟩
+    · exact False.elim (List.not_mem_nil ha)
+
+private theorem core_core_contact {c d : Point} {e f : ℕ × Crossover.SplitVariable × Route}
+    (he : e ∈ Crossover.incidenceRoutes) (hf : f ∈ Crossover.incidenceRoutes)
+    (hne : translate (cellOrigin 120 c) e.2.2 ≠ translate (cellOrigin 120 d) f.2.2)
+    {p : ℝ × ℝ} (hp : p ∈ support (translate (cellOrigin 120 c) e.2.2))
+    (hq : p ∈ support (translate (cellOrigin 120 d) f.2.2)) :
+    ∃ a : Point, p = realPoint a ∧ RouteEnd (translate (cellOrigin 120 c) e.2.2) a ∧
+      RouteEnd (translate (cellOrigin 120 d) f.2.2) a := by
+  have hpc := crossingRoute_mem_openCell he c hp
+  have hqc := crossingRoute_mem_openCell hf d hq
+  have hcd : c = d := cell_eq_of_mem_open_closed (by decide) hpc
+    ⟨hqc.1.le, hqc.2.1.le, hqc.2.2.1.le, hqc.2.2.2.le⟩
+  subst d
+  have hef : e ≠ f := fun h => hne (h ▸ rfl)
+  let x := p - realPoint (cellOrigin 120 c)
+  have hx : x + realPoint (cellOrigin 120 c) = p := sub_add_cancel _ _
+  have hp' : x ∈ support e.2.2 :=
+    (mem_support_translate_iff _ _ _).mp (hx ▸ hp)
+  have hq' : x ∈ support f.2.2 :=
+    (mem_support_translate_iff _ _ _).mp (hx ▸ hq)
+  obtain ⟨a, hxa, ha, hb⟩ := core_local_contact he hf hef hp' hq'
+  refine ⟨a + cellOrigin 120 c, ?_, ha.translate _, hb.translate _⟩
+  rw [realPoint_add, ← hxa, hx]
+
+private theorem core_access_contact {φ : CNF ℕ} {r : Route} {c d q : Point}
+    (hc : c ∈ crossingSites φ) {e : ℕ × Crossover.SplitVariable × Route}
+    (he : e ∈ Crossover.incidenceRoutes) (hr : AccessPiece φ r d q)
+    {p : ℝ × ℝ} (hp : p ∈ support (translate (cellOrigin 120 c) e.2.2))
+    (hq : p ∈ support (access (crossingSites φ) d q)) :
+    ∃ a : Point, p = realPoint a ∧ RouteEnd (translate (cellOrigin 120 c) e.2.2) a ∧
+      RouteEnd r a := by
+  have hcd : c = d := cell_eq_of_mem_open_closed (by decide)
+    (crossingRoute_mem_openCell he c hp) (access_support_cell _ _ _ hq).1
+  subst d
+  let x := p - realPoint (cellOrigin 120 c)
+  have hx : x + realPoint (cellOrigin 120 c) = p := sub_add_cancel _ _
+  have hp' : x ∈ support e.2.2 :=
+    (mem_support_translate_iff _ _ _).mp (hx ▸ hp)
+  have hq' : x ∈ support (Crossover.accessRoute (side c q)) := by
+    apply (mem_support_translate_iff (cellOrigin 120 c) _ _).mp
+    simpa only [access, hc, ↓reduceIte, hx] using hq
+  obtain ⟨hevar, hxp⟩ := Crossover.access_contact he hq' hp'
+  refine ⟨variablePosition (signal (crossingSites φ) c q), ?_, ?_, hr.inner_endpoint⟩
+  · simp only [signal, hc, ↓reduceIte, variablePosition, Option.elim_some, realPoint_add]
+    rw [← hxp, add_comm, hx]
+  · have hend : RouteEnd e.2.2 (Crossover.variablePosition (Crossover.splitTerminal (side c q))) :=
+      Or.inr (by simpa only [hevar] using (Crossover.incidence_endpoints _ he).2.2)
+    simpa only [signal, hc, ↓reduceIte, variablePosition, Option.elim_some, add_comm] using
+      hend.translate (cellOrigin 120 c)
+
+/-- Distinct actual routes meet only at endpoints of both routes, over the complete real plane.
+The proof uses actual unit-step ownership, including the omitted final binary link. -/
+theorem route_contacts {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {r s : Route} (hr : r ∈ routes φ) (hs : s ∈ routes φ) (hne : r ≠ s)
+    {p : ℝ × ℝ} (hp : p ∈ support r) (hq : p ∈ support s) :
+    ∃ a : Point, p = realPoint a ∧
+      (r.head? = some a ∨ r.getLast? = some a) ∧
+      (s.head? = some a ∨ s.getLast? = some a) := by
+  rcases route_support_cases hr hp with ⟨c, hc, e, he, rfl⟩ | ⟨c, q, hr', hp'⟩
+  · rcases route_support_cases hs hq with ⟨d, _, f, hf, rfl⟩ | ⟨d, t, hs', hq'⟩
+    · exact core_core_contact he hf hne hp hq
+    · exact core_access_contact hc he hs' hp hq'
+  · rcases route_support_cases hs hq with ⟨d, hd, f, hf, rfl⟩ | ⟨d, t, hs', hq'⟩
+    · obtain ⟨a, hpa, hfend, hrend⟩ := core_access_contact hd hf hr' hq hp'
+      exact ⟨a, hpa, hrend, hfend⟩
+    · exact accessPieces_contact hw hv hr' hs' hne hp' hq'
+
+private theorem lastLiteral_route_injective {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {o t : Occurrence ℕ} (ho : o ∈ Cslib.Logic.PL.occurrences φ)
+    (ht : t ∈ Cslib.Logic.PL.occurrences φ) {b b' : Bool}
+    (h : (lastLiteral (crossingSites φ) (occurrencePath φ o) b).2 =
+      (lastLiteral (crossingSites φ) (occurrencePath φ t) b').2) : o = t := by
+  have hmid := congrArg (fun r : Route => r.getD 1 (0, 0)) h
+  simp only [lastLiteral, access_eq_pair, List.getD_cons_succ,
+    List.getD_cons_zero] at hmid
+  exact (occurrence_step_unique hw hv ho ht (lastStep_mem ho) (lastStep_mem ht) hmid).1
+
+private theorem originalClause_routes_nodup_at {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {c : Clause ℕ} {i : ℕ} (hci : (c, i) ∈ φ.zipIdx) :
+    ((c.zipIdx.map fun lj =>
+      lastLiteral (crossingSites φ) (occurrencePath φ (i, lj.2, lj.1)) lj.1.2).map
+        Prod.snd).Nodup := by
+  rw [List.map_map]
+  have hn : c.zipIdx.Nodup := by
+    apply List.Nodup.of_map Prod.snd
+    rw [List.zipIdx_map_snd]
+    exact List.nodup_range' _
+  apply hn.map_on
+  intro lj hlj mk hmk heq
+  have ho : (i, lj.2, lj.1) ∈ Cslib.Logic.PL.occurrences φ :=
+    List.mem_flatMap.mpr ⟨(c, i), hci, List.mem_map.mpr ⟨lj, hlj, rfl⟩⟩
+  have ht : (i, mk.2, mk.1) ∈ Cslib.Logic.PL.occurrences φ :=
+    List.mem_flatMap.mpr ⟨(c, i), hci, List.mem_map.mpr ⟨mk, hmk, rfl⟩⟩
+  have hot := lastLiteral_route_injective hw hv ho ht (b := lj.1.2) (b' := mk.1.2) heq
+  have hjl := Prod.mk.inj (Prod.mk.inj hot).2
+  exact Prod.ext hjl.2 hjl.1
+
+private theorem originalClause_routes_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {pc : PlacedClause} (hpc : pc ∈ originalClauses φ (crossingSites φ)) : pc.2.2.Nodup := by
+  obtain ⟨⟨c, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+  exact originalClause_routes_nodup_at hw hv hci
+
+private theorem crossing_routes_nodup_check : ∀ i : Fin 74,
+    ((Crossover.incidenceRoutes.filter fun e => e.1 == i.val).map fun e => e.2.2).Nodup := by
+  decide +kernel
+
+private theorem crossingClause_routes_nodup {c : Point} {pc : PlacedClause}
+    (hpc : pc ∈ crossingClauses c) : pc.2.2.Nodup := by
+  obtain ⟨⟨sourceClause, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+  have hi : i < 74 := by
+    simpa only [Nat.zero_add, Crossover.length_splitFormula] using (List.mem_zipIdx hci).2.1
+  change ((Crossover.incidenceRoutes.filter fun e => e.1 == i).map
+    (fun e => translate (cellOrigin 120 c) e.2.2)).Nodup
+  have hn := (crossing_routes_nodup_check ⟨i, hi⟩).map
+    (f := translate (cellOrigin 120 c))
+    (fun _ _ h => (List.map_inj_right (fun _ _ h => add_right_cancel h)).mp h)
+  simpa only [List.map_map, Function.comp_def] using hn
+
+private theorem access_reverse_ne {sites : List Point} {p q : Point}
+    (h : Orthogonal.length p q = 1) : access sites p q ≠ access sites q p := by
+  intro heq
+  have hvar := congrArg List.getLast? heq
+  simp only [access_eq_pair, List.getLast?_cons_cons, List.getLast?_singleton,
+    Option.some.injEq] at hvar
+  have hp := variablePosition_mem_openCell (signal sites p q)
+  have hq := variablePosition_mem_openCell (signal sites q p)
+  rw [← hvar] at hq
+  have hpq : p = q := cell_eq_of_mem_open_closed (by decide) hp
+    ⟨hq.1.le, hq.2.1.le, hq.2.2.1.le, hq.2.2.2.le⟩
+  subst q
+  simp [Orthogonal.length] at h
+
+private theorem placedClause_routes_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {pc : PlacedClause} (hpc : pc ∈ placedClauses φ) : pc.2.2.Nodup := by
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨_, _, hpc⟩) | ⟨o, ho, hpc⟩
+  · exact originalClause_routes_nodup hw hv hpc
+  · exact crossingClause_routes_nodup hpc
+  · obtain ⟨e, he, rfl⟩ := List.mem_map.mp hpc
+    have hne := access_reverse_ne (sites := crossingSites φ)
+      (occurrencePath_unit ho (prefixStep_mem he))
+    cases o.2.2.2 <;> simp [link, hne, Ne.symm hne]
+
+/-- Distinct incidence occurrences have distinct actual route lists. -/
+theorem routes_nodup {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) : (routes φ).Nodup := by
+  apply List.nodup_flatMap.mpr
+  refine ⟨fun _ hpc => placedClause_routes_nodup hw hv hpc, ?_⟩
+  have hn := clausePositions_nodup hw hv
+  rw [List.Nodup, List.pairwise_map] at hn
+  apply hn.imp_of_mem
+  intro pc pd hpc hpd hpos r hr hs
+  have hhead (pc : PlacedClause) (hpc : pc ∈ placedClauses φ) (hr : r ∈ pc.2.2) :
+      r.head? = some pc.2.1 := by
+    obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+    have hi' : i < pc.1.length := by rwa [← placedClause_route_count φ pc hpc]
+    have hzip : (pc.1[i], pc.2.2[i]) ∈ pc.1.zip pc.2.2 := by
+      have hk : i < (pc.1.zip pc.2.2).length := by simp only [List.length_zip]; omega
+      simpa only [List.getElem_zip] using (List.getElem_mem hk)
+    exact (placedClause_endpoints φ hpc hzip).1
+  exact hpos (Option.some.inj ((hhead pc hpc hr).symm.trans (hhead pd hpd hs)))
+
 end Cslib.Complexity.SAT.PlanarCompile

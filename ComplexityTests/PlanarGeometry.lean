@@ -54,6 +54,15 @@ example : (positions [[(7, true), (7, false), (7, true)]]).Nodup := by
   · intro v
     exact List.count_le_length.trans (by decide)
 
+-- Repeated literal occurrences have different routes as well as different midpoint clauses.
+example : (routes [[(7, true), (7, false), (7, true)]]).Nodup := by
+  apply routes_nodup
+  · intro c hc
+    obtain rfl := List.mem_singleton.mp hc
+    decide
+  · intro v
+    exact List.count_le_length.trans (by decide)
+
 -- Repeated empty clauses still produce different geometric clause vertices.
 example : (positions [[], []]).Nodup := by
   apply positions_nodup
