@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
-public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 import Mathlib.Data.List.GetD
 import Mathlib.Tactic
 
@@ -25,8 +25,6 @@ All compiler data and CNF operations are reused from their existing modules.
 
 ## Main results
 
-* `Cslib.Complexity.SAT.PlanarCompile.occurrencePath_endpoints`: exact source and clause endpoints.
-* `Cslib.Complexity.SAT.PlanarCompile.occurrencePath_length_ge_two`: no empty cell wire is used.
 * `Cslib.Complexity.SAT.PlanarCompile.satisfiable_source_of_formula`: actual compiler soundness
   under source width and literal-occurrence bounds of three.
 
@@ -40,20 +38,6 @@ These are original logical composition proofs for the finite compiler.
 namespace Cslib.Complexity.SAT.PlanarCompile
 
 open Cslib.Logic.PL Cslib.Logic.PL.CNF Orthogonal
-
-/-- Compiler paths are exactly the checked canonical unit paths of the existing incidence graph. -/
-theorem paths_eq_unitPaths (φ : CNF ℕ) : paths φ = (SAT.incidenceGraph φ).unitPaths := rfl
-
-/-- Occurrence access preserves the original literal-incidence edge index. -/
-theorem occurrencePath_eq_unitPath (φ : CNF ℕ) (o : Occurrence ℕ) :
-    occurrencePath φ o = (SAT.incidenceGraph φ).unitPath
-      ((Cslib.Logic.PL.occurrences φ).idxOf o) := rfl
-
-/-- Every actual occurrence indexes an existing incidence edge. -/
-theorem occurrence_index_lt {φ : CNF ℕ} {o : Occurrence ℕ}
-    (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
-    (Cslib.Logic.PL.occurrences φ).idxOf o < (SAT.incidenceGraph φ).2.length := by
-  simpa only [SAT.incidenceGraph, List.length_map] using List.idxOf_lt_length_of_mem ho
 
 private theorem occurrence_var_mem {φ : CNF ℕ} {o : Occurrence ℕ}
     (ho : o ∈ Cslib.Logic.PL.occurrences φ) : o.2.2.1 ∈ φ.vars := by
@@ -69,55 +53,6 @@ theorem occurrence_edgeEndpoint {φ : CNF ℕ} {o : Occurrence ℕ}
   rw [List.getD_eq_getElem _ _ (occurrence_index_lt ho)]
   simp only [SAT.incidenceGraph, List.getElem_map,
     List.getElem_idxOf (List.idxOf_lt_length_of_mem ho)]
-
-private theorem idxOf_range {n i : ℕ} (hi : i < n) : (List.range n).idxOf i = i := by
-  have hm : i ∈ List.range n := List.mem_range.mpr hi
-  have hi' := List.idxOf_lt_length_of_mem hm
-  simpa only [List.getElem_range] using List.getElem_idxOf hi'
-
-/-- The path starts at the original variable center and ends at its original clause center. -/
-theorem occurrencePath_endpoints {φ : CNF ℕ} {o : Occurrence ℕ}
-    (ho : o ∈ Cslib.Logic.PL.occurrences φ) :
-    (occurrencePath φ o).head? = some (Layout.center (φ.distinctVars.idxOf o.2.2.1)) ∧
-      (occurrencePath φ o).getLast? = some (Layout.center (φ.distinctVars.length + o.1)) := by
-  have h := Graph.unitPath_endpoints (SAT.incidenceGraph φ)
-    (fun _ he => SAT.incidenceGraph_endpoints he)
-    (fun _ he => SAT.incidenceGraph_loopless he) (occurrence_index_lt ho)
-  rw [← occurrencePath_eq_unitPath] at h
-  rw [occurrence_edgeEndpoint ho false, occurrence_edgeEndpoint ho true] at h
-  have hvar := List.idxOf_lt_length_of_mem (CNF.mem_distinctVars.mpr (occurrence_var_mem ho))
-  obtain ⟨hclause, _, _⟩ := Cslib.Logic.PL.mem_occurrences.mp ho
-  have hv : φ.distinctVars.idxOf o.2.2.1 < φ.distinctVars.length + φ.length := by omega
-  have hc : φ.distinctVars.length + o.1 < φ.distinctVars.length + φ.length := by omega
-  simpa [SAT.incidenceGraph, idxOf_range hv, idxOf_range hc] using h
-
-/-- Every actual occurrence path has distinct listed points. -/
-theorem occurrencePath_nodup {φ : CNF ℕ} {o : Occurrence ℕ}
-    (ho : o ∈ Cslib.Logic.PL.occurrences φ) : (occurrencePath φ o).Nodup := by
-  rw [occurrencePath_eq_unitPath]
-  exact Graph.unitPath_nodup (SAT.incidenceGraph φ)
-    (fun _ he => SAT.incidenceGraph_endpoints he)
-    (fun _ he => SAT.incidenceGraph_loopless he) (occurrence_index_lt ho)
-
-/-- Different source/clause vertices guarantee at least one cell before the clause center. -/
-theorem occurrencePath_length_ge_two {φ : CNF ℕ} {o : Occurrence ℕ}
-    (ho : o ∈ Cslib.Logic.PL.occurrences φ) : 2 ≤ (occurrencePath φ o).length := by
-  have h := occurrencePath_endpoints ho
-  have hvar := List.idxOf_lt_length_of_mem (CNF.mem_distinctVars.mpr (occurrence_var_mem ho))
-  have hneq : Layout.center (φ.distinctVars.idxOf o.2.2.1) ≠
-      Layout.center (φ.distinctVars.length + o.1) := by
-    intro he
-    have hx := congrArg Prod.fst he
-    simp only [Layout.center] at hx
-    omega
-  cases hr : occurrencePath φ o with
-  | nil => simp [hr] at h
-  | cons a r =>
-    cases r with
-    | nil =>
-      simp only [hr, List.head?_cons, List.getLast?_singleton, Option.some.injEq] at h
-      exact False.elim (hneq (h.1.symm.trans h.2))
-    | cons b r => simp
 
 private theorem other_path_index (rs : List Route) (p : Point) (i : ℕ) (hi : i < rs.length)
     (hcount : 2 ≤ (rs.filter fun r => r.contains p).length) :
