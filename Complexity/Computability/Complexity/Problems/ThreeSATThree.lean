@@ -18,15 +18,18 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 
 /-!
-# Finite 3SAT with at most three occurrences per variable
+# 3SAT with at most three occurrences per variable
 
 `ThreeSATThree` uses clauses of width at most three, allowing binary clauses. Every variable has
-at most three literal occurrences, including repeated literals within a clause. The reduction
+at most three literal occurrences, including repeated literals within a clause
+[Papadimitriou, Proposition 9.3][Papadimitriou94]. Only the variable-occurrence restriction of
+that proposition is formalized; its additional bound of two occurrences per signed literal is
+not part of `ThreeSATThree` or the completeness theorem. The reduction
 splits occurrences and connects the copies by binary implication cycles. It is total on all CNF
 inputs: a formula having a clause longer than three maps to the unsatisfiable formula `[[]]`.
 Original natural labels stay binary throughout; only syntactic positions use unary counters.
 
-The finite construction is adapted from `lean-trominoes` revision
+The construction is adapted from `lean-trominoes` revision
 `6d5b36c15cec6cb18d30137b7f1c7fb92ea24332`,
 `SAT/ThreeSAT/PeriodicThreeSATThree{,Correctness,ExactSize}.lean`.
 This endpoint imposes no planarity condition.
@@ -40,7 +43,11 @@ This endpoint imposes no planarity condition.
 
 * `Cslib.Complexity.mem_ThreeSATThree_toThreeSATThree_iff`: correctness of the reduction.
 * `Cslib.Complexity.computableInPolyTime_toThreeSATThree`: native polynomial time under `encCNF`.
-* `Cslib.Complexity.ThreeSATThree_npComplete`: finite 3SAT-3 is NP-complete.
+* `Cslib.Complexity.ThreeSATThree_npComplete`: 3SAT-3 is NP-complete.
+
+## References
+
+* [C. H. Papadimitriou, *Computational Complexity*, Proposition 9.3][Papadimitriou94]
 -/
 
 @[expose] public section
@@ -78,8 +85,9 @@ theorem computableInPolyTime_numberCopy :
     ComputableInPolyTime numberCopy (encPair encNat (encPair encUnary encUnary)) encNat := by
   have hi : ComputableInPolyTime (fun p : ℕ × ℕ => Nat.pair p.1 p.2)
       (encPair encUnary encUnary) encNat :=
-    .of_tidy (ComputableTidilyInPolyTime.unary_to_binary.comp
-      ComputableTidilyInPolyTime.unary_pair)
+    computableInPolyTime_pair.comp
+      ((ComputableInPolyTime.unary_to_binary.comp (ComputableInPolyTime.fst _ _)).prod
+        (ComputableInPolyTime.unary_to_binary.comp (ComputableInPolyTime.snd _ _)))
   exact computableInPolyTime_pair.comp
     ((ComputableInPolyTime.fst _ _).prod (hi.comp (ComputableInPolyTime.snd _ _)))
 
@@ -117,7 +125,7 @@ theorem computableInPolyTime_verifier :
   unfold verifier
   fun_prop
 
-/-- Finite 3SAT-3 belongs to NP under the ordinary binary CNF encoding. -/
+/-- 3SAT-3 belongs to NP under the ordinary binary CNF encoding. -/
 theorem mem_NP : ThreeSATThree ∈ NP encCNF :=
   ⟨Polynomial.X, verifier, computableInPolyTime_verifier, isVerifier⟩
 
@@ -175,17 +183,19 @@ theorem mem_ThreeSATThree_toThreeSATThree_iff (φ : CNF ℕ) :
   · have hw' : ¬ ∀ c ∈ φ, c.length ≤ 3 := by simpa using hw
     simp [ThreeSATThree, ThreeSAT, hw', CNF.Satisfiable]
 
-/-- `ThreeSAT` reduces to finite 3SAT-3. -/
+/-- `ThreeSAT` reduces to 3SAT-3. -/
 theorem polyTimeReducible_ThreeSAT_ThreeSATThree :
     PolyTimeReducible encCNF encCNF ThreeSAT ThreeSATThree :=
   ⟨toThreeSATThree, computableInPolyTime_toThreeSATThree,
     fun φ => (mem_ThreeSATThree_toThreeSATThree_iff φ).symm⟩
 
-/-- Finite 3SAT-3 is NP-hard. -/
+/-- 3SAT-3 is NP-hard. -/
 theorem ThreeSATThree_npHard : NPHard encCNF ThreeSATThree :=
   ThreeSAT_npHard.trans polyTimeReducible_ThreeSAT_ThreeSATThree
 
-/-- Finite CNF satisfiability with width and literal-occurrence bounds three is NP-complete. -/
+/-- 3SAT with at most three occurrences per variable is NP-complete
+[Papadimitriou, Proposition 9.3][Papadimitriou94]. The additional per-signed-literal bound in that
+proposition is not part of this statement. -/
 theorem ThreeSATThree_npComplete : NPComplete encCNF ThreeSATThree :=
   ⟨ThreeSATThree.mem_NP, ThreeSATThree_npHard⟩
 
