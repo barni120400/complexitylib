@@ -455,6 +455,7 @@ public import Complexity.Computability.Circuit.Parallel
 public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Pointwise
 public import Complexity.Computability.Circuit.Program
+public import Complexity.Computability.Circuit.Quantum.Basic
 public import Complexity.Computability.Circuit.Rational
 public import Complexity.Computability.Circuit.Rational.Affine
 public import Complexity.Computability.Circuit.Rational.BlockDivision
