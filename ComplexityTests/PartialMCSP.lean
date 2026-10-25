@@ -127,10 +127,18 @@ example : ∃ x : PartialMCSP.Instance, x ∈ PartialMCSP.BinaryGate ∧ x ∉ P
       · have := hV []; revert this; cases b <;> decide
       · simp [certLength, MCSP.budget] at hu⟩
 
-/-- The 2-variable `AND` table at threshold 0 has both variables essential and therefore cannot be
-computed with 0 binary gates (`not_mem_binaryGate_of_threshold_lt`). -/
-example : PartialMCSP.trivialNoInstance ∉ PartialMCSP.BinaryGate :=
-  PartialMCSP.trivialNoInstance_not_mem_binaryGate
+/-- The 2-variable `AND` table at threshold 0 has both variables essential and `0 + 1 < 2`, so it
+cannot be computed with 0 binary gates (`not_mem_binaryGate_of_threshold_lt`). -/
+example : (⟨2, ![some false, some false, some false, some true], 0⟩ : PartialMCSP.Instance) ∉
+    PartialMCSP.BinaryGate := by
+  refine PartialMCSP.not_mem_binaryGate_of_threshold_lt (fun i => ?_) (by decide)
+  fin_cases i
+  · refine ⟨![false, true], ![true, true], false, true, ?_, rfl, rfl, by decide⟩
+    intro k hk
+    fin_cases k <;> first | contradiction | rfl
+  · refine ⟨![true, false], ![true, true], false, true, ?_, rfl, rfl, by decide⟩
+    intro k hk
+    fin_cases k <;> first | contradiction | rfl
 
 /-! ### NP verifier certificates -/
 
