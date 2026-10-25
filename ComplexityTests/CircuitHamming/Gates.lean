@@ -232,6 +232,16 @@ example (f g h : Fin 0 → Bool) :
       hammingDist f h + hammingDist g h :=
   hammingDist_and_add_hammingDist_or f g h
 
+/-- Flipping one coordinate increases or decreases the Hamming distance by one, and summing
+`q ^ hammingDist σ τ` over `BitString 3` gives `(1 + q) ^ 3`. -/
+example (x z : BitString 3) (i : Fin 3) :
+    hammingDist (flipOn {i} x) z =
+      if x i = z i then hammingDist x z + 1 else hammingDist x z - 1 :=
+  hammingDist_flip_singleton x z i
+
+example (τ : BitString 3) : ∑ σ : BitString 3, (2 : ℕ) ^ hammingDist σ τ = 27 := by
+  simpa using sum_pow_hammingDist (2 : ℕ) τ
+
 /-! ### Axioms -/
 
 /--

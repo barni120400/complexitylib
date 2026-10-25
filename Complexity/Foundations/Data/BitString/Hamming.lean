@@ -64,8 +64,11 @@ is.
   `Cslib.BitString.two_mul_hammingDist_add_proj`: projections and their shifts are half the cube
   apart.
 * `Cslib.BitString.hammingDist_flip_self`, `Cslib.BitString.hammingDist_le_flip_add_one`,
-  `Cslib.BitString.hammingDist_flip_le_add_one`, `Cslib.BitString.hammingDist_flip_eq_add_one`:
-  effect of flipping one coordinate on Hamming distance.
+  `Cslib.BitString.hammingDist_flip_le_add_one`, `Cslib.BitString.hammingDist_flip_eq_add_one`,
+  `Cslib.BitString.hammingDist_flip_singleton`: effect of flipping one coordinate on Hamming
+  distance.
+* `Cslib.BitString.sum_pow_hammingDist`: summing `q ^ hammingDist σ τ` over the cube gives
+  `(1 + q) ^ Fintype.card ι`.
 
 ## References
 
@@ -327,6 +330,31 @@ theorem hammingDist_flip_eq_add_one (x z : ι → Bool) (i : ι)
   rw [hammingDist, h, Finset.card_insert_of_notMem]
   · rfl
   · simp [hi]
+
+/-- Flipping one coordinate changes the Hamming distance to `z` by one: it increases by one if
+`x i = z i` and decreases by one otherwise. -/
+theorem hammingDist_flip_singleton (x z : ι → Bool) (i : ι) :
+    hammingDist (flipOn {i} x) z =
+      if x i = z i then hammingDist x z + 1 else hammingDist x z - 1 := by
+  split_ifs with hi
+  · exact hammingDist_flip_eq_add_one x z i hi
+  · have h := hammingDist_flip_eq_add_one (flipOn {i} x) z i
+      (by rw [flipOn_singleton_self]; cases hx : x i <;> cases hz : z i <;> simp_all)
+    rw [flipOn_flipOn] at h
+    omega
+
+/-- Summing `q ^ hammingDist σ τ` over all points `σ : ι → Bool` of the cube gives
+`(1 + q) ^ Fintype.card ι`, factoring coordinatewise. -/
+theorem sum_pow_hammingDist {R : Type*} [CommSemiring R] (q : R) (τ : ι → Bool) :
+    ∑ σ : ι → Bool, q ^ hammingDist σ τ = (1 + q) ^ Fintype.card ι := by
+  have hprod (σ : ι → Bool) : q ^ hammingDist σ τ = ∏ i, if σ i = τ i then 1 else q := by
+    rw [prod_ite, prod_const_one, one_mul, prod_const]
+    rfl
+  simp only [hprod, ← Fintype.prod_sum (fun i b => if b = τ i then (1 : R) else q)]
+  have hb (i : ι) : ∑ b : Bool, (if b = τ i then (1 : R) else q) = 1 + q := by
+    rw [Fintype.sum_bool]
+    cases τ i <;> simp [add_comm]
+  simp only [hb, prod_const, card_univ]
 
 end Fintype
 
