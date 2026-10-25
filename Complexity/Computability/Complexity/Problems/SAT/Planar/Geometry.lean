@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
+public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 import Mathlib.Data.List.GetD
 import Mathlib.Tactic.FinCases
@@ -619,6 +620,11 @@ theorem routes_length (φ : CNF ℕ) :
 theorem positions_length (φ : CNF ℕ) :
     (positions φ).length = (SAT.incidenceGraph (formula φ)).1.length := by
   simp [positions, SAT.incidenceGraph, formula, CNF.distinctVars_compact, rawFormula]
+
+/-- The final compact output has exactly the same ordered incidence graph as the raw output. -/
+theorem incidenceGraph_formula (φ : CNF ℕ) :
+    SAT.incidenceGraph (formula φ) = SAT.incidenceGraph (rawFormula φ) :=
+  SAT.incidenceGraph_compact _
 
 /-- The actual displayed variable positions have no repetitions. -/
 theorem variablePositions_nodup (φ : CNF ℕ) :

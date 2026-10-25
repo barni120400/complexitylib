@@ -792,9 +792,11 @@ public import Complexity.Computability.Complexity.Problems.MonotoneCircuitValue.
 public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence
+public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
 public import Complexity.Computability.Complexity.Problems.STCON
@@ -1840,8 +1842,8 @@ public import Complexity.Foundations.FieldTheory.TensorBasis
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Complexity.Foundations.Geometry.Orthogonal
-public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
 public import Complexity.Foundations.Geometry.Orthogonal.Endpoint
+public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
 public import Complexity.Foundations.Geometry.Orthogonal.Neighborhood
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
