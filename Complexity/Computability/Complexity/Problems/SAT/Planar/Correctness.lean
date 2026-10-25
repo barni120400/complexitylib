@@ -11,7 +11,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Logical correctness along the actual incidence paths

@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Correctness
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Compatible assignments for the actual planar compiler

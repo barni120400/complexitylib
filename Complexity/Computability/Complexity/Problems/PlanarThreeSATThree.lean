@@ -21,7 +21,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Li
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Membership
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
-import Mathlib.Tactic
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
 
 /-!
 # Planar 3SAT with three literal occurrences per variable

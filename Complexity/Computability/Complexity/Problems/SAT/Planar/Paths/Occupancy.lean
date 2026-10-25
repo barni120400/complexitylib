@@ -11,7 +11,6 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
 
 /-!
 # Ordinary-cell occupancy in the actual planarization paths
@@ -23,6 +22,10 @@ continuous drawing proof and the literal-count proof can use it without importin
 
 * `Cslib.Complexity.SAT.PlanarCompile.paths_filter_length_le_one`: outside source centers and
   selected crossing cells, at most one actual path contains a given integer point.
+
+## References
+
+This is an original consequence of the canonical path contact classification.
 -/
 
 @[expose] public section

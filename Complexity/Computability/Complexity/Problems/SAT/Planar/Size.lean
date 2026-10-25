@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 import Mathlib.Algebra.BigOperators.Ring.List
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
+import Mathlib.Tactic.Linarith
 
 /-!
 # Size accounting for the finite planarization compiler

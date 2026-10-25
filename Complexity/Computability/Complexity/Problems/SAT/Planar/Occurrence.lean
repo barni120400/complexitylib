@@ -13,7 +13,6 @@ public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 import Mathlib.Algebra.BigOperators.Ring.List
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
 
 /-!
 # Literal occurrences in the actual planarization output
@@ -21,7 +20,7 @@ import Mathlib.Tactic
 All bounds count literal positions, including repetitions within one clause. External incidences
 are compared with the directed halves of the actual canonical unit paths. The final clause-cell
 half is permitted in this comparison, so the comparison only overcounts the emitted variables.
-The existing `CNF.vars` counts literal positions; `CNF.occurrences` counts mentioning clauses
+The existing `CNF.vars` counts literal positions; `ClauseSet.occurrences` counts mentioning clauses
 and does not suffice when a source clause repeats a variable.
 
 ## Main definitions
@@ -36,6 +35,10 @@ and does not suffice when a source clause repeats a variable.
   of three literal occurrences under the source width and literal-count bounds.
 * `Cslib.Complexity.SAT.PlanarCompile.count_links_lastLiteral_le`: every emitted external literal
   is bounded by the corresponding actual path halves.
+
+## References
+
+This literal-position accounting is original and uses the imported fixed crossover template.
 -/
 
 @[expose] public section

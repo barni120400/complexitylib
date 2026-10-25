@@ -9,7 +9,11 @@ module
 
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 import Mathlib.Analysis.Convex.Basic
-import Mathlib.Tactic
+import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Push
 
 /-!
 # Translation and separation of square grid cells

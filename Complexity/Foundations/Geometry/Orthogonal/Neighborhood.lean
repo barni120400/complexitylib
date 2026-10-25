@@ -8,7 +8,9 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
-import Mathlib.Tactic
+import Mathlib.Tactic.Abel
+import Mathlib.Tactic.IntervalCases
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Integer points and local neighborhoods of orthogonal unit paths
@@ -25,6 +27,10 @@ import Mathlib.Tactic
 * `Cslib.Orthogonal.subdivide_horizontal`, `.subdivide_vertical`: strict interior grid points
   retain consecutive straight neighborhoods after subdivision.
 * `Cslib.Orthogonal.point_bounds_of_mem_support`: listed-point bounds hold on all integer support.
+
+## References
+
+These are original finite-list proofs of elementary lattice-segment facts.
 -/
 
 @[expose] public section

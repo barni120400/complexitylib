@@ -13,7 +13,10 @@ import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
 import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
+import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Explicit grid and wire bounds for the actual planarization compiler

@@ -11,7 +11,6 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalPath
 public import Complexity.Logics.Propositional.CNF.Occurrence
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
 
 /-!
 # Canonical paths of the actual planarization compiler
@@ -33,6 +32,10 @@ These shared certificates serve both continuous geometry and logical wire correc
 
 * `Cslib.Complexity.SAT.PlanarCompile.occurrencePaths_eq_paths`: indexed source occurrences
   select exactly the emitted canonical paths in their original order.
+
+## References
+
+These certificates refer to the original canonical path construction in the imported compiler.
 -/
 
 @[expose] public section

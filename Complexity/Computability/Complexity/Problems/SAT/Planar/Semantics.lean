@@ -10,7 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Logics.Propositional.CNF.Planar.DirectedWire
 import Mathlib.Data.List.GetD
-import Mathlib.Tactic
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Logical semantics of the actual finite planar SAT compiler
