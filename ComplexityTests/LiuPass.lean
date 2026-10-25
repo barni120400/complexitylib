@@ -203,4 +203,63 @@ example (hOWF : ∃ f : List Bool → List Bool, OneWay f) :
   have hNat_p := (mildlyHardOnAverageENat_timeBounded_iff hp).mp hENat_p
   exact ⟨p, hp, hNat_p, hENat_p⟩
 
+/-! ### 5. Converse construction (Theorem 4.1) and headline equivalences (Theorem 3.1) -/
+
+/-- Canonical preimage existence
+(`LiuPassConverse.exists_liuPassCore_eq_targetImage_timeBoundedNat`) and preimage soundness
+(`LiuPassConverse.timeBoundedNat_le_of_liuPassCore_eq_targetImage`) on a concrete $3$-bit string
+$y = [1, 0, 1]$ with $t(n) = n + 1$, showing that the soundness hypothesis is nonvacuously
+satisfied by an `inputSchedule 3`-bit preimage. -/
+example :
+    ∃ x : List Bool,
+      x.length = LiuPassConverse.inputSchedule 3 ∧
+      LiuPassConverse.liuPassCore (fun n => n + 1) 3 x =
+        LiuPassConverse.targetImage (timeBoundedNat (fun n => n + 1) [true, false, true])
+          [true, false, true] ∧
+      timeBoundedNat (fun n => n + 1) [true, false, true] ≤
+        timeBoundedNat (fun n => n + 1) [true, false, true] := by
+  obtain ⟨x, hx_len, hx_eq⟩ :=
+    LiuPassConverse.exists_liuPassCore_eq_targetImage_timeBoundedNat
+      (t := fun n => n + 1) (fun _ => le_rfl) (y := [true, false, true]) rfl
+  exact ⟨x, hx_len, hx_eq,
+    LiuPassConverse.timeBoundedNat_le_of_liuPassCore_eq_targetImage rfl le_rfl hx_eq⟩
+
+/-- Theorem 4.1 (`weakOneWay_reindex_liuPassCore`,
+`exists_weakOneWay_of_mildlyHardOnAverage_timeBoundedNat`) and Theorem 3.1 (b) $\Rightarrow$ (a)
+(`exists_oneWay_of_mildlyHardOnAverage_timeBoundedNat`) instantiated on the concrete linear time
+bound $t(n) = n + 1$. -/
+example (hK : MildlyHardOnAverage (timeBoundedNat fun n => n + 1)) :
+    WeakOneWay (OneWayReindex.reindex LiuPassConverse.inputSchedule
+      (LiuPassConverse.liuPassCore fun n => n + 1)) ∧
+    (∃ f : List Bool → List Bool, WeakOneWay f) ∧
+    (∃ F : List Bool → List Bool, OneWay F) := by
+  have ht_comp : ComputableInPolyTime (fun n => n + 1) encUnary encUnary := by fun_prop
+  exact ⟨weakOneWay_reindex_liuPassCore ht_comp (fun _ => le_rfl) hK,
+    exists_weakOneWay_of_mildlyHardOnAverage_timeBoundedNat ht_comp (fun _ => le_rfl) hK,
+    exists_oneWay_of_mildlyHardOnAverage_timeBoundedNat ht_comp (fun _ => le_rfl) hK⟩
+
+/-- Headline equivalences of Theorem 3.1 (a) $\Leftrightarrow$ (b) $\Leftrightarrow$ (c):
+one-way functions exist iff $K^t$ is mildly hard on average (both existential-polynomial and
+threshold forms, in both `ℕ` and `ℕ∞`), and iff $K^t$ is mildly hard on average to symmetrically
+approximate within $d \lfloor \log_2 n \rfloor$. -/
+example :
+    ((∃ f : List Bool → List Bool, OneWay f) ↔
+      (∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        MildlyHardOnAverage (timeBoundedNat fun n => p.eval n))) ∧
+    ((∃ f : List Bool → List Bool, OneWay f) ↔
+      (∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        MildlyHardOnAverageENat (timeBounded fun n => p.eval n))) ∧
+    ((∃ f : List Bool → List Bool, OneWay f) ↔
+      (∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        ∀ {t : ℕ → ℕ}, (∀ n, p.eval n ≤ t n) →
+          MildlyHardOnAverage (timeBoundedNat t))) ∧
+    ((∃ f : List Bool → List Bool, OneWay f) ↔
+      (∀ d : ℕ, ∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        ∀ {t : ℕ → ℕ}, (∀ n, p.eval n ≤ t n) →
+          MildlyHardOnAverageToApprox (fun n => d * Nat.log 2 n) (timeBoundedNat t))) :=
+  ⟨exists_oneWay_iff_exists_mildlyHardOnAverage_timeBoundedNat,
+   exists_oneWay_iff_exists_mildlyHardOnAverageENat_timeBounded,
+   exists_oneWay_iff_exists_forall_mildlyHardOnAverage_timeBoundedNat,
+   exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_timeBoundedNat⟩
+
 end Cslib.Crypto.LiuPassTests

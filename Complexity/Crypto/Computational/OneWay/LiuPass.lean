@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.OneWay.CondEPPRG
+public import Complexity.Crypto.Computational.OneWay.LiuPassConverse
 public import Complexity.Computability.Complexity.AverageCase
 public import Complexity.Computability.Kolmogorov.AverageCase
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
@@ -17,28 +18,39 @@ import Complexity.Tactic.PPT
 import Complexity.Tactic.PolyTime
 
 /-!
-# One-Way Functions Imply Average-Case Hardness of Time-Bounded Kolmogorov Complexity
+# One-Way Functions and Average-Case Hardness of Time-Bounded Kolmogorov Complexity
 
 This module proves the **M2a polynomial-overhead form** of the forward direction of the main
-theorem of [Y. Liu and R. Pass, *On One-Way Functions and Kolmogorov Complexity*][LiuPass2020]:
-if one-way functions exist, then for every constant $d \in \mathbb{N}$ there exists a polynomial
-$p(n) > 0$ such that for every time bound $t(n) \ge p(n)$, $t$-time-bounded Kolmogorov complexity
-$K^t$ is mildly hard on average against uniform strict PPT heuristics, and mildly hard on average
-to approximate within the symmetric error windows $d (\lfloor \log_2 n \rfloor + 1)$,
-$d \lceil \log_2 n \rceil$, $d \lfloor \log_2 n \rfloor$, and the real-valued window $d \log_2 n$.
+theorem of [Y. Liu and R. Pass, *On One-Way Functions and Kolmogorov Complexity*][LiuPass2020]
+and combines it with the Section 4 converse
+(`Complexity.Crypto.Computational.OneWay.LiuPassConverse`) to establish the headline equivalences
+of Theorem 3.1:
+* **Forward direction:** if one-way functions exist, then for every constant $d \in \mathbb{N}$
+  there exists a polynomial $p(n) \ge n + 1$ such that for every time bound $t(n) \ge p(n)$,
+  $t$-time-bounded Kolmogorov complexity $K^t$ is mildly hard on average against uniform strict PPT
+  heuristics, and mildly hard on average to approximate within the symmetric error windows
+  $d (\lfloor \log_2 n \rfloor + 1)$, $d \lceil \log_2 n \rceil$, $d \lfloor \log_2 n \rfloor$, and
+  the real-valued window $d \log_2 n$.
+* **Headline equivalences (Theorem 3.1 (a) $\Leftrightarrow$ (b) $\Leftrightarrow$ (c)):**
+  one-way functions exist if and only if there exists a polynomial $p(n) \ge n + 1$ such that
+  $K^p$ is mildly hard on average (`exists_oneWay_iff_exists_mildlyHardOnAverage_timeBoundedNat`),
+  and equivalently in the polynomial-threshold and symmetric approximation forms.
+
 All section, theorem, definition, lemma, and page locators follow the full version
 `arXiv:2009.11514v1` (and ECCC TR20-052).
 
-**Time-bound scope note (M2a polynomial-overhead form):**
+**Time-bound scope note (M2a polynomial-overhead form and $n + 1$-step sufficient clock):**
 In [Liu and Pass, Theorem 3.1 (b)–(c), §3, p. 9 and Theorem 5.2, §5.2, p. 11 of
-arXiv:2009.11514v1][LiuPass2020], the universal Turing machine is assumed to simulate any fixed
-machine with constant multiplicative time overhead (rate-$1$ universal simulation), which yields
-hardness for all polynomial $t(n) \ge (1 + \varepsilon) n$ once the PRG evaluation is optimized to
-near-linear time. Because `Cslib.Kolmogorov.timeBounded` is defined over the library's polynomial-
-overhead multi-tape universal machine
-(`DescriptionMethod.exists_etimeBoundedComplexity_universalTM_le_ofMultiTapeTM`),
-evaluating the truncated generator takes a fixed polynomial $p(n)$ steps on the universal machine,
-giving the M2a polynomial-threshold form $\exists p,\ \forall t \ge p$.
+arXiv:2009.11514v1][LiuPass2020], item (b) quantifies over a polynomial $t(n) > 0$, while item (c)
+and the post-Theorem 3.1 remark assume rate-$1$ universal simulation to obtain hardness for all
+polynomial $t(n) \ge (1 + \varepsilon) n$. In `complexitylib`'s multi-tape Turing machine model
+(`DescriptionMethod.universalTM`), the literal/copy program bound supplies a program that prints
+each $n$-bit string within $n + 1$ steps (`Kolmogorov.timeBoundedNat_le_length_add`). Our statements
+therefore assume $p(n) \ge n + 1$ as a sufficient clock hypothesis ensuring finite $K^t$ in the
+native model (rather than a lower bound on every program or an equivalence with the source's
+$t(n) > 0$ convention), and polynomial-overhead universal simulation
+(`DescriptionMethod.exists_etimeBoundedComplexity_universalTM_le_ofMultiTapeTM`) gives the M2a
+polynomial-threshold form $\exists p,\ \forall t \ge p$ in (c) and in the threshold consequence.
 
 **Symmetric approximation and logarithm rounding:**
 [Liu and Pass, Definition 2.5, §2.3, p. 8 of arXiv:2009.11514v1][LiuPass2020] defines
@@ -92,11 +104,23 @@ d \log_2 |x|$ window (`OneWay.exists_eventually_real_abs_sub_le_timeBoundedNat`)
   `Cslib.Crypto.exists_mildlyHardOnAverage_of_exists_oneWay`:
   existential M2a polynomial-overhead forms of [Liu and Pass, Theorem 3.1 (a) $\Rightarrow$ (c) and
   (a) $\Rightarrow$ (b), §3, p. 9 of arXiv:2009.11514v1][LiuPass2020].
+* `Cslib.Crypto.exists_oneWay_iff_exists_mildlyHardOnAverage_timeBoundedNat`,
+  `Cslib.Crypto.exists_oneWay_iff_exists_mildlyHardOnAverageENat_timeBounded`,
+  `Cslib.Crypto.exists_oneWay_iff_exists_forall_mildlyHardOnAverage_timeBoundedNat`:
+  headline characterizations of one-way functions via average-case hardness of $K^t$
+  ([Liu and Pass, Theorem 3.1 (a) $\Leftrightarrow$ (b) and post-Theorem 3.1 threshold consequence,
+  §3, p. 9 of arXiv:2009.11514v1][LiuPass2020]).
+* `Cslib.Crypto.exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_clog_timeBoundedNat`,
+  `Cslib.Crypto.exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_timeBoundedNat`:
+  approximation-hardness characterizations of one-way functions
+  ([Liu and Pass, Theorem 3.1 (a) $\Leftrightarrow$ (c), §3, p. 9 of
+  arXiv:2009.11514v1][LiuPass2020]), together with the upper-rounded log-window variant
+  `exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_log_succ_timeBoundedNat`.
 
 ## References
 
 * [Y. Liu and R. Pass, *On One-Way Functions and Kolmogorov Complexity*][LiuPass2020],
-  full version `arXiv:2009.11514v1` (Sections 3 and 5).
+  full version `arXiv:2009.11514v1` (Sections 3, 4, and 5).
 -/
 
 @[expose] public section
@@ -809,5 +833,103 @@ theorem exists_mildlyHardOnAverage_of_exists_oneWay
         MildlyHardOnAverage (timeBoundedNat t) := by
   obtain ⟨f, hf⟩ := h
   exact hf.exists_mildlyHardOnAverage_timeBoundedNat
+
+/-! ### Headline equivalences ([Liu and Pass, Theorem 3.1, §3, p. 9][LiuPass2020]) -/
+
+/-- **[Liu and Pass, Theorem 3.1 (a) $\Leftrightarrow$ (b), §3, p. 9 of
+arXiv:2009.11514v1][LiuPass2020]:**
+One-way functions exist if and only if there exists a polynomial $p \in \mathbb{N}[X]$ with
+$p(n) \ge n + 1$ for all $n$ (a sufficient clock hypothesis in the native model ensuring finite
+$K^t$ via `timeBoundedNat_le_length_add`, where the source writes $t(n) > 0$) such that
+`timeBoundedNat (fun n => p.eval n)` is mildly hard on average against uniform strict PPT
+heuristics (`MildlyHardOnAverage`). -/
+theorem exists_oneWay_iff_exists_mildlyHardOnAverage_timeBoundedNat :
+    (∃ f : List Bool → List Bool, OneWay f) ↔
+      (∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        MildlyHardOnAverage (timeBoundedNat fun n => p.eval n)) := by
+  refine ⟨fun h => ?_, exists_oneWay_of_exists_mildlyHardOnAverage_timeBoundedNat⟩
+  obtain ⟨p, hp, hhard⟩ := exists_mildlyHardOnAverage_of_exists_oneWay h
+  exact ⟨p, hp, hhard fun _ => le_rfl⟩
+
+/-- **`ℕ∞`-valued `Kolmogorov.timeBounded` corollary of Theorem 3.1 (a) $\Leftrightarrow$ (b):**
+One-way functions exist if and only if there exists a polynomial $p \in \mathbb{N}[X]$ with
+$p(n) \ge n + 1$ for all $n$ such that `timeBounded (fun n => p.eval n)` is mildly hard on
+average against uniform strict PPT heuristics (`MildlyHardOnAverageENat`). -/
+theorem exists_oneWay_iff_exists_mildlyHardOnAverageENat_timeBounded :
+    (∃ f : List Bool → List Bool, OneWay f) ↔
+      (∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        MildlyHardOnAverageENat (timeBounded fun n => p.eval n)) := by
+  refine ⟨fun ⟨f, hf⟩ => ?_, exists_oneWay_of_exists_mildlyHardOnAverageENat_timeBounded⟩
+  obtain ⟨p, hp, hhard⟩ := hf.exists_mildlyHardOnAverageENat_timeBounded
+  exact ⟨p, hp, hhard fun _ => le_rfl⟩
+
+/-- **[Liu and Pass, §3, p. 9 of arXiv:2009.11514v1][LiuPass2020]
+(post-Theorem 3.1 threshold consequence, M2a polynomial-threshold form):**
+One-way functions exist if and only if there exists a polynomial $p \in \mathbb{N}[X]$ with
+$p(n) \ge n + 1$ for all $n$ such that for every time bound $t(n) \ge p(n)$, `timeBoundedNat t`
+is mildly hard on average against uniform strict PPT heuristics (`MildlyHardOnAverage`). -/
+theorem exists_oneWay_iff_exists_forall_mildlyHardOnAverage_timeBoundedNat :
+    (∃ f : List Bool → List Bool, OneWay f) ↔
+      (∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        ∀ {t : ℕ → ℕ}, (∀ n, p.eval n ≤ t n) →
+          MildlyHardOnAverage (timeBoundedNat t)) := by
+  refine ⟨exists_mildlyHardOnAverage_of_exists_oneWay, fun ⟨p, hp, hhard⟩ => ?_⟩
+  exact exists_oneWay_of_exists_mildlyHardOnAverage_timeBoundedNat
+    ⟨p, hp, hhard fun _ => le_rfl⟩
+
+/-- **[Liu and Pass, Theorem 3.1 (a) $\Leftrightarrow$ (c), §3, p. 9 of
+arXiv:2009.11514v1][LiuPass2020]
+(M2a polynomial-threshold form, upper-rounded log window):**
+One-way functions exist if and only if for every $d \in \mathbb{N}$ there exists a polynomial
+$p \in \mathbb{N}[X]$ with $p(n) \ge n + 1$ for all $n$ such that for every time bound
+$t(n) \ge p(n)$, `timeBoundedNat t` is mildly hard on average to symmetrically approximate within
+$d (\lfloor \log_2 n \rfloor + 1)$ (`d * (Nat.log 2 n + 1)`) against uniform strict PPT heuristics
+(`MildlyHardOnAverageToApprox`). -/
+theorem exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_log_succ_timeBoundedNat :
+    (∃ f : List Bool → List Bool, OneWay f) ↔
+      (∀ d : ℕ, ∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        ∀ {t : ℕ → ℕ}, (∀ n, p.eval n ≤ t n) →
+          MildlyHardOnAverageToApprox
+            (fun n => d * (Nat.log 2 n + 1)) (timeBoundedNat t)) := by
+  refine ⟨exists_mildlyHardOnAverageToApprox_log_succ_of_exists_oneWay, fun h => ?_⟩
+  obtain ⟨p, hp, hhard⟩ := h 0
+  exact exists_oneWay_of_exists_mildlyHardOnAverage_timeBoundedNat
+    ⟨p, hp, (hhard fun _ => le_rfl).mildlyHardOnAverage⟩
+
+/-- **[Liu and Pass, Theorem 3.1 (a) $\Leftrightarrow$ (c), §3, p. 9 of
+arXiv:2009.11514v1][LiuPass2020]
+(M2a polynomial-threshold form, ceiling log window):**
+One-way functions exist if and only if for every $d \in \mathbb{N}$ there exists a polynomial
+$p \in \mathbb{N}[X]$ with $p(n) \ge n + 1$ for all $n$ such that for every time bound
+$t(n) \ge p(n)$, `timeBoundedNat t` is mildly hard on average to symmetrically approximate within
+$d \lceil \log_2 n \rceil$ (`d * Nat.clog 2 n`) against uniform strict PPT heuristics
+(`MildlyHardOnAverageToApprox`). -/
+theorem exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_clog_timeBoundedNat :
+    (∃ f : List Bool → List Bool, OneWay f) ↔
+      (∀ d : ℕ, ∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        ∀ {t : ℕ → ℕ}, (∀ n, p.eval n ≤ t n) →
+          MildlyHardOnAverageToApprox (fun n => d * Nat.clog 2 n) (timeBoundedNat t)) := by
+  refine ⟨exists_mildlyHardOnAverageToApprox_clog_of_exists_oneWay, fun h => ?_⟩
+  obtain ⟨p, hp, hhard⟩ := h 0
+  exact exists_oneWay_of_exists_mildlyHardOnAverage_timeBoundedNat
+    ⟨p, hp, (hhard fun _ => le_rfl).mildlyHardOnAverage⟩
+
+/-- **[Liu and Pass, Theorem 3.1 (a) $\Leftrightarrow$ (c), §3, p. 9 of
+arXiv:2009.11514v1][LiuPass2020]
+(M2a polynomial-threshold form, floor log window):**
+One-way functions exist if and only if for every $d \in \mathbb{N}$ there exists a polynomial
+$p \in \mathbb{N}[X]$ with $p(n) \ge n + 1$ for all $n$ such that for every time bound
+$t(n) \ge p(n)$, `timeBoundedNat t` is mildly hard on average to symmetrically approximate within
+$d \lfloor \log_2 n \rfloor$ (`d * Nat.log 2 n`) against uniform strict PPT heuristics
+(`MildlyHardOnAverageToApprox`). -/
+theorem exists_oneWay_iff_forall_exists_mildlyHardOnAverageToApprox_timeBoundedNat :
+    (∃ f : List Bool → List Bool, OneWay f) ↔
+      (∀ d : ℕ, ∃ p : Polynomial ℕ, (∀ n, n + 1 ≤ p.eval n) ∧
+        ∀ {t : ℕ → ℕ}, (∀ n, p.eval n ≤ t n) →
+          MildlyHardOnAverageToApprox (fun n => d * Nat.log 2 n) (timeBoundedNat t)) := by
+  refine ⟨exists_mildlyHardOnAverageToApprox_of_exists_oneWay, fun h => ?_⟩
+  obtain ⟨p, hp, hhard⟩ := h 0
+  exact exists_oneWay_of_exists_mildlyHardOnAverage_timeBoundedNat
+    ⟨p, hp, (hhard fun _ => le_rfl).mildlyHardOnAverage⟩
 
 end Cslib.Crypto
