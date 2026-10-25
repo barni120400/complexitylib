@@ -50,6 +50,15 @@ example : repeatedNames.compact.distinctVars.idxOf (repeatedNames.vars.idxOf ((1
     repeatedNames.distinctVars.idxOf ((1, 0), none) :=
   CNF.idxOf_distinctVars_compact _ (by decide)
 
+example : repeatedNames.compact.vars.count (repeatedNames.vars.idxOf ((0, 0), none)) =
+    repeatedNames.vars.count ((0, 0), none) := CNF.count_vars_compact _ (by decide)
+
+example {k : ℕ} (h : ∀ v, repeatedNames.vars.count v ≤ k) :
+    ∀ i, repeatedNames.compact.vars.count i ≤ k := CNF.count_vars_compact_le _ h
+
+example : SAT.incidenceGraph repeatedNames.compact = SAT.incidenceGraph repeatedNames :=
+  SAT.incidenceGraph_compact _
+
 example : (positions [[(7, true)]]).getD
     ((formula [[(7, true)]]).distinctVars.idxOf
       ((rawFormula [[(7, true)]]).vars.idxOf ((4, 4), none))) (0, 0) =

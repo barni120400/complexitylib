@@ -10,6 +10,7 @@ module
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ModelCount
 import Mathlib.Data.List.GetD
+import Mathlib.Data.List.Count
 
 /-!
 # First-occurrence order under injective CNF relabeling
@@ -92,4 +93,43 @@ theorem getD_idxOf_distinctVars_compact {P : Type*} (φ : CNF V) (data : List P)
       data.getD (φ.distinctVars.idxOf v) fallback := by
   rw [idxOf_distinctVars_compact φ hv]
 
+/-- Compaction relabels the full variable-occurrence list in its original order. -/
+theorem vars_compact (φ : CNF V) : φ.compact.vars = φ.vars.map φ.vars.idxOf := by
+  simp only [compact, vars_relabel, List.idxOf, beq_eq_decide]
+
+/-- Every used variable keeps its exact literal-occurrence count after compaction. -/
+theorem count_vars_compact (φ : CNF V) {v : V} (hv : v ∈ φ.vars) :
+    φ.compact.vars.count (φ.vars.idxOf v) = φ.vars.count v := by
+  rw [vars_compact]
+  simp only [List.count_eq_countP, List.countP_map, Function.comp_def]
+  apply List.countP_congr
+  intro w _
+  simp only [beq_iff_eq]
+  rw [eq_comm, List.idxOf_inj hv, eq_comm]
+
+/-- A bound on all original literal-occurrence counts also bounds every compact variable. -/
+theorem count_vars_compact_le (φ : CNF V) {k : ℕ} (h : ∀ v, φ.vars.count v ≤ k) :
+    ∀ i, φ.compact.vars.count i ≤ k := by
+  intro i
+  by_cases hi : i ∈ φ.compact.vars
+  · rw [vars_compact] at hi
+    obtain ⟨v, hv, rfl⟩ := List.mem_map.mp hi
+    rw [count_vars_compact φ hv]
+    exact h v
+  · rw [List.count_eq_zero.mpr hi]
+    exact Nat.zero_le _
+
 end Cslib.Logic.PL.CNF
+
+namespace Cslib.Logic.PL
+
+/-- Relabeling preserves literal-occurrence order and both occurrence indices. -/
+theorem occurrences_relabel {V W : Type*} (φ : CNF V) (f : V → W) :
+    occurrences (φ.relabel f) =
+      (occurrences φ).map (fun o => (o.1, o.2.1, (f o.2.2.1, o.2.2.2))) := by
+  simp only [occurrences, CNF.relabel, Clause.relabel, List.zipIdx_map,
+    List.flatMap_map, List.map_flatMap, List.map_map, Function.comp_def,
+    Prod.map_fst, Prod.map_snd, id_eq]
+  rfl
+
+end Cslib.Logic.PL
