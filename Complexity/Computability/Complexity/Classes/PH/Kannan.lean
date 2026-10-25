@@ -434,12 +434,6 @@ private theorem isAlternatingVerifier_verifier (k : ℕ) :
 /-! ### Polynomial time -/
 
 open ComputableTidilyInPolyTime in
-/-- The binary value of a word is polynomial-time, in binary. -/
-private theorem computableTidilyInPolyTime_binaryValue :
-    ComputableTidilyInPolyTime BitString.binaryValue encBits encNat :=
-  bitsBinaryValue
-
-open ComputableTidilyInPolyTime in
 /-- The verifier for Kannan's language is polynomial-time. -/
 private theorem computableTidilyInPolyTime_verifier (k : ℕ) :
     ComputableTidilyInPolyTime (verifier k) (encPair encBits encBits) encBool := by
@@ -488,8 +482,8 @@ private theorem computableTidilyInPolyTime_verifier (k : ℕ) :
   have hnotVerifier := bool_not.comp (MCSP.computableInPolyTime_tableVerifier.tidy.comp
     ((hT.prod hs).prod hc))
   have hlt := bool_not.comp (binary_lt'
-    (computableTidilyInPolyTime_binaryValue.comp hT')
-    (computableTidilyInPolyTime_binaryValue.comp hT))
+    (bitsBinaryValue.comp hT')
+    (bitsBinaryValue.comp hT))
   have hverifier' := MCSP.computableInPolyTime_tableVerifier.tidy.comp ((hT'.prod hs).prod hc')
   have hor := bool_or.comp (hlt.prod hverifier')
   have h := bool_and' (bool_and' hnotVerifier hor) hval
