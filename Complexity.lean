@@ -796,6 +796,9 @@ public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
@@ -1985,6 +1988,7 @@ public import Complexity.Logics.Propositional.CNF.Gadgets
 public import Complexity.Logics.Propositional.CNF.ImplicationChain
 public import Complexity.Logics.Propositional.CNF.ImplicationCycle
 public import Complexity.Logics.Propositional.CNF.ModelCount
+public import Complexity.Logics.Propositional.CNF.Occurrence
 public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.Planar.Crossover
 public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayout
