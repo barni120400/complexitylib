@@ -647,13 +647,44 @@ theorem isPPTOn_sufCmaGame (M : MACScheme) {adversary : Forger}
     convert ComputableInPolyTime.decide_mem hlist helem using 1
     funext a
     rw [Bool.eq_iff_iff, List.contains_iff_mem, decide_eq_true_eq]
+  have hverify : ComputableInPolyTime
+      (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+        M.verify pair.1.2 pair.2.1.1 pair.2.1.2)
+      (encPair (encPair encUnary encBits)
+        (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool :=
+    M.verify_polyTime.comp (show ComputableInPolyTime
+      (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+        (pair.1.2, pair.2.1.1, pair.2.1.2))
+      (encPair (encPair encUnary encBits)
+        (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
+      (encPair encBits (encPair encBits encBits)) by fun_prop)
+  have hsize : ComputableInPolyTime
+      (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+        pair.2.1.1.length == pair.1.1)
+      (encPair (encPair encUnary encBits)
+        (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool :=
+    ComputableInPolyTime.beq (encB := encUnary)
+      (ComputableInPolyTime.length_bits.comp (show ComputableInPolyTime
+        (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+          pair.2.1.1)
+        (encPair (encPair encUnary encBits)
+          (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
+        encBits by fun_prop))
+      (show ComputableInPolyTime
+        (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
+          pair.1.1)
+        (encPair (encPair encUnary encBits)
+          (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
+        encUnary by fun_prop)
   have hpost : ComputableInPolyTime
       (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
         (pair.2.1.1.length == pair.1.1) && !pair.2.2.contains pair.2.1 &&
           M.verify pair.1.2 pair.2.1.1 pair.2.1.2)
       (encPair (encPair encUnary encBits)
         (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool := by
-    polytime
+    exact ComputableInPolyTime.bool_and.comp
+      ((ComputableInPolyTime.bool_and.comp
+        (hsize.prod (ComputableInPolyTime.bool_not.comp hcontains))).prod hverify)
   exact M.keyGen_ppt.bind_with (hrun.bind_with hpost.isPPTOn)
 
 /-- The MAC SUF-CMA experiment is uniformly strict PPT, independently of unused auxiliary input. -/
