@@ -19,15 +19,33 @@ only linear in the input length. *Hardness magnification* shows that for the Min
 Problem (`MCSP`), even a barely superlinear circuit lower bound on truth tables of length
 `N = 2 ^ n` implies the full superpolynomial separation `¬ (NP ⊆ P/poly)`, and hence `P ≠ NP`.
 
-McKay, Murray, and Williams prove this by a downward self-reduction along a tree of subcubes of
-`{0, 1} ^ n`. Under the assumption `NP ⊆ P/poly`, an `NP` language that merges canonical minimum
-circuit descriptions on adjacent subcubes has polynomial-size circuits. Composing those merge
-circuits across all `2 ^ n` leaves yields a circuit of size `2 ^ n * poly(n + s(n))` that decides
-`MCSP[s]` on `2 ^ n`-bit truth tables. Contrapositively, if for some polynomial threshold
-`s(n) = n ^ k` and every exponent `c > 0`, deciding `MCSP[n ^ k]` on `N = 2 ^ n`-bit truth tables
-requires more than `N * c * (n + 1) ^ c = N * O((log₂ N) ^ c)` gates at some arity `n`
-(equivalently, infinitely often, since each fixed arity has finite circuit complexity), then
-`¬ (NP ⊆ P/poly)` and `P ≠ NP`.
+The proof follows [McKay, Murray, and Williams, Lemma 3.1 and Section 5][McKayMurrayWilliams2019]:
+they build circuits for `MCSP[s]` from a tree of `Circuit-Min-Merge` gates over the truth table
+and, assuming `NP ⊆ P/poly`, replace each gate by a polynomial-size circuit. The library proof
+adapts this construction to the binary tree of subcubes of `{0, 1} ^ n`. Its merge problem is a
+language in the polynomial hierarchy. It receives a subcube and, for each of its two halves, a
+validity bit and a fixed-threshold certificate: a bit string of a length fixed by `n` and `s(n)`
+that describes a circuit with at most `s(n)` gates. It outputs the lexicographically least valid
+certificate of this kind that agrees with both halves, rather than a minimum-size circuit. The
+language is defined by polynomially bounded existential and universal quantifiers over
+polynomial-time predicates. Under `NP ⊆ P/poly`, polynomial-size circuits are closed under such
+quantifiers (the argument that places the whole polynomial hierarchy in `P/poly`), so the merge
+problem has polynomial-size circuits. Composing these merge circuits along the tree yields a circuit
+of size `2 ^ n * poly(n + s(n))` that decides `MCSP[s]` on `2 ^ n`-bit truth tables.
+Contrapositively, if for some polynomial threshold `s(n) = n ^ k` and every exponent `c > 0`,
+deciding `MCSP[n ^ k]` on `N = 2 ^ n`-bit truth tables requires more than
+`N * c * (n + 1) ^ c = N * O((log₂ N) ^ c)` gates at some arity `n` (equivalently, infinitely often,
+since each fixed arity has finite circuit complexity), then `¬ (NP ⊆ P/poly)` and `P ≠ NP`.
+
+These statements specialize the third bullet of
+[McKay, Murray, and Williams, Theorem 1.4][McKayMurrayWilliams2019], which assumes that
+`search-MCSP^A[s(n)]`, for an oracle `A` in the polynomial hierarchy, has no circuits of size
+`N * poly(s(n))` and depth `poly(s(n))`. Here `MCSP` has no oracle, the problem is the decision
+version, and the lower bound constrains size alone. A decision lower bound implies a search lower
+bound, and a size-only lower bound implies a size-and-depth lower bound, so these hypotheses are
+stronger and the theorems are special cases of the source. Likewise, the upper bound under
+`NP ⊆ P/poly` gives decision circuits with a size bound only; it asserts no search circuits and no
+depth bound.
 
 Circuits use the standard De Morgan basis of binary AND/OR, unary NOT, and Boolean constants, and
 `C.size` counts every operation gate, constants included. Truth tables of `n`-variable Boolean
