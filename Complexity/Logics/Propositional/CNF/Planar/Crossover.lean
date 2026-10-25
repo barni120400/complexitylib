@@ -13,7 +13,8 @@ public import Mathlib.Data.Fintype.Basic
 /-!
 # The finite crossover relation
 
-The 26 clauses of the Figure 8(b) crossover, adapted from
+The 26 clauses formalize Lichtenstein’s crossover [Lichtenstein1982, Figs. 4–5], drawn on a
+grid by MIT–ULB CompGeom Group [Tromino2025, Fig. 8(b)]. The Lean table is adapted from
 `edemaine/lean-trominoes` at `6d5b36c15cec6cb18d30137b7f1c7fb92ea24332`,
 `LeanTrominoes/SAT/Planar/PlanarThreeSATGadgets.lean`.
 This file uses the ordinary CNF semantics. Geometry and local degree reduction are separate.
@@ -30,7 +31,10 @@ This file uses the ordinary CNF semantics. Geometry and local degree reduction a
 
 ## References
 
-* The pinned lean-trominoes source above, finite Figure 8(b) gadget and truth-table certificate.
+* David Lichtenstein, *Planar Formulae and Their Uses*, Figs. 4–5 [Lichtenstein1982].
+* MIT–ULB CompGeom Group, *Undecidability of Tiling with a Tromino*, Fig. 8(b) [Tromino2025].
+
+The clause table and truth-table certificate adapt the Lean source cited above.
 -/
 
 @[expose] public section
@@ -93,8 +97,6 @@ def formula : CNF Variable :=
     [(.aInnerRight, true), (.aRight, false)],
     [(.aInnerRight, false), (.aRight, true)]]
 
-/-- A complete satisfying assignment for the ordinary CNF formula. -/
-abbrev Holds (σ : Variable → Bool) : Prop := formula.eval σ = true
 /-- Assemble four boundary values and nine internal values into an assignment. -/
 def assignment
     (aLeft aRight bTop bBottom
@@ -129,8 +131,8 @@ instance (aLeft aRight bTop bBottom : Bool) :
   unfold Extends
   exact Fintype.decidableExistsFintype
 
-/-- Exhaustive certificate for the Lichtenstein crossover: the horizontal
-and vertical values propagate independently. -/
+/-- Exhaustive certificate for Lichtenstein’s crossover [Lichtenstein1982, Figs. 4–5],
+as drawn in [Tromino2025, Fig. 8(b)]: horizontal and vertical values propagate independently. -/
 theorem extends_iff (aLeft aRight bTop bBottom : Bool) :
     Extends aLeft aRight bTop bBottom ↔
       aLeft = aRight ∧ bTop = bBottom := by

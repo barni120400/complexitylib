@@ -807,6 +807,9 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths.Occu
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayout
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutChecks
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutData
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
 public import Complexity.Computability.Complexity.Problems.STCON
@@ -2003,9 +2006,6 @@ public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.Occurrence
 public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.Planar.Crossover
-public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayout
-public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayoutChecks
-public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayoutData
 public import Complexity.Logics.Propositional.CNF.Planar.CrossoverSplit
 public import Complexity.Logics.Propositional.CNF.Planar.DirectedWire
 public import Complexity.Logics.Propositional.CNF.PolyTime
