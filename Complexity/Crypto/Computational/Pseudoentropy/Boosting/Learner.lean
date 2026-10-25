@@ -397,8 +397,17 @@ theorem isPPTOn_learn {Param : Type} {input : Param ↪ List Bool}
     (hgap : ComputableInPolyTime inverseGap input encUnary) :
     IsPPTOn input encBits (fun a =>
       learn (candidates a) (test a) (confidence a) (inverseGap a)) := by
-  unfold learn
-  ppt
+  have hcount : ComputableInPolyTime
+      (fun a => (confidence a + 1) * (4 * inverseGap a) ^ 2) input encUnary := by fun_prop
+  have htrials : ComputableInPolyTime
+      (fun a => (confidence a + 1) * (8 * inverseGap a) ^ 2) input encUnary := by fun_prop
+  have htest' : IsPPTOn (encPair (encPair input encBits) encBits) encBool
+      (fun p => test p.1.1 p.2) := htest.preprocess
+    ((ComputableInPolyTime.fst (encPair input encBits) encBits).fst'.prod
+      (ComputableInPolyTime.snd (encPair input encBits) encBits))
+  have hsigned := isPPTOn_signedTest (test := fun p : Param × List Bool => test p.1)
+    htest' (ComputableInPolyTime.snd input encBits)
+  exact IsPPTOn.sampleBest [] (isPPTOn_randomSign hcandidates) hsigned hcount.tidy htrials.tidy
 
 attribute [program_certificate hcandidates] isPPTOn_learn
 

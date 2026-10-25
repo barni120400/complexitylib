@@ -79,8 +79,14 @@ theorem isPPTOn_selectSlope {α : Type} {input : α ↪ List Bool}
     (hsource : IsPPTOn input (encPair encBits encBool) source) :
     IsPPTOn input encUnary (fun a =>
       selectSlope (confidence a) (inverseTolerance a) (precision a) (source a)) := by
-  unfold selectSlope
-  ppt
+  have hcount : ComputableInPolyTime (fun a => dyadicSize (precision a) + 1)
+      input encUnary := by fun_prop
+  have htrials : ComputableInPolyTime
+      (fun a => (confidence a + 1) * inverseTolerance a ^ 2) input encUnary := by fun_prop
+  have ha := ComputableInPolyTime.fst input encUnary
+  have hi := ComputableInPolyTime.snd input encUnary
+  have htrial := isPPTOn_clippedTrial (hprecision.comp ha) hi (hsource.preprocess ha)
+  exact IsPPTOn.selectBest htrial hcount.tidy htrials.tidy
 
 attribute [program_certificate] isPPTOn_selectSlope
 

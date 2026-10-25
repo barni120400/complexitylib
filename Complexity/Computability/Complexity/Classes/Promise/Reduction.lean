@@ -935,7 +935,7 @@ theorem RPReducibleWithError.trans_polyTimeReducible {s : α → ℝ}
     RPReducibleWithError encA encC s X Z := by
   obtain ⟨R, hR, hyes, hno⟩ := hXY
   obtain ⟨g, hg, gyes, gno⟩ := hYZ
-  refine ⟨fun a => g <$> R a, hR.map hg.tidy, fun a ha c hc => ?_, fun a ha => ?_⟩
+  refine ⟨fun a => g <$> R a, hR.map hg, fun a ha c hc => ?_, fun a ha => ?_⟩
   · simp only [ProbComp.eval_map, PMF.mem_support_map_iff] at hc
     obtain ⟨b, hb, rfl⟩ := hc
     exact gyes (hyes a ha b hb)
