@@ -234,7 +234,9 @@ private meta def restateKnownFacts (source conversion : Name) : TacticM Unit := 
         return some (← mkLambdaFVars xs proof)
       if let some proof := proof? then
         let type ← inferType proof
-        let found ← (← getLCtx).anyM fun other => isDefEq other.type type
+        let found ← (← getLCtx).anyM fun other => do
+          if other.isImplementationDetail then return false
+          isDefEq other.type type
         unless found do
           let (_, next) ← goal.note (← mkFreshUserName `knownCertificate) proof
           goal := next
