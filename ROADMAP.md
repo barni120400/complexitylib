@@ -122,7 +122,7 @@ families and full-input native runtime.
   statistical-distance term from sampling `ZMod q`.
 - **Diffie–Hellman and ElGamal:** group-element messages, efficient key generation and
   encryption, the efficient DDH random self-reduction (Boneh–Shoup Ex. 10.10), hashed ElGamal,
-  Cramer–Shoup CCA security ([#1000]), and Pedersen commitments.
+  and Cramer–Shoup CCA security ([#1000]).
 - **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
   Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
   starting point (Boneh–Shoup Exercise 11.9).
