@@ -158,27 +158,12 @@ private theorem foldl_binaryBitsStep (w : List Bool) :
       rw [hbit, Nat.bits_append_bit _ _ (by omega)]
       simp [binaryBitsStep, hemp]
 
-/-- Decoding a most-significant-first bit string to its binary natural number (`encNat`) is
-polynomial-time. -/
-private theorem computableTidilyInPolyTime_binaryValue :
-    ComputableTidilyInPolyTime binaryValue encBits encNat := by
-  have hstep : ComputableTidilyInPolyTime
-      (fun p : List Bool × Bool => binaryBitsStep p.1 p.2)
-      (encPair encBits encBool) encBits := by
-    unfold binaryBitsStep
-    fun_prop
-  have hfold := foldl_of_bounded_growth (encA := encBool) (encL := encBits) (encB := encBits)
-    id' (const []) hstep (growth := 1) fun acc bit => by
-      unfold binaryBitsStep
-      split_ifs <;> simp
-  exact hfold.of_enc_eq fun w => (foldl_binaryBitsStep w).symm
-
 @[fun_prop]
 theorem computableInPolyTime_binaryValue_comp {encIn : α ↪ List Bool} {w : α → List Bool}
     (hw : ComputableInPolyTime w encIn encBits) :
     ComputableInPolyTime (fun a => binaryValue (w a)) encIn encNat := by
   have hw := hw.tidy
-  exact .of_tidy (computableTidilyInPolyTime_binaryValue.comp hw)
+  exact .of_tidy (bitsBinaryValue.comp hw)
 
 /-- Comparing the binary values of two bit strings is polynomial-time. -/
 theorem computableInPolyTime_binaryValue_le :
@@ -186,8 +171,8 @@ theorem computableInPolyTime_binaryValue_le :
       (fun p : List Bool × List Bool => decide (binaryValue p.1 ≤ binaryValue p.2))
       (encPair encBits encBits) encBool :=
   .of_tidy (binary_le.comp
-    ((computableTidilyInPolyTime_binaryValue.comp (fst encBits encBits)).prod
-      (computableTidilyInPolyTime_binaryValue.comp (snd encBits encBits))))
+    ((bitsBinaryValue.comp (fst encBits encBits)).prod
+      (bitsBinaryValue.comp (snd encBits encBits))))
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Comparing two binary natural numbers (`encNat`) is polynomial-time. -/
