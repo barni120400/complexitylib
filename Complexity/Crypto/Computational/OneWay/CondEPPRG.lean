@@ -357,7 +357,7 @@ private theorem sum_uniformOfFinset_le_mul_uniformOfFintype {n : ℕ}
 /-- The trivial inverter that ignores the challenge image and samples a uniform $k$-bit string. -/
 private noncomputable def trivialInverter : Inverter := fun k _ => BitString.sampleList k
 
-@[program_certificate]
+@[local program_certificate]
 private theorem isPPT_trivialInverter : IsPPT encBits trivialInverter := by
   unfold trivialInverter
   ppt

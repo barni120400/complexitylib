@@ -139,7 +139,7 @@ theorem computableInPolyTime_verify_comp (S : SignatureScheme)
   have hsig := hsig.tidy
   exact .of_tidy (S.verify_polyTime.tidy.comp (hpk.prod (hmsg.prod hsig)))
 
-@[fun_prop]
+@[local fun_prop]
 private theorem computableTidilyInPolyTime_contains {γ : Type} {encIn : γ ↪ List Bool}
     {list : γ → List (List Bool)} {elem : γ → List Bool}
     (hlist : ComputableTidilyInPolyTime list encIn (encList encBits))
