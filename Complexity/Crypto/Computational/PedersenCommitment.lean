@@ -36,7 +36,10 @@ On encoded group elements and natural-number exponents, `encodePedersenCommit` c
 `F.encode d (F.pedersenCommit d h m r)` in polynomial time from `(d, encode h, m, r)` using
 `F.encode d (F.generator d)`, `F.smul`, and `F.add`.
 
-We instantiate the general public-parameter `CommitmentScheme` (`pedersenScheme`) and establish:
+We instantiate the general public-parameter `CommitmentScheme` (`pedersenScheme`) with canonical
+binary message words (`ValidPedersenMessage`), commitment-and-opening pair law
+(`pedersenCommitPairLaw`), and verification algorithm `pedersenVerify` (`V(m, c, o)`), and
+establish:
 
 1. **Algebraic and homomorphic laws (`pedersenCommit_zero`, `pedersenCommit_add`,
    `pedersenCommit_neg`, `pedersenCommit_sub`, `pedersenCommit_smul`)** and polynomial-time
@@ -48,42 +51,44 @@ We instantiate the general public-parameter `CommitmentScheme` (`pedersenScheme`
    `pedersenScheme_statisticalHiding`)**: for every non-identity commitment key `h ≠ 0`, a uniform
    blinding exponent `r ← PMF.uniformOfFintype (ZMod (F.order d))` makes `pedersenCommit d h m r`
    uniformly distributed on `F.Carrier d` and independent of `m`. Consequently, at any fixed `d` and
-   `h ≠ 0`, the chosen-message hiding distributions for `bit = false` and `bit = true` are identical
-   against every (even computationally unbounded) two-stage adversary `PedersenHidingAdversary`.
-   When the key exponent `α ← PMF.uniformOfFintype (ZMod (F.order d))` is drawn uniformly from all
-   of `ZMod (F.order d)` (matching `discreteLogGame` and [BonehShoup2023], Exercise 20.5), the
-   degenerate key `α = 0` occurs with probability `1 / F.order d`, bounding any unbounded
-   adversary's hiding advantage by `1 / m` whenever supported groups have order at least `m`.
-3. **Computational binding under the discrete-logarithm assumption (`pedersenBindingGame`,
+   `h ≠ 0`, the chosen-message hiding distributions for `bit = false` and `bit = true` in
+   `F.pedersenScheme.hidingForKey ⟨d, h⟩` are identical against every (even computationally
+   unbounded) two-stage adversary `Encryption.WordAdversary`. When the key exponent
+   `α ← PMF.uniformOfFintype (ZMod (F.order d))` is drawn uniformly from all of `ZMod (F.order d)`
+   (matching `discreteLogGame` and [BonehShoup2023], Exercise 20.5), the degenerate key `α = 0`
+   occurs with probability `1 / F.order d`, bounding any unbounded adversary's hiding advantage in
+   `F.pedersenScheme.hidingGame (F.pedersenKeyDist setup)` by `1 / m` whenever supported groups have
+   order at least `m`.
+3. **Computational binding under the discrete-logarithm assumption (`pedersenVerify`,
    `pedersenExtractNat`, `pedersenToDLAdversary`,
    `succProbability_pedersenBindingGame_le_discreteLogGame`, `isPPTOn_pedersenToDLAdversary`,
-   `DiscreteLog.pedersenBinding`, `DiscreteLog.pedersenScheme_binding`)**: any double opening
-   `((m₀, r₀), (m₁, r₁))` with `(ofBits m₀ : ZMod q) ≠ (ofBits m₁ : ZMod q)` and equal commitments
-   under `h = α • g` forces `(ofBits r₀ : ZMod q) ≠ (ofBits r₁ : ZMod q)` and yields
-   `α = (r₁ - r₀)⁻¹ * (m₀ - m₁)` modulo `q` ([Pedersen1991], Section 3, Theorem 3.1;
-   [BonehShoup2023], Section 10.6.1, Fact 10.3 and Theorem 10.4), computed in polynomial time via
-   Fermat's little theorem (`pedersenExtractNat`). This gives an exact zero-loss reduction from
-   `pedersenBindingGame` to `discreteLogGame`.
+   `DiscreteLog.pedersenBinding`, `DiscreteLog.pedersenScheme_binding`)**: any verified double
+   opening `(c, (m₀, o₀), (m₁, o₁))` with `m₀ ≠ m₁` and `pedersenVerify d h mᵢ c oᵢ = true` for
+   `i ∈ {0, 1}` under `h = α • g` has `(ofBits m₀ : ZMod q) ≠ (ofBits m₁ : ZMod q)`, forces
+   `(ofBits o₀ : ZMod q) ≠ (ofBits o₁ : ZMod q)`, and yields `α = (o₁ - o₀)⁻¹ * (m₀ - m₁)` modulo
+   `q` ([Pedersen1991], Section 3, Theorem 3.1; [BonehShoup2023], Section 10.6.1, Fact 10.3 and
+   Theorem 10.4), computed in polynomial time via Fermat's little theorem (`pedersenExtractNat`).
+   This gives an exact zero-loss reduction from `F.pedersenScheme.bindingGame` to `discreteLogGame`.
 
 ## Main definitions
 
 * `Cslib.Crypto.PrimeOrderGroupFamily.pedersenCommit`,
   `Cslib.Crypto.PrimeOrderGroupFamily.encodePedersenCommit`: algebraic and encoded Pedersen
   commitment evaluation.
-* `Cslib.Crypto.PrimeOrderGroupFamily.pedersenCommitLaw`: the commitment distribution for a uniform
-  blinding exponent `r : ZMod (F.order d)`.
+* `Cslib.Crypto.PrimeOrderGroupFamily.pedersenCommitLaw`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenCommitPairLaw`: the commitment element distribution
+  and the `(c, o)` commitment-and-opening pair distribution for a uniform blinding exponent
+  `r : ZMod (F.order d)`.
+* `Cslib.Crypto.PrimeOrderGroupFamily.ValidPedersenMessage`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenVerify`: canonical message space and verification
+  algorithm `V(m, c, o)`.
 * `Cslib.Crypto.PrimeOrderGroupFamily.PedersenKey`,
   `Cslib.Crypto.PrimeOrderGroupFamily.pedersenKeyDist`,
   `Cslib.Crypto.PrimeOrderGroupFamily.pedersenScheme`: Pedersen commitment packaged as a
   public-parameter `CommitmentScheme`.
-* `Cslib.Crypto.PrimeOrderGroupFamily.PedersenHidingAdversary`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenHidingForKey`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenHidingGame`: two-stage chosen-message hiding
-  adversary and experiments.
-* `Cslib.Crypto.PrimeOrderGroupFamily.pedersenBindingGame`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenExtractNat`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenToDLAdversary`: computational binding experiment and
-  discrete-logarithm extractor.
+* `Cslib.Crypto.PrimeOrderGroupFamily.pedersenExtractNat`,
+  `Cslib.Crypto.PrimeOrderGroupFamily.pedersenToDLAdversary`: discrete-logarithm extractor and
+  reduction from a binding adversary.
 
 ## Main results
 
@@ -247,14 +252,59 @@ theorem uniform_pedersenCommit {β : Type*} (d : F.Desc) {h : F.Carrier d} (hh :
   have hmap := congrArg (fun p => p.bind f) (F.pedersenCommitLaw_eq_uniform_of_ne_zero d hh m)
   simpa only [pedersenCommitLaw, PMF.bind_map, Function.comp_def] using hmap
 
-/-- Boolean predicate checking whether two candidate openings `((m₀, r₀), (m₁, r₁))` form a valid
-Pedersen commitment collision under `(d, h)`: the messages are distinct modulo `F.order d` and
-produce the same encoded commitment. -/
-def checkPedersenCollision (d : F.Desc) (h : F.Carrier d)
-    (openings : (List Bool × List Bool) × (List Bool × List Bool)) : Bool :=
-  decide ((ofBits openings.1.1 : ZMod (F.order d)) ≠ (ofBits openings.2.1 : ZMod (F.order d))) &&
-    decide (F.encode d (F.pedersenCommit d h (ofBits openings.1.1) (ofBits openings.1.2)) =
-      F.encode d (F.pedersenCommit d h (ofBits openings.2.1) (ofBits openings.2.2)))
+/-- A message word `m : List Bool` is a canonical Pedersen message for group description `d` if
+`ofBits m < F.order d` and `m` is the canonical binary representation `(ofBits m).bits`. Requiring
+canonical binary representation ensures that distinct message words in the message space represent
+distinct elements of `ZMod (F.order d)`. -/
+def ValidPedersenMessage (d : F.Desc) (m : List Bool) : Prop :=
+  ofBits m < F.order d ∧ (ofBits m).bits = m
+
+/-- The distribution of `(F.encode d (F.pedersenCommit d h m r), r.val.bits)` (encoded commitment
+string and canonical binary opening string) when `r` is drawn uniformly from `ZMod (F.order d)`. -/
+noncomputable def pedersenCommitPairLaw (d : F.Desc) (h : F.Carrier d) (m : ZMod (F.order d)) :
+    PMF (List Bool × List Bool) :=
+  (PMF.uniformOfFintype (ZMod (F.order d))).map fun r =>
+    (F.encode d (F.pedersenCommit d h m r), r.val.bits)
+
+/-- The commitment-string marginal of `pedersenCommitPairLaw` is
+`(pedersenCommitLaw d h m).map (F.encode d)`. -/
+@[simp]
+theorem map_fst_pedersenCommitPairLaw (d : F.Desc) (h : F.Carrier d) (m : ZMod (F.order d)) :
+    (F.pedersenCommitPairLaw d h m).map Prod.fst =
+      (F.pedersenCommitLaw d h m).map (F.encode d) := by
+  simp only [pedersenCommitPairLaw, pedersenCommitLaw, PMF.map_comp]
+  rfl
+
+/-- Pedersen commitment verification `V(m, c, o)` ([BonehShoup2023], Section 8.12, p. 344, and
+Section 10.6.1, p. 414; [Pedersen1991], Section 3): verify that `m` is a canonical message word for
+`d` (`ofBits m < F.order d` and `(ofBits m).bits = m`) and that recomputing the commitment from
+`(ofBits m, ofBits o)` under `(d, h)` yields `c`. -/
+def pedersenVerify (d : F.Desc) (h : F.Carrier d) (m c o : List Bool) : Bool :=
+  decide (ofBits m < F.order d) &&
+    decide ((ofBits m).bits = m) &&
+    decide (F.encode d (F.pedersenCommit d h (ofBits m) (ofBits o)) = c)
+
+/-- `pedersenVerify` accepts only canonical Pedersen message words (`ValidPedersenMessage`). -/
+theorem validPedersenMessage_of_pedersenVerify {d : F.Desc} {h : F.Carrier d} {m c o : List Bool}
+    (hv : F.pedersenVerify d h m c o = true) :
+    F.ValidPedersenMessage d m := by
+  simp only [pedersenVerify, Bool.and_eq_true, decide_eq_true_eq] at hv
+  exact ⟨hv.1.1, hv.1.2⟩
+
+/-- Correctness of `pedersenVerify`: every `(c, o)` in the support of
+`pedersenCommitPairLaw d h (ofBits m)` for a canonical message word `m` is accepted by
+`pedersenVerify d h m c o`. -/
+theorem pedersenVerify_of_mem_support_pedersenCommitPairLaw (d : F.Desc) (h : F.Carrier d)
+    {m : List Bool} {co : List Bool × List Bool}
+    (hm : F.ValidPedersenMessage d m)
+    (hco : co ∈ (F.pedersenCommitPairLaw d h (ofBits m)).support) :
+    F.pedersenVerify d h m co.1 co.2 = true := by
+  simp only [pedersenCommitPairLaw, PMF.support_map, Set.mem_image] at hco
+  rcases hco with ⟨r, -, rfl⟩
+  have hr : (ofBits r.val.bits : ZMod (F.order d)) = r := by
+    unfold ofBits
+    rw [Nat.foldr_bit_bits, ZMod.natCast_zmod_val]
+  simp only [pedersenVerify, Bool.and_eq_true, decide_eq_true_eq, hm.1, hm.2, hr, true_and]
 
 /-- A Pedersen commitment key over `F`: a group description `d : F.Desc` together with a public
 group element `h : F.Carrier d`. -/
@@ -268,84 +318,82 @@ noncomputable def pedersenKeyDist (setup : ℕ → PMF F.Desc) (n : ℕ) : PMF F
   return ⟨d, α • F.generator d⟩
 
 /-- Pedersen's commitment scheme as an instance of the general public-parameter `CommitmentScheme`
-([BonehShoup2023], Section 8.12, Definition 8.8, p. 344; [Pedersen1991], Section 3). -/
-noncomputable def pedersenScheme : CommitmentScheme F.PedersenKey (F.Desc × List Bool) where
-  viewKey k := (k.1, F.encode k.1 k.2)
-  commitDist k msg := (F.pedersenCommitLaw k.1 k.2 (ofBits msg)).map (F.encode k.1)
-  checkCollision k openings := F.checkPedersenCollision k.1 k.2 openings
+([BonehShoup2023], Section 8.12, Definition 8.8, p. 344, and Section 10.6.1, p. 414;
+[Pedersen1991], Section 3). -/
+noncomputable def pedersenScheme : CommitmentScheme F.PedersenKey where
+  encodeKey k := encPair F.encDesc encBits (k.1, F.encode k.1 k.2)
+  ValidMessage k := F.ValidPedersenMessage k.1
+  commitDist k msg := F.pedersenCommitPairLaw k.1 k.2 (ofBits msg)
+  verify k := F.pedersenVerify k.1 k.2
+  validMessage_of_verify _ _ _ _ hv := F.validPedersenMessage_of_pedersenVerify hv
+  verify_of_mem_support k _ _ hm hco :=
+    F.pedersenVerify_of_mem_support_pedersenCommitPairLaw k.1 k.2 hm hco
 
-/-- A two-stage chosen-message hiding adversary against Pedersen commitments: an instance of
-`CommitmentHidingAdversary (F.Desc × List Bool)` ([BonehShoup2023], Section 8.12,
-Definition 8.8, p. 344). -/
-abbrev PedersenHidingAdversary := CommitmentHidingAdversary (F.Desc × List Bool)
+@[simp]
+theorem pedersenScheme_encodeKey (k : F.PedersenKey) :
+    F.pedersenScheme.encodeKey k = encPair F.encDesc encBits (k.1, F.encode k.1 k.2) := rfl
 
-/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344)
-at a fixed group description `d` and commitment key `h : F.Carrier d` for hidden bit `bit : Bool`,
-instantiating `CommitmentScheme.hidingForKey`. -/
-noncomputable def pedersenHidingForKey (d : F.Desc) (h : F.Carrier d)
-    (adversary : F.PedersenHidingAdversary) (bit : Bool) (n : ℕ) : Game :=
-  F.pedersenScheme.hidingForKey ⟨d, h⟩ adversary bit n
-
-/-- For any non-identity commitment key `h ≠ 0`, `pedersenHidingForKey` produces the exact same
-output distribution for any two hidden bits `b₁` and `b₂`, against every (even computationally
-unbounded) `PedersenHidingAdversary`. -/
+/-- For any non-identity commitment key `h ≠ 0`, `F.pedersenScheme.hidingForKey ⟨d, h⟩` produces the
+exact same output distribution for any two hidden bits `b₁` and `b₂`, against every (even
+computationally unbounded) `Encryption.WordAdversary`. -/
 theorem pedersenHidingForKey_eq_of_ne_zero (d : F.Desc) {h : F.Carrier d} (hh : h ≠ 0)
-    (adversary : F.PedersenHidingAdversary) (b₁ b₂ : Bool) (n : ℕ) :
-    F.pedersenHidingForKey d h adversary b₁ n = F.pedersenHidingForKey d h adversary b₂ n :=
-  F.pedersenScheme.hidingForKey_eq_of_commitDist_eq
-    (fun _ _ => by simp only [pedersenScheme, F.pedersenCommitLaw_eq_uniform_of_ne_zero d hh])
+    (adversary : Encryption.WordAdversary) (b₁ b₂ : Bool) (n : ℕ) :
+    F.pedersenScheme.hidingForKey ⟨d, h⟩ adversary b₁ n =
+      F.pedersenScheme.hidingForKey ⟨d, h⟩ adversary b₂ n :=
+  F.pedersenScheme.hidingForKey_eq_of_map_fst_commitDist_eq
+    (fun _ _ => by
+      simp only [pedersenScheme, F.map_fst_pedersenCommitPairLaw,
+        F.pedersenCommitLaw_eq_uniform_of_ne_zero d hh])
     adversary b₁ b₂ n
 
 /-- At any non-identity commitment key `h ≠ 0`, the hiding advantage of any (computationally
 unbounded) adversary between `bit = false` and `bit = true` is `0`. -/
 @[simp]
 theorem advantage_pedersenHidingForKey_eq_zero (d : F.Desc) {h : F.Carrier d} (hh : h ≠ 0)
-    (adversary : F.PedersenHidingAdversary) (n : ℕ) :
-    Game.advantage (F.pedersenHidingForKey d h adversary false n)
-      (F.pedersenHidingForKey d h adversary true n) = 0 :=
+    (adversary : Encryption.WordAdversary) (n : ℕ) :
+    Game.advantage (F.pedersenScheme.hidingForKey ⟨d, h⟩ adversary false n)
+      (F.pedersenScheme.hidingForKey ⟨d, h⟩ adversary true n) = 0 :=
   F.pedersenScheme.advantage_hidingForKey_eq_zero
-    (fun _ _ => by simp only [pedersenScheme, F.pedersenCommitLaw_eq_uniform_of_ne_zero d hh])
+    (fun _ _ => by
+      simp only [pedersenScheme, F.map_fst_pedersenCommitPairLaw,
+        F.pedersenCommitLaw_eq_uniform_of_ne_zero d hh])
     adversary n
 
-/-- The full Pedersen chosen-message hiding experiment ([BonehShoup2023], Section 8.12,
-Definition 8.8, p. 344, and Exercise 20.5, pp. 843–844), instantiating
-`CommitmentScheme.hidingGame`. -/
-noncomputable def pedersenHidingGame (setup : ℕ → PMF F.Desc)
-    (adversary : F.PedersenHidingAdversary) (bit : Bool) (n : ℕ) : Game :=
-  F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary bit n
-
 /-- When every supported group at parameter `n` has order at least `m`, changing the hidden bit from
-`b₁` to `b₂` changes acceptance probability in `pedersenHidingGame` by at most `1 / m` (arising
-solely from the `1 / F.order d` probability of sampling the degenerate key `α = 0`). -/
+`b₁` to `b₂` changes acceptance probability in
+`F.pedersenScheme.hidingGame (F.pedersenKeyDist setup)` by at most `1 / m` (arising solely from the
+`1 / F.order d` probability of sampling the degenerate key `α = 0`). -/
 theorem pedersenHidingGame_apply_true_le (setup : ℕ → PMF F.Desc)
-    (adversary : F.PedersenHidingAdversary) (b₁ b₂ : Bool) (n m : ℕ)
+    (adversary : Encryption.WordAdversary) (b₁ b₂ : Bool) (n m : ℕ)
     (hm : ∀ d ∈ (setup n).support, m ≤ F.order d) :
-    F.pedersenHidingGame setup adversary b₁ n true ≤
-      F.pedersenHidingGame setup adversary b₂ n true + (m : ℝ≥0∞)⁻¹ := by
+    F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary b₁ n true ≤
+      F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary b₂ n true + (m : ℝ≥0∞)⁻¹ := by
   have hd_bound (d : F.Desc) (hd : d ∈ (setup n).support) :
       ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun α =>
-        F.pedersenHidingForKey d (α • F.generator d) adversary b₁ n) true ≤
+        F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₁ n) true ≤
       ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun α =>
-        F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n) true + (m : ℝ≥0∞)⁻¹ := by
+        F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n) true +
+        (m : ℝ≥0∞)⁻¹ := by
     have hord : (F.order d : ℝ≥0∞)⁻¹ ≤ (m : ℝ≥0∞)⁻¹ :=
       ENNReal.inv_le_inv.mpr (Nat.cast_le.mpr (hm d hd))
     have hα (α : ZMod (F.order d)) :
         PMF.uniformOfFintype (ZMod (F.order d)) α *
-          F.pedersenHidingForKey d (α • F.generator d) adversary b₁ n true ≤
+          F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₁ n true ≤
         PMF.uniformOfFintype (ZMod (F.order d)) α *
-          F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n true +
+          F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n true +
           if α = 0 then (F.order d : ℝ≥0∞)⁻¹ else 0 := by
       by_cases h0 : α = 0
       · subst h0
         simp only [↓reduceIte, PMF.uniformOfFintype_apply, ZMod.card]
         calc (F.order d : ℝ≥0∞)⁻¹ *
-              F.pedersenHidingForKey d ((0 : ZMod (F.order d)) • F.generator d) adversary b₁ n true
+              F.pedersenScheme.hidingForKey
+                ⟨d, (0 : ZMod (F.order d)) • F.generator d⟩ adversary b₁ n true
             ≤ (F.order d : ℝ≥0∞)⁻¹ * 1 :=
               mul_le_mul_of_nonneg_left (PMF.coe_le_one _ _) zero_le
           _ = 0 + (F.order d : ℝ≥0∞)⁻¹ := by rw [mul_one, zero_add]
           _ ≤ (F.order d : ℝ≥0∞)⁻¹ *
-                F.pedersenHidingForKey d ((0 : ZMod (F.order d)) • F.generator d)
-                  adversary b₂ n true +
+                F.pedersenScheme.hidingForKey
+                  ⟨d, (0 : ZMod (F.order d)) • F.generator d⟩ adversary b₂ n true +
               (F.order d : ℝ≥0∞)⁻¹ := add_le_add zero_le le_rfl
       · have hh : α • F.generator d ≠ 0 := fun h =>
           h0 (F.smul_generator_injective d (by simpa using h))
@@ -353,27 +401,28 @@ theorem pedersenHidingGame_apply_true_le (setup : ℕ → PMF F.Desc)
           F.pedersenHidingForKey_eq_of_ne_zero d hh adversary b₁ b₂ n, le_rfl]
     rw [PMF.bind_apply, PMF.bind_apply]
     calc ∑' α, PMF.uniformOfFintype (ZMod (F.order d)) α *
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₁ n true
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₁ n true
         ≤ ∑' α, (PMF.uniformOfFintype (ZMod (F.order d)) α *
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n true +
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n true +
             if α = 0 then (F.order d : ℝ≥0∞)⁻¹ else 0) :=
           ENNReal.tsum_le_tsum hα
       _ = (∑' α, PMF.uniformOfFintype (ZMod (F.order d)) α *
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n true) +
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n true) +
           (F.order d : ℝ≥0∞)⁻¹ := by
           rw [ENNReal.tsum_add, tsum_ite_eq]
       _ ≤ (∑' α, PMF.uniformOfFintype (ZMod (F.order d)) α *
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n true) +
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n true) +
           (m : ℝ≥0∞)⁻¹ := add_le_add le_rfl hord
-  simp only [pedersenHidingGame, CommitmentScheme.hidingGame, pedersenKeyDist,
+  simp only [CommitmentScheme.hidingGame, pedersenKeyDist,
     PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, PMF.bind_bind, PMF.pure_bind]
   rw [PMF.bind_apply, PMF.bind_apply]
   calc ∑' d, setup n d *
           ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun α =>
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₁ n) true
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₁ n) true
       ≤ ∑' d, setup n d *
           (((PMF.uniformOfFintype (ZMod (F.order d))).bind fun α =>
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n) true + (m : ℝ≥0∞)⁻¹) := by
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n) true +
+            (m : ℝ≥0∞)⁻¹) := by
         refine ENNReal.tsum_le_tsum fun d => ?_
         by_cases hd : d ∈ (setup n).support
         · exact mul_le_mul_of_nonneg_left (hd_bound d hd) zero_le
@@ -381,18 +430,19 @@ theorem pedersenHidingGame_apply_true_le (setup : ℕ → PMF F.Desc)
           simp [hd0]
     _ = (∑' d, setup n d *
           ((PMF.uniformOfFintype (ZMod (F.order d))).bind fun α =>
-            F.pedersenHidingForKey d (α • F.generator d) adversary b₂ n) true) +
+            F.pedersenScheme.hidingForKey ⟨d, α • F.generator d⟩ adversary b₂ n) true) +
         (m : ℝ≥0∞)⁻¹ := by
         simp only [mul_add, ENNReal.tsum_add, ENNReal.tsum_mul_right, (setup n).tsum_coe, one_mul]
 
-/-- **Unconditional hiding bound for `pedersenHidingGame`**: when every supported group at
+/-- **Unconditional hiding bound for Pedersen commitments**: when every supported group at
 parameter `n` has order at least `m > 0`, any (even computationally unbounded)
-`PedersenHidingAdversary` has distinguishing advantage at most `1 / m`. -/
+`Encryption.WordAdversary` has distinguishing advantage at most `1 / m` in
+`F.pedersenScheme.hidingGame (F.pedersenKeyDist setup)`. -/
 theorem advantage_pedersenHidingGame_le (setup : ℕ → PMF F.Desc)
-    (adversary : F.PedersenHidingAdversary) (n m : ℕ)
+    (adversary : Encryption.WordAdversary) (n m : ℕ)
     (hm0 : 0 < m) (hm : ∀ d ∈ (setup n).support, m ≤ F.order d) :
-    Game.advantage (F.pedersenHidingGame setup adversary false n)
-      (F.pedersenHidingGame setup adversary true n) ≤ 1 / m := by
+    Game.advantage (F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary false n)
+      (F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary true n) ≤ 1 / m := by
   have hB : (m : ℝ≥0∞)⁻¹ ≠ ⊤ := ENNReal.inv_ne_top.mpr (Nat.cast_ne_zero.mpr hm0.ne')
   have hadv := Game.advantage_le_of_apply_le hB
     (F.pedersenHidingGame_apply_true_le setup adversary false true n m hm)
@@ -404,15 +454,15 @@ theorem advantage_pedersenHidingGame_le (setup : ℕ → PMF F.Desc)
 /-- **Asymptotic unconditional hiding of Pedersen commitments** ([Pedersen1991], Section 3,
 Theorem 3.1; [BonehShoup2023], Section 8.12, Definition 8.8, and Exercise 20.5): when every
 supported group at parameter `n` has order at least `m n > 0` and `1 / m n` is negligible, every
-(even computationally unbounded) `PedersenHidingAdversary` has negligible advantage in
-`pedersenHidingGame`. -/
+(even computationally unbounded) `Encryption.WordAdversary` has negligible advantage in
+`F.pedersenScheme.hidingGame (F.pedersenKeyDist setup)`. -/
 theorem negligible_advantage_pedersenHidingGame (setup : ℕ → PMF F.Desc)
-    (adversary : F.PedersenHidingAdversary)
+    (adversary : Encryption.WordAdversary)
     {m : ℕ → ℕ} (hm0 : ∀ n, 0 < m n) (hm : ∀ n, ∀ d ∈ (setup n).support, m n ≤ F.order d)
     (hinv : Negligible fun n => (1 / m n : ℝ≥0)) :
     Negligible fun n =>
-      Game.advantage (F.pedersenHidingGame setup adversary false n)
-        (F.pedersenHidingGame setup adversary true n) :=
+      Game.advantage (F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary false n)
+        (F.pedersenScheme.hidingGame (F.pedersenKeyDist setup) adversary true n) :=
   negligible_of_le hinv fun n =>
     F.advantage_pedersenHidingGame_le setup adversary n (m n) (hm0 n) (hm n)
 
@@ -426,15 +476,6 @@ theorem pedersenScheme_statisticalHiding (setup : ℕ → PMF F.Desc)
   fun adversary _ => F.negligible_advantage_pedersenHidingGame setup adversary hm0 hm hinv
 
 /-! ### Computational binding under the discrete-logarithm assumption -/
-
-/-- The Pedersen commitment binding experiment ([BonehShoup2023], Section 8.12, Definition 8.8,
-p. 344, and Section 10.6.1, Theorem 10.4; [Pedersen1991], Section 3), instantiating
-`CommitmentScheme.bindingGame`. -/
-noncomputable def pedersenBindingGame (setup : ℕ → PMF F.Desc)
-    (adversary : ℕ → F.Desc × List Bool →
-      ProbComp ((List Bool × List Bool) × (List Bool × List Bool)))
-    (n : ℕ) : Game :=
-  F.pedersenScheme.bindingGame (F.pedersenKeyDist setup) adversary n
 
 /-- Extract the discrete logarithm `(r₁ - r₀)⁻¹ * (m₀ - m₁) mod q` from a Pedersen commitment
 collision `((m₀, r₀), (m₁, r₁))` ([Pedersen1991], Section 3, Theorem 3.1; [BonehShoup2023],
@@ -458,63 +499,81 @@ theorem pedersenExtractNat_cast {q : ℕ} [Fact q.Prime] {m₀ r₀ m₁ r₁ : 
     ZMod.pow_card_sub_two_eq_inv hne
   simp only [pedersenExtractNat, Nat.cast_mul, ZMod.natCast_mod, Nat.cast_pow, hsub, hinv]
 
-/-- Any valid Pedersen collision under `h = α • g` recovers `α` via `pedersenExtractNat`
-([Pedersen1991], Section 3, Theorem 3.1; [BonehShoup2023], Section 10.6.1, Fact 10.3). -/
-theorem pedersenExtractNat_eq_of_checkPedersenCollision (d : F.Desc) (α : ZMod (F.order d))
-    {openings : (List Bool × List Bool) × (List Bool × List Bool)}
-    (hcoll : F.checkPedersenCollision d (α • F.generator d) openings = true) :
+/-- Any valid Pedersen binding collision `(c, (m₀, o₀), (m₁, o₁))` under `h = α • g` recovers `α`
+via `pedersenExtractNat` ([Pedersen1991], Section 3, Theorem 3.1; [BonehShoup2023],
+Section 10.6.1, Fact 10.3). -/
+theorem pedersenExtractNat_eq_of_isBindingCollision (d : F.Desc) (α : ZMod (F.order d))
+    {out : List Bool × (List Bool × List Bool) × (List Bool × List Bool)}
+    (hcoll : F.pedersenScheme.isBindingCollision ⟨d, α • F.generator d⟩ out = true) :
     (pedersenExtractNat (F.order d)
-      (ofBits openings.1.1) (ofBits openings.1.2)
-      (ofBits openings.2.1) (ofBits openings.2.2) : ZMod (F.order d)) = α := by
-  simp only [checkPedersenCollision, Bool.and_eq_true, decide_eq_true_eq,
-    (F.encode_injective d).eq_iff, F.pedersenCommit_smul_generator_eq_iff] at hcoll
-  rcases hcoll with ⟨hm, hlin⟩
-  have hmul : ((ofBits openings.2.2 : ZMod (F.order d)) - ofBits openings.1.2) * α =
-      (ofBits openings.1.1 : ZMod (F.order d)) - ofBits openings.2.1 := by
+      (ofBits out.2.1.1) (ofBits out.2.1.2)
+      (ofBits out.2.2.1) (ofBits out.2.2.2) : ZMod (F.order d)) = α := by
+  simp only [CommitmentScheme.isBindingCollision, pedersenScheme, pedersenVerify,
+    Bool.and_eq_true, decide_eq_true_eq] at hcoll
+  rcases hcoll with ⟨⟨hne, ⟨hm₀_lt, hm₀_bits⟩, hc₀⟩, ⟨hm₁_lt, hm₁_bits⟩, hc₁⟩
+  have hm_nat : ofBits out.2.1.1 ≠ ofBits out.2.2.1 := by
+    intro h
+    apply hne
+    rw [← hm₀_bits, ← hm₁_bits, h]
+  have hm : (ofBits out.2.1.1 : ZMod (F.order d)) ≠ (ofBits out.2.2.1 : ZMod (F.order d)) := by
+    intro h
+    apply hm_nat
+    have hval := congrArg ZMod.val h
+    rwa [ZMod.val_natCast_of_lt hm₀_lt, ZMod.val_natCast_of_lt hm₁_lt] at hval
+  have hlin : (ofBits out.2.1.1 : ZMod (F.order d)) + (ofBits out.2.1.2 : ZMod (F.order d)) * α =
+      (ofBits out.2.2.1 : ZMod (F.order d)) + (ofBits out.2.2.2 : ZMod (F.order d)) * α :=
+    (F.pedersenCommit_smul_generator_eq_iff d α _ _ _ _).mp
+      (F.encode_injective d (hc₀.trans hc₁.symm))
+  have hmul : ((ofBits out.2.2.2 : ZMod (F.order d)) - ofBits out.2.1.2) * α =
+      (ofBits out.2.1.1 : ZMod (F.order d)) - ofBits out.2.2.1 := by
     linear_combination -hlin
-  have hr : (ofBits openings.2.2 : ZMod (F.order d)) ≠ ofBits openings.1.2 := by
+  have hr : (ofBits out.2.2.2 : ZMod (F.order d)) ≠ ofBits out.2.1.2 := by
     intro hreq
     apply hm
-    have hzero : ((ofBits openings.2.2 : ZMod (F.order d)) - ofBits openings.1.2) * α = 0 := by
+    have hzero : ((ofBits out.2.2.2 : ZMod (F.order d)) - ofBits out.2.1.2) * α = 0 := by
       rw [sub_eq_zero.mpr hreq, zero_mul]
     exact sub_eq_zero.mp (hmul.symm.trans hzero)
   rw [pedersenExtractNat_cast hr, ← hmul, inv_mul_cancel_left₀ (sub_ne_zero.mpr hr)]
 
-/-- Turn a Pedersen binding adversary into a discrete-logarithm adversary by running it on
-`(d, encode (α • g))` and extracting `pedersenExtractNat` in binary ([BonehShoup2023],
-Section 10.6.1, Theorem 10.4, pp. 414–415). -/
+/-- Turn a `pedersenScheme` binding adversary into a discrete-logarithm adversary by passing the
+encoded Pedersen key `encPair F.encDesc encBits input` and extracting `pedersenExtractNat` in binary
+from the two candidate openings ([BonehShoup2023], Section 10.6.1, Theorem 10.4, pp. 414–415). -/
 def pedersenToDLAdversary
-    (adversary : ℕ → F.Desc × List Bool →
-      ProbComp ((List Bool × List Bool) × (List Bool × List Bool)))
+    (adversary : ℕ → List Bool →
+      ProbComp (List Bool × (List Bool × List Bool) × (List Bool × List Bool)))
     (n : ℕ) (input : F.Desc × List Bool) : ProbComp (List Bool) := do
-  let openings ← adversary n input
+  let out ← adversary n (encPair F.encDesc encBits input)
   return (pedersenExtractNat (F.order input.1)
-    (ofBits openings.1.1) (ofBits openings.1.2)
-    (ofBits openings.2.1) (ofBits openings.2.2)).bits
+    (ofBits out.2.1.1) (ofBits out.2.1.2)
+    (ofBits out.2.2.1) (ofBits out.2.2.2)).bits
 
 /-- **Exact binding-to-discrete-logarithm reduction** ([BonehShoup2023], Section 10.6.1,
 Theorem 10.4, pp. 414–415; [Pedersen1991], Section 3, Theorem 3.1): for every security parameter
-`n`, the success probability of `adversary` in `pedersenBindingGame` is at most the
-discrete-logarithm success probability of `pedersenToDLAdversary adversary`. -/
+`n`, the success probability of `adversary` in
+`F.pedersenScheme.bindingGame (F.pedersenKeyDist setup)` is at most the discrete-logarithm success
+probability of `pedersenToDLAdversary adversary`. -/
 theorem succProbability_pedersenBindingGame_le_discreteLogGame (setup : ℕ → PMF F.Desc)
-    (adversary : ℕ → F.Desc × List Bool →
-      ProbComp ((List Bool × List Bool) × (List Bool × List Bool)))
+    (adversary : ℕ → List Bool →
+      ProbComp (List Bool × (List Bool × List Bool) × (List Bool × List Bool)))
     (n : ℕ) :
-    Game.succProbability (F.pedersenBindingGame setup adversary n) ≤
+    Game.succProbability
+      (F.pedersenScheme.bindingGame (F.pedersenKeyDist setup) adversary n) ≤
       Game.succProbability (F.discreteLogGame setup (F.pedersenToDLAdversary adversary) n) := by
   refine ENNReal.toNNReal_mono (PMF.apply_ne_top _ _) ?_
-  dsimp only [pedersenBindingGame, CommitmentScheme.bindingGame, pedersenKeyDist, pedersenScheme,
+  dsimp only [CommitmentScheme.bindingGame, pedersenKeyDist,
     discreteLogGame, pedersenToDLAdversary, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
-  simp only [ProbComp.eval_bind, ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind]
+  simp only [pedersenScheme_encodeKey, ProbComp.eval_bind, ProbComp.eval_pure, PMF.bind_bind,
+    PMF.pure_bind]
   refine PMF.bind_apply_mono_on_support (setup n) true fun d _ => ?_
   refine PMF.bind_apply_mono_on_support (PMF.uniformOfFintype (ZMod (F.order d))) true fun α _ => ?_
   refine PMF.bind_apply_mono_on_support
-    (ProbComp.eval (adversary n (d, F.encode d (α • F.generator d)))) true fun openings _ => ?_
-  by_cases hcoll : F.checkPedersenCollision d (α • F.generator d) openings = true
-  · have hextract := F.pedersenExtractNat_eq_of_checkPedersenCollision d α hcoll
+    (ProbComp.eval (adversary n (encPair F.encDesc encBits (d, F.encode d (α • F.generator d)))))
+    true fun out _ => ?_
+  by_cases hcoll : F.pedersenScheme.isBindingCollision ⟨d, α • F.generator d⟩ out = true
+  · have hextract := F.pedersenExtractNat_eq_of_isBindingCollision d α hcoll
     have hbits : ((ofBits (pedersenExtractNat (F.order d)
-        (ofBits openings.1.1) (ofBits openings.1.2)
-        (ofBits openings.2.1) (ofBits openings.2.2)).bits : ℕ) : ZMod (F.order d)) = α := by
+        (ofBits out.2.1.1) (ofBits out.2.1.2)
+        (ofBits out.2.2.1) (ofBits out.2.2.2)).bits : ℕ) : ZMod (F.order d)) = α := by
       unfold ofBits
       rwa [Nat.foldr_bit_bits]
     simp [hcoll, hbits]
@@ -547,28 +606,34 @@ attribute [local fun_prop] computableTidilyInPolyTime_pedersenExtractNat
 
 /-- `pedersenToDLAdversary` is uniform strict PPT whenever the binding adversary is. -/
 theorem isPPTOn_pedersenToDLAdversary
-    {adversary : ℕ → F.Desc × List Bool →
-      ProbComp ((List Bool × List Bool) × (List Bool × List Bool))}
-    (hA : IsPPTOn (encPair encUnary (encPair F.encDesc encBits))
-      (encPair (encPair encBits encBits) (encPair encBits encBits))
+    {adversary : ℕ → List Bool →
+      ProbComp (List Bool × (List Bool × List Bool) × (List Bool × List Bool))}
+    (hA : IsPPTOn (encPair encUnary encBits)
+      (encPair encBits (encPair (encPair encBits encBits) (encPair encBits encBits)))
       (fun input => adversary input.1 input.2)) :
     IsPPTOn (encPair encUnary (encPair F.encDesc encBits)) encBits
       (fun input => F.pedersenToDLAdversary adversary input.1 input.2) := by
   unfold pedersenToDLAdversary
-  refine hA.bind_with ?_
+  refine (hA.preprocess
+    (prepare := fun input : ℕ × F.Desc × List Bool =>
+      (input.1, encPair F.encDesc encBits input.2)) (by fun_prop)).bind_with ?_
   have hextract : ComputableTidilyInPolyTime
-      (fun p : (ℕ × F.Desc × List Bool) × ((List Bool × List Bool) × (List Bool × List Bool)) =>
+      (fun p :
+          (ℕ × F.Desc × List Bool) ×
+            (List Bool × (List Bool × List Bool) × (List Bool × List Bool)) =>
         (pedersenExtractNat (F.order p.1.2.1)
-          (ofBits p.2.1.1) (ofBits p.2.1.2)
-          (ofBits p.2.2.1) (ofBits p.2.2.2)).bits)
+          (ofBits p.2.2.1.1) (ofBits p.2.2.1.2)
+          (ofBits p.2.2.2.1) (ofBits p.2.2.2.2)).bits)
       (encPair (encPair encUnary (encPair F.encDesc encBits))
-        (encPair (encPair encBits encBits) (encPair encBits encBits)))
+        (encPair encBits (encPair (encPair encBits encBits) (encPair encBits encBits))))
       encBits := by
     change ComputableTidilyInPolyTime
-      (fun p : (ℕ × F.Desc × List Bool) × ((List Bool × List Bool) × (List Bool × List Bool)) =>
+      (fun p :
+          (ℕ × F.Desc × List Bool) ×
+            (List Bool × (List Bool × List Bool) × (List Bool × List Bool)) =>
         encNat (pedersenExtractNat (F.order p.1.2.1)
-          (ofBits p.2.1.1) (ofBits p.2.1.2)
-          (ofBits p.2.2.1) (ofBits p.2.2.2)))
+          (ofBits p.2.2.1.1) (ofBits p.2.2.1.2)
+          (ofBits p.2.2.2.1) (ofBits p.2.2.2.2)))
       _ encBits
     exact ComputableTidilyInPolyTime.id'.comp (by fun_prop)
   exact hextract.isPPTOn
@@ -576,15 +641,16 @@ theorem isPPTOn_pedersenToDLAdversary
 /-- **Computational binding of Pedersen commitments under the discrete-logarithm assumption**
 ([Pedersen1991], Section 3, Theorem 3.1; [BonehShoup2023], Section 8.12, Definition 8.8, and
 Section 10.6.1, Theorem 10.4): if `F.DiscreteLog setup` holds, every uniform strict PPT adversary
-succeeds in `pedersenBindingGame` with negligible probability. -/
+succeeds in `F.pedersenScheme.bindingGame (F.pedersenKeyDist setup)` with negligible probability. -/
 theorem DiscreteLog.pedersenBinding {F : PrimeOrderGroupFamily} {setup : ℕ → PMF F.Desc}
     (hDL : F.DiscreteLog setup)
-    (adversary : ℕ → F.Desc × List Bool →
-      ProbComp ((List Bool × List Bool) × (List Bool × List Bool)))
-    (hA : IsPPTOn (encPair encUnary (encPair F.encDesc encBits))
-      (encPair (encPair encBits encBits) (encPair encBits encBits))
+    (adversary : ℕ → List Bool →
+      ProbComp (List Bool × (List Bool × List Bool) × (List Bool × List Bool)))
+    (hA : IsPPTOn (encPair encUnary encBits)
+      (encPair encBits (encPair (encPair encBits encBits) (encPair encBits encBits)))
       (fun input => adversary input.1 input.2)) :
-    Negligible fun n => Game.succProbability (F.pedersenBindingGame setup adversary n) :=
+    Negligible fun n =>
+      Game.succProbability (F.pedersenScheme.bindingGame (F.pedersenKeyDist setup) adversary n) :=
   negligible_of_le (hDL (F.pedersenToDLAdversary adversary) (F.isPPTOn_pedersenToDLAdversary hA))
     (F.succProbability_pedersenBindingGame_le_discreteLogGame setup adversary)
 
@@ -593,7 +659,7 @@ discrete-logarithm assumption** ([Pedersen1991], Section 3, Theorem 3.1; [BonehS
 Section 8.12, Definition 8.8, and Section 10.6.1, Theorem 10.4). -/
 theorem DiscreteLog.pedersenScheme_binding {F : PrimeOrderGroupFamily} {setup : ℕ → PMF F.Desc}
     (hDL : F.DiscreteLog setup) :
-    F.pedersenScheme.Binding (encPair F.encDesc encBits) (F.pedersenKeyDist setup) :=
+    F.pedersenScheme.Binding (F.pedersenKeyDist setup) :=
   fun adversary hA => hDL.pedersenBinding adversary hA
 
 end Cslib.Crypto.PrimeOrderGroupFamily
