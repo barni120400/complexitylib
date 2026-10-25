@@ -70,7 +70,16 @@ theorem isPPTOn_extract {α : Type} {encode : α ↪ List Bool}
     (hcount : ComputableTidilyInPolyTime count encode encUnary)
     (hinput : ComputableTidilyInPolyTime input encode encBits) :
     IsPPTOn encode encBits (fun a => extract (count a) (input a)) := by
-  unfold extract
-  ppt
+  have hwidth := ComputableTidilyInPolyTime.unary_mul.comp
+    (hcount.prod (ComputableTidilyInPolyTime.length_bits.comp hinput))
+  have hsample := ComputableTidilyInPolyTime.sampleList hwidth
+  have hc := (ComputableInPolyTime.of_tidy hcount).comp
+    (ComputableInPolyTime.fst encode encBits)
+  have hi := (ComputableInPolyTime.of_tidy hinput).comp
+    (ComputableInPolyTime.fst encode encBits)
+  have hs := ComputableInPolyTime.snd encode encBits
+  have hcallback := ComputableInPolyTime.bitsAppend hs
+    (computableInPolyTime_wordHash hc hs hi)
+  simpa only [extract, bind_pure_comp, Function.comp_def] using hsample.map_with hcallback
 
 end Cslib.BitString.LinearHash

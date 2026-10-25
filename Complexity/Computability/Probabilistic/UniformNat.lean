@@ -77,8 +77,16 @@ theorem isPPTOn_sampleBinaryNat : IsPPTOn encUnary encNat sampleBinaryNat :=
 theorem isPPTOn_sampleDyadicIndex {α : Type} {input : α ↪ List Bool} {bound : α → ℕ}
     (hbound : ComputableTidilyInPolyTime bound input encUnary) :
     IsPPTOn input encUnary (fun a => sampleDyadicIndex (bound a)) := by
-  unfold sampleDyadicIndex
-  ppt
+  have hlog : ComputableInPolyTime (Nat.log 2) encUnary encUnary :=
+    .of_tidy ComputableTidilyInPolyTime.unary_log_two
+  have hwidth := ComputableInPolyTime.unary_succ.comp
+    (hlog.comp (ComputableInPolyTime.of_tidy hbound))
+  have hsample := isPPTOn_sampleList.preprocess hwidth
+  have hcap := ComputableInPolyTime.unary_dyadicSize.comp (.of_tidy hbound)
+  have hcallback := ComputableInPolyTime.bitsBoundedBinaryValue.comp
+    ((hcap.comp (ComputableInPolyTime.fst input encBits)).prod
+      (ComputableInPolyTime.snd input encBits))
+  simpa only [sampleDyadicIndex, Function.comp_def] using hsample.map_with hcallback
 
 /-- Efficient unary parameters give a strict PPT coin with the specified dyadic law. -/
 @[program_certificate]
@@ -99,8 +107,15 @@ theorem isPPTOn_sampleDyadicCoin {α : Type} {input : α ↪ List Bool}
 theorem isPPTOn_sampleBoundedIndex {α : Type} {input : α ↪ List Bool} {bound : α → ℕ}
     (hbound : ComputableTidilyInPolyTime bound input encUnary) :
     IsPPTOn input encUnary (fun a => sampleBoundedIndex (bound a)) := by
-  unfold sampleBoundedIndex
-  ppt
+  have hlog : ComputableInPolyTime (Nat.log 2) encUnary encUnary :=
+    .of_tidy ComputableTidilyInPolyTime.unary_log_two
+  have hwidth := ComputableInPolyTime.unary_succ.comp
+    (hlog.comp (ComputableInPolyTime.of_tidy hbound))
+  have hsample := isPPTOn_sampleList.preprocess hwidth
+  have hcallback := ComputableInPolyTime.bitsBoundedBinaryValue.comp
+    (((ComputableInPolyTime.of_tidy hbound).comp
+      (ComputableInPolyTime.fst input encBits)).prod (ComputableInPolyTime.snd input encBits))
+  simpa only [sampleBoundedIndex, Function.comp_def] using hsample.map_with hcallback
 
 end Cslib.Probability
 
