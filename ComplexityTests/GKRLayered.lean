@@ -31,9 +31,9 @@ example (x : (Fin 1 → Bool) → ℤ) :
 example (W : (Fin (mulTwo.width 0) → Bool) → ℤ) (z : Fin (mulTwo.width 1) → ℤ) :
     eval z (multilinearExtension (mulTwo.step 0 W)) =
       ∑ b, ∑ c,
-        (eval (Sum.elim z (Sum.elim (LayeredCircuit.bitPoint b) (LayeredCircuit.bitPoint c)))
+        (eval (Sum.elim z (Sum.elim (bitPoint b) (bitPoint c)))
             (multilinearExtension (mulTwo.addPred (R := ℤ) 0)) * (W b + W c) +
-          eval (Sum.elim z (Sum.elim (LayeredCircuit.bitPoint b) (LayeredCircuit.bitPoint c)))
+          eval (Sum.elim z (Sum.elim (bitPoint b) (bitPoint c)))
             (multilinearExtension (mulTwo.multPred (R := ℤ) 0)) * (W b * W c)) :=
   mulTwo.eval_multilinearExtension_step 0 W z
 

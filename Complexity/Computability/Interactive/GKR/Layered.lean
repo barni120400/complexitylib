@@ -115,21 +115,14 @@ abbrev addPred (i : ℕ) : (C.WiringVar i → Bool) → R := C.wiringPred .add i
 /-- The multiplication predicate `mult_i`. -/
 abbrev multPred (i : ℕ) : (C.WiringVar i → Bool) → R := C.wiringPred .mul i
 
-/-- The value at `z` of the indicator polynomial of the point `a` of the cube. -/
-def basis {ι : Type*} [Fintype ι] (a : ι → Bool) (z : ι → R) : R :=
-  ∏ j, if a j then z j else 1 - z j
-
-theorem basis_bitVal {ι : Type*} [Fintype ι] (a b : ι → Bool) :
-    basis a (fun j => bitVal R (b j)) = if a = b then 1 else 0 := by
-  rw [basis, ← eval_indicatorPoly_apply, eval_indicatorPoly]
-
 /-- The multilinear extension of a wiring predicate at `(z, y, w)` is the sum, over the gates `a`
 of that kind, of the product of the basis polynomials of `a`, its left and its right in-neighbour.
 -/
 theorem eval_multilinearExtension_wiringPred (g : Gate) (i : ℕ) (z : Fin (C.width (i + 1)) → R)
     (y w : Fin (C.width i) → R) :
     eval (Sum.elim z (Sum.elim y w)) (multilinearExtension (C.wiringPred (R := R) g i)) =
-      ∑ a, if C.gate i a = g then basis a z * basis (C.left i a) y * basis (C.right i a) w
+      ∑ a, if C.gate i a = g then eval z (indicatorPoly a) * eval y (indicatorPoly (C.left i a)) *
+          eval w (indicatorPoly (C.right i a))
         else 0 := by
   simp only [multilinearExtension, map_sum, map_mul, eval_C, eval_indicatorPoly_apply]
   rw [← (Equiv.sumArrowEquivProdArrow _ _ Bool).symm.sum_comp, Fintype.sum_prod_type]
@@ -140,7 +133,8 @@ theorem eval_multilinearExtension_wiringPred (g : Gate) (i : ℕ) (z : Fin (C.wi
   by_cases hg : C.gate i a = g
   · rw [ite_eq_left hg]
     rw [Finset.sum_eq_single (C.left i a), Finset.sum_eq_single (C.right i a)]
-    · simp [hg, basis, Function.comp_def, mul_assoc]
+    · simp only [Function.comp_def, Equiv.sumArrowEquivProdArrow_symm_apply_inl, hg,
+        Equiv.sumArrowEquivProdArrow_symm_apply_inr, and_self, ↓reduceIte, one_mul, mul_assoc]
       congr 1
     · intro c _ hc
       simp [Function.comp_def, Ne.symm hc]
@@ -152,16 +146,6 @@ theorem eval_multilinearExtension_wiringPred (g : Gate) (i : ℕ) (z : Fin (C.wi
   · rw [ite_eq_right hg]
     refine Finset.sum_eq_zero fun b _ => Finset.sum_eq_zero fun c _ => ?_
     simp [Function.comp_def, hg]
-
-/-- The multilinear extension of `g` at `z` is the sum of the values of `g` weighted by the basis
-polynomials. -/
-theorem eval_multilinearExtension_eq_sum {ι : Type*} [Fintype ι] [DecidableEq ι]
-    (g : (ι → Bool) → R) (z : ι → R) :
-    eval z (multilinearExtension g) = ∑ a, g a * basis a z := by
-  simp [multilinearExtension, eval_indicatorPoly_apply, basis]
-
-/-- The point of `R^k` with the coordinates of the bit string `b`. -/
-abbrev bitPoint {k : ℕ} (b : Fin k → Bool) : Fin k → R := fun j => bitVal R (b j)
 
 /-- **The GKR identity** [Thaler, Lemma 4.7][Thaler2022]. The multilinear extension of the values
 of layer `i + 1` is a sum over the pairs of gates `b`, `c` of layer `i` of the multilinear
@@ -176,14 +160,14 @@ theorem eval_multilinearExtension_step (i : ℕ) (W : (Fin (C.width i) → Bool)
           eval (Sum.elim z (Sum.elim (bitPoint b) (bitPoint c)))
             (multilinearExtension (C.multPred (R := R) i)) * (W b * W c)) := by
   rw [eval_multilinearExtension_eq_sum (C.step i W)]
-  simp only [eval_multilinearExtension_wiringPred, basis_bitVal]
-  have hinner : ∀ b c, (∑ a, if C.gate i a = .add then basis a z *
+  simp only [eval_multilinearExtension_wiringPred, eval_indicatorPoly]
+  have hinner : ∀ b c, (∑ a, if C.gate i a = .add then eval z (indicatorPoly a) *
         (if C.left i a = b then (1 : R) else 0) * (if C.right i a = c then 1 else 0) else 0) *
         (W b + W c) +
-      (∑ a, if C.gate i a = .mul then basis a z *
+      (∑ a, if C.gate i a = .mul then eval z (indicatorPoly a) *
         (if C.left i a = b then (1 : R) else 0) * (if C.right i a = c then 1 else 0) else 0) *
         (W b * W c) =
-      ∑ a, (if C.left i a = b ∧ C.right i a = c then basis a z *
+      ∑ a, (if C.left i a = b ∧ C.right i a = c then eval z (indicatorPoly a) *
         (if C.gate i a = .add then W b + W c else W b * W c) else 0) := by
     intro b c
     rw [Finset.sum_mul, Finset.sum_mul, ← Finset.sum_add_distrib]
