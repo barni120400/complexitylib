@@ -1832,6 +1832,7 @@ public import Complexity.Foundations.FieldTheory.TensorBasis
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Complexity.Foundations.Geometry.Orthogonal
+public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 public import Complexity.Foundations.Geometry.OrthogonalLayout
