@@ -1,3 +1,4 @@
+import ComplexityTests.AKSCriterion
 import ComplexityTests.AWPPAmplification
 import ComplexityTests.AWPPLowness
 import ComplexityTests.Abstracts.All
