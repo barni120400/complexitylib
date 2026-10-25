@@ -7,7 +7,7 @@ Authors: Erik Demaine
 import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 import Mathlib.Tactic.NormNum
 
-/-! Actual cell-access routes and compaction with repeated structured variable names. -/
+/-! Actual continuous cell geometry and complete compiled drawing regressions. -/
 
 namespace ComplexityTests.PlanarGeometry
 
@@ -72,6 +72,53 @@ example : (positions [[], []]).Nodup := by
     decide
   · intro v
     simp [CNF.vars]
+
+example : Graph.IsPlanarOrthogonalDrawing (SAT.incidenceGraph (formula []))
+    (positions [], routes []) :=
+  isPlanarOrthogonalDrawing (by simp) (by simp [CNF.vars])
+
+-- Empty clauses are isolated vertices at distinct source centers.
+example : Graph.IsPlanarOrthogonalDrawing (SAT.incidenceGraph (formula [[], []]))
+    (positions [[], []], routes [[], []]) := by
+  apply isPlanarOrthogonalDrawing
+  · intro c hc
+    have : c = [] := by simpa using hc
+    subst c
+    decide
+  · intro v
+    simp [CNF.vars]
+
+-- Three parallel source incidences retain their individual ordered routes.
+example : Graph.IsPlanarOrthogonalDrawing
+    (SAT.incidenceGraph (formula [[(7, true), (7, false), (7, true)]]))
+    (positions [[(7, true), (7, false), (7, true)]],
+      routes [[(7, true), (7, false), (7, true)]]) := by
+  apply isPlanarOrthogonalDrawing
+  · intro c hc
+    obtain rfl := List.mem_singleton.mp hc
+    decide
+  · intro v
+    exact List.count_le_length.trans (by decide)
+
+private def crossed : CNF ℕ :=
+  [[(0, true), (1, true), (2, true)], [(1, true), (0, true), (2, false)]]
+
+-- This is a selected crossing of the actual generator, rather than an assumed local site list.
+example : (10, 42) ∈ crossingSites crossed := by decide +kernel
+
+example : Graph.IsPlanarOrthogonalDrawing (SAT.incidenceGraph (formula crossed))
+    (positions crossed, routes crossed) := by
+  apply isPlanarOrthogonalDrawing
+  · intro c hc
+    simp only [crossed, List.mem_cons, List.not_mem_nil, or_false] at hc
+    rcases hc with rfl | rfl <;> decide
+  · intro v
+    by_cases hv : v ∈ crossed.vars
+    · have hv' : v = 0 ∨ v = 1 ∨ v = 2 := by
+        simpa [crossed, CNF.vars, or_assoc, or_left_comm, or_comm] using hv
+      rcases hv' with rfl | rfl | rfl <;> decide
+    · rw [List.count_eq_zero.mpr hv]
+      decide
 
 example :
     ((paths [[(7, true), (7, false), (7, true)]]).flatMap fun r =>

@@ -44,12 +44,12 @@ ordinary center spokes. Their translated supports are confined to the correspond
   actual paths are distinct under the source width and occurrence bounds.
 * `Cslib.Complexity.SAT.PlanarCompile.positions_nodup`: every actual output vertex has a
   distinct displayed position under those same source bounds.
-
 * `Cslib.Complexity.SAT.PlanarCompile.routes_endpoints`: actual incidence-order endpoints,
   including repeated literal occurrences and compact variable indices.
-
-These results do not yet certify the complete planar drawing: nonincident-vertex avoidance and
-global route contacts remain to be proved.
+* `Cslib.Complexity.SAT.PlanarCompile.isPlanarOrthogonalDrawing`: the actual emitted formula,
+  positions and routes form a complete planar orthogonal drawing under source clause width
+  at most three and literal occurrence count at most three. Simplicity, vertex avoidance and
+  contacts use full real supports, including the fixed crossing templates and final clause steps.
 
 ## References
 
@@ -1843,5 +1843,231 @@ theorem routes_nodup {φ : CNF ℕ}
       simpa only [List.getElem_zip] using (List.getElem_mem hk)
     exact (placedClause_endpoints φ hpc hzip).1
   exact hpos (Option.some.inj ((hhead pc hpc hr).symm.trans (hhead pd hpd hs)))
+
+private theorem route_declared_endpoints (φ : CNF ℕ) {r : Route} (hr : r ∈ routes φ) :
+    ∃ pc ∈ placedClauses φ, ∃ v ∈ (rawFormula φ).vars,
+      r.head? = some pc.2.1 ∧ r.getLast? = some (variablePosition v) := by
+  obtain ⟨pc, hpc, hr⟩ := List.mem_flatMap.mp hr
+  obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.mp hr
+  have hi' : i < pc.1.length := by rwa [← placedClause_route_count φ pc hpc]
+  have hzip : (pc.1[i], pc.2.2[i]) ∈ pc.1.zip pc.2.2 := by
+    have hk : i < (pc.1.zip pc.2.2).length := by simp only [List.length_zip]; omega
+    simpa only [List.getElem_zip] using (List.getElem_mem hk)
+  refine ⟨pc, hpc, (pc.1[i]).1, ?_, placedClause_endpoints φ hpc hzip⟩
+  exact CNF.mem_vars.mpr ⟨pc.1, List.mem_map_of_mem hpc, (pc.1[i]).2,
+    List.getElem_mem hi'⟩
+
+private theorem variable_ne_clause {φ : CNF ℕ} {v : Variable}
+    (hv : v ∈ (rawFormula φ).vars) {pc : PlacedClause} (hpc : pc ∈ placedClauses φ) :
+    variablePosition v ≠ pc.2.1 := by
+  intro h
+  apply variable_clause_positions_disjoint φ
+    (List.mem_map_of_mem (CNF.mem_distinctVars.mpr hv))
+  rw [h]
+  exact List.mem_map_of_mem hpc
+
+private theorem routeEnd_clause_is_head {φ : CNF ℕ} {r : Route} (hr : r ∈ routes φ)
+    {pc : PlacedClause} (hpc : pc ∈ placedClauses φ) (hend : RouteEnd r pc.2.1) :
+    r.head? = some pc.2.1 := by
+  rcases hend with h | h
+  · exact h
+  · obtain ⟨_, _, v, hv, _, hlast⟩ := route_declared_endpoints φ hr
+    exact False.elim (variable_ne_clause hv hpc (Option.some.inj (hlast.symm.trans h)))
+
+private theorem route_originalClause_contact {φ : CNF ℕ} {r : Route} (hr : r ∈ routes φ)
+    {pc : PlacedClause} (hpc : pc ∈ originalClauses φ (crossingSites φ))
+    (hp : realPoint pc.2.1 ∈ support r) : r.head? = some pc.2.1 := by
+  have hpc' : pc ∈ placedClauses φ := List.mem_append_left _ (List.mem_append_left _ hpc)
+  apply routeEnd_clause_is_head hr hpc'
+  obtain ⟨⟨clause, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+  have hi : i < φ.length := by
+    simpa only [Nat.zero_add] using (List.mem_zipIdx hci).2.1
+  have hsite := clause_cell_not_mem_crossingSites φ hi
+  change realPoint (center (Layout.center (φ.distinctVars.length + i))) ∈ support r at hp
+  change RouteEnd r (center (Layout.center (φ.distinctVars.length + i)))
+  rcases route_support_cases hr hp with ⟨c, hc, e, he, rfl⟩ | ⟨c, q, hpiece, hp'⟩
+  · have hcore := crossingRoute_mem_openCell he c hp
+    have hcenter := center_mem_openCell (r := 120) (by decide)
+      (Layout.center (φ.distinctVars.length + i))
+    have heq : Layout.center (φ.distinctVars.length + i) = c :=
+      cell_eq_of_mem_open_closed (by decide) hcenter
+        ⟨hcore.1.le, hcore.2.1.le, hcore.2.2.1.le, hcore.2.2.2.le⟩
+    exact False.elim (hsite (heq ▸ hc))
+  · have heq := access_variable_contact
+      (v := (Layout.center (φ.distinctVars.length + i), none))
+      (sites := crossingSites φ) (by simp [hsite]) hp'
+    have hend := hpiece.inner_endpoint
+    rw [← heq] at hend
+    simpa only [variablePosition, Option.elim_none, center] using hend
+
+private theorem splitClause_nonempty : ∀ c ∈ Crossover.splitFormula, c ≠ [] := by
+  decide +kernel
+
+private theorem placedClause_nonempty_or_original {φ : CNF ℕ} {pc : PlacedClause}
+    (hpc : pc ∈ placedClauses φ) :
+    pc.1 ≠ [] ∨ pc ∈ originalClauses φ (crossingSites φ) := by
+  simp only [placedClauses, List.mem_append, List.mem_flatMap] at hpc
+  rcases hpc with (hpc | ⟨_, _, hpc⟩) | ⟨_, _, hpc⟩
+  · exact Or.inr hpc
+  · obtain ⟨⟨c, i⟩, hci, rfl⟩ := List.mem_map.mp hpc
+    exact Or.inl (by
+      simpa only [Clause.relabel, ne_eq, List.map_eq_nil_iff] using
+        splitClause_nonempty c (List.fst_mem_of_mem_zipIdx hci))
+  · obtain ⟨e, _, rfl⟩ := List.mem_map.mp hpc
+    exact Or.inl (by cases ‹Occurrence ℕ›.2.2.2 <;> simp [link])
+
+/-- An actual route can meet a displayed clause only at its clause endpoint.
+The source bounds are used by the global contact certificate; empty original clauses are
+handled separately by their source-center geometry. -/
+theorem route_clause_contact {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {r : Route} (hr : r ∈ routes φ) {pc : PlacedClause} (hpc : pc ∈ placedClauses φ)
+    (hp : realPoint pc.2.1 ∈ support r) : r.head? = some pc.2.1 := by
+  rcases placedClause_nonempty_or_original hpc with hne | horg
+  · have hi : 0 < pc.2.2.length := by
+      rw [placedClause_route_count φ pc hpc]
+      exact List.length_pos_iff.mpr hne
+    have hi' : 0 < pc.1.length := List.length_pos_iff.mpr hne
+    let s := pc.2.2[0]
+    have hs : s ∈ routes φ := List.mem_flatMap.mpr ⟨pc, hpc, List.getElem_mem hi⟩
+    have hzip : (pc.1[0], s) ∈ pc.1.zip pc.2.2 := by
+      have hk : 0 < (pc.1.zip pc.2.2).length := by simp only [List.length_zip]; omega
+      simpa only [List.getElem_zip] using (List.getElem_mem hk)
+    have hhead := (placedClause_endpoints φ hpc hzip).1
+    by_cases hrs : r = s
+    · exact hrs ▸ hhead
+    · have hq : realPoint pc.2.1 ∈ support s :=
+        Or.inl ⟨pc.2.1, List.mem_of_head? hhead, rfl⟩
+      obtain ⟨a, hpa, hend, _⟩ := route_contacts hw hv hr hs hrs hp hq
+      have heq := realPoint_injective hpa
+      exact routeEnd_clause_is_head hr hpc (heq ▸ hend)
+  · exact route_originalClause_contact hr horg hp
+
+private theorem drawingPosition_eq_getD {φ : CNF ℕ} {v : ℕ}
+    (hv : v ∈ (SAT.incidenceGraph (formula φ)).1) :
+    Graph.drawingPosition (SAT.incidenceGraph (formula φ)) (positions φ, routes φ) v =
+      (positions φ).getD v (0, 0) := by
+  simp only [SAT.incidenceGraph, List.mem_range] at hv
+  simp only [Graph.drawingPosition, SAT.incidenceGraph]
+  rw [idxOf_range_eq hv]
+
+private theorem declared_position_index_lt {φ : CNF ℕ} {v : ℕ}
+    (hv : v ∈ (SAT.incidenceGraph (formula φ)).1) : v < (positions φ).length := by
+  rw [positions_length]
+  simpa only [SAT.incidenceGraph, List.mem_range, List.length_range] using hv
+
+private theorem drawingPosition_mem {φ : CNF ℕ} {v : ℕ}
+    (hv : v ∈ (SAT.incidenceGraph (formula φ)).1) :
+    Graph.drawingPosition (SAT.incidenceGraph (formula φ)) (positions φ, routes φ) v ∈
+      positions φ := by
+  rw [drawingPosition_eq_getD hv, List.getD_eq_getElem _ _ (declared_position_index_lt hv)]
+  exact List.getElem_mem _
+
+private theorem drawingPosition_injective {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {a b : ℕ} (ha : a ∈ (SAT.incidenceGraph (formula φ)).1)
+    (hb : b ∈ (SAT.incidenceGraph (formula φ)).1)
+    (heq : Graph.drawingPosition (SAT.incidenceGraph (formula φ)) (positions φ, routes φ) a =
+      Graph.drawingPosition (SAT.incidenceGraph (formula φ))
+        (positions φ, routes φ) b) : a = b := by
+  have hi := declared_position_index_lt ha
+  have hj := declared_position_index_lt hb
+  rw [drawingPosition_eq_getD ha, drawingPosition_eq_getD hb,
+    List.getD_eq_getElem _ _ hi, List.getD_eq_getElem _ _ hj] at heq
+  exact (positions_nodup hw hv).eq_of_getElem_eq hi hj heq
+
+private theorem indexed_route_mem {φ : CNF ℕ} {i : ℕ}
+    (hi : i < (SAT.incidenceGraph (formula φ)).2.length) :
+    (routes φ).getD i [] ∈ routes φ := by
+  have hir : i < (routes φ).length := by rwa [routes_length]
+  rw [List.getD_eq_getElem _ _ hir]
+  exact List.getElem_mem hir
+
+/-- Every actual indexed route avoids all nonincident displayed vertices. -/
+theorem routes_avoid_vertices {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {i : ℕ} (hi : i < (SAT.incidenceGraph (formula φ)).2.length)
+    {v : ℕ} (hvertex : v ∈ (SAT.incidenceGraph (formula φ)).1)
+    (hp : realPoint (Graph.drawingPosition (SAT.incidenceGraph (formula φ))
+      (positions φ, routes φ) v) ∈ support ((routes φ).getD i [])) :
+    v = (SAT.incidenceGraph (formula φ)).2[i].1 ∨
+      v = (SAT.incidenceGraph (formula φ)).2[i].2 := by
+  have hend := routes_endpoints φ hi
+  have hdecl := SAT.incidenceGraph_endpoints (List.getElem_mem hi)
+  have hmem := drawingPosition_mem hvertex
+  change Graph.drawingPosition (SAT.incidenceGraph (formula φ)) (positions φ, routes φ) v ∈
+    (rawFormula φ).distinctVars.map variablePosition ++
+      (placedClauses φ).map (fun pc => pc.2.1) at hmem
+  simp only [List.mem_append, List.mem_map] at hmem
+  rcases hmem with ⟨w, hwmem, heq⟩ | ⟨pc, hpc, heq⟩
+  · rw [← heq] at hp
+    have hlast := route_variable_contact φ (indexed_route_mem hi)
+      (CNF.mem_distinctVars.mp hwmem) hp
+    apply Or.inl
+    apply drawingPosition_injective hw hv hvertex hdecl.1
+    exact heq.symm.trans (Option.some.inj (hlast.symm.trans hend.2))
+  · rw [← heq] at hp
+    have hhead := route_clause_contact hw hv (indexed_route_mem hi) hpc hp
+    apply Or.inr
+    apply drawingPosition_injective hw hv hvertex hdecl.2
+    exact heq.symm.trans (Option.some.inj (hhead.symm.trans hend.1))
+
+private theorem indexed_endpoint_declared {φ : CNF ℕ} {i : ℕ}
+    (hi : i < (SAT.incidenceGraph (formula φ)).2.length) {a : Point}
+    (ha : RouteEnd ((routes φ).getD i []) a) :
+    ∃ v ∈ (SAT.incidenceGraph (formula φ)).1,
+      (v = (SAT.incidenceGraph (formula φ)).2[i].1 ∨
+        v = (SAT.incidenceGraph (formula φ)).2[i].2) ∧
+      a = Graph.drawingPosition (SAT.incidenceGraph (formula φ)) (positions φ, routes φ) v := by
+  have hend := routes_endpoints φ hi
+  have hdecl := SAT.incidenceGraph_endpoints (List.getElem_mem hi)
+  rcases ha with ha | ha
+  · exact ⟨_, hdecl.2, Or.inr rfl, Option.some.inj (ha.symm.trans hend.1)⟩
+  · exact ⟨_, hdecl.1, Or.inl rfl, Option.some.inj (ha.symm.trans hend.2)⟩
+
+/-- Contacts between distinct incidence indices are exactly at common displayed graph vertices. -/
+theorem routes_contacts {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3)
+    {i : ℕ} (hi : i < (SAT.incidenceGraph (formula φ)).2.length)
+    {j : ℕ} (hj : j < (SAT.incidenceGraph (formula φ)).2.length) (hij : i ≠ j)
+    {p : ℝ × ℝ} (hp : p ∈ support ((routes φ).getD i []))
+    (hq : p ∈ support ((routes φ).getD j [])) :
+    ∃ v ∈ (SAT.incidenceGraph (formula φ)).1,
+      (v = (SAT.incidenceGraph (formula φ)).2[i].1 ∨
+        v = (SAT.incidenceGraph (formula φ)).2[i].2) ∧
+      (v = (SAT.incidenceGraph (formula φ)).2[j].1 ∨
+        v = (SAT.incidenceGraph (formula φ)).2[j].2) ∧
+      p = realPoint (Graph.drawingPosition (SAT.incidenceGraph (formula φ))
+        (positions φ, routes φ) v) := by
+  have hir : i < (routes φ).length := by rwa [routes_length]
+  have hjr : j < (routes φ).length := by rwa [routes_length]
+  have hne : (routes φ).getD i [] ≠ (routes φ).getD j [] := by
+    rw [List.getD_eq_getElem _ _ hir, List.getD_eq_getElem _ _ hjr]
+    exact fun h => hij ((routes_nodup hw hv).eq_of_getElem_eq hir hjr h)
+  obtain ⟨a, hpa, ha, hb⟩ := route_contacts hw hv
+    (indexed_route_mem hi) (indexed_route_mem hj) hne hp hq
+  obtain ⟨v, hv', hvi, hav⟩ := indexed_endpoint_declared hi ha
+  obtain ⟨w, hw', hwj, haw⟩ := indexed_endpoint_declared hj hb
+  have heq : v = w := drawingPosition_injective hw hv hv' hw' (hav.symm.trans haw)
+  exact ⟨v, hv', hvi, heq ▸ hwj, hpa.trans (congrArg realPoint hav)⟩
+
+/-- The executable planar SAT compiler supplies an actual planar orthogonal drawing.
+Only the source clause-width and literal-occurrence bounds are assumed. Every contact,
+avoidance and simplicity assertion uses full real segment support. -/
+theorem isPlanarOrthogonalDrawing {φ : CNF ℕ}
+    (hw : ∀ c ∈ φ, c.length ≤ 3) (hv : ∀ v, φ.vars.count v ≤ 3) :
+    Graph.IsPlanarOrthogonalDrawing (SAT.incidenceGraph (formula φ))
+      (positions φ, routes φ) where
+  vertexCount := positions_length φ
+  edgeCount := routes_length φ
+  labelsNodup := List.nodup_range
+  positionsNodup := positions_nodup hw hv
+  endpointsDeclared := fun _ => SAT.incidenceGraph_endpoints
+  loopless := fun _ => SAT.incidenceGraph_loopless
+  endpoints := fun _ hi => Or.inr (routes_endpoints φ hi)
+  orthogonal := fun _ hi => (routes_regular φ _ (indexed_route_mem hi)).1
+  simple := fun _ hi => (routes_regular φ _ (indexed_route_mem hi)).2
+  avoidsVertices := fun _ hi _ hvertex => routes_avoid_vertices hw hv hi hvertex
+  contacts := fun _ hi _ hj hij _ hp hq => routes_contacts hw hv hi hj hij hp hq
 
 end Cslib.Complexity.SAT.PlanarCompile
