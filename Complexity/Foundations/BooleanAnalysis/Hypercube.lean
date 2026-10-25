@@ -63,7 +63,7 @@ open Finset Function Module
 variable {ι : Type*}
 
 /-- Flipping a bit of `T` negates the character of `T`. -/
-private theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Finset ι}
+theorem chi_update_not_of_mem {R : Type*} [CommRing R] [DecidableEq ι] {T : Finset ι}
     {i : ι}
     (hi : i ∈ T) (x : ι → Bool) : chi R T (update x i (!x i)) = -chi R T x := by
   have h := chi_update_of_mem (R := R) hi x (x i)
@@ -86,6 +86,7 @@ def signedAdjacency (S : Finset ι) : Module.End ℝ ((ι → Bool) → ℝ) whe
     simp only [Pi.smul_apply, smul_eq_mul, RingHom.id_apply, mul_sum]
     exact sum_congr rfl fun _ _ => mul_left_comm _ _ _
 
+/-- Pointwise evaluation of the signed adjacency operator `signedAdjacency S`. -/
 theorem signedAdjacency_apply (S : Finset ι) (v : (ι → Bool) → ℝ) (x : ι → Bool) :
     signedAdjacency S v x = ∑ i ∈ S, chi ℝ {j ∈ S | j < i} x * v (update x i (!x i)) :=
   rfl

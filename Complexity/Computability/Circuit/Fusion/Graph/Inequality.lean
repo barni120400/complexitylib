@@ -120,7 +120,7 @@ theorem inequality_signature_injective
   tauto
 
 /-- A canonical cover needs enough bit signatures to label all vertices. -/
-private theorem card_le_two_pow_length_inequality
+theorem card_le_two_pow_length_inequality
     (c : PairCover (inequality V) sources (canonicalClass (inequality V))) :
     Fintype.card V ≤ 2 ^ c.pairs.length := by
   simpa using Fintype.card_le_of_injective _ (inequality_signature_injective c)
@@ -131,7 +131,7 @@ theorem le_length_inequality {n : ℕ}
       (canonicalClass (inequality (Fin n → Bool)))) : n ≤ c.pairs.length := by
   have h := card_le_two_pow_length_inequality c
   simp only [Fintype.card_fun, Fintype.card_bool, Fintype.card_fin] at h
-  exact (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).mp h
+  exact (Nat.pow_le_pow_iff_right Nat.one_lt_two).mp h
 
 private theorem exists_union_formula {U α : Type*} {m : ℕ}
     (input : Fin m → Set U) (s : Finset α) (f : α → Set U) (cost : α → ℕ)

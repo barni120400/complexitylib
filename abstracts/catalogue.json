@@ -70,6 +70,20 @@
       "namespace": "ComplexityTests.Abstracts.USTCONAbstract"
     },
     {
+      "id": "immerman-szelepcsenyi",
+      "title": "Immerman–Szelepcsényi: nondeterministic space is closed under complement",
+      "module": "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract",
+      "headline_theorems": [
+        "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.nspace_eq_conspace",
+        "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.nl_eq_conl"
+      ],
+      "supporting_theorems": [
+        "ComplexityAbstracts.ImmermanSzelepcsenyiAbstract.stcon_compl_mem_nl"
+      ],
+      "summary": "Nondeterministic space at least logarithmic is closed under complement; in particular NL equals coNL.",
+      "scope": "One finite-state native machine per problem, every-prefix work space c₁ s(n) + c₂ for any s with log₂ n ≤ s(n), no constructibility assumed, every branch terminating, arbitrary injective encodings; directed non-reachability on unary-header adjacency matrices as a corollary."
+    },
+    {
       "id": "shamir",
       "title": "Shamir: IP equals PSPACE",
       "module": "ComplexityAbstracts.ShamirAbstract",

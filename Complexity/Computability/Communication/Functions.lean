@@ -119,7 +119,7 @@ theorem card_lt_two_pow_of_run_eq_equality [Fintype X] [DecidableEq X] (hX : 1 <
 /-- **Greater-than on a finite linear order needs more than `log₂` of its size bits**: a protocol
 computing greater-than on a linear order of at least two elements sends `d` bits with
 `|X| < 2 ^ d`. -/
-theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
+private theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
     (hX : 1 < Fintype.card X) {p : Protocol X X Bool} (hp : p.run = greaterThan) :
     Fintype.card X < 2 ^ p.depth := by
   obtain ⟨x, y, hxy⟩ := Fintype.one_lt_card_iff.mp hX
@@ -207,7 +207,7 @@ theorem two_mul_card_dotProduct_eq_true_add [DecidableEq ι] (x : ι → Bool) :
 
 /-- The inner product is `true` on `2 ^ (k - 1) (2 ^ k - 1)` pairs of `k`-bit strings, in the form
 `2 c + 2 ^ k = 2 ^ k 2 ^ k`. -/
-private theorem two_mul_card_dotProduct_eq_true_add_two_pow [DecidableEq ι] :
+theorem two_mul_card_dotProduct_eq_true_add_two_pow [DecidableEq ι] :
     2 * #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} + 2 ^ Fintype.card ι =
       2 ^ Fintype.card ι * 2 ^ Fintype.card ι := by
   have hrow : #{q : (ι → Bool) × (ι → Bool) | q.1 ⬝ᵥ q.2 = true} =
@@ -259,6 +259,6 @@ theorem ecomplexity_dotProduct (hn : 0 < n) :
   have h := (two_pow_lt_leafCount_of_run_eq_dotProduct (Protocol.solves_univ_iff.mp hp)).trans_le
     p.leafCount_le_two_pow_depth
   rw [Fintype.card_fin] at h
-  exact_mod_cast (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp h
+  exact_mod_cast (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp h
 
 end Cslib.Communication

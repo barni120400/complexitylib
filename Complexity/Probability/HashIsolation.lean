@@ -73,7 +73,7 @@ private theorem sum_isolation_error_le (size count : ℕ) (hsize : 0 < size) :
       _ = _ := by rw [pow_succ]; field_simp
   have hratio : mass / (2 : ℝ) ^ cutoff ≤ 2 := by
     rw [div_le_iff₀ (by positivity)]
-    have h := Nat.lt_pow_succ_log_self (by decide : 1 < 2) size
+    have h := Nat.lt_pow_succ_log_self Nat.one_lt_two size
     have hr : (size : ℝ) < 2 ^ (cutoff + 1) := by exact_mod_cast h
     rw [pow_succ] at hr
     dsimp [mass]
@@ -158,7 +158,7 @@ theorem IsTwoUniversal.conditionalEntropy_hash_le [Finite Seed] {seed : PMF Seed
 omit [Fintype Seed] [Fintype Output] in
 /-- Averaging over hash lengths `1, …, count` leaves at most the average logarithmic fiber size
 plus two bits, divided by `count`. This is the entropy bound in Holenstein's Lemma 3. -/
-private theorem mean_conditionalEntropy_hash_le [Finite Seed] (count : ℕ) (seed : PMF Seed)
+theorem mean_conditionalEntropy_hash_le [Finite Seed] (count : ℕ) (seed : PMF Seed)
     (source : PMF Input)
     (f : Input → Image) (hash : (i : Fin count) → Seed → Input → (Fin (i.val + 1) → Bool))
     (hhash : ∀ i, IsTwoUniversal seed (hash i)) (predicate : Fin count → Seed → Input → Bool) :

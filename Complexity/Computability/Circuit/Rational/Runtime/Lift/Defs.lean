@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Executable
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
+public import Complexity.Foundations.Data.List.OfFn
 import Mathlib.Data.List.GetD
 
 /-!
@@ -77,7 +78,7 @@ open Polynomial
 
 /-! ### Index bridges -/
 
-private lemma val_finEquiv {m : ℕ} [NeZero m] (i : Fin m) : (ZMod.finEquiv m i).val = i.val := by
+lemma val_finEquiv {m : ℕ} [NeZero m] (i : Fin m) : (ZMod.finEquiv m i).val = i.val := by
   cases m with
   | zero => exact (NeZero.ne 0 rfl).elim
   | succ m => rfl
@@ -87,22 +88,16 @@ lemma val_finEquiv_symm {m : ℕ} [NeZero m] (z : ZMod m) :
     ((ZMod.finEquiv m).symm z).val = z.val := by
   rw [← val_finEquiv, RingEquiv.apply_symm_apply]
 
-/-- A sum over `List.range m` is a sum over `Fin m`. -/
-private lemma sum_range_eq_sum_fin {A : Type*} [AddCommMonoid A] (m : ℕ) (f : ℕ → A) :
-    ((List.range m).map f).sum = ∑ i : Fin m, f i := by
-  rw [← List.map_coe_finRange_eq_range, List.map_map, ← List.ofFn_eq_map, List.sum_ofFn]
-  rfl
-
 /-- A sum over `List.range m` is a sum over the residues modulo `m`. -/
-private lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZero m] (f : ℕ → A) :
+lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZero m] (f : ℕ → A) :
     ((List.range m).map f).sum = ∑ z : ZMod m, f z.val := by
-  rw [sum_range_eq_sum_fin]
+  rw [List.sum_map_range]
   exact Fintype.sum_equiv (ZMod.finEquiv m).toEquiv _ _ fun i => by
     change f i.val = f (ZMod.finEquiv m i).val
     rw [val_finEquiv]
 
 /-- Residue subtraction on values, without truncated subtraction below zero. -/
-private lemma val_sub_eq_mod {m : ℕ} [NeZero m] (u v : ZMod m) :
+lemma val_sub_eq_mod {m : ℕ} [NeZero m] (u v : ZMod m) :
     (u - v).val = (u.val + m - v.val) % m := by
   have hv := v.val_lt
   rw [← ZMod.val_natCast, Nat.cast_sub (by omega), Nat.cast_add, ZMod.natCast_self,
@@ -240,7 +235,7 @@ theorem testEntry_eq (M N : ℕ) (a t : ℤ) (u v : Fin M) :
     testEntry M N (coeffRows (-a) M) (coeffRows a M) t u v = IntegralTest.padded M N a t u v := by
   unfold testEntry IntegralTest.padded IntegralTest.full
   split_ifs
-  · rw [testTerms, sum_range_eq_sum_fin]
+  · rw [testTerms, List.sum_map_range]
     refine Finset.sum_congr rfl fun q _ => ?_
     have hq := q.isLt
     rw [testTerm, rowEntry_coeffRows, rowEntry_coeffRows, ite_eq_left (by omega),

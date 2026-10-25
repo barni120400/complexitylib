@@ -11,6 +11,7 @@ public import Complexity.Init
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Bits
 public import Complexity.Foundations.Data.BitString.List
 public import Complexity.Foundations.Data.BitString.List.Operations
+public import Complexity.Foundations.Data.List.OfFn
 public import Mathlib.RingTheory.Trace.Defs
 import Mathlib.Data.List.GetD
 
@@ -76,12 +77,6 @@ theorem repr_fieldOfBits (B : Basis (Fin n) (ZMod 2) F) (a : List Bool) (u : Fin
 theorem fieldOfBits_nil (B : Basis (Fin n) (ZMod 2) F) : fieldOfBits B [] = 0 := by
   simp [fieldOfBits]
 
-private theorem bitEquiv_symm_foldl_xor (l : List Bool) :
-    bitEquiv.symm (l.foldl xor false) = (l.map bitEquiv.symm).sum := by
-  rw [← map_list_sum]
-  congr 1
-  simp [List.sum_eq_foldl, Bool.add_eq_xor, Bool.zero_eq_false]
-
 /-- The coordinates of a sum: `listXor` adds coordinate words. -/
 theorem fieldOfBits_listXor (B : Basis (Fin n) (ZMod 2) F) (words : List (List Bool)) :
     fieldOfBits B (listXor n words) = (words.map (fieldOfBits B)).sum := by
@@ -106,11 +101,6 @@ private theorem sum_map_flatMap {α β M : Type*} [AddCommMonoid M] (l : List α
   | nil => simp
   | cons a l ih => simp [List.flatMap_cons, ih]
 
-private theorem sum_map_range {M : Type*} [AddCommMonoid M] (n : ℕ) (f : ℕ → M) :
-    ((List.range n).map f).sum = ∑ i : Fin n, f i := by
-  rw [Finset.sum_range (f := f) |>.symm]
-  rfl
-
 /-- The coordinates of the product `B u * B w` in the multiplication table `tab`. -/
 def tableEntry (tab : List (List (List Bool))) (u w : ℕ) : List Bool :=
   (tab.getD u []).getD w []
@@ -132,8 +122,8 @@ coordinates `fieldMul tab a b` is the product of those with coordinates `a` and 
 theorem fieldOfBits_fieldMul {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (List Bool))}
     (htab : IsMulTable B tab) (a b : List Bool) :
     fieldOfBits B (fieldMul tab a b) = fieldOfBits B a * fieldOfBits B b := by
-  rw [fieldMul, htab.1, fieldOfBits_listXor, sum_map_flatMap, sum_map_range]
-  simp_rw [List.map_map, Function.comp_def, sum_map_range]
+  rw [fieldMul, htab.1, fieldOfBits_listXor, sum_map_flatMap, List.sum_map_range]
+  simp_rw [List.map_map, Function.comp_def, List.sum_map_range]
   rw [fieldOfBits, fieldOfBits, Finset.sum_mul_sum]
   refine Finset.sum_congr rfl fun u _ => Finset.sum_congr rfl fun w _ => ?_
   rw [smul_mul_smul_comm, htab.2 u w]
@@ -245,7 +235,7 @@ theorem fieldOfBits_esymmCoords {B : Basis (Fin n) (ZMod 2) F} {tab : List (List
 
 /-- The trace is the trace of the multiplication matrix: the sum of the diagonal coordinates
 `[x * b i]_i`. -/
-private theorem trace_eq_sum_repr_mul {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
+theorem trace_eq_sum_repr_mul {R S : Type*} [CommRing R] [CommRing S] [Algebra R S]
     {ι : Type*} [Fintype ι] (b : Basis ι R S) (x : S) :
     Algebra.trace R S x = ∑ i, b.repr (x * b i) i := by
   classical
@@ -272,13 +262,13 @@ theorem traceBit_traceVector {B : Basis (Fin n) (ZMod 2) F} {tab : List (List (L
       Algebra.trace (ZMod 2) F (B u) := by
     rw [trace_eq_sum_repr_mul B, List.getD_eq_getElem _ _ (by simp [traceVector, htab.1])]
     simp only [traceVector, List.getElem_map, List.getElem_range, htab.1,
-      bitEquiv_symm_foldl_xor, List.map_map, Function.comp_def, sum_map_range]
+      bitEquiv_symm_foldl_xor, List.map_map, Function.comp_def, List.sum_map_range]
     refine Finset.sum_congr rfl fun v _ => ?_
     rw [htab.2 u v, repr_fieldOfBits]
   have hlen : (traceVector tab).length = n := by simp [traceVector, htab.1]
   apply bitEquiv.symm.injective
   rw [traceBit, hlen, bitEquiv_symm_foldl_xor, RingEquiv.symm_apply_apply, List.map_map,
-    Function.comp_def, sum_map_range, fieldOfBits, map_sum]
+    Function.comp_def, List.sum_map_range, fieldOfBits, map_sum]
   refine Finset.sum_congr rfl fun u _ => ?_
   rw [map_smul, smul_eq_mul, ← hτ u]
   cases a.getD u false <;> cases (traceVector tab).getD u false <;> decide
@@ -289,7 +279,7 @@ input bits. -/
 def blockPos {r n N : ℕ} (h : r * n ≤ N) (q : Fin r × Fin n) : Fin N :=
   Fin.castLE h (finProdFinEquiv q)
 
-private theorem getD_take_drop (x : List Bool) {n u : ℕ} (hu : u < n) (i : ℕ) :
+theorem getD_take_drop (x : List Bool) {n u : ℕ} (hu : u < n) (i : ℕ) :
     ((x.drop (n * i)).take n).getD u false = x.getD (n * i + u) false := by
   rw [List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD, List.getElem?_take_of_lt hu,
     List.getElem?_drop]

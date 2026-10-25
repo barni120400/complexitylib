@@ -97,8 +97,9 @@ when a milestone completes only part of it.
    Keep the issue open until the work is merged or explicitly dispositioned by a coordinator.
    Awaiting review is a handoff, not abandoned active work: hourly worker reports and the
    three-hour takeover rule are suspended while the PR waits in the coordinator's queue.
-6. Await coordinator review for that PR while freely progressing other tasks; do not approve or
-   merge your own PR. Address requested changes, post an `active` status when resuming,
+6. Await coordinator review for that PR while progressing other tasks; do not approve or merge
+   your own PR. Address requested changes on your open PRs before opening new ones, post an
+   `active` status when resuming,
    restart hourly reports, and request fresh review of the updated revision. If unavailable,
    release the task explicitly so another worker can take over.
 
@@ -136,7 +137,9 @@ tooling.
   completed issues and link any remaining work once the change lands.
 - For your own implementation, follow the worker rules and obtain another coordinator's review.
   Changing roles or delegating authorship never makes an author eligible to approve their work.
-  The one exception is a validated coordinator fix, described under [Review cycle](#review-cycle).
+  The exceptions are validated coordinator fixes and the delegated-review exception for changes
+  that preserve every public statement's meaning, both described under
+  [Review cycle](#review-cycle).
 
 If a shared GitHub account prevents formal approval, use one brief PR comment naming the reviewer
 agent/session, revision and verdict. This is agent review, not platform or human approval.
@@ -208,14 +211,26 @@ campaign or separate design study for every small improvement.
 
 ## Lean development: use the Lean MCP server first
 
-Use MCP goal inspection, diagnostics and theorem search while iterating; reserve `lake` commands
-for validation checkpoints. If MCP tools are unavailable, say so and use the smallest shell check.
+Before the first Lean MCP operation that can elaborate or build in a checkout, run
+`scripts/cache/ensure.sh`. Run it again after pulling, switching branches, or changing the
+toolchain or dependency pins. This applies regardless of the agent client: MCP's
+`lean_build(fetch_cache=true)` fetches Mathlib's cache, not the Complexitylib cache.
+The bootstrap attempts both and suppresses repeated downloads for the same checkout state
+for ten minutes; `scripts/cache/ensure.sh --refresh` retries immediately. A miss or download
+failure leaves Lean to compile the missing outputs.
 
-In a fresh checkout or worktree, run `scripts/cache/get.sh` before the first build. Lake's local
-artifact cache then shares outputs between all checkouts on the machine, so a module is compiled
-once per machine for given inputs. Proof-only edits do not rebuild dependents; statement and
-definition changes in widely imported modules do. [scripts/cache/README.md](scripts/cache/README.md)
-describes both caches.
+Use MCP goal inspection, diagnostics and theorem search while iterating; reserve builds for
+validation checkpoints. `scripts/build.sh [Lake build arguments]`, `scripts/check.sh` and
+`scripts/worktree.sh create` run the same bootstrap automatically. Bare `lake` and MCP commands do
+not invoke it. If MCP tools are unavailable, say so and use the smallest shell check.
+
+`scripts/worktree.sh` never points a worktree at the primary checkout, refuses targets or cache
+symlinks that do, and isolates dependency Git control files and external symlinks so worktree
+operations cannot write into the primary checkout. Lake's local artifact cache then shares
+Complexitylib outputs between checkouts on the same machine with the same inputs. Proof-only edits
+do not rebuild dependents; statement and definition changes in widely imported modules do.
+[scripts/cache/README.md](scripts/cache/README.md) describes the caches and the deliberate opt-out
+for builds that must not download artifacts.
 
 ## Validation sequence
 
@@ -228,7 +243,7 @@ lake exe lint-style
 lake exe checkInitImports
 ```
 
-`scripts/check.sh` runs this sequence. CI runs the same checks.
+`scripts/check.sh` restores optional caches and runs this sequence. CI runs the same checks.
 
 For the edit loop, `scripts/check.sh --quick [--base REF]` builds changed Lean modules and their
 transitive importing clients, then checks import aggregates. The comparison uses the merge base
@@ -239,7 +254,7 @@ ambiguous change/import analysis fall back to all six gates. Run the default com
 submitting a PR; quick success does not satisfy that requirement.
 
 `lake exe mk_all` regenerates `Complexity.lean` after adding a file. New test files go in
-`ComplexityTests/` and must be imported from `ComplexityTests.lean`.
+`ComplexityTests/`; the test library is built from a Lake glob, so there is no aggregator to update.
 
 ## File rules
 
@@ -298,7 +313,8 @@ submitting a PR; quick success does not satisfy that requirement.
    single bits with `^^`.
 7. **Citations.** Cite textbook sources in docstrings via `references.bib` keys
    (`[AroraBarak09]`, `[Papadimitriou94]`, `[Sipser2013]`, `[Jukna2012]`, …). Add new entries in cslib's
-   format, keeping bibliography and project-documentation changes in focused commits.
+   format at their place in key order (`scripts/check_hygiene.py` checks it), keeping bibliography
+   and project-documentation changes in focused commits.
 
 ## Proof hygiene
 
@@ -355,6 +371,17 @@ the resulting revision. Other reviewers, and coordinators for everything else, s
 the author as review comments. That includes changes to public statements, the meaning of
 definitions or the API, and any fix the coordinator is less sure of.
 
+**Delegated-review exception (coordinators only).** A coordinator may approve a PR authored under
+its own delegation when the change leaves the meaning of every public statement and definition
+unchanged: proof-only, documentation-only and test-only changes, mechanical refactors,
+privatizations, restacks and generated-baseline updates. The review is performed by a reviewing
+agent that did not author the change, working in a context separate from the one that briefed the
+author, and the verdict names this delegated-review exception and the classification. A reviewer
+outside the delegating fleet must still approve any PR that introduces or changes a public theorem
+statement or definition, a curated abstract or a security claim, and any PR whose classification is
+in doubt. Another coordinator audits a sample of these approvals. Workers and non-coordinator
+reviewers never approve work from their own fleet.
+
 Finish with a short approval or a clear request for changes. A substantive concern may need a
 long explanation; a clean review does not need a checklist of everything inspected. Record the
 reviewed revision, meaningful findings and resolutions once in the PR, following
@@ -364,14 +391,27 @@ CSLib examples: [focused fixes and replies](https://github.com/leanprover/cslib/
 [an architectural suggestion kept separate from approval](https://github.com/leanprover/cslib/pull/1120),
 and [API review with explicit nonblocking nits](https://github.com/leanprover/cslib/pull/923#pullrequestreview-5560941186).
 
+## New statements and definitions
+
+When a declaration claims to formalize a cited result, the PR quotes the source statement with its
+exact locator and maps the source's notation to the Lean statement: quantifiers, models, encodings
+and resource conventions. Reviewers check that mapping rather than an impression. New mathematics
+and new proof ideas need no source; label them as original.
+
+Whether a new definition needs checked examples on both sides (an instance where it holds and one
+where it fails) is for the author and reviewers to judge; reviewers may ask for them when a
+definition could be vacuous or trivially satisfied.
+
+Reuse existing definitions rather than adding parallel notions; extend or generalize them instead.
+
 ## Curated formal abstracts
 
 `abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
 `*Abstract.lean` and `*Bridge.lean` under `abstracts/ComplexityAbstracts/`, imported by the
-dedicated `ComplexityAbstracts` library. `ComplexityTests.lean` imports that library and its
-regression tests. Existing declaration namespaces remain stable across the source relocation.
-The Lean definitions and statements are the source of truth; PDFs are generated from them, with
-proof bodies omitted. There is no separately maintained paper/TeX index.
+dedicated `ComplexityAbstracts` library. `ComplexityTests/Abstracts/All.lean` imports that library,
+and its regression tests sit beside it. Existing declaration namespaces remain stable across the
+source relocation. The Lean definitions and statements are the source of truth; PDFs are generated
+from them, with proof bodies omitted. There is no separately maintained paper/TeX index.
 
 Selection has a higher bar than inclusion in the library: a headline must be a substantial proved
 endpoint with conventional, inspectable semantics, hypotheses that are satisfiable or are standard
@@ -409,11 +449,10 @@ are not versioned.
   recovering `MultiTapeTM` and `Choose := Set` recovering `MultiTapeNTM`, step-exactly.
 - Computability predicates (`PolyTime`, `InTimeSpace`, …) are `@[fun_prop]`-registered; loops
   go through Hoare-style `iterate_spec` rules and the Aesop `polytime` set.
-- Tidy computability (`ComputableTidily…`) is a proof device for composing machines. Definitions
-  and public results use plain computability with independent time and space bounds: upstream
-  `ComputableInTimeAndSpace…` and the notions built on it, such as `ComputableInPolyTime`. Proofs
-  switch through the bridges (`ComputableInPolyTime.tidy`, `.of_tidy`); the combinator layer
-  stays tidy.
+- Definitions and public results use plain computability with independent time and space bounds:
+  upstream `ComputableInTimeAndSpace…` and the notions built on it, such as `ComputableInPolyTime`.
+  The tidy computability calculus is being deleted (#862); tidiness survives only as a machine-level
+  kernel inside the Machines layer, used inside proofs of plain rules.
 - Programs are `PFunctor.FreeM` values; a machine's clocked run is itself a program.
 - The universal machine is an interpreter program certified by the calculus, not a hand-built
   machine.

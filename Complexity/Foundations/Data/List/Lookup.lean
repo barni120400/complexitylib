@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Mathlib.Data.List.Basic
+public import Mathlib.Order.Lattice.Nat
 import Mathlib.Data.List.GetD
 import Mathlib.Data.List.OfFn
 
@@ -24,6 +25,10 @@ import Mathlib.Data.List.OfFn
   updates and bound defaulted reads of numeric register files.
 * `List.getD_map_range`: read a function tabulated over a bounded range.
 * `List.map_range_eq_ofFn`: runtime tabulation agrees with the finite coordinate view.
+* `List.ofFn_getElem_of_length_eq`: a list whose length equals `n` matches `List.ofFn` of its
+  elements.
+* `List.find?_range_getD_eq_sInf`: the least index below `m` passing a test, or `m`, as a search
+  over a range.
 -/
 
 @[expose] public section
@@ -79,3 +84,34 @@ theorem List.map_range_eq_ofFn {α : Type*} (n : ℕ) (f : ℕ → α) :
   apply List.ext_getElem (by simp)
   intro i hi hi'
   simp
+
+/-- A list whose length equals `n` matches `List.ofFn` of its elements indexed by `Fin n`. -/
+theorem List.ofFn_getElem_of_length_eq {α : Type*} {n : ℕ} (L : List α) (h : L.length = n) :
+    List.ofFn (fun i : Fin n => L[i.val]'(by omega)) = L :=
+  List.ext_getElem (by simp [h]) fun _ _ _ => by simp
+
+/-- The least index below `m` passing a test, or `m`, as a search over `List.range m`. -/
+theorem List.find?_range_getD_eq_sInf (m : ℕ) (p : ℕ → Bool) :
+    ((List.range m).find? p).getD m = sInf {i | i = m ∨ p i = true} := by
+  set v := ((List.range m).find? p).getD m with hv
+  have hmem : v ∈ {i | i = m ∨ p i = true} ∧ ∀ i < v, i ∉ {i | i = m ∨ p i = true} := by
+    cases hf : (List.range m).find? p with
+    | none =>
+      rw [hv, hf, Option.getD_none]
+      rw [List.find?_eq_none] at hf
+      refine ⟨Or.inl rfl, fun i hi hmem => ?_⟩
+      rcases hmem with rfl | h
+      · exact lt_irrefl _ hi
+      · exact hf i (List.mem_range.mpr hi) h
+    | some i₀ =>
+      rw [hv, hf, Option.getD_some]
+      obtain ⟨hp, k, hk, hki, hmin⟩ := List.find?_eq_some_iff_getElem.mp hf
+      rw [List.getElem_range] at hki
+      subst hki
+      rw [List.length_range] at hk
+      refine ⟨Or.inr hp, fun i hi hmem => ?_⟩
+      rcases hmem with rfl | h
+      · omega
+      · have := hmin i hi
+        simp_all
+  exact le_antisymm (not_lt.mp fun h => hmem.2 _ h (Nat.sInf_mem ⟨v, hmem.1⟩)) (Nat.sInf_le hmem.1)

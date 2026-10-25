@@ -48,7 +48,7 @@ example (z : Fin 3 → Fin 9) :
   rintro ⟨_, _, _, hz, he⟩
   change ∀ i, (z i).val < 2 at hz
   change 8 = Nat.ofDigits 2 (List.ofFn fun i => (z i).val) at he
-  have := Nat.ofDigits_ofFn_lt (by decide : 1 < 2) (fun i => (z i).val) hz
+  have := Nat.ofDigits_ofFn_lt Nat.one_lt_two (fun i => (z i).val) hz
   lia
 
 /-- A scalar decoder cannot silently discard its final nonzero quotient. -/

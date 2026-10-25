@@ -351,7 +351,7 @@ theorem two_mul_log_le_depth_of_computes_parity {F : Formula signature n}
       _ ≤ n ^ 2 := Nat.pow_le_pow_left (Nat.pow_log_le_self 2 hn.ne') 2
       _ ≤ F.leafSize := sq_le_leafSize_of_computes_parity hF
       _ ≤ 2 ^ F.depth := F.leafSize_le_pow_depth Boolean.arity_le_two
-  exact (Nat.pow_le_pow_iff_right (by decide : 1 < 2)).1 hpow
+  exact (Nat.pow_le_pow_iff_right Nat.one_lt_two).1 hpow
 
 /-! ### Formulas for parity -/
 
@@ -405,7 +405,7 @@ theorem eval_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) (x : BitString n) :
     omega
 
 /-- The formula `parityFormula k o` has leaf size `4 ^ k`. -/
-private theorem leafSize_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) :
+theorem leafSize_parityFormula (k o : ℕ) (h : o + 2 ^ k ≤ n) :
     (parityFormula k o h).leafSize = 4 ^ k := by
   induction k generalizing o with
   | zero => rfl

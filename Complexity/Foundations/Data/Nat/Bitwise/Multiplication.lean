@@ -105,7 +105,7 @@ private theorem sum_pairs (x y : ℕ) :
 /-- The weighted contribution of all columns strictly below `k`. -/
 def mulPrefix (x y k : ℕ) : ℕ := ∑ j ∈ range k, mulColumn x y j * 2 ^ j
 
-private theorem mulPrefix_succ (x y k : ℕ) :
+theorem mulPrefix_succ (x y k : ℕ) :
     mulPrefix x y (k + 1) = mulPrefix x y k + mulColumn x y k * 2 ^ k := sum_range_succ _ _
 
 private theorem mulPrefix_eq_filter (x y k : ℕ) :
@@ -149,9 +149,9 @@ private theorem mulPrefix_eq_mul {x y w k : ℕ} (hx : x < 2 ^ w) (hy : y < 2 ^ 
     apply filter_eq_self.mpr
     intro p hp
     simp only [pairs, mem_product, List.mem_toFinset, Nat.mem_bitIndices] at hp
-    have hi := (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp
+    have hi := (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp
       (lt_of_le_of_lt (Nat.ge_two_pow_of_testBit hp.1) hx)
-    have hj := (Nat.pow_lt_pow_iff_right (by decide : 1 < 2)).mp
+    have hj := (Nat.pow_lt_pow_iff_right Nat.one_lt_two).mp
       (lt_of_le_of_lt (Nat.ge_two_pow_of_testBit hp.2) hy)
     lia
   rw [hp, sum_pairs]
@@ -162,14 +162,14 @@ def mulCarry (x y k : ℕ) : ℕ := mulPrefix x y k / 2 ^ k
 /-- No carry enters column `0`. -/
 @[simp] theorem mulCarry_zero (x y : ℕ) : mulCarry x y 0 = 0 := by simp [mulCarry, mulPrefix]
 
-private theorem mulCarry_succ (x y k : ℕ) :
+theorem mulCarry_succ (x y k : ℕ) :
     mulCarry x y (k + 1) = (mulCarry x y k + mulColumn x y k) / 2 := by
   simp only [mulCarry, mulPrefix_succ, pow_succ, ← Nat.div_div_eq_div_mul,
     Nat.add_mul_div_right _ _ (Nat.two_pow_pos k)]
 
 private theorem testBit_toNat (x k : ℕ) : (x.testBit k).toNat = x / 2 ^ k % 2 := by
   rw [Nat.testBit_eq_decide_div_mod_eq]
-  have := Nat.mod_lt (x / 2 ^ k) (by decide : 0 < 2)
+  have := Nat.mod_lt (x / 2 ^ k) two_pos
   by_cases h : x / 2 ^ k % 2 = 1
   · simp [h]
   · have hz : x / 2 ^ k % 2 = 0 := by lia
