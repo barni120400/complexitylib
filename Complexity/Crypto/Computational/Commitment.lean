@@ -1262,8 +1262,8 @@ theorem OneWay.exists_bitCommitmentScheme {f : List Bool → List Bool} (hf : On
 
 /-! ### Public-parameter commitment schemes ([BonehShoup2023], Section 8.12) -/
 
-/-- A commitment scheme `(C, V)` with public parameters ([BonehShoup2023], Section 8.12,
-Definition 8.8, p. 344):
+/-- A commitment scheme `(C, V)` with public parameters ([BonehShoup2023], Section 8.12, p. 344,
+and Definition 8.8):
 * `encodeKey k`: the encoded public parameter string presented to the adversary for key `k`.
 * `ValidMessage k m`: predicate characterizing valid message words `m` in the message space for key
   `k`.
@@ -1271,10 +1271,13 @@ Definition 8.8, p. 344):
   opening string `o`) produced by `C(msg)` under key `k`. `commitDist` is modeled as a `PMF` rather
   than a `ProbComp` so that group-based schemes such as Pedersen commitment can use the exact
   uniform distribution on `ZMod q` (matching `DiscreteLog`'s `PMF` setup; strict-PPT `ProbComp`
-  machines sample `ZMod q` only approximately via `sampleModNat`, while the deterministic commitment
-  evaluation is certified separately as `ComputableInPolyTime`).
+  machines sample `ZMod q` only approximately via `sampleModNat`).
 * `verify k m c o`: the deterministic verification algorithm `V(m, c, o)` returning `true` to accept
-  or `false` to reject.
+  or `false` to reject. Neither `commitDist` nor `verify` bundles a polynomial-time complexity
+  certificate in `CommitmentScheme`, keeping the general scheme interface at the distributional
+  layer; concrete instantiations certify their encoded evaluation and reduction algorithms
+  separately (e.g., `computableInPolyTime_encodePedersenCommit` and
+  `isPPTOn_pedersenToDLAdversary`).
 * `validMessage_of_verify` and `verify_of_mem_support`: `verify` accepts only valid message words
   and accepts every `(c, o)` in the support of `commitDist k m` for any valid message word `m`.
 
@@ -1298,15 +1301,20 @@ structure CommitmentScheme (Key : Type) where
   verify_of_mem_support : ∀ k m co, ValidMessage k m → co ∈ (commitDist k m).support →
     verify k m co.1 co.2 = true
 
-/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344)
-at a fixed commitment key `k : Key` for hidden bit `bit : Bool`: the adversary receives
-`S.encodeKey k`, chooses `((m₀, m₁), st)`, and receives the commitment string `c = co.1` (without
-the opening `co.2`) for `co ← S.commitDist k m_bit`. -/
+/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, p. 344, and
+Definition 8.8) at a fixed commitment key `k : Key` for hidden bit `bit : Bool`: the adversary
+receives `S.encodeKey k`, chooses `((m₀, m₁), st)`, and receives the commitment string `c = co.1`
+(without the opening `co.2`) for `co ← S.commitDist k m_bit`. Following Boneh–Shoup Section 8.12
+(`m₀, m₁ ∈ M`), the challenger commits to `m_bit` when both chosen words satisfy `S.ValidMessage k`,
+and defaults to `m₀` otherwise so that invalid challenge pairs produce identical distributions in
+both worlds. -/
 noncomputable def CommitmentScheme.hidingForKey {Key : Type}
     (S : CommitmentScheme Key) (k : Key)
     (adversary : Encryption.WordAdversary) (bit : Bool) (n : ℕ) : Game := do
   let choice ← ProbComp.eval (adversary.choose n (S.encodeKey k))
-  let msg := if bit then choice.1.2 else choice.1.1
+  let msg := open Classical in
+    if bit ∧ S.ValidMessage k choice.1.1 ∧ S.ValidMessage k choice.1.2 then choice.1.2
+    else choice.1.1
   let co ← S.commitDist k msg
   ProbComp.eval (adversary.guess n choice.2 co.1)
 
@@ -1341,15 +1349,15 @@ theorem CommitmentScheme.advantage_hidingForKey_eq_zero {Key : Type}
       (S.hidingForKey k adversary true n) = 0 := by
   rw [S.hidingForKey_eq_of_map_fst_commitDist_eq hk adversary false true n, Game.advantage_self]
 
-/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344)
-under a key distribution `keyDist : ℕ → PMF Key`. -/
+/-- The chosen-message hiding experiment ([BonehShoup2023], Section 8.12, p. 344, and
+Definition 8.8) under a key distribution `keyDist : ℕ → PMF Key`. -/
 noncomputable def CommitmentScheme.hidingGame {Key : Type}
     (S : CommitmentScheme Key) (keyDist : ℕ → PMF Key)
     (adversary : Encryption.WordAdversary) (bit : Bool) (n : ℕ) : Game := do
   let k ← keyDist n
   S.hidingForKey k adversary bit n
 
-/-- Statistical hiding ([BonehShoup2023], Section 8.12, Definition 8.8): every (even
+/-- Statistical hiding ([BonehShoup2023], Section 8.12, p. 344, and Definition 8.8): every (even
 computationally unbounded) `Encryption.WordAdversary` has negligible distinguishing advantage in
 `S.hidingGame keyDist`. -/
 def CommitmentScheme.StatisticalHiding {Key : Type}
@@ -1359,9 +1367,9 @@ def CommitmentScheme.StatisticalHiding {Key : Type}
     (fun adversary n => S.hidingGame keyDist adversary true n)
     (fun _ => True)
 
-/-- Computational hiding ([BonehShoup2023], Section 8.12, Definition 8.8): every uniform strict
-PPT `Encryption.WordAdversary` has negligible distinguishing advantage in `S.hidingGame keyDist`.
--/
+/-- Computational hiding ([BonehShoup2023], Section 8.12, p. 344, and Definition 8.8): every
+uniform strict PPT `Encryption.WordAdversary` has negligible distinguishing advantage in
+`S.hidingGame keyDist`. -/
 def CommitmentScheme.ComputationalHiding {Key : Type}
     (S : CommitmentScheme Key) (keyDist : ℕ → PMF Key) : Prop :=
   Game.Indistinguishable
@@ -1377,18 +1385,18 @@ theorem CommitmentScheme.StatisticalHiding.computationalHiding {Key : Type}
   fun adversary _ => h adversary trivial
 
 /-- Boolean predicate testing whether `(c, (m₀, o₀), (m₁, o₁))` is a valid binding collision under
-`S.verify k` ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344): `m₀ ≠ m₁` and both openings
-`(m₀, o₀)` and `(m₁, o₁)` are accepted by `S.verify k` for the commitment string `c`. -/
+`S.verify k` ([BonehShoup2023], Section 8.12, p. 344, and Definition 8.8): `m₀ ≠ m₁` and both
+openings `(m₀, o₀)` and `(m₁, o₁)` are accepted by `S.verify k` for the commitment string `c`. -/
 def CommitmentScheme.isBindingCollision {Key : Type} (S : CommitmentScheme Key) (k : Key)
     (out : List Bool × (List Bool × List Bool) × (List Bool × List Bool)) : Bool :=
   decide (out.2.1.1 ≠ out.2.2.1) &&
     S.verify k out.2.1.1 out.1 out.2.1.2 &&
     S.verify k out.2.2.1 out.1 out.2.2.2
 
-/-- The commitment binding experiment ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344):
-draw `k ← keyDist n`, give `S.encodeKey k` to `adversary`, and accept when the output
-`(c, (m₀, o₀), (m₁, o₁))` satisfies `S.isBindingCollision k` (`m₀ ≠ m₁` and both openings verify
-under `S.verify k`). -/
+/-- The commitment binding experiment ([BonehShoup2023], Section 8.12, p. 344, and
+Definition 8.8): draw `k ← keyDist n`, give `S.encodeKey k` to `adversary`, and accept when the
+output `(c, (m₀, o₀), (m₁, o₁))` satisfies `S.isBindingCollision k` (`m₀ ≠ m₁` and both openings
+verify under `S.verify k`). -/
 noncomputable def CommitmentScheme.bindingGame {Key : Type}
     (S : CommitmentScheme Key) (keyDist : ℕ → PMF Key)
     (adversary : ℕ → List Bool →
@@ -1398,8 +1406,8 @@ noncomputable def CommitmentScheme.bindingGame {Key : Type}
   let out ← ProbComp.eval (adversary n (S.encodeKey k))
   return S.isBindingCollision k out
 
-/-- Computational binding ([BonehShoup2023], Section 8.12, Definition 8.8, p. 344): every uniform
-strict PPT adversary has negligible success probability in `S.bindingGame keyDist`. -/
+/-- Computational binding ([BonehShoup2023], Section 8.12, p. 344, and Definition 8.8): every
+uniform strict PPT adversary has negligible success probability in `S.bindingGame keyDist`. -/
 def CommitmentScheme.Binding {Key : Type}
     (S : CommitmentScheme Key) (keyDist : ℕ → PMF Key) : Prop :=
   ∀ adversary : ℕ → List Bool →

@@ -479,7 +479,7 @@ theorem pedersenScheme_statisticalHiding (setup : ℕ → PMF F.Desc)
 
 /-- Extract the discrete logarithm `(r₁ - r₀)⁻¹ * (m₀ - m₁) mod q` from a Pedersen commitment
 collision `((m₀, r₀), (m₁, r₁))` ([Pedersen1991], Section 3, Theorem 3.1; [BonehShoup2023],
-Section 10.6.1, Fact 10.3, p. 414), computing the modular inverse via Fermat's little theorem as a
+Section 10.6.1, Fact 10.3, p. 415), computing the modular inverse via Fermat's little theorem as a
 `(q - 2)`-th power. -/
 def pedersenExtractNat (q m₀ r₀ m₁ r₁ : ℕ) : ℕ :=
   ((r₁ % q + q - r₀ % q) % q) ^ (q - 2) % q * ((m₀ % q + q - m₁ % q) % q) % q

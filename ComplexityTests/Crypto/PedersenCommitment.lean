@@ -90,7 +90,7 @@ theorem isPPTOn_trivialBindingAdversary :
     IsPPTOn (encPair encUnary encBits)
       (encPair encBits (encPair (encPair encBits encBits) (encPair encBits encBits)))
       (fun input => trivialBindingAdversary input.1 input.2) :=
-  ComputableTidilyInPolyTime.isPPTOn (ComputableTidilyInPolyTime.const _)
+  ComputableInPolyTime.isPPTOn (ComputableInPolyTime.const _)
 
 /-- Under the discrete-logarithm assumption for Schnorr groups, `trivialBindingAdversary` succeeds
 in `schnorrGroups.pedersenScheme.bindingGame (schnorrGroups.pedersenKeyDist setup)` with negligible
@@ -113,5 +113,67 @@ example (setup : ℕ → PMF schnorrGroups.Desc) (hDL : schnorrGroups.DiscreteLo
         simpa only [Nat.cast_pow, Nat.cast_ofNat, one_div, inv_pow] using
           negligible_geometric (ratio := 2⁻¹) (by norm_num)),
     hDL.pedersenScheme_binding⟩
+
+/-- Regression witness (`openScheme`): a scheme with empty commitment string and opening equal to
+the message is perfectly hiding, and is rejected by `CommitmentScheme.Binding`. -/
+noncomputable def openScheme : CommitmentScheme Unit where
+  encodeKey _ := []
+  ValidMessage _ _ := True
+  commitDist _ m := PMF.pure ([], m)
+  verify _ m c o := decide (c = [] ∧ o = m)
+  validMessage_of_verify _ _ _ _ _ := trivial
+  verify_of_mem_support _ m co _ hco := by
+    rw [PMF.support_pure, Set.mem_singleton_iff] at hco
+    subst hco
+    simp
+
+/-- A constant PPT adversary that breaks `openScheme.Binding` with probability `1`. -/
+def cheat : ℕ → List Bool →
+    ProbComp (List Bool × (List Bool × List Bool) × (List Bool × List Bool)) :=
+  fun _ _ => pure ([], ([], []), ([true], [true]))
+
+/-- `openScheme` is not binding (`¬ openScheme.Binding`). -/
+example : ¬ openScheme.Binding (fun _ => PMF.pure ()) := by
+  intro h
+  have hA : IsPPTOn (encPair encUnary encBits)
+      (encPair encBits (encPair (encPair encBits encBits) (encPair encBits encBits)))
+      (fun input => cheat input.1 input.2) :=
+    ComputableInPolyTime.isPPTOn (ComputableInPolyTime.const _)
+  have hs : ∀ n, Game.succProbability
+      (openScheme.bindingGame (fun _ => PMF.pure ()) cheat n) = 1 := by
+    intro n
+    simp [Game.succProbability, CommitmentScheme.bindingGame, CommitmentScheme.isBindingCollision,
+      openScheme, cheat]
+  exact not_negligible_const (c := 1) one_ne_zero (by simpa [hs] using h cheat hA)
+
+/-- Regression witness (`singletonScheme`): a scheme with singleton message space `{[]}` whose
+commitment string equals the message word satisfies `StatisticalHiding` because `hidingForKey`
+commits to `m_bit` only when both challenge words satisfy `ValidMessage`. -/
+noncomputable def singletonScheme : CommitmentScheme Unit where
+  encodeKey _ := []
+  ValidMessage _ m := m = []
+  commitDist _ m := PMF.pure (m, [])
+  verify _ m c _ := decide (m = [] ∧ c = [])
+  validMessage_of_verify _ _ _ _ h := (of_decide_eq_true h).1
+  verify_of_mem_support _ m co hm hco := by
+    rw [PMF.support_pure, Set.mem_singleton_iff] at hco
+    subst hco
+    simp [hm]
+
+/-- `singletonScheme` is statistically hiding. -/
+example : singletonScheme.StatisticalHiding (fun _ => PMF.pure ()) := by
+  intro adversary _
+  have heq : ∀ n,
+      singletonScheme.hidingGame (fun _ => PMF.pure ()) adversary false n =
+        singletonScheme.hidingGame (fun _ => PMF.pure ()) adversary true n := by
+    intro n
+    simp only [CommitmentScheme.hidingGame, CommitmentScheme.hidingForKey, singletonScheme,
+      PMF.monad_bind_eq_bind, PMF.pure_bind]
+    congr 1; funext choice
+    by_cases hvalid : choice.1.1 = [] ∧ choice.1.2 = []
+    · rcases hvalid with ⟨h1, h2⟩
+      simp [h1, h2]
+    · simp [hvalid]
+  simp [heq, negligible_zero]
 
 end ComplexityTests.Crypto.PedersenCommitment
