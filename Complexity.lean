@@ -1439,6 +1439,7 @@ public import Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit.
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Scheme
 public import Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Security
+public import Complexity.Crypto.Computational.Homomorphic.GSW.FullyHomomorphic
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Gadget
 public import Complexity.Crypto.Computational.Homomorphic.GSW.Hiding
 public import Complexity.Crypto.Computational.Homomorphic.GSW.LWE
