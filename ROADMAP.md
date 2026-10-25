@@ -1278,9 +1278,11 @@ Jukna coverage below is an additional target beyond the V1 port:
   [Summand](Complexity/Computability/Interactive/GKR/Summand.lean) gives the polynomial each
   layer's sumcheck runs on (its sum, values and degree at most two per variable), and
   [Bundle](Complexity/Computability/Interactive/Bundle.lean) runs a family of reductions on
-  statement-dependent parameters with the same completeness and round-by-round soundness. Open: the
-  GKR protocol itself (bundled sumcheck and the line reduction per layer, completeness and
-  soundness), its efficiency under uniformity, and the route to NEXP ⊆ MIP.
+  statement-dependent parameters with the same completeness and round-by-round soundness.
+  [Protocol](Complexity/Computability/Interactive/GKR/Protocol.lean) assembles the GKR protocol
+  (output step, bundled sumcheck and line step per layer, input step): perfectly complete and
+  sound with error `(width depth + ∑ 5 · width i) / |F|`, by composition. Open: verifier efficiency
+  under log-space uniformity (M3), and the route to NEXP ⊆ MIP.
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
   collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663),
   [Carter–Wegman MACs from Δ-universal hashing](Complexity/Crypto/Protocols/MAC/CarterWegman.lean)
