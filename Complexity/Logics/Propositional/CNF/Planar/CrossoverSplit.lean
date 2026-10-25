@@ -138,7 +138,8 @@ def ring (v : Internal) : CNF SplitVariable :=
 
 /-- Fixed ordered list of the eight local split squares. -/
 def internalList : List Internal :=
-  [.aInnerLeft, .upperLeft, .lowerLeft, .bInnerTop, .bInnerBottom, .upperRight, .lowerRight, .aInnerRight]
+  [.aInnerLeft, .upperLeft, .lowerLeft, .bInnerTop, .bInnerBottom,
+    .upperRight, .lowerRight, .aInnerRight]
 
 /-- The degree-three crossover: original split clauses followed by eight implication rings. -/
 def splitFormula : CNF SplitVariable := splitClauses ++ internalList.flatMap ring
@@ -161,6 +162,10 @@ theorem length_splitFormula : splitFormula.length = 74 := by decide
 
 /-- Every clause has width at most three. -/
 theorem width_splitFormula : ∀ c ∈ splitFormula, c.length ≤ 3 := by decide +kernel
+
+/-- No clause repeats a variable, so literal-incidence degree equals clause occurrence degree. -/
+theorem splitClauses_distinct_variables :
+    ∀ c ∈ splitFormula, (c.map Prod.fst).Nodup := by decide +kernel
 
 /-- Every variable occurs in at most three clauses. -/
 theorem split_occurrences_le_three : ∀ v, splitFormula.occurrences v ≤ 3 := by decide +kernel

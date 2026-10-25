@@ -119,10 +119,10 @@ def assignment
 def Extends (aLeft aRight bTop bBottom : Bool) : Prop :=
   ∃ aInnerLeft upperLeft lowerLeft bInnerTop center bInnerBottom
       upperRight lowerRight aInnerRight : Bool,
-    Holds
+    formula.eval
       (assignment aLeft aRight bTop bBottom
         aInnerLeft upperLeft lowerLeft bInnerTop center bInnerBottom
-        upperRight lowerRight aInnerRight)
+        upperRight lowerRight aInnerRight) = true
 
 instance (aLeft aRight bTop bBottom : Bool) :
     Decidable (Extends aLeft aRight bTop bBottom) := by
@@ -143,7 +143,7 @@ crossover embedded in a larger formula is projected back to its two original
 wires. -/
 theorem boundary_eq_of_holds
     {σ : Variable → Bool}
-    (holds : Holds σ) :
+    (holds : formula.eval σ = true) :
     σ .aLeft = σ .aRight ∧
       σ .bTop = σ .bBottom := by
   apply (extends_iff
@@ -173,7 +173,7 @@ theorem exists_holds_of_boundary_eq
     {aLeft aRight bTop bBottom : Bool}
     (horizontal : aLeft = aRight) (vertical : bTop = bBottom) :
     ∃ σ : Variable → Bool,
-      Holds σ ∧
+      formula.eval σ = true ∧
         σ .aLeft = aLeft ∧
         σ .aRight = aRight ∧
         σ .bTop = bTop ∧
