@@ -28,7 +28,7 @@ import Cslib.Foundations.Data.Nat.Asymptotics
 
 For every `k`, some language in `Σ₂` has no circuits of size `O(n ^ k)`: it lies in no class
 `SIZE (c (n + 1) ^ k)` (`Cslib.Complexity.exists_mem_SigmaP_two_notMem_SIZE`)
-[Kannan][Kannan1982], [Arora and Barak, Theorem 6.22][AroraBarak09]. Size counts gates, as in
+[Kannan][Kannan1982], [Arora and Barak, Chapter 6][AroraBarak09]. Size counts gates, as in
 `Cslib.Circuits.Boolean.SIZE`.
 
 Kannan's language (`Cslib.Complexity.Kannan.language`) is first built in `Σ₃`. At input length
@@ -508,7 +508,7 @@ end Kannan
 open Kannan in
 /-- **Kannan's theorem**: for every `k`, some language in `Σ₂` has no circuits of size
 `O(n ^ k)`, that is, lies in no class `SIZE (c (n + 1) ^ k)` [Kannan][Kannan1982],
-[Arora and Barak, Theorem 6.22][AroraBarak09]. If some
+[Arora and Barak, Chapter 6][AroraBarak09]. If some
 language in `P/poly` has preimage `SAT` under `encCNF`, the Karp–Lipton theorem collapses the
 polynomial hierarchy to `Σ₂` and Kannan's language, in `Σ₃`, is in `Σ₂`; otherwise the encodings
 of the satisfiable formulas, in `NP ⊆ Σ₂`, have no circuits of polynomial size. -/
