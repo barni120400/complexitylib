@@ -533,7 +533,7 @@ theorem isPPTOn_lamportSimKeys {f : List Bool → List Bool}
         (fun r : ((ℕ × List Bool) × ℕ) × List (List Bool) => 2 * r.1.1.1 - r.1.2 - 1)
         (encPair (encPair (encPair encUnary encBits) encUnary) (encList encBits))
         encUnary := by polytime
-    exact (ComputableInPolyTime.of_tidy hn).sampleList.replicate hcnt
+    exact (ComputableInPolyTime.of_tidy hn).sampleList.replicate (.of_tidy hcnt)
   have hpost : ComputableTidilyInPolyTime
       (fun s : (((ℕ × List Bool) × ℕ) × List (List Bool)) × List (List Bool) =>
         (encList encBits (s.1.2.map f ++ s.1.1.1.2 :: s.2.map f),

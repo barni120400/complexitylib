@@ -227,7 +227,7 @@ theorem isPPTOn_keyGen :
   have hkeys : IsPPTOn (encPair encUnary encBits) (encList (encPair encBits encBits))
       (fun p : ℕ × List Bool => OracleComp.replicate (2 ^ depth p.1) (S.keyGen p.1)) :=
     (S.isPPTOn_keyGen_comp (ComputableInPolyTime.fst encUnary encBits)).replicate
-      (hcap.comp (ComputableInPolyTime.fst encUnary encBits)).tidy
+      (hcap.comp (ComputableInPolyTime.fst encUnary encBits))
   have hpost : ComputableTidilyInPolyTime
       (fun q : (ℕ × List Bool) × List (List Bool × List Bool) =>
         (publicKey H q.1.2 q.2, secretKey q.1.2 q.2))

@@ -628,7 +628,7 @@ theorem isPPT_collisionFinder {adversary : IndexedForger}
   have hkeys : IsPPTOn (encPair encUnary encBits) (encList (encPair encBits encBits))
       (fun p : ℕ × List Bool => OracleComp.replicate (2 ^ depth p.1) (S.keyGen p.1)) :=
     (S.isPPTOn_keyGen_comp (ComputableInPolyTime.fst encUnary encBits)).replicate
-      (hcap.tidy.comp (ComputableTidilyInPolyTime.fst encUnary encBits))
+      (.of_tidy (hcap.tidy.comp (ComputableTidilyInPolyTime.fst encUnary encBits)))
   have hfst := ComputableTidilyInPolyTime.fst (encPair encUnary encBits)
     (encList (encPair encBits encBits))
   have hkk : ComputableTidilyInPolyTime
@@ -683,7 +683,8 @@ private theorem isPPTOn_plantKeys :
       (fun q : ((ℕ × List Bool) × ℕ) × List Bool =>
         OracleComp.replicate q.1.2 (S.keyGen q.1.1.1)) :=
     (S.isPPTOn_keyGen_comp (.of_tidy hn2)).replicate
-      ((ComputableTidilyInPolyTime.snd _ _).comp (ComputableTidilyInPolyTime.fst E1 encBits))
+      (.of_tidy ((ComputableTidilyInPolyTime.snd _ _).comp
+        (ComputableTidilyInPolyTime.fst E1 encBits)))
   have hn3 := hn2.comp (ComputableTidilyInPolyTime.fst (encPair E1 encBits) EK)
   have hback : IsPPTOn (encPair (encPair E1 encBits) EK) EK
       (fun q : (((ℕ × List Bool) × ℕ) × List Bool) × List (List Bool × List Bool) =>
@@ -696,7 +697,7 @@ private theorem isPPTOn_plantKeys :
     have hcount := ComputableTidilyInPolyTime.unary_sub.comp
       ((ComputableTidilyInPolyTime.unary_sub.comp ((hcap.tidy.comp hn3).prod hi)).prod
         (ComputableTidilyInPolyTime.const 1))
-    exact (S.isPPTOn_keyGen_comp (.of_tidy hn3)).replicate hcount
+    exact (S.isPPTOn_keyGen_comp (.of_tidy hn3)).replicate (.of_tidy hcount)
   have hret : ComputableTidilyInPolyTime
       (fun r : ((((ℕ × List Bool) × ℕ) × List Bool) × List (List Bool × List Bool)) ×
           List (List Bool × List Bool) =>

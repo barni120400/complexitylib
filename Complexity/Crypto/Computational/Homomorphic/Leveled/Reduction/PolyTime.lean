@@ -97,7 +97,7 @@ theorem isPPT_zeroLinkAdversary
     dsimp only [zeroLinkAdversary]
     have hrest := (hkeyGen.preprocess
       (ComputableInPolyTime.fst encUnary encBits)).replicate
-        (hdepth.comp (ComputableTidilyInPolyTime.fst encUnary encBits))
+        (.of_tidy (hdepth.comp (ComputableTidilyInPolyTime.fst encUnary encBits)))
     apply hrest.bind_with
     have hlinks : IsPPTOn
         (encPair (encPair encUnary encBits) (encList (encPair encBits encBits)))

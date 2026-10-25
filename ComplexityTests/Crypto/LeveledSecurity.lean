@@ -120,7 +120,7 @@ private theorem encrypt_ppt : IsPPTOn (encPair encUnary (encPair encBits encBool
 
 @[fun_prop]
 private theorem stateBit_poly : ComputableInPolyTime stateBit encBits encBool := by
-  have hcontext := publicKeyDecoder.computableTidilyInPolyTime
+  have hcontext := publicKeyDecoder.computableInPolyTime.tidy
   dsimp only [encPublicKey] at hcontext
   have hpk := (ComputableTidilyInPolyTime.listGetD
     (encA := encBits) (encL := encList encBits) []).comp

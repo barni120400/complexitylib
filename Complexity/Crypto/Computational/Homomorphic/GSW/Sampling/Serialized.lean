@@ -192,9 +192,9 @@ theorem isPPTOn_sampleKeyInputsSerialized
   have hn := hn.tidy
   have hm := hm.tidy
   have hη := hη.tidy
-  have hsecret := hw.sampleBinaryNat.replicate hn
-  have hpublicPart := hsecret.replicate hm
-  have herror := hη.sampleCenteredBinomial.replicate hm
+  have hsecret := hw.sampleBinaryNat.replicate (.of_tidy hn)
+  have hpublicPart := hsecret.replicate (.of_tidy hm)
+  have herror := hη.sampleCenteredBinomial.replicate (.of_tidy hm)
   unfold sampleKeyInputsSerialized encSerializedKeyInputs
   ppt
 
@@ -210,6 +210,7 @@ theorem isPPTOn_sampleCoinsSerialized
   have hn := hn.tidy
   have hm := hm.tidy
   have hw := hw.tidy
-  exact (((isPPTOn_uniform_bool input).replicate_bool hm).replicate hw).replicate (by fun_prop)
+  exact (((isPPTOn_uniform_bool input).replicate_bool (.of_tidy hm)).replicate
+    (.of_tidy hw)).replicate (by fun_prop)
 
 end Cslib.Crypto.Homomorphic.GSW

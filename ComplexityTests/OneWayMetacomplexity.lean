@@ -40,7 +40,7 @@ example : preimageSearch (fun p => decide (p.2.2 <+: p.2.1 ∧ p.2.1.length = p.
 
 -- The inverter lemma applies: the identity is not one-way, by its own inverse.
 example : ¬ OneWay id :=
-  not_oneWay_of_lengthInverse Prod.snd (ComputableTidilyInPolyTime.snd _ _) fun _ => rfl
+  not_oneWay_of_lengthInverse Prod.snd (ComputableInPolyTime.snd _ _) fun _ => rfl
 
 /-- The preimage-prefix problem of a constant function is in `P`: an image has a preimage of
 length `n` with a given prefix exactly when it is the constant and the prefix is short enough. -/

@@ -70,8 +70,8 @@ theorem isPPTOn_chooseLinkAt {n beforeCount afterCount bitIndex : α → ℕ}
   have hindex := hindex.tidy
   have hpk := hpk.tidy
   have hkey := hkeyGen.preprocess (.of_tidy hn)
-  have hfront := hkey.replicate hbefore
-  have hback := hkey.replicate hafter
+  have hfront := hkey.replicate (.of_tidy hbefore)
+  have hback := hkey.replicate (.of_tidy hafter)
   unfold chooseLinkAt
   apply hfront.bind_with
   apply (hkey.preprocess (ComputableInPolyTime.fst _ _)).bind_with
