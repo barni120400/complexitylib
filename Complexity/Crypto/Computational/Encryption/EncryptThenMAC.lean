@@ -31,7 +31,7 @@ This module formalizes the generic **Encrypt-then-MAC** composition (`encryptThe
 security reductions ([Boneh and Shoup, *A Graduate Course in Applied Cryptography*, Version 0.6,
 Section 9.4.1 and Theorem 9.2][BonehShoup2023], printed pp. 367–368), together with a concrete
 randomized PRF-based symmetric cipher (`prfCipher`, [BonehShoup2023], Section 5.4.1, Example 5.2
-and Theorem 5.2, printed pp. 183–187) that witnesses joint non-vacuity of all hypotheses:
+and Theorem 5.2, printed pp. 183–189) that witnesses joint non-vacuity of all hypotheses:
 
 1. **Generic Encrypt-then-MAC composition (`encryptThenMAC`, `etmToMACForger`,
    `etmToCPAAdversary`, `succProbability_ciGame_encryptThenMAC_eq`,
@@ -62,7 +62,7 @@ and Theorem 5.2, printed pp. 183–187) that witnesses joint non-vacuity of all 
    `PseudorandomFunction.indcpa_prfCipher`, `prfEncryptThenMAC`,
    `PseudorandomFunction.authenticatedEncryption_prfEncryptThenMAC`,
    `PseudorandomFunction.indcca_prfEncryptThenMAC`)** ([BonehShoup2023], Section 5.4.1, Example 5.2
-   and Theorem 5.2, printed pp. 183–187): for any `PseudorandomFunction family`, `prfCipher`
+   and Theorem 5.2, printed pp. 183–189): for any `PseudorandomFunction family`, `prfCipher`
    encrypts an `n`-bit message `msg` under an `n`-bit key `k` by sampling a random nonce
    `r ← BitString.sampleList n` and outputting the `2 * n`-bit ciphertext
    `r ++ List.zipWith xor (family k r) msg`. Using `OracleComp.IdenticalUntilBad.advantage_le`
@@ -86,14 +86,20 @@ and Theorem 5.2, printed pp. 183–187) that witnesses joint non-vacuity of all 
   `AuthenticatedEncryption` and `INDCCA` statements; the one-time `1AE` half and separate
   query-count preservation theorems are omitted.
 * **Specialization of Theorem 5.2 to the Example 5.2 one-time-pad instantiation (`prfCipher`) and
-  two-world CPA bound**: Theorem 5.2 in [BonehShoup2023] (printed p. 184) is stated for the general
-  hybrid cipher `E'` combining a PRF `F` with a semantically secure cipher `E`, with bound
+  two-world CPA bound with a factor-`2` collision term**: Theorem 5.2 in [BonehShoup2023] (printed
+  p. 184; proof on printed pp. 184–189) is stated for the general hybrid cipher `E'` combining a
+  PRF `F` with a semantically secure cipher `E`, with bound
   `CPAadv[A, E'] <= Q^2 / N + 2 * PRFadv[B_F, F] + Q * SSadv[B_E, E]` in the bit-guessing CPA
-  game. Here `prfCipher` formalizes the Example 5.2 instantiation (printed pp. 183–184) where `E`
-  is the one-time pad `k xor m` on `{0, 1}^n` (`SSadv = 0`, `N = 2^n`), and
+  game (where `Q^2 / N` arises from the birthday bound `Pr[Z] <= Q^2 / (2 * N)` in equation (5.11)
+  on printed p. 187). Here `prfCipher` formalizes the Example 5.2 instantiation (printed
+  pp. 183–184) where `E` is the one-time pad `k xor m` on `{0, 1}^n` (`SSadv = 0`, `N = 2^n`), and
   `advantage_cpaGame_prfCipher_le` bounds two-world `cpaGame` distinguishing advantage by
   `PRFadv[cpaToPrfDistinguisher adversary false, F] +
-  PRFadv[cpaToPrfDistinguisher adversary true, F] + 2 * Q^2 / 2^n`.
+  PRFadv[cpaToPrfDistinguisher adversary true, F] + 2 * Q^2 / 2^n`: it uses two fixed-bit PRF
+  distinguishers instead of one coin-flipping distinguisher `B_F` with factor `2`, and its
+  collision term `2 * Q^2 / 2^n` is `2×` the source's `Q^2 / N = Q^2 / 2^n` because
+  `bad_prfCipherForgetfulWithBadOracle_le` uses a per-step union bound `Q * Q / 2^n` per challenge
+  bit rather than the birthday sum `sum_{i < Q} i / 2^n <= Q^2 / 2^(n + 1)`.
 
 ## Main definitions
 
@@ -122,6 +128,7 @@ and Theorem 5.2, printed pp. 183–187) that witnesses joint non-vacuity of all 
   `Cslib.Crypto.indcca_encryptThenMAC_prfMAC`: asymptotic AE and IND-CCA security of
   Encrypt-then-MAC (`Theorem 9.2` and `Theorem 9.1`).
 * `Cslib.Crypto.prfCipher_ciphertext_length`, `Cslib.Crypto.isOraclePPT_cpaToPrfDistinguisher`,
+  `Cslib.Crypto.eval_prfRealGame_cpaToPrfDistinguisher`,
   `Cslib.Crypto.advantage_cpaGame_prfCipher_le`,
   `Cslib.Crypto.PseudorandomFunction.indcpa_prfCipher`: quantitative and asymptotic IND-CPA security
   of `prfCipher` (`Theorem 5.2`).
@@ -132,7 +139,7 @@ and Theorem 5.2, printed pp. 183–187) that witnesses joint non-vacuity of all 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 5.4.1 (Example 5.2, Theorem 5.2, printed pp. 183–187) and
+  Version 0.6][BonehShoup2023], Section 5.4.1 (Example 5.2, Theorem 5.2, printed pp. 183–189) and
   Section 9.4.1 (Theorem 9.2, printed pp. 367–368).
 -/
 
@@ -144,53 +151,6 @@ open Probability Turing.MultiTapeTM
 open scoped NNReal ENNReal BigOperators
 
 /-! ### Generic Encrypt-then-MAC Construction and Security (Boneh–Shoup Section 9.4.1) -/
-
-@[local fun_prop]
-private theorem computableTidilyInPolyTime_mac_msgLen_comp (M : MACScheme)
-    {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary) :
-    ComputableTidilyInPolyTime (fun a => M.msgLen (n a)) encIn encUnary :=
-  (M.computableInPolyTime_msgLen_comp hn.computableInPolyTime).tidy
-
-@[local fun_prop]
-private theorem isPPTOn_mac_keyGen_comp_tidy (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
-    {n : γ → ℕ} (hn : ComputableTidilyInPolyTime n encIn encUnary) :
-    IsPPTOn encIn encBits (fun a => M.keyGen (n a)) :=
-  M.isPPTOn_keyGen_comp hn.computableInPolyTime
-
-@[local fun_prop]
-private theorem isPPTOn_mac_sign_comp_tidy (M : MACScheme) {γ : Type} {encIn : γ ↪ List Bool}
-    {sk msg : γ → List Bool}
-    (hsk : ComputableTidilyInPolyTime sk encIn encBits)
-    (hmsg : ComputableTidilyInPolyTime msg encIn encBits) :
-    IsPPTOn encIn encBits (fun a => M.sign (sk a) (msg a)) :=
-  M.isPPTOn_sign_comp hsk.computableInPolyTime hmsg.computableInPolyTime
-
-@[local fun_prop]
-private theorem computableTidilyInPolyTime_mac_verify_comp (M : MACScheme)
-    {γ : Type} {encIn : γ ↪ List Bool} {sk msg tag : γ → List Bool}
-    (hsk : ComputableTidilyInPolyTime sk encIn encBits)
-    (hmsg : ComputableTidilyInPolyTime msg encIn encBits)
-    (htag : ComputableTidilyInPolyTime tag encIn encBits) :
-    ComputableTidilyInPolyTime (fun a => M.verify (sk a) (msg a) (tag a)) encIn encBool :=
-  (M.computableInPolyTime_verify_comp hsk.computableInPolyTime
-    hmsg.computableInPolyTime htag.computableInPolyTime).tidy
-
-@[local fun_prop]
-private theorem isPPTOn_cipher_keyGen_comp_tidy (E : SymmetricCipher)
-    {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary) :
-    IsPPTOn encIn encBits (fun a => E.keyGen (n a)) :=
-  E.isPPTOn_keyGen_comp hn.computableInPolyTime
-
-@[local fun_prop]
-private theorem isPPTOn_cipher_encrypt_comp_tidy (E : SymmetricCipher)
-    {γ : Type} {encIn : γ ↪ List Bool} {n : γ → ℕ} {k msg : γ → List Bool}
-    (hn : ComputableTidilyInPolyTime n encIn encUnary)
-    (hk : ComputableTidilyInPolyTime k encIn encBits)
-    (hmsg : ComputableTidilyInPolyTime msg encIn encBits) :
-    IsPPTOn encIn encBits (fun a => E.encrypt (n a) (k a) (msg a)) :=
-  E.isPPTOn_encrypt_comp hn.computableInPolyTime hk.computableInPolyTime hmsg.computableInPolyTime
 
 /-- **Encrypt-then-MAC symmetric cipher** ([BonehShoup2023], Section 9.4.1, printed p. 367):
 given a symmetric cipher `E : SymmetricCipher` whose ciphertexts on `n`-bit messages under supported
@@ -230,12 +190,34 @@ noncomputable def encryptThenMAC (E : SymmetricCipher) (M : MACScheme)
     else
       none
   keyGen_ppt := by
+    have : IsPPTOn encUnary encBits (fun n : ℕ => E.keyGen n) := E.keyGen_ppt
+    have : IsPPTOn (encPair encUnary encBits) encBits
+        (fun p : ℕ × List Bool => M.keyGen p.1) :=
+      M.isPPTOn_keyGen_comp (ComputableInPolyTime.fst encUnary encBits)
     simp only [encPair_apply, encBits_apply]
     ppt
   encrypt_ppt := by
+    have : IsPPTOn (encPair encUnary (encPair encBits encBits)) encBits
+        (fun p : ℕ × List Bool × List Bool => E.encrypt p.1 (unframe p.2.1) p.2.2) :=
+      E.isPPTOn_encrypt_comp (.of_tidy (by polytime)) (.of_tidy (by polytime))
+        (.of_tidy (by polytime))
+    have : IsPPTOn (encPair (encPair encUnary (encPair encBits encBits)) encBits) encBits
+        (fun p : (ℕ × List Bool × List Bool) × List Bool =>
+          M.sign (dropFrame p.1.2.1) p.2) :=
+      M.isPPTOn_sign_comp (.of_tidy (by polytime)) (.of_tidy (by polytime))
     simp only [encPair_apply, encBits_apply]
     ppt
   decrypt_polyTime := by
+    have hmsgLen : ComputableTidilyInPolyTime
+        (fun p : ℕ × List Bool × List Bool => M.msgLen p.1)
+        (encPair encUnary (encPair encBits encBits)) encUnary :=
+      (M.computableInPolyTime_msgLen_comp (.of_tidy (by polytime))).tidy
+    have hver : ComputableTidilyInPolyTime
+        (fun p : ℕ × List Bool × List Bool =>
+          M.verify (dropFrame p.2.1) (unframe p.2.2) (dropFrame p.2.2))
+        (encPair encUnary (encPair encBits encBits)) encBool :=
+      (M.computableInPolyTime_verify_comp (.of_tidy (by polytime))
+        (.of_tidy (by polytime)) (.of_tidy (by polytime))).tidy
     have hcond : ComputableTidilyInPolyTime
         (fun p : ℕ × List Bool × List Bool =>
           (frame (unframe p.2.2) ++ dropFrame p.2.2 == p.2.2) &&
@@ -499,7 +481,8 @@ theorem isOraclePPT_etmToMACForger (E : SymmetricCipher) (M : MACScheme) {tagBou
   have hnProj : ComputableTidilyInPolyTime
       (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) => M.msgLen p.1.1.1)
       (encPair ECaller (encPair encBits (encFinite Unit))) encUnary := by
-    dsimp only [ECaller]; fun_prop
+    dsimp only [ECaller]
+    exact (M.computableInPolyTime_msgLen_comp (.of_tidy (by polytime))).tidy
   have hpostNo : ComputableTidilyInPolyTime
       (fun p : ((ℕ × List Bool) × List Bool) × (List Bool × Unit) =>
         (if M.msgLen p.1.1.1 == 0 then [false] else [], ([] : List Bool)))
@@ -782,7 +765,8 @@ private theorem isOraclePPTOn_etmToCPAHandler (M : MACScheme) :
   have hqLim : ComputableTidilyInPolyTime
       (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) => M.msgLen p.1.1.1)
       EIn encUnary := by
-    dsimp only [EIn, ECaller]; fun_prop
+    dsimp only [EIn, ECaller]
+    exact (M.computableInPolyTime_msgLen_comp (.of_tidy (by polytime))).tidy
   have hq : IsOraclePPTOn (Operation := Unit) EIn encBits
       (fun p : ((ℕ × List Bool) × List Bool) × ((Unit × List Bool) × Unit) =>
         List.take (M.msgLen p.1.1.1) <$> ProbOracleComp.query ((), p.2.1.2)) :=
@@ -842,12 +826,17 @@ theorem isOraclePPT_etmToCPAAdversary (M : MACScheme) {adversary : OracleDisting
       (fun caller : (ℕ × List Bool) × List Bool => (caller.1.1, ([] : List Bool)))
       ECaller (encPair encUnary encBits) := by
     dsimp only [ECaller]; fun_prop
+  have hmsgLenPair : ComputableTidilyInPolyTime
+      (fun pair : ((ℕ × List Bool) × List Bool) × List Bool => M.msgLen pair.1.1.1)
+      (encPair ECaller encBits) encUnary := by
+    dsimp only [ECaller]
+    exact (M.computableInPolyTime_msgLen_comp (.of_tidy (by polytime))).tidy
   have hres : ComputableTidilyInPolyTime
       (fun pair : ((ℕ × List Bool) × List Bool) × List Bool =>
         2 * M.msgLen pair.1.1.1 +
           cs * (2 * pair.1.2.length + M.msgLen pair.1.1.1 + 2) ^ ds + 2)
       (encPair ECaller encBits) encUnary := by
-    dsimp only [ECaller]; polytime
+    dsimp only [ECaller] at hmsgLenPair ⊢; polytime
   have hrun : IsOraclePPTOn (Operation := Unit) ECaller (encPair encBool (encFinite Unit))
       (fun caller : (ℕ × List Bool) × List Bool =>
         (OracleComp.interpret
@@ -1107,7 +1096,7 @@ private theorem zipWith_xor_self_left :
     cases b <;> cases m <;> rfl
 
 /-- **Randomized PRF-based symmetric cipher** ([BonehShoup2023], Section 5.4.1, Example 5.2 and
-Theorem 5.2, printed pp. 183–187): given a keyed function family
+Theorem 5.2, printed pp. 183–189): given a keyed function family
 `family : List Bool → List Bool → List Bool` computable in plain polynomial time that maps `n`-bit
 keys and `n`-bit inputs to `n`-bit outputs:
 * `keyGen n` samples a uniform `n`-bit key `k ← BitString.sampleList n`.
@@ -1197,7 +1186,7 @@ theorem prfCipher_ciphertext_length (family : List Bool → List Bool → List B
 
 /-- Open stateful handler that simulates the `cpaEncryptionOracle` of `prfCipher` inside the PRF
 distinguishing experiment ([BonehShoup2023], Section 5.4.1, Theorem 5.2, Figure 5.1, printed
-pp. 184–185): on a pair of `n`-bit messages `(m0, m1)`, it samples a random nonce
+pp. 185–186): on a pair of `n`-bit messages `(m0, m1)`, it samples a random nonce
 `r ← BitString.sampleList n`, queries the external PRF/random-function oracle at `((), r)`
 (truncating the returned pad to `n` bits), and returns `r ++ List.zipWith xor pad msg` where
 `msg := if bit then m1 else m0`. -/
@@ -1215,7 +1204,7 @@ noncomputable def cpaToPrfHandler (n : ℕ) (bit : Bool) (request : Unit × List
       pure ([], ())
 
 /-- CPA-to-PRF reduction `cpaToPrfDistinguisher` ([BonehShoup2023], Section 5.4.1, Theorem 5.2,
-Figure 5.1, printed pp. 184–185): runs `adversary n []` against `cpaToPrfHandler n bit`. -/
+Figure 5.1, printed pp. 185–186): runs `adversary n []` against `cpaToPrfHandler n bit`. -/
 noncomputable def cpaToPrfDistinguisher (adversary : OracleDistinguisher) (bit : Bool) :
     OracleDistinguisher :=
   fun n _ =>
@@ -1914,11 +1903,13 @@ private theorem advantage_prfIdealGame_prfCipherOTPOracle_le (adversary : Oracle
   ring
 
 /-- **Quantitative IND-CPA security bound for `prfCipher`** ([BonehShoup2023], Section 5.4.1,
-Theorem 5.2, equation (5.5), printed pp. 184–187): for any `OracleDistinguisher` making at most `Q`
+Theorem 5.2, equation (5.5), printed pp. 184–189): for any `OracleDistinguisher` making at most `Q`
 encryption queries at security parameter `n`, the CPA distinguishing advantage against `prfCipher`
 is bounded by the sum of the PRF distinguishing advantages of
 `cpaToPrfDistinguisher adversary false` and `cpaToPrfDistinguisher adversary true` plus
-`2 * Q^2 / 2^n`. -/
+`2 * Q^2 / 2^n` (where `2 * Q^2 / 2^n` is a factor-`2` loosening of the source's `Q^2 / N =
+Q^2 / 2^n` collision term from equation (5.11) on printed p. 187, arising from the `Q * Q / 2^n`
+union bound per challenge bit in `bad_prfCipherForgetfulWithBadOracle_le`). -/
 theorem advantage_cpaGame_prfCipher_le (family : List Bool → List Bool → List Bool)
     (hpoly : ComputableInPolyTime (fun pair => family pair.1 pair.2)
       (encPair encBits encBits) encBits)
@@ -1969,7 +1960,7 @@ theorem advantage_cpaGame_prfCipher_le (family : List Bool → List Bool → Lis
   linarith
 
 /-- **Any secure `PseudorandomFunction` yields an `INDCPA`-secure symmetric cipher `prfCipher`**
-([BonehShoup2023], Section 5.4.1, Example 5.2 and Theorem 5.2, printed pp. 183–187). -/
+([BonehShoup2023], Section 5.4.1, Example 5.2 and Theorem 5.2, printed pp. 183–189). -/
 theorem PseudorandomFunction.indcpa_prfCipher
     {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family) :
     (prfCipher family hprf.polyTime hprf.length_eq).INDCPA := by
@@ -1997,18 +1988,9 @@ theorem PseudorandomFunction.indcpa_prfCipher
 
 /-! #### End-to-End Non-Vacuous PRF Encrypt-then-MAC Instance -/
 
-/-- Doubling schedule `2 * n` is computable in plain polynomial time in unary. -/
-theorem computableInPolyTime_double :
-    ComputableInPolyTime (fun n : ℕ => 2 * n) encUnary encUnary :=
-  .of_tidy (by polytime)
-
-/-- Doubling schedule `2 * n` is strictly monotone on `ℕ`. -/
-theorem strictMono_double : StrictMono (fun n : ℕ => 2 * n) :=
-  fun _ _ h => Nat.mul_lt_mul_of_pos_left h (by decide)
-
 /-- **Concrete PRF-based Encrypt-then-MAC cipher** combining `prfCipher` (`2 * n`-bit ciphertexts on
 `n`-bit plaintexts) with
-`(prfMAC family hpoly).reindex (fun n => 2 * n) computableInPolyTime_double`
+`(prfMAC family hpoly).reindex (fun n => 2 * n) (.of_tidy (by polytime))`
 (authenticating `2 * n`-bit ciphertexts at security parameter `n`). -/
 noncomputable def prfEncryptThenMAC (family : List Bool → List Bool → List Bool)
     (hpoly : ComputableInPolyTime (fun pair => family pair.1 pair.2)
@@ -2017,7 +1999,7 @@ noncomputable def prfEncryptThenMAC (family : List Bool → List Bool → List B
     SymmetricCipher :=
   encryptThenMAC
     (prfCipher family hpoly hlen)
-    ((prfMAC family hpoly).reindex (fun n => 2 * n) computableInPolyTime_double)
+    ((prfMAC family hpoly).reindex (fun n => 2 * n) (.of_tidy (by polytime)))
     (prfCipher_ciphertext_length family hpoly hlen)
 
 /-- **End-to-end non-vacuity of `authenticatedEncryption_encryptThenMAC`**: for any secure
@@ -2028,7 +2010,7 @@ theorem PseudorandomFunction.authenticatedEncryption_prfEncryptThenMAC
     (prfEncryptThenMAC family hprf.polyTime hprf.length_eq).AuthenticatedEncryption :=
   authenticatedEncryption_encryptThenMAC_prfMAC
     (prfCipher family hprf.polyTime hprf.length_eq)
-    hprf computableInPolyTime_double strictMono_double
+    hprf (.of_tidy (by polytime)) (strictMono_mul_left_of_pos two_pos)
     (prfCipher_ciphertext_length family hprf.polyTime hprf.length_eq)
     hprf.indcpa_prfCipher
 

@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Computational.Encryption.EncryptThenMAC
+import Complexity.Probability.BitString
 
 /-!
 # Tests for Encrypt-then-MAC and Randomized PRF-Based Encryption
@@ -47,6 +48,19 @@ example :
     echoPrfCipher.decrypt 2 [true, false] [true, false, false, true] =
       some [true, true] := by
   rfl
+
+-- `prfCipher.encrypt` is genuinely randomized: two distinct ciphertexts of the same plaintext
+-- `[true, true]` under the same key `[true, false]` both lie in the support of `encrypt`.
+example :
+    [false, false, true, true] ∈
+        (ProbComp.eval (echoPrfCipher.encrypt 2 [true, false] [true, true])).support ∧
+      [true, false, false, true] ∈
+        (ProbComp.eval (echoPrfCipher.encrypt 2 [true, false] [true, true])).support ∧
+      ([false, false, true, true] : List Bool) ≠ [true, false, false, true] := by
+  simp only [echoPrfCipher, prfCipher, echoFamily, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.mem_support_bind_iff, PMF.support_pure, Set.mem_singleton_iff,
+    BitString.eval_sampleList, BitString.mem_support_uniformList_iff]
+  refine ⟨⟨[false, false], rfl, rfl⟩, ⟨[true, false], rfl, rfl⟩, by decide⟩
 
 -- Wrong-length ciphertext is rejected by `prfCipher.decrypt`.
 example :
