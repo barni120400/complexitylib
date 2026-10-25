@@ -487,8 +487,14 @@ meta def Internal.funPropWithPlainBoundary (maxSteps : Nat) : TacticM Unit := wi
 
 open Lean Elab Tactic in
 /-- Plain deterministic goals use the shared backend at their original step limit. -/
-private meta def polytimePlainFunProp : TacticM Unit :=
-  Internal.funPropWithPlainBoundary 256
+private meta def polytimePlainFunProp : TacticM Unit := do
+  let search := Internal.funPropWithPlainBoundary 256
+  if (rawPremiseCache.getState (← Lean.getEnv)).rawProperties.isSome then
+    search
+  else
+    -- Other tactics can invoke this rule directly, outside the `polytime` elaborator.
+    -- Bootstrap the same scoped cache rather than repeatedly classifying global declarations.
+    Internal.withPlainRuleCache search
 
 open Lean Meta Elab Tactic in
 /-- An explicit raw construction goal may use a plain certificate and its existing PT normal
