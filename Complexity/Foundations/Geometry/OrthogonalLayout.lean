@@ -165,7 +165,7 @@ theorem center_elbow_axisAligned (v : ℕ) (s : Fin 3) : AxisAligned (center v) 
   fin_cases s <;> norm_num [AxisAligned, center, elbow, column, Prod.mk.injEq]; omega
 
 /-- The complete route has exactly five segments. -/
-@[simp] theorem route_segments_length (n e u v : ℕ) (s t : Fin 3) :
+theorem route_segments_length (n e u v : ℕ) (s t : Fin 3) :
     (route n e u v s t).consecutivePairs.length = 5 := by
   rfl
 
