@@ -18,8 +18,11 @@ Exercises the KEM, DEM, and KEM–DEM hybrid encryption API in
 `Complexity.Crypto.Computational.Encryption.Hybrid`:
 * native runtime certificates for `kemRealGame`, `kemIdealGame`, `demGame`, `hybridEncrypt`,
   `hybridDecrypt`, `otpEncrypt`, and `otpDecrypt`;
-* non-vacuous rejection of an insecure KEM (`not_kemINDCPA_leaking`) by an explicit uniform
-  distinguisher;
+* non-vacuous rejection of two insecure KEMs by an explicit uniform distinguisher: `leakingEncaps`
+  (`not_kemINDCPA_leaking`), whose leaked key is one bit too long and is caught by the length
+  mismatch alone, and `sameLengthLeakingEncaps` (`not_kemINDCPA_sameLengthLeaking`), whose leaked
+  key has the ideal key's length `n`, so the distinguisher has advantage exactly `1 - 2⁻ⁿ`
+  (`advantage_kem_sameLengthLeaking`);
 * exact decryption correctness of `hybridEncrypt` / `hybridDecrypt` instantiated with a concrete
   KEM and the one-time pad DEM (`otpEncrypt` / `otpDecrypt`);
 * quantitative advantage bounds (`advantage_hybridGame_le`, `advantage_hybridGame_le_two_mul`) and
@@ -41,7 +44,9 @@ noncomputable def toyKeyGen (n : ℕ) : ProbComp (List Bool × List Bool) := do
   return (k, k)
 
 /-- Deliberately insecure encapsulation that copies the public key as both encapsulated key and
-ciphertext, and prefixes `true` so the encapsulated key is non-empty even at `n = 0`. -/
+ciphertext, and prefixes `true` so the encapsulated key is non-empty even at `n = 0`. This is the
+length-boundary fixture: the leaked key has length `n + 1`, so it never equals an ideal `n`-bit
+key. `sameLengthLeakingEncaps` below removes the length difference. -/
 def leakingEncaps (_ : ℕ) (pk : List Bool) : ProbComp (List Bool × List Bool) :=
   pure (true :: pk, true :: pk)
 
@@ -174,6 +179,111 @@ theorem not_kemINDCPA_leaking : ¬ KEMINDCPA toyKeyGen leakingEncaps := by
     simp [Game.advantage, Game.succProbability]
   rw [hone] at hneg
   exact not_negligible_const one_ne_zero hneg
+
+/-! ### A leaking KEM of the right length -/
+
+/-- Deliberately insecure encapsulation that copies the public key as both encapsulated key and
+ciphertext. Under `toyKeyGen` the leaked key is a uniform `n`-bit word, the same length as the
+ideal key, so a length test cannot detect it. -/
+def sameLengthLeakingEncaps (_ : ℕ) (pk : List Bool) : ProbComp (List Bool × List Bool) :=
+  pure (pk, pk)
+
+theorem sameLengthLeakingEncaps_ppt :
+    IsPPTOn (encPair encUnary encBits) (encPair encBits encBits)
+      (fun p => sameLengthLeakingEncaps p.1 p.2) := by
+  unfold sameLengthLeakingEncaps
+  ppt
+
+/-- A uniform `n`-bit word equals a fixed `n`-bit word with probability `2⁻ⁿ`. -/
+theorem uniformList_bind_decide_eq_apply_true {n : ℕ} {w : List Bool} (hw : w.length = n) :
+    ((BitString.uniformList n).bind fun k => PMF.pure (decide (k = w))) true = (2 ^ n)⁻¹ := by
+  rw [show (fun k => PMF.pure (decide (k = w))) = PMF.pure ∘ fun k => decide (k = w) from rfl,
+    PMF.bind_pure_comp, BitString.uniformList_map_apply]
+  subst hw
+  have hcard : (Finset.univ.filter fun r : Fin w.length → Bool =>
+      decide (List.ofFn r = w) = true).card = 1 := by
+    rw [Finset.card_eq_one]
+    refine ⟨w.get, ?_⟩
+    ext r
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and, decide_eq_true_eq,
+      Finset.mem_singleton]
+    constructor
+    · intro h
+      exact List.ofFn_injective (h.trans (List.ofFn_get w).symm)
+    · rintro rfl
+      exact List.ofFn_get w
+  rw [hcard, Nat.cast_one, one_div]
+
+/-- In `kemRealGame`, `eqKemDistinguisher` always outputs `true` on `sameLengthLeakingEncaps`. -/
+theorem eval_kemRealGame_sameLengthLeaking (n : ℕ) :
+    ProbComp.eval (kemRealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher n) =
+      PMF.pure true := by
+  simp only [kemRealGame, toyKeyGen, sameLengthLeakingEncaps, eqKemDistinguisher, encPair_apply,
+    encBits_apply, unframe_frame_append, dropFrame_frame_append, ProbComp.eval_bind,
+    ProbComp.eval_pure, BitString.eval_sampleList, PMF.pure_bind,
+    decide_true, PMF.bind_const]
+
+/-- In `kemIdealGame`, `eqKemDistinguisher` outputs `true` on `sameLengthLeakingEncaps` exactly
+when the independent ideal key equals the public key, which has probability `2⁻ⁿ`. -/
+theorem eval_kemIdealGame_sameLengthLeaking_true (n : ℕ) :
+    ProbComp.eval (kemIdealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher n) true =
+      (2 ^ n)⁻¹ := by
+  simp only [kemIdealGame, toyKeyGen, sameLengthLeakingEncaps, eqKemDistinguisher, encPair_apply,
+    encBits_apply, unframe_frame_append, dropFrame_frame_append, ProbComp.eval_bind,
+    ProbComp.eval_pure, BitString.eval_sampleList, PMF.bind_bind, PMF.pure_bind]
+  rw [PMF.bind_apply]
+  calc
+    _ = ∑' pk, BitString.uniformList n pk * (2 ^ n)⁻¹ := by
+      refine tsum_congr fun pk => ?_
+      by_cases hpk : pk ∈ (BitString.uniformList n).support
+      · rw [uniformList_bind_decide_eq_apply_true
+          (BitString.length_of_mem_support_uniformList hpk)]
+      · rw [(PMF.apply_eq_zero_iff _ _).mpr hpk, zero_mul, zero_mul]
+    _ = (2 ^ n)⁻¹ := by rw [ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul]
+
+/-- `eqKemDistinguisher` distinguishes `sameLengthLeakingEncaps` with advantage exactly
+`1 - 2⁻ⁿ`: it accepts with probability `1` in the real game and `2⁻ⁿ` in the ideal game. -/
+theorem advantage_kem_sameLengthLeaking (n : ℕ) :
+    Game.advantage
+        (ProbComp.eval (kemRealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher n))
+        (ProbComp.eval (kemIdealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher n)) =
+      1 - (2 ^ n)⁻¹ := by
+  have hle : ((2 : ℝ≥0) ^ n)⁻¹ ≤ 1 := inv_le_one_of_one_le₀ (one_le_pow₀ one_le_two)
+  rw [Game.advantage, Game.succProbability, Game.succProbability,
+    eval_kemRealGame_sameLengthLeaking, eval_kemIdealGame_sameLengthLeaking_true,
+    PMF.pure_apply_self, ENNReal.toNNReal_one, ENNReal.toNNReal_inv, ENNReal.toNNReal_pow,
+    ENNReal.toNNReal_ofNat, NNReal.nndist_eq, tsub_eq_zero_of_le hle, max_eq_left zero_le]
+
+/-- At `n = 1` the advantage is `1 / 2`. -/
+example :
+    Game.advantage
+        (ProbComp.eval (kemRealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher 1))
+        (ProbComp.eval (kemIdealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher 1)) =
+      1 / 2 := by
+  rw [advantage_kem_sameLengthLeaking,
+    tsub_eq_iff_eq_add_of_le (inv_le_one_of_one_le₀ (one_le_pow₀ one_le_two))]
+  norm_num
+
+/-- At `n = 2` the advantage is `3 / 4`. -/
+example :
+    Game.advantage
+        (ProbComp.eval (kemRealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher 2))
+        (ProbComp.eval (kemIdealGame toyKeyGen sameLengthLeakingEncaps eqKemDistinguisher 2)) =
+      3 / 4 := by
+  rw [advantage_kem_sameLengthLeaking,
+    tsub_eq_iff_eq_add_of_le (inv_le_one_of_one_le₀ (one_le_pow₀ one_le_two))]
+  norm_num
+
+/-- The same-length leaking KEM is not IND-CPA secure: the advantage `1 - 2⁻ⁿ` of
+`eqKemDistinguisher` plus the negligible `2⁻ⁿ` is the constant `1`. -/
+theorem not_kemINDCPA_sameLengthLeaking : ¬ KEMINDCPA toyKeyGen sameLengthLeakingEncaps := by
+  intro hsecure
+  have hneg := hsecure eqKemDistinguisher eqKemDistinguisher_ppt
+  simp only [advantage_kem_sameLengthLeaking] at hneg
+  have hsum := hneg.add_fun (negligible_geometric (ratio := 2⁻¹) (by norm_num))
+  refine not_negligible_const one_ne_zero (?_ : Negligible fun _ => (1 : ℝ≥0))
+  convert hsum using 2 with n
+  rw [inv_pow, tsub_add_cancel_of_le (inv_le_one_of_one_le₀ (one_le_pow₀ one_le_two))]
 
 /-- For `1 ≤ n`, specializing `advantage_hybridGame_le_two_mul` to `otpEncrypt` eliminates the
 DEM advantage term via `advantage_demGame_otpEncrypt_eq_zero`. -/
