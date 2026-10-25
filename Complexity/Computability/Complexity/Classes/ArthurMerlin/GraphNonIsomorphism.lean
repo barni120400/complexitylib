@@ -17,6 +17,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Factorial
 import Complexity.Foundations.Data.BitString.Basic
+import Complexity.Foundations.Data.Matrix.Reindex
 import Mathlib.Data.List.GetD
 
 /-!
@@ -74,7 +75,7 @@ protocol in `Complexity.Computability.Complexity.Classes.IP.GraphNonIsomorphism`
 
 namespace Cslib.Complexity
 
-open Finset Turing.MultiTapeTM
+open Finset Turing.MultiTapeTM Matrix
 
 namespace GraphNonIsomorphism
 
@@ -83,25 +84,6 @@ namespace PublicCoin
 /-! ### Relabelling matrices -/
 
 variable {n : ℕ}
-
-/-- Relabelling by a product of permutations is relabelling twice. -/
-theorem reindex_mul (σ τ : Equiv.Perm (Fin n)) (M : Matrix (Fin n) (Fin n) Bool) :
-    Matrix.reindex (σ * τ) (σ * τ) M = Matrix.reindex σ σ (Matrix.reindex τ τ M) :=
-  (DFunLike.congr_fun (Matrix.reindex_trans τ τ σ σ) M).symm
-
-/-- Relabelling by the identity permutation does nothing. -/
-theorem reindex_one (M : Matrix (Fin n) (Fin n) Bool) : Matrix.reindex 1 1 M = M :=
-  Matrix.reindex_refl_refl M
-
-/-- `Matrix.reindex τ τ A = M` says that `τ` carries `A` to `M`. -/
-theorem reindex_eq_iff {τ : Equiv.Perm (Fin n)} {A M : Matrix (Fin n) (Fin n) Bool} :
-    Matrix.reindex τ τ A = M ↔ ∀ i j, M (τ i) (τ j) = A i j := by
-  constructor
-  · rintro rfl i j
-    simp
-  · intro h
-    ext i j
-    simpa using (h (τ.symm i) (τ.symm j)).symm
 
 /-- The relabellings of a matrix by permutations of its rows and columns. -/
 def orbit (A : Matrix (Fin n) (Fin n) Bool) : Finset (Matrix (Fin n) (Fin n) Bool) :=
