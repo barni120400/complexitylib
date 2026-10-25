@@ -39,6 +39,9 @@ formulas are at least as strong as for formulas whose negations sit at the leave
 * `Cslib.Circuits.Formula.size_orList_add_one`, `Cslib.Circuits.Formula.depthWith_orList_le`,
   `Cslib.Circuits.Formula.size_andList_add_one`, `Cslib.Circuits.Formula.depthWith_andList_le`: a
   balanced tree of `k ≥ 1` formulas adds `k - 1` nodes and `⌈log₂ k⌉` levels.
+* `Cslib.Circuits.Formula.leafSize_orList_le`, `Cslib.Circuits.Formula.leafSize_andList_le`: the
+  leaf size of `orList l` or `andList l` is at most the sum of the leaf sizes of the formulas in
+  `l`.
 * `Cslib.Circuits.Formula.exists_computes`: every Boolean function has a De Morgan formula.
 * `Cslib.Circuits.Boolean.exists_computes_depthWith_eq_formulaDepth`: some formula attains the
   formula depth.
@@ -266,6 +269,20 @@ theorem size_orList_add_one {l : List (Formula signature n)} (hl : l ≠ []) :
 theorem size_andList_add_one {l : List (Formula signature n)} (hl : l ≠ []) :
     (andList l).size + 1 = (l.map size).sum + l.length :=
   size_balanced_add_one _ hl
+
+/-- The leaf size of `orList l` is at most the sum of the leaf sizes of the formulas in `l`. -/
+theorem leafSize_orList_le (l : List (Formula signature n)) :
+    (orList l).leafSize ≤ (l.map leafSize).sum := by
+  rcases eq_or_ne l [] with rfl | hl
+  · simp
+  · exact (leafSize_balanced (const false) hl).le
+
+/-- The leaf size of `andList l` is at most the sum of the leaf sizes of the formulas in `l`. -/
+theorem leafSize_andList_le (l : List (Formula signature n)) :
+    (andList l).leafSize ≤ (l.map leafSize).sum := by
+  rcases eq_or_ne l [] with rfl | hl
+  · simp
+  · exact (leafSize_balanced (const true) hl).le
 
 /-- A balanced disjunction is deeper than its disjuncts by `⌈log₂⌉` of their number times the
 cost of a disjunction; the disjunction of no formulas is a constant. -/
