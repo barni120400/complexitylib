@@ -61,6 +61,8 @@ theorem, lemma, and page locators follow the full version `arXiv:2009.11514v1` (
 * `Cslib.Complexity.MildlyHardOnAverageToOneSidedApprox.mildlyHardOnAverageToApprox`:
   shift + gap-scaling bridge converting one-sided $(2 g)$-approximation hardness into symmetric
   $g$-approximation hardness whenever `fun x => g x.length` is computable in polynomial time.
+* `Cslib.Complexity.MildlyHardOnAverageToOneSidedApproxDet.mildlyHardOnAverageToApproxDet`: the
+  same bridge for deterministic approximation.
 * `Cslib.Complexity.MildlyHardOnAverageToApprox.eventually_real_abs_sub_le`:
   upper-rounded integer log window `d * (Nat.log 2 n + 1)` implies the real-valued symmetric window
   $|(v : \mathbb{R}) - f(x)| \le d \log_2 |x|$ of Definition 2.5.
