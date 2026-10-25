@@ -122,4 +122,13 @@ theorem idxOf [DecidableEq α] (enc : α ↪ List Bool) :
   simpa only [Function.comp_def, foldl_idxStep, Bool.false_eq_true, ite_false, Nat.zero_add]
     using (snd encBool encUnary).comp h
 
+/-- Find a computed value's first occurrence in a computed list. -/
+@[fun_prop]
+theorem idxOfWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    [DecidableEq α] {list : γ → List α} {value : γ → α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hvalue : ComputableInPolyTime value encIn encA) :
+    ComputableInPolyTime (fun x => (list x).idxOf (value x)) encIn encUnary :=
+  (idxOf encA).comp (hlist.prod hvalue)
+
 end Turing.MultiTapeTM.ComputableInPolyTime
