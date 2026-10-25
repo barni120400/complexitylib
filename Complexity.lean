@@ -1019,6 +1019,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Reducti
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceTable
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock

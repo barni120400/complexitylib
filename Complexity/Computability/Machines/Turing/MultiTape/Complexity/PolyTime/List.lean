@@ -7,7 +7,7 @@ Authors: Erik Demaine, Christian Reitwiessner, Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
@@ -948,26 +948,6 @@ theorem length_bits :
     ComputableInPolyTime (fun (l : List Bool) => l.length)
   encBits encUnary :=
   .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.length_bits
-
-/-- Map a function that also uses the original input. A single joint certificate in the input
-and list element makes the cost uniform across all elements. The list certificate is supplied
-first so that `fun_prop` can infer its element encoding before checking the body. -/
-@[fun_prop]
-theorem mapWithInput {α : Type}
-    {β : Type}
-    {γ : Type}
-    {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool}
-    {encIn : γ ↪ List Bool}
-    {f : γ → α → β}
-    {list : γ → List α}
-    (hlist : ComputableInPolyTime list encIn (encList encA))
-    (hf : ComputableInPolyTime (fun (p : γ × α) => f p.1 p.2)
-  (encPair encIn encA) encB) :
-    ComputableInPolyTime (fun (x : γ) => List.map (f x) (list x)) encIn
-  (encList encB) :=
-  .of_tidy (@Turing.MultiTapeTM.ComputableTidilyInPolyTime.mapWithInput α β γ encA encB encIn f
-      list hlist.tidy hf.tidy)
 
 /-- Drop a computed unary number of bits from a computed raw word. Counts beyond the word
 length return the empty word, with no promise on the count or input. -/

@@ -135,7 +135,8 @@ private theorem foldlReverse {α : Type} (word acc : List α) :
   | nil => simp
   | cons bit word ih => simp [ih, List.reverse_cons, List.append_assoc]
 
-private theorem foldlMap {α β : Type} (f : α → β) (list : List α) (acc : List β) :
+/-- Appending mapped elements in a left fold retains the initial output prefix. -/
+theorem foldlMap {α β : Type} (f : α → β) (list : List α) (acc : List β) :
     list.foldl (fun mapped value => mapped ++ [f value]) acc = acc ++ list.map f := by
   induction list generalizing acc with
   | nil => simp
