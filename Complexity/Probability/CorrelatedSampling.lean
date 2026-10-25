@@ -189,7 +189,8 @@ theorem map_firstIn_weightedOrderAux (w : Ω → ℝ≥0) :
         · rw [ite_eq_left haR, PMF.pure_apply]
           by_cases hac : a = c
           · subst hac
-            simp [du, weightedDraw_apply, haR, (mem_inter.mp hc).2]
+            simp only [weightedDraw_apply, (mem_inter.mp hc).2, ↓reduceIte, mul_one, mem_filter, haR,
+              not_true_eq_false, and_false, add_zero, du]
             rfl
           · simp [hac, Ne.symm hac, haR]
         · rw [ite_eq_right haR, hrhs]

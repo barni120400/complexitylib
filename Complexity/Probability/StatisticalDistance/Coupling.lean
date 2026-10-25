@@ -56,7 +56,8 @@ private theorem dist_map_map_le_of_finite [Finite α] [Fintype β] (p : PMF α) 
     · simp [hfg]
     · rw [← Finset.add_sum_erase _ _ (Finset.mem_univ (f a)),
         Finset.sum_eq_single_of_mem (g a) (by simp [Ne.symm hfg])]
-      · simp [hfg, Ne.symm hfg]
+      · simp only [↓reduceIte, Ne.symm hfg, sub_zero, abs_one, hfg, zero_sub, abs_neg, ne_eq,
+          not_false_eq_true]
         norm_num
       · intro b hb hbg
         have hbf : b ≠ f a := by simpa using hb
