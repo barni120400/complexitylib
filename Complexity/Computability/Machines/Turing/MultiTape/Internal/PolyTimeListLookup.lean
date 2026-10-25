@@ -7,6 +7,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeOptionPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Index
 import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Bounds
@@ -54,6 +55,35 @@ theorem dropUnary {encL : List α ↪ List Bool} [ListEncoding encA encL]
       simp only [length_encPair]
       omega)
   simpa only [heq] using h
+
+/-- Read an optional head in any list encoding, without an inhabitant of the element type. -/
+@[fun_prop]
+theorem head? (enc : α ↪ List Bool) {encL : List α ↪ List Bool}
+    [_inst3 : ListEncoding enc encL] :
+    ComputableInPolyTime List.head? encL (encOption enc) := by
+  rcases isEmpty_or_nonempty α with h | h
+  · exact of_finite _
+  · obtain ⟨fallback⟩ := h
+    have hempty : ComputableInPolyTime List.isEmpty encL encBool := by
+      obtain ⟨c, k, Q, hfin, tm, htm⟩ := ListEncoding.isEmpty (enc₁ := enc) (enc := encL)
+      exact ⟨fun n => c * (n + 1), fun n => c * (n + 1), by fun_prop, by fun_prop,
+        k, Q, hfin, tm, fun l => (htm l).computesInTimeAndSpace⟩
+    have hread := hempty.ite (const none) ((optionSome enc).comp (headPlain fallback))
+    convert hread using 1
+    funext values
+    cases values <;> rfl
+
+/-- Look up a computed unary index, returning `none` outside a computed list. The list certificate
+ determines its encoding before proof search checks the corresponding operation and size rules. -/
+@[fun_prop]
+theorem getElem? {γ : Type} {encIn : γ ↪ List Bool} {encL : List α ↪ List Bool}
+    {list : γ → List α} {index : γ → ℕ}
+    (hlist : ComputableInPolyTime list encIn encL)
+    (hindex : ComputableInPolyTime index encIn encUnary)
+    [ListEncoding encA encL] [SizedListEncoding encA encL] :
+    ComputableInPolyTime (fun x => (list x)[index x]?) encIn (encOption encA) := by
+  simpa only [Function.comp_def, List.head?_drop] using
+    (head? encA).comp ((dropUnary (encA := encA)).comp (hlist.prod hindex))
 
 /-- Lookup with an explicit default and unary index, in any sized list encoding. -/
 @[fun_prop]
