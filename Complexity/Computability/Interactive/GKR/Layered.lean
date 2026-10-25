@@ -38,9 +38,8 @@ wiring predicates and the gate values of the layer below
 
 ## Main results
 
-* `Cslib.Interactive.GKR.LayeredCircuit.eval_multilinearExtension_addPred`,
-  `Cslib.Interactive.GKR.LayeredCircuit.eval_multilinearExtension_multPred`: closed forms of the
-  multilinear extensions of the wiring predicates.
+* `Cslib.Interactive.GKR.LayeredCircuit.eval_multilinearExtension_wiringPred`: the closed form of
+  the multilinear extensions of the wiring predicates (`addPred` and `multPred` are its two cases).
 * `Cslib.Interactive.GKR.LayeredCircuit.eval_multilinearExtension_step`: the GKR identity.
 
 ## References
