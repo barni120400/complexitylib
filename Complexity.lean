@@ -1790,6 +1790,7 @@ public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.OrderedSet.Spec
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Polynomial.SignQueries
+public import Complexity.Foundations.Data.Rat.Basic
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape

@@ -56,15 +56,15 @@ example : encodeNat 6 = [true, true, true, false, false, true, true] := by
   decide +kernel
 
 example : (Rat.divInt (-6) 4).num.natAbs = 3 := by
-  rw [divInt_num_abs (-6) 4 (by decide)]
+  rw [Rat.divInt_num_natAbs (-6) 4 (by decide)]
   decide +kernel
 
 example : (Rat.divInt (-6) 4).den = 2 := by
-  rw [divInt_den (-6) 4 (by decide)]
+  rw [Rat.divInt_den_of_ne_zero (-6) 4 (by decide)]
   decide +kernel
 
 example : decide ((Rat.divInt (-6) 4).num < 0) = true := by
-  rw [divInt_sign (-6) 4 (by decide)]
+  rw [Rat.divInt_sign (-6) 4 (by decide)]
   decide +kernel
 
 example : encodeRat (Rat.divInt (-6) 4) =
