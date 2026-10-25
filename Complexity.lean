@@ -1803,6 +1803,7 @@ public import Complexity.Foundations.Data.Code.LocalDecoding
 public import Complexity.Foundations.Data.Code.LocalListDecoding
 public import Complexity.Foundations.Data.Code.LowDegreeExtension
 public import Complexity.Foundations.Data.Code.Multilinearity
+public import Complexity.Foundations.Data.Code.MultilinearitySoundness
 public import Complexity.Foundations.Data.Code.ReedMuller
 public import Complexity.Foundations.Data.Code.ReedSolomon
 public import Complexity.Foundations.Data.Code.SelfCorrection
