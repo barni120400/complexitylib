@@ -33,7 +33,7 @@ security.
 * `noise_margin`: the strict decoding margin after the entire declared depth budget.
 * `entropy_margin`, `negligible_statistical_error`: the statistical part of the security bound.
 * `polynomiallyBounded_parameters`: polynomial bounds for the unary numerical parameters.
-* `computableTidilyInPolyTime_modulus`: native computation of the binary modulus.
+* `computableInPolyTime_modulus`: native computation of the binary modulus.
 
 ## References
 

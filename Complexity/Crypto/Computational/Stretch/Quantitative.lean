@@ -23,11 +23,12 @@ only needs a bounded seed prefix; the one-bit length promise is used separately 
 lengths.
 
 Under the genuine one-bit length invariant (`(generator s).length = s.length + 1`), `iterate` and
-`stretch` also admit cumulative quantitative certificates (`ComputableTidilyInTimeAndSpace`) that
-stream the emitted bits in forward generation order followed by the reversed final seed
-(`forwardIterate`), charging `O(n + k + ∑_{i < k} (tGen(seed_i) + n + 1))` time and `O(Q + n + 1)`
-workspace during the streaming loop, and then apply one linear-time zero-workspace reversal
-(`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.reverse_bits`) whose composition charges the
+`stretch` also admit plain cumulative certificates (`ComputableInTimeAndSpace`) that stream the
+emitted bits in forward generation order followed by the reversed final seed (`forwardIterate`),
+charging `O(n + k + ∑_{i < k} (tGen(seed_i) + n + 1))` time and `O(Q + n + 1)` workspace during
+the streaming loop. Workspace counts only work-tape cells; emitted output is not charged to it.
+The proof then uses a linear-time zero-workspace tidy reversal
+(`Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.reverse_bits`), whose composition charges the
 `(n + k)`-bit reversal buffer to restore the exact original output order.
 
 ## Main definitions
@@ -51,7 +52,7 @@ workspace during the streaming loop, and then apply one linear-time zero-workspa
 * `Cslib.Crypto.PRGStretch.computableInTimeAndSpace_forwardIterate`,
   `Cslib.Crypto.PRGStretch.computableInTimeAndSpace_forwardIterate_captured`: streaming `k`
   expansions in forward order with cumulative time and `k`-independent workspace `O(Q + n + 1)`,
-  both clients of `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum`.
+  their proofs use `Turing.MultiTapeTM.ComputableTidilyInTimeAndSpace.iterate_unary_stream_sum`.
 * `Cslib.Crypto.PRGStretch.computableInTimeAndSpace_iterate_pair`,
   `Cslib.Crypto.PRGStretch.computableInTimeAndSpace_iterate_captured`,
   `Cslib.Crypto.PRGStretch.computableInTimeAndSpace_stretch`,
@@ -59,7 +60,7 @@ workspace during the streaming loop, and then apply one linear-time zero-workspa
   `Cslib.Crypto.PRGStretch.polyTime_stretch_of_length_eq`: quantitative cumulative-time, workspace
   and degree certificates for `iterate` (unparameterized and with captured parameters) and
   `stretch`, preserving the exact reverse-generation output order and recovering
-  `ComputableTidilyInPolyTime`.
+  `ComputableInPolyTime`.
 
 ## References
 
@@ -442,7 +443,7 @@ theorem computableInTimeAndSpace_forwardIterate
     nlinarith [Nat.zero_le (a * (Q p + p.1.length))]
 
 /-- **Quantitative cumulative-time and workspace certificate for `PRGStretch.iterate`.**
-Composing `forwardIterate` with the linear-time zero-workspace reversal primitive
+The proof composes `forwardIterate` with the linear-time zero-workspace tidy reversal primitive
 `ComputableTidilyInTimeAndSpace.reverse_bits` produces the exact output of
 `iterate generator p.1.length p.2 p.1`. The time bound remains
 `O(n + k + ∑_{i < k} (tGen(seed_i) + n + 1))`, while the workspace bound `O(Q + n + k + 1)`
@@ -643,7 +644,7 @@ theorem computableInDegree_stretch
   exact ⟨⟨_, _, (((htC.add hseed).add hlC).add hsum).add_const 1 |>.smul c,
     (((hsC.add hQ).add hseed).add hlC).add_const 1 |>.smul c, hstretch⟩, hout⟩
 
-/-- Recover `ComputableTidilyInPolyTime (stretch generator count)` directly as a corollary of the
+/-- Recover `ComputableInPolyTime (stretch generator count)` directly as a corollary of the
 quantitative streaming theorem `computableInTimeAndSpace_stretch` (via
 `computableInDegree_stretch`). -/
 theorem polyTime_stretch_of_length_eq {generator : List Bool → List Bool} {count : ℕ → ℕ}
