@@ -97,8 +97,9 @@ when a milestone completes only part of it.
    Keep the issue open until the work is merged or explicitly dispositioned by a coordinator.
    Awaiting review is a handoff, not abandoned active work: hourly worker reports and the
    three-hour takeover rule are suspended while the PR waits in the coordinator's queue.
-6. Await coordinator review for that PR while freely progressing other tasks; do not approve or
-   merge your own PR. Address requested changes, post an `active` status when resuming,
+6. Await coordinator review for that PR while progressing other tasks; do not approve or merge
+   your own PR. Address requested changes on your open PRs before opening new ones, post an
+   `active` status when resuming,
    restart hourly reports, and request fresh review of the updated revision. If unavailable,
    release the task explicitly so another worker can take over.
 
@@ -389,6 +390,19 @@ CSLib examples: [focused fixes and replies](https://github.com/leanprover/cslib/
 [an architectural suggestion kept separate from approval](https://github.com/leanprover/cslib/pull/1120),
 and [API review with explicit nonblocking nits](https://github.com/leanprover/cslib/pull/923#pullrequestreview-5560941186).
 
+## New statements and definitions
+
+When a declaration claims to formalize a cited result, the PR quotes the source statement with its
+exact locator and maps the source's notation to the Lean statement: quantifiers, models, encodings
+and resource conventions. Reviewers check that mapping rather than an impression. New mathematics
+and new proof ideas need no source; label them as original.
+
+Whether a new definition needs checked examples on both sides (an instance where it holds and one
+where it fails) is for the author and reviewers to judge; reviewers may ask for them when a
+definition could be vacuous or trivially satisfied.
+
+Reuse existing definitions rather than adding parallel notions; extend or generalize them instead.
+
 ## Curated formal abstracts
 
 `abstracts/catalogue.json` selects the public headline results. Each selected group has a checked
@@ -434,11 +448,10 @@ are not versioned.
   recovering `MultiTapeTM` and `Choose := Set` recovering `MultiTapeNTM`, step-exactly.
 - Computability predicates (`PolyTime`, `InTimeSpace`, …) are `@[fun_prop]`-registered; loops
   go through Hoare-style `iterate_spec` rules and the Aesop `polytime` set.
-- Tidy computability (`ComputableTidily…`) is a proof device for composing machines. Definitions
-  and public results use plain computability with independent time and space bounds: upstream
-  `ComputableInTimeAndSpace…` and the notions built on it, such as `ComputableInPolyTime`. Proofs
-  switch through the bridges (`ComputableInPolyTime.tidy`, `.of_tidy`); the combinator layer
-  stays tidy.
+- Definitions and public results use plain computability with independent time and space bounds:
+  upstream `ComputableInTimeAndSpace…` and the notions built on it, such as `ComputableInPolyTime`.
+  The tidy computability calculus is being deleted (#862); tidiness survives only as a machine-level
+  kernel inside the Machines layer, used inside proofs of plain rules.
 - Programs are `PFunctor.FreeM` values; a machine's clocked run is itself a program.
 - The universal machine is an interpreter program certified by the calculus, not a hand-built
   machine.
