@@ -123,32 +123,6 @@ noncomputable def reduction (generator : List Bool → List Bool) (count : ℕ �
   let i ← sampleBoundedIndex (count n)
   hop generator count adversary n i challenge
 
--- The tactic composes a sampled index, a conditional sample, and the supplied distinguisher.
-attribute [local fun_prop] ComputableInPolyTime.tidy in
-/-- The reduction's complete efficiency proof uses the public programming interface. -/
-@[program_certificate]
-theorem isPPT_reduction {generator : List Bool → List Bool} {count : ℕ → ℕ}
-    {adversary : Distinguisher} (hgenerator : ComputableInPolyTime generator encBits encBits)
-    (hcount : ComputableInPolyTime count encUnary encUnary)
-    (hadversary : IsPPT encBool adversary) :
-    IsPPT encBool (reduction generator count adversary) := by
-  have hgenerator := hgenerator.tidy
-  have hcount := hcount.tidy
-  have hiterate {β : Type} {encode : β ↪ List Bool}
-      {generator : β → List Bool → List Bool} {seedBits count : β → ℕ}
-      {word : β → List Bool}
-      (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
-        (encPair encode encBits) encBits)
-      (hseedBits : ComputableTidilyInPolyTime seedBits encode encUnary)
-      (hcount : ComputableTidilyInPolyTime count encode encUnary)
-      (hword : ComputableTidilyInPolyTime word encode encBits) :
-      ComputableTidilyInPolyTime
-        (fun a => iterate (generator a) (seedBits a) (count a) (word a)) encode encBits :=
-    (polyTime_iterate (.of_tidy hgenerator) (.of_tidy hseedBits)
-      (.of_tidy hcount) (.of_tidy hword)).tidy
-  unfold reduction hop
-  ppt
-
 /-- Apply the same random-hop reduction at an explicit seed length, with any captured test. -/
 noncomputable def test (generator : List Bool → List Bool) (seedBits count : ℕ)
     (adversary : List Bool → ProbComp Bool) (challenge : List Bool) : ProbComp Bool :=
@@ -169,24 +143,65 @@ theorem isPPT_test {α : Type} {input : α ↪ List Bool}
     (hchallenge : ComputableInPolyTime challenge input encBits) :
     IsPPTOn input encBool
       (fun a => test (generator a) (seedBits a) (count a) (adversary a) (challenge a)) := by
-  have hgenerator := hgenerator.tidy
-  have hseedBits := hseedBits.tidy
-  have hcount := hcount.tidy
-  have hchallenge := hchallenge.tidy
-  have hiterate {β : Type} {encode : β ↪ List Bool}
-      {generator : β → List Bool → List Bool} {seedBits count : β → ℕ}
-      {word : β → List Bool}
-      (hgenerator : ComputableTidilyInPolyTime (fun pair => generator pair.1 pair.2)
-        (encPair encode encBits) encBits)
-      (hseedBits : ComputableTidilyInPolyTime seedBits encode encUnary)
-      (hcount : ComputableTidilyInPolyTime count encode encUnary)
-      (hword : ComputableTidilyInPolyTime word encode encBits) :
-      ComputableTidilyInPolyTime
-        (fun a => iterate (generator a) (seedBits a) (count a) (word a)) encode encBits :=
-    (polyTime_iterate (.of_tidy hgenerator) (.of_tidy hseedBits)
-      (.of_tidy hcount) (.of_tidy hword)).tidy
-  unfold test reduction hop
-  ppt
+  let pairEncoding := encPair input encUnary
+  let fullEncoding := encPair pairEncoding encBits
+  have ha := ComputableInPolyTime.fst input encUnary
+  have hi := ComputableInPolyTime.snd input encUnary
+  have houter := ComputableInPolyTime.fst pairEncoding encBits
+  have hsuffix := ComputableInPolyTime.snd pairEncoding encBits
+  have hprepare : ComputableInPolyTime
+      (fun p : (α × ℕ) × List Bool => (p.1.1,
+        iterate (generator p.1.1) (seedBits p.1.1) (count p.1.1 - (p.1.2 + 1))
+          (challenge p.1.1 ++ p.2))) fullEncoding (encPair input encBits) := by
+    apply ComputableInPolyTime.prod (ha.comp houter)
+    apply polyTime_iterate
+    · have hparam := ComputableInPolyTime.fst fullEncoding encBits
+      have hword := ComputableInPolyTime.snd fullEncoding encBits
+      have harg : ComputableInPolyTime
+          (fun p : ((α × ℕ) × List Bool) × List Bool => (p.1.1.1, p.2))
+          (encPair fullEncoding encBits) (encPair input encBits) :=
+        ((ha.comp houter).comp hparam).prod hword
+      exact hgenerator.comp harg
+    · exact hseedBits.comp (ha.comp houter)
+    · exact ComputableInPolyTime.unary_sub.comp
+        ((hcount.comp (ha.comp houter)).prod
+          (ComputableInPolyTime.unary_succ.comp (hi.comp houter)))
+    · exact ComputableInPolyTime.bitsAppend (hchallenge.comp (ha.comp houter)) hsuffix
+  have hsample := isPPTOn_sampleList.preprocess hi
+  have hpost : IsPPTOn fullEncoding encBool (fun p : (α × ℕ) × List Bool =>
+      adversary p.1.1 (iterate (generator p.1.1) (seedBits p.1.1)
+        (count p.1.1 - (p.1.2 + 1)) (challenge p.1.1 ++ p.2))) := by
+    simpa only [Function.comp_def] using hadversary.preprocess hprepare
+  have hyes := hsample.bind_with
+    (second := fun p suffix => adversary p.1 (iterate (generator p.1) (seedBits p.1)
+      (count p.1 - (p.2 + 1)) (challenge p.1 ++ suffix))) hpost
+  have hcond := ComputableInPolyTime.unary_lt' hi (hcount.comp ha)
+  have hfalse : IsPPTOn pairEncoding encBool (fun _ => pure false) :=
+    (ComputableInPolyTime.const false).isPPTOn
+  have hbranch := IsPPTOn.ite hcond.tidy hyes hfalse
+  have hindex := isPPTOn_sampleBoundedIndex hcount.tidy
+  simpa only [test, reduction, hop, pairEncoding, fullEncoding, Function.comp_def] using
+    hindex.bind_with hbranch
+
+/-- The reduction's complete efficiency proof uses the public programming interface. -/
+@[program_certificate]
+theorem isPPT_reduction {generator : List Bool → List Bool} {count : ℕ → ℕ}
+    {adversary : Distinguisher} (hgenerator : ComputableInPolyTime generator encBits encBits)
+    (hcount : ComputableInPolyTime count encUnary encUnary)
+    (hadversary : IsPPT encBool adversary) :
+    IsPPT encBool (reduction generator count adversary) := by
+  have hgen : ComputableInPolyTime
+      (fun p : (ℕ × List Bool) × List Bool => generator p.2)
+      (encPair (encPair encUnary encBits) encBits) encBits :=
+    hgenerator.comp (ComputableInPolyTime.snd (encPair encUnary encBits) encBits)
+  have hadv : IsPPTOn (encPair (encPair encUnary encBits) encBits) encBool
+      (fun p => adversary p.1.1 p.2) := hadversary.on.preprocess
+    ((ComputableInPolyTime.fst (encPair encUnary encBits) encBits).fst'.prod
+      (ComputableInPolyTime.snd (encPair encUnary encBits) encBits))
+  simpa only [IsPPT, test, reduction, hop, Function.comp_def] using
+    (isPPT_test hgen (ComputableInPolyTime.fst encUnary encBits)
+      (hcount.comp (ComputableInPolyTime.fst encUnary encBits)) hadv
+      (ComputableInPolyTime.snd encUnary encBits))
 
 /-- Capping a sampled index only merges rejecting branches. -/
 theorem hop_min (generator : List Bool → List Bool) (count : ℕ → ℕ)
