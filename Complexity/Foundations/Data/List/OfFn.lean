@@ -28,6 +28,9 @@ other keys may repeat. The key order need only be a partial order.
 * `List.countP_range_eq_card_filter`: counting the numbers below `n` that pass a test is counting
   the elements of `Fin n` that pass it.
 * `List.sum_map_range`: a sum over `List.range n` is a sum over `Fin n`.
+* `Fin.card_lt_of_monotone_of_unique`: a unique value in a monotone array has its index many
+  smaller entries.
+* `List.Perm.key_ofFn_eq_of_rank`: a unique key occurs at its rank after sorting.
 * `List.Perm.apply_ofFn_eq_of_rank`: identify an entire entry at its sorted position.
 
 ## References
