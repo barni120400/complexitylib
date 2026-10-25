@@ -771,6 +771,7 @@ public import Complexity.Computability.Complexity.Problems.CountingSAT
 public import Complexity.Computability.Complexity.Problems.ExactThreeSAT
 public import Complexity.Computability.Complexity.Problems.GeneralizedGeography
 public import Complexity.Computability.Complexity.Problems.Graph
+public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawing
 public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalLayout
 public import Complexity.Computability.Complexity.Problems.Graph.Ports
 public import Complexity.Computability.Complexity.Problems.GraphIsomorphism
@@ -790,6 +791,8 @@ public import Complexity.Computability.Complexity.Problems.MonotoneCircuitValue.
 public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence
+public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
 public import Complexity.Computability.Complexity.Problems.STCON
@@ -1972,6 +1975,7 @@ public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.Compact
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.Gadgets
+public import Complexity.Logics.Propositional.CNF.ImplicationChain
 public import Complexity.Logics.Propositional.CNF.ImplicationCycle
 public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.Parity
