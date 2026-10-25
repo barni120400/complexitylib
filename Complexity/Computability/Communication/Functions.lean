@@ -119,7 +119,7 @@ theorem card_lt_two_pow_of_run_eq_equality [Fintype X] [DecidableEq X] (hX : 1 <
 /-- **Greater-than on a finite linear order needs more than `log₂` of its size bits**: a protocol
 computing greater-than on a linear order of at least two elements sends `d` bits with
 `|X| < 2 ^ d`. -/
-theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
+private theorem card_lt_two_pow_of_run_eq_greaterThan [Fintype X] [LinearOrder X]
     (hX : 1 < Fintype.card X) {p : Protocol X X Bool} (hp : p.run = greaterThan) :
     Fintype.card X < 2 ^ p.depth := by
   obtain ⟨x, y, hxy⟩ := Fintype.one_lt_card_iff.mp hX
