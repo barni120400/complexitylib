@@ -132,32 +132,6 @@ theorem computableInPolyTime_zeroVertex_comp {encIn : α ↪ List Bool} {n : α 
     ComputableInPolyTime (fun a => zeroVertex (n a)) encIn encBits :=
   .of_tidy (computableTidilyInPolyTime_zeroVertex_comp hn.tidy)
 
-/-- One step of converting a most-significant-first bit string to `Nat.bits` (`encNat`): strip
-leading `false` bits and prepend significant bits. -/
-private def binaryBitsStep (acc : List Bool) (bit : Bool) : List Bool :=
-  if acc.isEmpty && !bit then [] else bit :: acc
-
-private theorem foldl_binaryBitsStep (w : List Bool) :
-    w.foldl binaryBitsStep [] = (binaryValue w).bits := by
-  induction w using List.reverseRecOn with
-  | nil => rfl
-  | append_singleton w b ih =>
-    rw [List.foldl_append, List.foldl_cons, List.foldl_nil, ih, binaryValue_snoc]
-    rcases Nat.eq_zero_or_pos (binaryValue w) with h0 | hpos
-    · rw [h0]
-      cases b <;> rfl
-    · have hne : (binaryValue w).bits ≠ [] := by
-        intro h
-        have hbv := binaryValue_reverse_bits (binaryValue w)
-        rw [h] at hbv
-        change 0 = binaryValue w at hbv
-        omega
-      have hemp : (binaryValue w).bits.isEmpty = false := List.isEmpty_eq_false_iff.2 hne
-      have hbit : 2 * binaryValue w + b.toNat = Nat.bit b (binaryValue w) := by
-        cases b <;> simp [Nat.bit_val]
-      rw [hbit, Nat.bits_append_bit _ _ (by omega)]
-      simp [binaryBitsStep, hemp]
-
 @[fun_prop]
 theorem computableInPolyTime_binaryValue_comp {encIn : α ↪ List Bool} {w : α → List Bool}
     (hw : ComputableInPolyTime w encIn encBits) :
