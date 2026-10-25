@@ -10306,3 +10306,66 @@ info: 'Cslib.Complexity.not_mildlyHardOnAverageToApprox_zero' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Complexity.not_mildlyHardOnAverageToApprox_zero
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_condEPPRG' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_condEPPRG
+
+/--
+info: 'Cslib.Crypto.CondEPPRG.exists_mildlyHardOnAverageToApprox_timeBoundedNat_log_succ'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.CondEPPRG.exists_mildlyHardOnAverageToApprox_timeBoundedNat_log_succ
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_mildlyHardOnAverageToApprox_timeBoundedNat_log_succ'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_mildlyHardOnAverageToApprox_timeBoundedNat_log_succ
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_mildlyHardOnAverageToApprox_timeBoundedNat_clog'
+depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_mildlyHardOnAverageToApprox_timeBoundedNat_clog
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_mildlyHardOnAverageToApprox_timeBoundedNat' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_mildlyHardOnAverageToApprox_timeBoundedNat
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_eventually_real_abs_sub_le_timeBoundedNat' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_eventually_real_abs_sub_le_timeBoundedNat
+
+/--
+info: 'Cslib.Crypto.OneWay.exists_mildlyHardOnAverage_timeBoundedNat' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.OneWay.exists_mildlyHardOnAverage_timeBoundedNat
+
+/--
+info: 'Cslib.Crypto.exists_mildlyHardOnAverageToApprox_of_exists_oneWay' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.exists_mildlyHardOnAverageToApprox_of_exists_oneWay
+
+/--
+info: 'Cslib.Crypto.exists_mildlyHardOnAverage_of_exists_oneWay' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Crypto.exists_mildlyHardOnAverage_of_exists_oneWay

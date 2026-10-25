@@ -849,6 +849,7 @@ public import Complexity.Computability.Interactive.Plain
 public import Complexity.Computability.Interactive.Security
 public import Complexity.Computability.Interactive.Sequential
 public import Complexity.Computability.Interactive.Sumcheck
+public import Complexity.Computability.Kolmogorov.AverageCase
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
 public import Complexity.Computability.Kolmogorov.Depth
@@ -1475,6 +1476,8 @@ public import Complexity.Crypto.Computational.MerkleDamgard
 public import Complexity.Crypto.Computational.OneWay
 public import Complexity.Crypto.Computational.OneWay.BPP
 public import Complexity.Crypto.Computational.OneWay.Collision
+public import Complexity.Crypto.Computational.OneWay.CondEPPRG
+public import Complexity.Crypto.Computational.OneWay.LiuPass
 public import Complexity.Crypto.Computational.OneWay.MCSP
 public import Complexity.Crypto.Computational.OneWay.NP
 public import Complexity.Crypto.Computational.OneWay.Normalize
