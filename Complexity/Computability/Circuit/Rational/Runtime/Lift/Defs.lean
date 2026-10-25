@@ -10,6 +10,7 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Executable
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
+public import Complexity.Foundations.Data.List.OfFn
 import Mathlib.Data.List.GetD
 
 /-!
@@ -87,16 +88,10 @@ lemma val_finEquiv_symm {m : ℕ} [NeZero m] (z : ZMod m) :
     ((ZMod.finEquiv m).symm z).val = z.val := by
   rw [← val_finEquiv, RingEquiv.apply_symm_apply]
 
-/-- A sum over `List.range m` is a sum over `Fin m`. -/
-lemma sum_range_eq_sum_fin {A : Type*} [AddCommMonoid A] (m : ℕ) (f : ℕ → A) :
-    ((List.range m).map f).sum = ∑ i : Fin m, f i := by
-  rw [← List.map_coe_finRange_eq_range, List.map_map, ← List.ofFn_eq_map, List.sum_ofFn]
-  rfl
-
 /-- A sum over `List.range m` is a sum over the residues modulo `m`. -/
 lemma sum_range_eq_sum_zmod {A : Type*} [AddCommMonoid A] (m : ℕ) [NeZero m] (f : ℕ → A) :
     ((List.range m).map f).sum = ∑ z : ZMod m, f z.val := by
-  rw [sum_range_eq_sum_fin]
+  rw [List.sum_map_range]
   exact Fintype.sum_equiv (ZMod.finEquiv m).toEquiv _ _ fun i => by
     change f i.val = f (ZMod.finEquiv m i).val
     rw [val_finEquiv]
@@ -240,7 +235,7 @@ theorem testEntry_eq (M N : ℕ) (a t : ℤ) (u v : Fin M) :
     testEntry M N (coeffRows (-a) M) (coeffRows a M) t u v = IntegralTest.padded M N a t u v := by
   unfold testEntry IntegralTest.padded IntegralTest.full
   split_ifs
-  · rw [testTerms, sum_range_eq_sum_fin]
+  · rw [testTerms, List.sum_map_range]
     refine Finset.sum_congr rfl fun q _ => ?_
     have hq := q.isLt
     rw [testTerm, rowEntry_coeffRows, rowEntry_coeffRows, ite_eq_left (by omega),
