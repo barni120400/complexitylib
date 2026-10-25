@@ -12,6 +12,7 @@ public import Complexity.Crypto.Game.Hybrid
 public import Complexity.Foundations.Data.BitString.Basic
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
+import Complexity.Probability.PMF.Uniform
 import Complexity.Tactic.PolyTime
 
 /-!
@@ -19,7 +20,7 @@ import Complexity.Tactic.PolyTime
 
 Over a `PrimeOrderGroupFamily` `F`, the Naor–Reingold pseudorandom function
 ([BonehShoup2023], Section 10.11, Exercise 10.4, p. 424; [NaorReingold2004], Section 4.1,
-Construction 4.1 & Theorem 4.2) with key `(α₀, α₁, …, αₙ) ∈ (ZMod q)ⁿ⁺¹` maps an `n`-bit input
+Construction 4.1 & Theorem 4.1) with key `(α₀, α₁, …, αₙ) ∈ (ZMod q)ⁿ⁺¹` maps an `n`-bit input
 `x ∈ {0, 1}ⁿ` to the group element
 $$F_{\mathrm{NR}}((\alpha_0, \alpha_1, \dots, \alpha_n), (x_1, \dots, x_n))
   := \left(\alpha_0 \cdot \prod_{i=1}^n \alpha_i^{x_i}\right) \bullet g.$$
@@ -43,19 +44,22 @@ Following Boneh–Shoup Exercises 10.4, 10.8, 10.11, and 4.18, we formalize:
      counterpart `ddhFixedUWordRerandomize`, and the exact distributional laws
      `ddhFixedURerandomizeLaw_real` (Exercise 10.8(a)) and `ddhFixedURerandomizeLaw_ideal`
      (Exercise 10.8(b)).
-   - The Multi-DDH (I) reduction `multiDDHRerandomizeLaw` ([BonehShoup2023], Exercise 10.11,
-     p. 426), proving `multiDDHRerandomizeLaw_real`, `multiDDHRerandomizeLaw_ideal`, and the
-     quantitative bound `advantage_multiDDH_le` ($\le \mathrm{DDHadv}[B] + 1 / q$).
-3. **Naor–Reingold PRF prefix hybrids and security reduction (`naorReingoldRealGame`,
+   - The $n = 1$ (single shared secret $\alpha$, $|\iota|$ pairs) Multi-DDH (I) reduction
+     `multiDDHRerandomizeLaw` ([BonehShoup2023], Exercise 10.11, p. 426), whose wrapper samples
+     $|\iota|$ rerandomized pairs, proving `multiDDHRerandomizeLaw_real`,
+     `multiDDHRerandomizeLaw_ideal`, and the quantitative bound `advantage_multiDDH_le`
+     ($\le \mathrm{DDHadv}[B] + 1 / q$).
+3. **Naor–Reingold PRF prefix hybrids and distributional security bound (`naorReingoldRealGame`,
    `naorReingoldIdealGame`, `naorReingoldHybridGame`)**:
    - The adaptive oracle experiments `naorReingoldRealGame`, `naorReingoldIdealGame`, and the
      depth-$k$ prefix hybrids `naorReingoldHybridGame` ($0 \le k \le n$), with exact endpoint
      identities `naorReingoldHybridGame_zero` and `naorReingoldHybridGame_self`.
-   - The single-level DDH reduction `naorReingoldLevelDDHDistinguisher` and adjacent-hop bound
+   - The distributional single-level DDH distinguisher `naorReingoldLevelDDHDistinguisher`
+     (which samples the $2^k$-entry prefix table `BitString k`) and adjacent-hop bound
      `advantage_naorReingoldHybridGame_succ_le`, the $n$-hybrid sum bound
-     `advantage_naorReingold_le_sum`, the random-level single-distinguisher bound
-     `advantage_naorReingold_le_mul` ($\le n \cdot (\mathrm{DDHadv}[D] + 1 / q)$), and the
-     asymptotic `DDH` corollary `DDH.negligible_naorReingold_of_distinguisher`.
+     `advantage_naorReingold_le_sum`, and the common-bound corollary `advantage_naorReingold_le_mul`
+     ($\le n \cdot (\varepsilon + 1 / q)$). The efficient lazy-sampling reduction (`IsOraclePPT` /
+     `PseudorandomFunction` bridge) remains open in #1093.
 
 ## Main definitions
 
@@ -74,7 +78,7 @@ Following Boneh–Shoup Exercises 10.4, 10.8, 10.11, and 4.18, we formalize:
 * `Cslib.Crypto.PrimeOrderGroupFamily.multiDDHRealTupleLaw`,
   `Cslib.Crypto.PrimeOrderGroupFamily.multiDDHIdealTupleLaw`,
   `Cslib.Crypto.PrimeOrderGroupFamily.multiDDHRerandomizeLaw`:
-  Multi-DDH (I) distributions and rerandomization (Boneh–Shoup Exercise 10.11).
+  $n = 1$ Multi-DDH (I) distributions and rerandomization (Boneh–Shoup Exercise 10.11).
 * `Cslib.Crypto.PrimeOrderGroupFamily.naorReingoldRealGame`,
   `Cslib.Crypto.PrimeOrderGroupFamily.naorReingoldIdealGame`,
   `Cslib.Crypto.PrimeOrderGroupFamily.naorReingoldHybridGame`:
@@ -90,13 +94,15 @@ Following Boneh–Shoup Exercises 10.4, 10.8, 10.11, and 4.18, we formalize:
   `Cslib.Crypto.PrimeOrderGroupFamily.ddhFixedURerandomizeLaw_ideal`:
   fixed-$u$ DDH random self-reduction (Boneh–Shoup Exercise 10.8).
 * `Cslib.Crypto.PrimeOrderGroupFamily.advantage_multiDDH_le`:
-  Multi-DDH (I) reduction to DDH (Boneh–Shoup Exercise 10.11).
+  $n = 1$ Multi-DDH (I) reduction to DDH, sampling $|\iota|$ rerandomized pairs
+  (Boneh–Shoup Exercise 10.11).
 * `Cslib.Crypto.PrimeOrderGroupFamily.advantage_naorReingoldHybridGame_succ_le`,
   `Cslib.Crypto.PrimeOrderGroupFamily.advantage_naorReingold_le_sum`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.advantage_naorReingold_le_mul`,
-  `Cslib.Crypto.PrimeOrderGroupFamily.DDH.negligible_naorReingold_of_distinguisher`:
-  concrete and asymptotic security of the Naor–Reingold PRF under DDH (Boneh–Shoup Exercise 10.4(b);
-  Naor–Reingold Theorem 4.2).
+  `Cslib.Crypto.PrimeOrderGroupFamily.advantage_naorReingold_le_mul`:
+  distributional prefix-hybrid security bounds for the Naor–Reingold PRF against the explicit
+  $2^k$-pair PMF distinguisher `naorReingoldLevelDDHDistinguisher` (Boneh–Shoup Exercise 10.4(b);
+  Naor–Reingold Theorem 4.1). The efficient lazy-sampling reduction (`IsOraclePPT` /
+  `PseudorandomFunction` bridge) remains open in #1093.
 
 ## References
 
@@ -104,7 +110,7 @@ Following Boneh–Shoup Exercises 10.4, 10.8, 10.11, and 4.18, we formalize:
   Version 0.6][BonehShoup2023], Section 4.11 (Exercise 4.18, p. 172) and Section 10.11
   (Exercises 10.4, 10.8, 10.11, pp. 424–426).
 * [M. Naor, O. Reingold, *Number-Theoretic Constructions of Efficient Pseudo-Random
-  Functions*][NaorReingold2004], Section 4.1 (Construction 4.1 & Theorem 4.2).
+  Functions*][NaorReingold2004], Section 4.1 (Construction 4.1 & Theorem 4.1).
 -/
 
 @[expose] public section
@@ -303,7 +309,7 @@ theorem computableTidilyInPolyTime_naorReingoldProdNat :
   have hval : value.1.size ≤ (encList (encPair encNat encBool) input.2).length := by
     rw [← Nat.size_eq_bits_len, ← encNat_apply]
     have h1 : (encNat value.1).length ≤ (encPair encNat encBool value).length := by
-      simp
+      simp only [length_encPair]
       omega
     exact h1.trans (length_le_encList_of_mem (encPair encNat encBool) hmem)
   rcases value with ⟨v, _ | _⟩
@@ -589,16 +595,6 @@ private def ddhRerandomizeSecondCoordEquiv {q : ℕ} [Fact (Nat.Prime q)]
     · rfl
     · dsimp; rw [mul_assoc, inv_mul_cancel₀ hne, mul_one, add_sub_cancel]
 
-private theorem uniformOfFintype_prod_map_fst (α β : Type*)
-    [Fintype α] [Nonempty α] [Fintype β] [Nonempty β] :
-    (PMF.uniformOfFintype (α × β)).map Prod.fst = PMF.uniformOfFintype α := by
-  rw [← PMF.uniformOfFintype_prod, PMF.map_bind]
-  simp only [PMF.map_comp]
-  have hconst (a : α) :
-      (PMF.uniformOfFintype β).map (Prod.fst ∘ fun b => (a, b)) = PMF.pure a :=
-    PMF.map_const (PMF.uniformOfFintype β) a
-  simp_rw [hconst, PMF.bind_pure]
-
 /-- On any real DDH triple `(α • g, β • g, (α * β) • g)`, `multiDDHRerandomizeLaw` produces
 `multiDDHRealTupleLaw d ι α` ([BonehShoup2023], Exercise 10.11). -/
 theorem multiDDHRerandomizeLaw_real (d : F.Desc) (ι : Type*) [Fintype ι] [DecidableEq ι]
@@ -609,7 +605,7 @@ theorem multiDDHRerandomizeLaw_real (d : F.Desc) (ι : Type*) [Fintype ι] [Deci
       ((ι → ZMod (F.order d)) × (ι → ZMod (F.order d))) :=
     ddhRerandomizeRealTupleEquiv ι β
   rw [multiDDHRealTupleLaw,
-    ← uniformOfFintype_prod_map_fst (ι → ZMod (F.order d)) (ι → ZMod (F.order d)),
+    ← PMF.uniformOfFintype_prod_map_fst (α := ι → ZMod (F.order d)) (β := ι → ZMod (F.order d)),
     ← PMF.uniformOfFintype_map_equiv e, PMF.map_comp, PMF.map_comp,
     multiDDHRerandomizeLaw]
   congr 1; funext r; funext i
@@ -633,7 +629,7 @@ theorem multiDDHRerandomizeLaw_ideal (d : F.Desc) (ι : Type*) [Fintype ι] [Dec
 
 /-- If a family of games `g : α → Game` agrees with `p : Game` on every `a ≠ a₀`, then averaging
 `g` over `PMF.uniformOfFintype α` is within `(Fintype.card α)⁻¹` of `p`. -/
-theorem advantage_bind_uniformOfFintype_of_ne_le {α : Type*} [Fintype α] [Nonempty α]
+private theorem advantage_bind_uniformOfFintype_of_ne_le {α : Type*} [Fintype α] [Nonempty α]
     (a₀ : α) (g : α → Game) (p : Game) (hne : ∀ a, a ≠ a₀ → g a = p) :
     Game.advantage ((PMF.uniformOfFintype α).bind g) p ≤ (Fintype.card α : ℝ≥0)⁻¹ := by
   classical
@@ -669,10 +665,12 @@ theorem advantage_bind_uniformOfFintype_of_ne_le {α : Type*} [Fintype α] [None
   rw [ENNReal.toReal_inv, ENNReal.toReal_natCast, ← NNReal.coe_natCast, ← NNReal.coe_inv] at hadv
   exact NNReal.coe_le_coe.mp hadv
 
-/-- **Boneh–Shoup Exercise 10.11 (Multi-DDH (I), p. 426)**: for any finite index type `ι` and any
-test `test : F.Carrier d → (ι → F.Carrier d × F.Carrier d) → PMF Bool`, the advantage between
+/-- **Boneh–Shoup Exercise 10.11 ($n = 1$ Multi-DDH (I), p. 426)**: for a single shared secret `α`,
+any finite index type `ι` (`|ι|` pairs), and any test
+`test : F.Carrier d → (ι → F.Carrier d × F.Carrier d) → PMF Bool`, the advantage between
 `(α • g, multiDDHRealTupleLaw d ι α)` and `(α • g, multiDDHIdealTupleLaw d ι)` is at most the DDH
-advantage of the rerandomizing wrapper plus `(F.order d)⁻¹`. -/
+advantage of the rerandomizing wrapper `multiDDHRerandomizeLaw` (which samples `|ι|` pairs) plus
+`(F.order d)⁻¹`. -/
 theorem advantage_multiDDH_le (d : F.Desc) (ι : Type*) [Fintype ι] [DecidableEq ι]
     (test : F.Carrier d → (ι → F.Carrier d × F.Carrier d) → PMF Bool) :
     Game.advantage
@@ -816,7 +814,7 @@ def naorReingoldHybridEval (d : F.Desc) {n : ℕ} (k : ℕ)
 
 /-- Run an adaptive oracle distinguisher `adv` against a deterministic function
 `fn : BitString n → F.Carrier d`. -/
-noncomputable def evalWithFn (d : F.Desc) (n : ℕ)
+noncomputable def naorReingoldEvalWithFn (d : F.Desc) (n : ℕ)
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool)
     (fn : BitString n → F.Carrier d) : PMF Bool :=
   OracleComp.interpret (fun x => PMF.pure (fn x)) adv
@@ -827,7 +825,7 @@ noncomputable def naorReingoldRealGame (d : F.Desc) (n : ℕ)
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool) : Game := do
   let α₀ ← PMF.uniformOfFintype (ZMod (F.order d))
   let α ← PMF.uniformOfFintype (Fin n → ZMod (F.order d))
-  F.evalWithFn d n adv (F.naorReingoldEval d α₀ α)
+  F.naorReingoldEvalWithFn d n adv (F.naorReingoldEval d α₀ α)
 
 /-- The ideal random-function experiment at group `d` and input length `n`: a uniformly random
 function `BitString n → F.Carrier d` represented via
@@ -835,7 +833,7 @@ function `BitString n → F.Carrier d` represented via
 noncomputable def naorReingoldIdealGame (d : F.Desc) (n : ℕ)
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool) : Game := do
   let B ← PMF.uniformOfFintype (BitString n → ZMod (F.order d))
-  F.evalWithFn d n adv (fun x => B x • F.generator d)
+  F.naorReingoldEvalWithFn d n adv (fun x => B x • F.generator d)
 
 /-- The depth-`k` Naor–Reingold prefix-hybrid experiment ($0 \le k \le n$): queries share a
 uniform random function `B : BitString k → ZMod (F.order d)` on `k`-bit prefixes and evaluate the
@@ -845,7 +843,7 @@ noncomputable def naorReingoldHybridGame (d : F.Desc) (n k : ℕ)
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool) : Game := do
   let B ← PMF.uniformOfFintype (BitString k → ZMod (F.order d))
   let α ← PMF.uniformOfFintype (Fin n → ZMod (F.order d))
-  F.evalWithFn d n adv (F.naorReingoldHybridEval d k B α)
+  F.naorReingoldEvalWithFn d n adv (F.naorReingoldHybridEval d k B α)
 
 /-- At depth `0`, `naorReingoldHybridGame` is the real Naor–Reingold PRF experiment. -/
 @[simp]
@@ -944,7 +942,7 @@ noncomputable def naorReingoldLevelTest (d : F.Desc) {n : ℕ} (k : ℕ) (hk : k
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool)
     (_u : F.Carrier d) (T : BitString k → F.Carrier d × F.Carrier d) : PMF Bool := do
   let α ← PMF.uniformOfFintype (Fin n → ZMod (F.order d))
-  F.evalWithFn d n adv (F.naorReingoldTableEval d k hk T α)
+  F.naorReingoldEvalWithFn d n adv (F.naorReingoldTableEval d k hk T α)
 
 /-- Single-level DDH distinguisher at depth `k < n`: given a candidate DDH triple `(u, v, w)`,
 rerandomize it into a `BitString k`-indexed family via `multiDDHRerandomizeLaw` and run
@@ -984,7 +982,7 @@ theorem multiDDHRealTupleLaw_naorReingoldLevelTest (d : F.Desc) {n : ℕ} (k : �
     · simp [hxk, smul_smul, mul_comm]
   simp_rw [hfn]
   exact uniformOfFintype_bind_update ⟨k, hk⟩
-    (fun α => F.evalWithFn d n adv (F.naorReingoldHybridEval d k B α))
+    (fun α => F.naorReingoldEvalWithFn d n adv (F.naorReingoldHybridEval d k B α))
 
 /-- Under `multiDDHIdealTupleLaw`, `naorReingoldLevelTest` reproduces `naorReingoldHybridGame` at
 depth `k + 1`. -/
@@ -1034,10 +1032,13 @@ noncomputable def naorReingoldHopDDHDistinguisher (d : F.Desc) (n k : ℕ)
     (t : F.Carrier d × F.Carrier d × F.Carrier d) : PMF Bool :=
   if hk : k < n then F.naorReingoldLevelDDHDistinguisher d k hk adv t else PMF.pure false
 
-/-- **Naor–Reingold PRF security (`∑ k < n` bound, [BonehShoup2023], Exercise 10.4;
-[NaorReingold2004], Theorem 4.2)**: the distinguishing advantage between `naorReingoldRealGame` and
-`naorReingoldIdealGame` is bounded by the sum over `k ∈ Finset.range n` of the level-`k` DDH
-distinguishing advantages plus `n * (F.order d)⁻¹`. -/
+/-- **Naor–Reingold PRF distributional prefix-hybrid bound (`∑ k < n` bound,
+[BonehShoup2023], Exercise 10.4; [NaorReingold2004], Theorem 4.1)**: the distinguishing advantage
+between `naorReingoldRealGame` and `naorReingoldIdealGame` is bounded by the sum over
+`k ∈ Finset.range n` of the DDH distinguishing advantages of the explicit `2^k`-pair PMF
+distinguisher `naorReingoldLevelDDHDistinguisher` (`naorReingoldHopDDHDistinguisher`) plus
+`n * (F.order d)⁻¹`. The efficient lazy-sampling reduction (`IsOraclePPT` /
+`PseudorandomFunction` bridge) remains open in #1093. -/
 theorem advantage_naorReingold_le_sum (d : F.Desc) (n : ℕ)
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool) :
     Game.advantage (F.naorReingoldRealGame d n adv) (F.naorReingoldIdealGame d n adv) ≤
@@ -1070,9 +1071,12 @@ theorem advantage_naorReingold_le_sum (d : F.Desc) (n : ℕ)
   rw [heq]
   exact F.advantage_naorReingoldHybridGame_succ_le d k hlt adv
 
-/-- **Common-bound Naor–Reingold PRF reduction**: if every level-`k` DDH distinguisher (`k < n`)
-has DDH advantage at most `ε`, then the Naor–Reingold PRF advantage is at most
-`n * (ε + (F.order d)⁻¹)`. -/
+/-- **Common-bound Naor–Reingold PRF distributional prefix-hybrid bound**
+([BonehShoup2023], Exercise 10.4; [NaorReingold2004], Theorem 4.1): if for every `k < n` the
+explicit `2^k`-pair PMF distinguisher `naorReingoldHopDDHDistinguisher d n k adv` has DDH advantage
+at most `ε`, then the Naor–Reingold PRF advantage is at most `n * (ε + (F.order d)⁻¹)`. The
+efficient lazy-sampling reduction (`IsOraclePPT` / `PseudorandomFunction` bridge) remains open in
+#1093. -/
 theorem advantage_naorReingold_le_mul (d : F.Desc) (n : ℕ)
     (adv : OracleComp (fun _ : BitString n => F.Carrier d) Bool) (ε : ℝ≥0)
     (hε : ∀ k < n,
@@ -1091,73 +1095,5 @@ theorem advantage_naorReingold_le_mul (d : F.Desc) (n : ℕ)
   refine (F.advantage_naorReingoldHybridGame_succ_le d k hk adv).trans ?_
   rw [← heq]
   exact add_le_add (hε k hk) le_rfl
-
-/-- Setup-averaged real Naor–Reingold PRF experiment over `setup : ℕ → PMF F.Desc`. -/
-noncomputable def naorReingoldSetupRealGame (setup : ℕ → PMF F.Desc)
-    (adv : (n : ℕ) → (d : F.Desc) → OracleComp (fun _ : BitString n => F.Carrier d) Bool)
-    (n : ℕ) : Game :=
-  (setup n).bind fun d => F.naorReingoldRealGame d n (adv n d)
-
-/-- Setup-averaged ideal random-function experiment over `setup : ℕ → PMF F.Desc`. -/
-noncomputable def naorReingoldSetupIdealGame (setup : ℕ → PMF F.Desc)
-    (adv : (n : ℕ) → (d : F.Desc) → OracleComp (fun _ : BitString n => F.Carrier d) Bool)
-    (n : ℕ) : Game :=
-  (setup n).bind fun d => F.naorReingoldIdealGame d n (adv n d)
-
-/-- Setup-averaged depth-`k` Naor–Reingold prefix-hybrid experiment over `setup : ℕ → PMF F.Desc`.
--/
-noncomputable def naorReingoldSetupHybridGame (setup : ℕ → PMF F.Desc)
-    (adv : (n : ℕ) → (d : F.Desc) → OracleComp (fun _ : BitString n => F.Carrier d) Bool)
-    (n k : ℕ) : Game :=
-  (setup n).bind fun d => F.naorReingoldHybridGame d n k (adv n d)
-
-@[simp]
-theorem naorReingoldSetupHybridGame_zero (setup : ℕ → PMF F.Desc)
-    (adv : (n : ℕ) → (d : F.Desc) → OracleComp (fun _ : BitString n => F.Carrier d) Bool)
-    (n : ℕ) :
-    F.naorReingoldSetupHybridGame setup adv n 0 = F.naorReingoldSetupRealGame setup adv n := by
-  simp [naorReingoldSetupHybridGame, naorReingoldSetupRealGame]
-
-@[simp]
-theorem naorReingoldSetupHybridGame_self (setup : ℕ → PMF F.Desc)
-    (adv : (n : ℕ) → (d : F.Desc) → OracleComp (fun _ : BitString n => F.Carrier d) Bool)
-    (n : ℕ) :
-    F.naorReingoldSetupHybridGame setup adv n n = F.naorReingoldSetupIdealGame setup adv n := by
-  simp [naorReingoldSetupHybridGame, naorReingoldSetupIdealGame]
-
-/-- **Asymptotic Naor–Reingold PRF security under `DDH`** ([BonehShoup2023], Exercise 10.4;
-[NaorReingold2004], Theorem 4.2): if `F.DDH setup` holds, `1 / m n` is negligible, and `D` is an
-admissible strict-PPT DDH distinguisher whose advantage bounds each prefix-hybrid hop up to a
-polynomially bounded factor `loss n` plus `1 / m n`, then `naorReingoldSetupRealGame` and
-`naorReingoldSetupIdealGame` have negligible distinguishing advantage. Note that this theorem
-assumes the DDH reduction wrapper `D` and its hop-bound contract `hsim` as hypotheses. -/
-theorem DDH.negligible_naorReingold_of_distinguisher
-    {F : PrimeOrderGroupFamily} {setup : ℕ → PMF F.Desc} (hDDH : F.DDH setup)
-    {m : ℕ → ℕ}
-    (hinv : Negligible fun n => (1 / m n : ℝ≥0))
-    (adv : (n : ℕ) → (d : F.Desc) → OracleComp (fun _ : BitString n => F.Carrier d) Bool)
-    (D : ℕ → F.Desc × List Bool × List Bool × List Bool → ProbComp Bool)
-    (hD : IsPPTOn (encPair encUnary (encPair F.encDesc (encPair encBits (encPair encBits encBits))))
-      encBool (fun input => D input.1 input.2))
-    {loss : ℕ → ℕ} (hloss : PolynomiallyBounded loss)
-    (hsim : ∀ n k, k < n →
-      Game.advantage
-        (F.naorReingoldSetupHybridGame setup adv n k)
-        (F.naorReingoldSetupHybridGame setup adv n (k + 1)) ≤
-      loss n * Game.advantage (F.ddhRealGame setup D n) (F.ddhIdealGame setup D n) +
-        (1 / m n : ℝ≥0)) :
-    Negligible fun n =>
-      Game.advantage
-        (F.naorReingoldSetupRealGame setup adv n)
-        (F.naorReingoldSetupIdealGame setup adv n) := by
-  have hε : Negligible fun n =>
-      loss n * Game.advantage (F.ddhRealGame setup D n) (F.ddhIdealGame setup D n) +
-        (1 / m n : ℝ≥0) := by
-    refine Negligible.add ?_ hinv
-    simpa only [mul_comm (loss _ : ℝ≥0)] using (hDDH D hD).polynomiallyBounded_mul hloss
-  have hhyb := Game.negligible_hybrid
-    (games := fun n k => F.naorReingoldSetupHybridGame setup adv n k)
-    (hops := id) PolynomiallyBounded.id hε hsim
-  simpa only [id_eq, naorReingoldSetupHybridGame_zero, naorReingoldSetupHybridGame_self] using hhyb
 
 end Cslib.Crypto.PrimeOrderGroupFamily
