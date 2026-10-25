@@ -81,7 +81,8 @@ theorem sum_castAdd_add_sum_natAdd {k : ℕ} (v : Fin (k + k)) :
   · rw [Finset.sum_eq_single j₀, Finset.sum_eq_zero]
     · simp
     · intro j _
-      simp [Fin.ext_iff]
+      simp only [Fin.natAdd_eq_addNat, Fin.ext_iff, Fin.val_addNat, Fin.val_castAdd,
+        ite_eq_right_iff, one_ne_zero, imp_false]
       omega
     · intro j _ hj
       simp [Fin.castAdd_inj, hj]
@@ -92,7 +93,8 @@ theorem sum_castAdd_add_sum_natAdd {k : ℕ} (v : Fin (k + k)) :
       simp [hj]
     · simp
     · intro j _
-      simp [Fin.ext_iff]
+      simp only [Fin.natAdd_eq_addNat, Fin.ext_iff, Fin.val_addNat, Fin.val_castAdd,
+        ite_eq_right_iff, one_ne_zero, imp_false]
       omega
 
 /-- A bit string of length `k + k` is a pair of bit strings of length `k`. -/
