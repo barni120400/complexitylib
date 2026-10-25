@@ -799,6 +799,8 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Completeness
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Correctness
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
