@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 public import Complexity.Logics.Propositional.CNF.PolyTime
+import Complexity.Computability.Complexity.Classes.NP.Witness
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 
 /-!
@@ -45,6 +46,8 @@ Together with `Cslib.Complexity.SAT.isVerifier`, this proves membership in `NP`
   generic `Cslib.Logic.PL.CNF` lemmas).
 * `Cslib.Complexity.SAT.mem_NP`: satisfiability belongs to NP.
 * `Cslib.Complexity.UNSAT_mem_coNP`: unsatisfiability belongs to coNP.
+* `Cslib.Complexity.image_SAT_mem_NP`: the encodings of the satisfiable formulas form a problem in
+  `NP` on words.
 
 ## References
 
@@ -159,5 +162,9 @@ end SAT
 /-- Unsatisfiability is in coNP. -/
 theorem UNSAT_mem_coNP : UNSAT ∈ coNP encCNF := by
   simpa only [mem_coNP, ← compl_SAT, compl_compl] using SAT.mem_NP
+
+/-- The encodings of the satisfiable formulas form a problem in `NP` on words. -/
+theorem image_SAT_mem_NP : encCNF '' SAT ∈ NP encBits :=
+  mem_NP_image cnfDecoder SAT.mem_NP
 
 end Cslib.Complexity

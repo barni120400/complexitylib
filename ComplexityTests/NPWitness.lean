@@ -47,6 +47,11 @@ example : {n | ∃ m, m + m = n} ∈ NP encUnary :=
     isHalf_iff
     fun _ m h => ⟨m, h, by simp; omega⟩
 
+example : encUnary '' {n | ∃ m, m + m = n} ∈ NP encBits :=
+  mem_NP_image Decoder.unary
+    (mem_NP_of_witness Decoder.unary (p := Polynomial.X)
+      (.of_tidy computableTidilyInPolyTime_isHalf) isHalf_iff fun _ m h => ⟨m, h, by simp; omega⟩)
+
 -- In: the framed witness `2` for `4`, padded to the certificate length `2 * 4 + 1`.
 example : (frame (encUnary 2) ++ List.replicate 4 false).length = 2 * 4 + 1 := rfl
 example : witnessVerifier Decoder.unary isHalf (4, frame (encUnary 2) ++ List.replicate 4 false) =

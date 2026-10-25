@@ -27,6 +27,8 @@ example : Turing.MultiTapeNTM.DecidableInPolyTime SAT encCNF :=
 
 example : UNSAT ∈ coNP encCNF := UNSAT_mem_coNP
 
+example : encCNF '' SAT ∈ NP encBits := image_SAT_mem_NP
+
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 example : ComputableTidilyInPolyTime SAT.verifier (encPair encCNF encBits) encBool := by
   fun_prop
