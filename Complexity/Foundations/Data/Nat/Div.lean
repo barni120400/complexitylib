@@ -8,6 +8,7 @@ module
 -- upstream: candidate (to Mathlib's `Mathlib/Data/Nat/Defs.lean` or cslib)
 
 public import Complexity.Init
+public import Mathlib.Data.Nat.ModEq
 
 /-!
 # Dividing repeatedly by a power and quotient-remainder arithmetic
@@ -22,6 +23,9 @@ and exact quotient identities for division by `m` with remainder strictly below 
 * `Nat.mul_add_div_of_lt`, `Nat.add_mul_div_of_lt`: dividing `k * m + i` or `i + k * m` by `m`
   when `i < m` yields `k`.
 * `Nat.mul_add_div_fin`: the same for `i : Fin m`.
+* `Nat.add_sub_mod_mod_eq_ite`: difference of remainders modulo `d`, in the form
+  `(a + d - b % d) % d`.
+* `Nat.add_sub_mod_mod_eq_of_modEq`: a modular difference is determined by its congruence.
 -/
 
 @[expose] public section
@@ -51,5 +55,30 @@ theorem add_mul_div_of_lt (k : ℕ) {i m : ℕ} (hi : i < m) : (i + k * m) / m =
 /-- Dividing `k * m + i` by `m` for `i : Fin m` yields `k`. -/
 theorem mul_add_div_fin (k : ℕ) {m : ℕ} (i : Fin m) : (k * m + i) / m = k :=
   mul_add_div_of_lt k i.isLt
+
+/-- Difference of remainders modulo `d`, in the form `(a + d - b % d) % d`. -/
+theorem add_sub_mod_mod_eq_ite (a b d : ℕ) (hd : 0 < d) :
+    (a + d - b % d) % d = if a % d < b % d then a % d + d - b % d else a % d - b % d := by
+  have ha := Nat.mod_lt a hd
+  have hb := Nat.mod_lt b hd
+  have hdiv := Nat.div_add_mod a d
+  have he : a + d - b % d = (a % d + d - b % d) + d * (a / d) := by omega
+  rw [he, Nat.add_mul_mod_self_left]
+  split_ifs with h
+  · exact Nat.mod_eq_of_lt (by omega)
+  · rw [show a % d + d - b % d = (a % d - b % d) + d by omega, Nat.add_mod_right,
+      Nat.mod_eq_of_lt (by omega)]
+
+/-- A modular difference is determined by the congruence it satisfies. -/
+theorem add_sub_mod_mod_eq_of_modEq {a b c d : ℕ} (hd : 0 < d) (hc : c < d)
+    (he : c + b ≡ a [MOD d]) : (a + d - b % d) % d = c := by
+  have hb := Nat.mod_lt b hd
+  have h1 : (a + d - b % d) + b ≡ c + b [MOD d] :=
+    calc (a + d - b % d) + b ≡ (a + d - b % d) + b % d [MOD d] :=
+          (Nat.mod_modEq b d).symm.add_left _
+      _ = a + d := Nat.sub_add_cancel (by omega)
+      _ ≡ a [MOD d] := Nat.add_modEq_right
+      _ ≡ c + b [MOD d] := he.symm
+  rw [Nat.ModEq.add_right_cancel' b h1, Nat.mod_eq_of_lt hc]
 
 end Nat
