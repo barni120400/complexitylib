@@ -71,6 +71,7 @@ private meta def pptFunProp : TacticM Unit :=
 attribute [program_certificate]
   Turing.MultiTapeTM.ComputableInPolyTime.isPPTOn
   isPPTOn_sampleList
+  Turing.MultiTapeTM.ComputableInPolyTime.sampleList
   isPPTOn_uniform_bool
   IsPPTOn.memoize
 

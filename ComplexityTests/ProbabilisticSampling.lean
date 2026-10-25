@@ -71,4 +71,11 @@ example (count : List Bool → ℕ)
   fail_if_success have : IsPPTOn encNat encBits BitString.sampleList := by ppt
   trivial
 
+-- A computed count remains an ordinary plain certificate under arbitrary encoded inputs.
+example {α : Type} {input : α ↪ List Bool} {count : α → ℕ}
+    (hcount : ComputableInPolyTime count input encUnary) :
+    IsPPTOn input encBits (fun a => BitString.sampleList (count a)) := by
+  fail_if_success (clear hcount; ppt)
+  ppt
+
 end ComplexityTests.ProbabilisticSampling

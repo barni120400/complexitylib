@@ -24,7 +24,7 @@ strict fair-coin PPT.
 
 * `Cslib.Probability.isPPTOn_uniform_bool`: one fair bit is uniformly PPT.
 * `Cslib.Probability.isPPTOn_sampleList`: uniform words from a unary count.
-* `Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList`: sample an efficiently computed length.
+* `Turing.MultiTapeTM.ComputableInPolyTime.sampleList`: sample an efficiently computed length.
 
 ## References
 
@@ -65,9 +65,8 @@ end Cslib.Probability
 
 /-- Sample an efficiently computed number of independent fair bits, charging the count in unary. -/
 @[fun_prop]
-theorem Turing.MultiTapeTM.ComputableTidilyInPolyTime.sampleList {α : Type}
+theorem Turing.MultiTapeTM.ComputableInPolyTime.sampleList {α : Type}
     {input : α ↪ List Bool} {count : α → ℕ}
-    (hcount : ComputableTidilyInPolyTime count input encUnary) :
+    (hcount : ComputableInPolyTime count input encUnary) :
     Cslib.Probability.IsPPTOn input encBits (fun a => Cslib.BitString.sampleList (count a)) :=
-  Cslib.Probability.isPPTOn_sampleList.preprocess
-    (Turing.MultiTapeTM.ComputableInPolyTime.of_tidy hcount)
+  Cslib.Probability.isPPTOn_sampleList.preprocess hcount
