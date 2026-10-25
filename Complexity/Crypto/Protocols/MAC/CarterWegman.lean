@@ -130,7 +130,7 @@ This module formalizes:
    `prfRandomNonceStrongGame_le_of_distinguisher`, `prfRandomNonceGame_le_of_distinguisher`,
    `PseudorandomFunction.negligible_prfRandomNonceStrongGame`,
    `PseudorandomFunction.negligible_prfRandomNonceGame`)**: models Boneh–Shoup Section 7.4,
-   Theorem 7.9 ([BonehShoup2023], pp. 269–270) under a statistical `IsDeltaUniversalHash` family,
+   Theorem 7.9 ([BonehShoup2023], pp. 267–270) under a statistical `IsDeltaUniversalHash` family,
    where the signer samples a fresh uniform nonce `x_i ← PMF.uniformOfFintype N` on each signing
    query, bounding any `Q`-query adaptive forger's winning probability by
    `((∑ i ∈ Finset.range Q, i : ℕ) : ℝ≥0∞) / |N| + max ε (1 / |Y|) ≤`
@@ -2581,7 +2581,7 @@ structure RandomNonceForger (M N Y : Type) where
   forge : Coins → OracleComp (fun _ : M => N × Y) ((M × N) × Y)
 
 /-- Randomized Carter–Wegman signing handler driven by a pad function `padFn : N → Y`
-([BonehShoup2023], Section 7.4, p. 269): on signing query `m`, sample a uniform nonce
+([BonehShoup2023], Section 7.4, p. 267): on signing query `m`, sample a uniform nonce
 `x ← PMF.uniformOfFintype N`, compute `t = sign hash k (padFn x) m`, append `((m, x), t)` to the
 transcript `tr`, and return `(x, t)`. -/
 noncomputable def randomNonceFnHandler [Fintype N] [Nonempty N]
