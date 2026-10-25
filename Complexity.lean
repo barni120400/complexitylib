@@ -792,12 +792,20 @@ public import Complexity.Computability.Complexity.Problems.MonotoneCircuitValue.
 public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence
+public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Bounds
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Completeness
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Correctness
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Semantics
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
@@ -1844,6 +1852,7 @@ public import Complexity.Foundations.FieldTheory.TensorBasis
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Complexity.Foundations.Geometry.Orthogonal
+public import Complexity.Foundations.Geometry.Orthogonal.Endpoint
 public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
 public import Complexity.Foundations.Geometry.Orthogonal.Neighborhood
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
@@ -1986,6 +1995,7 @@ public import Complexity.Logics.Propositional.CNF.Gadgets
 public import Complexity.Logics.Propositional.CNF.ImplicationChain
 public import Complexity.Logics.Propositional.CNF.ImplicationCycle
 public import Complexity.Logics.Propositional.CNF.ModelCount
+public import Complexity.Logics.Propositional.CNF.Occurrence
 public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.Planar.Crossover
 public import Complexity.Logics.Propositional.CNF.Planar.CrossoverLayout
