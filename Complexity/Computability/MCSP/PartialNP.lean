@@ -11,6 +11,7 @@ public import Complexity.Computability.Complexity.Reduction
 public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.MCSP.Partial
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
+public import Complexity.Foundations.Data.Option
 import Complexity.Computability.Circuit.Boolean.Hierarchy
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -122,36 +123,14 @@ private theorem two_pow_le_length_enc_of_encT (encT : ℕ ↪ List Bool) (x : In
   dsimp only
   omega
 
-private theorem two_pow_le_length_enc (x : Instance) :
-    2 ^ x.arity ≤ (enc x).length :=
-  two_pow_le_length_enc_of_encT encUnary x
-
-private theorem two_pow_le_length_encBinary (x : Instance) :
-    2 ^ x.arity ≤ (encBinary x).length :=
-  two_pow_le_length_enc_of_encT encNat x
-
 /-- The entry of a partial truth-table list at the input with bits `y` (`none` if out of bounds). -/
 def tableEntry (table : List (Option Bool)) (y : List Bool) : Option Bool :=
   table.getD (BitString.boundedBinaryValue table.length y.reverse) none
 
 /-- The verifier reads the partial function of an instance from its truth table. -/
 theorem tableEntry_ofFn (x : Instance) (y : BitString x.arity) :
-    tableEntry (List.ofFn x.table) (List.ofFn y) = x.partialFunction y := by
-  have hlt := (BitString.equivFin x.arity y).isLt
-  rw [tableEntry, BitString.boundedBinaryValue_eq, BitString.binaryValue_reverse_ofFn,
-    List.length_ofFn, Nat.min_eq_right hlt.le, List.getD_eq_getElem _ _ (by simp),
-    List.getElem_ofFn]
-  rfl
-
-/-- An optional truth-table entry `entry` agrees with a circuit output bit `out` iff
-`entry.getD out == out` holds. -/
-private theorem getD_beq_self_eq_true_iff (entry : Option Bool) (out : Bool) :
-    (entry.getD out == out) = true ↔ ∀ b, entry = some b → out = b := by
-  cases entry with
-  | none => simp
-  | some b =>
-    simp only [Option.getD_some, beq_iff_eq, Option.some.injEq, forall_eq']
-    exact eq_comm
+    tableEntry (List.ofFn x.table) (List.ofFn y) = x.partialFunction y :=
+  MCSP.getD_boundedBinaryValue_reverse_ofFn x.table y none
 
 /-- The verifier for `PartialMCSP`: the certificate must describe a circuit on `n` inputs with at
 most `MCSP.budget n s` gates (`readCertificate`) whose output agrees with the partial truth table on
@@ -176,16 +155,6 @@ private theorem certLength_le_enc_of_encT (encT : ℕ ↪ List Bool) (x : Instan
     Polynomial.eval_X, Polynomial.eval_one, Polynomial.eval_ofNat, certLength]
   nlinarith
 
-private theorem certLength_le_enc (x : Instance) :
-    certLength x.arity (MCSP.budget x.arity x.threshold) ≤
-      MCSP.certPolynomial.eval (enc x).length :=
-  certLength_le_enc_of_encT encUnary x
-
-private theorem certLength_le_encBinary (x : Instance) :
-    certLength x.arity (MCSP.budget x.arity x.threshold) ≤
-      MCSP.certPolynomial.eval (encBinary x).length :=
-  certLength_le_enc_of_encT encNat x
-
 /-- **Soundness of the verifier.** An instance with an accepted certificate, of any length, is in
 `PartialMCSP`. -/
 theorem mem_of_verifier_eq_true {x : Instance} {w : List Bool} (hw : verifier (x, w) = true) :
@@ -193,7 +162,7 @@ theorem mem_of_verifier_eq_true {x : Instance} {w : List Bool} (hw : verifier (x
   obtain ⟨c, hcS, hall⟩ := MCSP.exists_circuit_of_checkCertificate hw
   refine mem_iff_exists_circuit.2 ⟨c, hcS.trans (Nat.min_le_left _ _), fun y b hy => ?_⟩
   have hagree := hall y
-  rw [tableEntry_ofFn x y, hy, getD_beq_self_eq_true_iff] at hagree
+  rw [tableEntry_ofFn x y, hy, Option.getD_beq_self_eq_true_iff] at hagree
   exact hagree b rfl
 
 /-- **Completeness of the verifier.** Every instance in `PartialMCSP` has a certificate of length
@@ -211,25 +180,24 @@ theorem exists_verifier_append {x : Instance} (hx : x ∈ PartialMCSP) :
   obtain ⟨c, hc, hsize⟩ := complexityOn_le_iff.mp hS
   have hagree : x.AgreesWith fun y => c.eval interpretation y 0 :=
     (Instance.computesOn_definedInputs_iff.mp hc)
-  obtain ⟨u, hu, hV⟩ := MCSP.exists_checkCertificate_append
+  exact MCSP.exists_checkCertificate_append
     (accept := fun y out => (tableEntry (List.ofFn x.table) y).getD out == out)
     hsize fun y => by
-    rw [tableEntry_ofFn, getD_beq_self_eq_true_iff]
+    rw [tableEntry_ofFn, Option.getD_beq_self_eq_true_iff]
     intro b hb
     exact hagree y b hb
-  exact ⟨u, hu, hV⟩
 
 /-- `PartialMCSP.verifier` verifies `PartialMCSP` under `enc` (unary threshold). -/
 theorem isVerifier : IsVerifier enc MCSP.certPolynomial verifier PartialMCSP := by
   refine IsVerifier.of_padding (fun x w _ hw => mem_of_verifier_eq_true hw) fun x hx => ?_
   obtain ⟨u, hu, hV⟩ := exists_verifier_append hx
-  exact ⟨u, hu ▸ certLength_le_enc x, fun k => hV _⟩
+  exact ⟨u, hu ▸ certLength_le_enc_of_encT encUnary x, fun k => hV _⟩
 
 /-- `PartialMCSP.verifier` verifies `PartialMCSP` under `encBinary` (binary threshold). -/
 theorem isVerifier_encBinary : IsVerifier encBinary MCSP.certPolynomial verifier PartialMCSP := by
   refine IsVerifier.of_padding (fun x w _ hw => mem_of_verifier_eq_true hw) fun x hx => ?_
   obtain ⟨u, hu, hV⟩ := exists_verifier_append hx
-  exact ⟨u, hu ▸ certLength_le_encBinary x, fun k => hV _⟩
+  exact ⟨u, hu ▸ certLength_le_enc_of_encT encNat x, fun k => hV _⟩
 
 /-! ### Polynomial time -/
 
@@ -266,77 +234,20 @@ theorem computableInPolyTime_tableVerifier :
     ComputableInPolyTime tableVerifier
       (encPair (encPair (encList (encOption encBool)) encNat) encBits) encBool := by
   let encT := encList (encOption encBool)
-  let encIn := encPair (encPair encT encNat) encBits
-  have hT : ComputableTidilyInPolyTime (fun r : (List (Option Bool) × ℕ) × List Bool => r.1.1)
-      encIn encT := (fst encT encNat).comp (fst _ _)
-  have hlen : ComputableTidilyInPolyTime (fun r : (List (Option Bool) × ℕ) × List Bool =>
-      r.1.1.length) encIn encUnary :=
-    (length_list (encOption encBool)).comp hT
-  have hm : ComputableTidilyInPolyTime (fun r : (List (Option Bool) × ℕ) × List Bool =>
-      Nat.log 2 r.1.1.length) encIn encUnary :=
-    unary_log_two.comp hlen
-  have hcap : ComputableTidilyInPolyTime (fun r : (List (Option Bool) × ℕ) × List Bool =>
-      r.1.1.length * (2 * Nat.log 2 r.1.1.length + 3) + 1) encIn encUnary := by
-    fun_prop
-  have hs : ComputableTidilyInPolyTime (fun r : (List (Option Bool) × ℕ) × List Bool => r.1.2)
-      encIn encNat := (snd encT encNat).comp (fst _ _)
-  have hS := MCSP.computableInPolyTime_min_cap (.of_tidy hs) (.of_tidy hcap)
-  have hw : ComputableTidilyInPolyTime (fun r : (List (Option Bool) × ℕ) × List Bool => r.2)
-      encIn encBits := snd _ _
-  have hsize : PolynomiallyBounded (fun L => L * (2 * L + 1)) := by fun_prop
-  have hbudget (r : (List (Option Bool) × ℕ) × List Bool) :
-      2 ^ Nat.log 2 r.1.1.length * (2 * Nat.log 2 r.1.1.length + 1) ≤
-        (encIn r).length * (2 * (encIn r).length + 1) := by
-    set T := r.1.1.length
-    have hpow : 2 ^ Nat.log 2 T ≤ T + 1 := by
-      rcases Nat.eq_zero_or_pos T with h | h
-      · simp [h]
-      · exact (Nat.pow_log_le_self 2 h.ne').trans (Nat.le_succ T)
-    have hlog : 2 * Nat.log 2 T + 1 ≤ 2 * T + 1 := by
-      have := Nat.log_le_self 2 T
-      omega
-    have h1 := SizedListEncoding.length_le (encA := encOption encBool) (encL := encT) r.1.1
-    have hT_enc : 2 * T + 1 ≤ (encIn r).length := by
-      simp only [encIn, length_encPair]
-      omega
-    calc 2 ^ Nat.log 2 T * (2 * Nat.log 2 T + 1) ≤ (T + 1) * (2 * T + 1) :=
-          Nat.mul_le_mul hpow hlog
-      _ ≤ (encIn r).length * (2 * (encIn r).length + 1) :=
-          Nat.mul_le_mul (by omega) (by omega)
-  have htable : ComputableTidilyInPolyTime
-      (fun p : (((List (Option Bool) × ℕ) × List Bool) × List Bool) × Bool => p.1.1.1.1)
-      (encPair (encPair encIn encBits) encBool) encT :=
-    (fst _ _).fst'.fst'.fst'
-  have hy : ComputableTidilyInPolyTime
-      (fun p : (((List (Option Bool) × ℕ) × List Bool) × List Bool) × Bool => p.1.2)
-      (encPair (encPair encIn encBits) encBool) encBits :=
-    (fst _ _).snd'
-  have hout : ComputableTidilyInPolyTime
-      (fun p : (((List (Option Bool) × ℕ) × List Bool) × List Bool) × Bool => p.2)
-      (encPair (encPair encIn encBits) encBool) encBool :=
-    snd _ _
-  have hentry : ComputableTidilyInPolyTime
-      (fun p : (((List (Option Bool) × ℕ) × List Bool) × List Bool) × Bool =>
-        tableEntry p.1.1.1.1 p.1.2)
-      (encPair (encPair encIn encBits) encBool) (encOption encBool) :=
-    computableInPolyTime_tableEntry.tidy.comp (htable.prod hy)
-  have hval : ComputableTidilyInPolyTime
-      (fun p : (((List (Option Bool) × ℕ) × List Bool) × List Bool) × Bool =>
-        (tableEntry p.1.1.1.1 p.1.2).getD p.2)
-      (encPair (encPair encIn encBits) encBool) encBool :=
-    optionGetDWithInput hentry hout
+  let encP := encPair encT encBits
   have haccept : ComputableInPolyTime
-      (fun p : (((List (Option Bool) × ℕ) × List Bool) × List Bool) × Bool =>
-        (tableEntry p.1.1.1.1 p.1.2).getD p.2 == p.2)
-      (encPair (encPair encIn encBits) encBool) encBool :=
-    .of_tidy (ComputableTidilyInPolyTime.beq hval hout)
-  exact MCSP.computableInPolyTime_checkCertificate
-    (γ := (List (Option Bool) × ℕ) × List Bool) (encIn := encIn)
-    (accept := fun r y out => (tableEntry r.1.1 y).getD out == out)
-    (m := fun r => Nat.log 2 r.1.1.length)
-    (S := fun r => min r.1.2 (r.1.1.length * (2 * Nat.log 2 r.1.1.length + 3) + 1))
-    (w := fun r => r.2)
-    (.of_tidy hm) hS (.of_tidy hw) hsize hbudget haccept
+      (fun p : (List (Option Bool) × List Bool) × Bool =>
+        (tableEntry p.1.1 p.1.2).getD p.2 == p.2)
+      (encPair encP encBool) encBool := by
+    have hentry := computableInPolyTime_tableEntry.tidy.comp
+      (((fst encP encBool).fst').prod ((fst encP encBool).snd'))
+    have hval := optionGetDWithInput hentry (snd encP encBool)
+    exact .of_tidy (ComputableTidilyInPolyTime.beq hval (snd encP encBool))
+  exact MCSP.computableInPolyTime_checkCertificate_table
+    (accept := fun T y out => (tableEntry T y).getD out == out)
+    (.of_tidy (length_list (encOption encBool)))
+    (fun T => SizedListEncoding.length_le (encA := encOption encBool) T)
+    haccept
 
 /-- The `PartialMCSP` verifier is computable in polynomial time under `encBinary`. -/
 theorem computableInPolyTime_verifier_encBinary :
