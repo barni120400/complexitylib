@@ -12,6 +12,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Machi
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Compose
 public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Decode
 public import Complexity.Foundations.Data.List.Append
+import Complexity.Foundations.Data.Nat.Bits
 import Mathlib.Data.Nat.Size
 
 /-!
@@ -84,35 +85,16 @@ def word (j : ℕ) : List Bool := (j + 1).bits.dropLast
 `true`. -/
 def index (w : List Bool) : ℕ := w.foldr Nat.bit 1 - 1
 
-theorem foldr_bit_one_ne_zero (w : List Bool) : w.foldr Nat.bit 1 ≠ 0 := by
-  induction w with
-  | nil => simp
-  | cons b w ih => exact Nat.bit_ne_zero b ih
-
-theorem bits_foldr_bit_one (w : List Bool) : (w.foldr Nat.bit 1).bits = w ++ [true] := by
-  induction w with
-  | nil => simp
-  | cons b w ih =>
-    rw [List.foldr_cons, Nat.bits_append_bit _ _ fun h => absurd h (foldr_bit_one_ne_zero w), ih,
-      List.cons_append]
-
-theorem foldr_bit_one_lt (w : List Bool) : w.foldr Nat.bit 1 < 2 ^ (w.length + 1) := by
-  induction w with
-  | nil => simp
-  | cons b w ih =>
-    rw [List.foldr_cons, Nat.bit_val, List.length_cons, pow_succ]
-    cases b <;> simp only [Bool.toNat_false, Bool.toNat_true] <;> omega
-
 /-- **Every word has an index.** -/
 @[simp]
 theorem word_index (w : List Bool) : word (index w) = w := by
-  rw [word, index, Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (foldr_bit_one_ne_zero w)),
-    bits_foldr_bit_one, List.dropLast_concat]
+  rw [word, index, Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.mpr (Nat.foldr_bit_one_ne_zero w)),
+    Nat.bits_foldr_bit_one, List.dropLast_concat]
 
 /-- The index of a word of length `l` is less than `2 ^ (l + 1) - 1`. -/
 theorem index_add_two_le (w : List Bool) : index w + 2 ≤ 2 ^ (w.length + 1) := by
-  have h₁ := foldr_bit_one_lt w
-  have h₂ := foldr_bit_one_ne_zero w
+  have h₁ := Nat.foldr_bit_one_lt w
+  have h₂ := Nat.foldr_bit_one_ne_zero w
   rw [index]
   omega
 
