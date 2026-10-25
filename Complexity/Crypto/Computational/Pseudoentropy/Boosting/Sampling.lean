@@ -159,7 +159,6 @@ theorem sampleWeight_density_deviation {α : Type} [Fintype α] (source : ProbCo
     ProbComp.countTrue_average_deviation count hcount
       (source >>= fun x => sampleWeight bound rateNumerator threshold (votes x) (truth x)) hε
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- Runtime-dependent parameters, votes, and labels compose to a uniform strict PPT sampler. -/
 theorem isPPTOn_sampleWeight {α : Type} {input : α ↪ List Bool}
     {bound rateNumerator threshold : α → ℕ} {votes : α → List Bool} {truth : α → Bool}
@@ -170,13 +169,10 @@ theorem isPPTOn_sampleWeight {α : Type} {input : α ↪ List Bool}
     (htruth : ComputableInPolyTime truth input encBool) :
     IsPPTOn input encBool (fun a =>
       sampleWeight (bound a) (rateNumerator a) (threshold a) (votes a) (truth a)) := by
-  have hbound := hbound.tidy
-  have hrate := hrate.tidy
-  have hthreshold := hthreshold.tidy
-  have hvotes := hvotes.tidy
-  have htruth := htruth.tidy
   unfold sampleWeight
-  ppt
+  exact isPPTOn_sampleDyadicCoin hbound.tidy
+    (isPolyTime_weightNumerator (ComputableInPolyTime.unary_dyadicSize.comp hbound)
+      hrate hthreshold hvotes htruth).tidy
 
 attribute [program_certificate] isPPTOn_sampleWeight
 
