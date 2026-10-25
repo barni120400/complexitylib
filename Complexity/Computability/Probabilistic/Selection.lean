@@ -97,10 +97,16 @@ theorem IsPPTOn.selectFrom {α β : Type} {input : α ↪ List Bool} {output : �
   have hget : ComputableInPolyTime
       (fun p : α × ℕ => ((values p.1)[p.2]?).getD fallback)
       (encPair input encUnary) output := by
-    apply ComputableInPolyTime.of_tidy
-    fun_prop
-  unfold OracleComp.selectFrom
-  ppt
+    simpa only [List.getD_eq_getElem?_getD, Function.comp_def] using
+      (ComputableInPolyTime.listGetD (encA := output) fallback).comp
+        (((ComputableInPolyTime.of_tidy hvalues).comp
+          (ComputableInPolyTime.fst input encUnary)).prod
+          (ComputableInPolyTime.snd input encUnary))
+  have htest' := htest.preprocess
+    ((ComputableInPolyTime.fst input encUnary).prod hget)
+  have hlength := (ComputableTidilyInPolyTime.length_list output).comp hvalues
+  simpa only [OracleComp.selectFrom, bind_pure_comp, Function.comp_def] using
+    (IsPPTOn.selectBest htest' hlength htrials).map_with hget
 
 /-- Sampling a polynomial candidate pool and selecting empirically is a uniform strict PPT
 program. Both the generator and the validation test may capture the original input. -/
@@ -113,7 +119,12 @@ theorem IsPPTOn.sampleBest {α β : Type} {input : α ↪ List Bool} {output : �
     (htrials : ComputableTidilyInPolyTime trials input encUnary) :
     IsPPTOn input output (fun a =>
       OracleComp.sampleBest (count a) (trials a) (source a) (test a) fallback) := by
-  unfold OracleComp.sampleBest
-  ppt
+  have htest' : IsPPTOn (encPair (encPair input (encList output)) output) encBool
+      (fun p => test p.1.1 p.2) := htest.preprocess
+    (prepare := fun p : (α × List β) × β => (p.1.1, p.2)) (by fun_prop)
+  have hselect := IsPPTOn.selectFrom (test := fun p : α × List β => test p.1) fallback
+    (ComputableTidilyInPolyTime.snd input (encList output))
+    (htrials.comp (ComputableTidilyInPolyTime.fst input (encList output))) htest'
+  exact (hsource.replicate hcount).bind_with hselect
 
 end Cslib.Probability
