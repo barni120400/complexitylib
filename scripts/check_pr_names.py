@@ -395,6 +395,8 @@ def search_words(token: str) -> set[str]:
     words = {last.rstrip("'!?")}
     if m := SIMPS_SUFFIX.match(last):
         words.add(m.group(1))
+    if re.fullmatch(r"to[A-Z]\w*", last):  # `extends Inhabited` declares `toInhabited`
+        words.add(last[2:].rstrip("'!?"))
     for variant in additive_variants(bare):
         words.add(variant.rsplit(".", 1)[-1].rstrip("'!?"))
     return {w for w in words if w}
@@ -529,7 +531,7 @@ def base_declarations(root: Path, base: str, words: set[str]) -> Declarations:
         end = data.index(b"\n", pos)
         header = data[pos:end].split()
         pos = end + 1
-        if len(header) != 3:  # `<object> missing`
+        if len(header) != 3 or header[1] != b"blob":  # `<object> missing`; a path may hold spaces
             continue
         size = int(header[2])
         parse_source(data[pos:pos + size].decode("utf-8", errors="replace"), decls)

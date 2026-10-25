@@ -143,6 +143,16 @@ class CheckPrNamesTests(unittest.TestCase):
         self.assertIn("did you mean `Cslib.Demo.secureGame`",
                       found["Cslib.Wrong.secureGame"].note(None))
 
+    def test_parent_projections_resolve_from_the_structure_file(self) -> None:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = pathlib.Path(tmp.name)
+        self.write("Complexity/Parent.lean", "class Base (α : Type) where\n  base : α\n")
+        self.write("Complexity/Child.lean",
+                   "structure Pair (α : Type) extends Base α where\n  first : α\n")
+        self.assertEqual(self.check("`Pair.toBase`"), {})
+        self.assertEqual(list(self.check("`Pair.toNotAThing`")), ["Pair.toNotAThing"])
+
     def test_hypothesis_shaped_names(self) -> None:
         found = self.check("`hasCollision_of_le`, `hfA`, `h_le`, `hasNothing`, `hFoo`")
         self.assertEqual(list(found), ["hasNothing", "hFoo"])
