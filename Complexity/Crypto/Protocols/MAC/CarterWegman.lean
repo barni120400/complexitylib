@@ -43,7 +43,7 @@ verifies under `r = -hash k m + t` if and only if
 
 Since the adversary's view `(m, t)` is independent of `k`, `IsDeltaUniversalHash seed hash ε`
 bounds the probability of this difference equation over `k ← seed` by at most `ε`
-([BonehShoup2023], Section 7.4, Theorem 7.3).
+([BonehShoup2023], Section 7.6, Lemma 7.11 and Theorem 7.12).
 
 This module formalizes:
 
@@ -55,7 +55,7 @@ This module formalizes:
    `oneTimeStrongGame`, `oneTimeStrongGame_eq_oneTimeGame`, `oneTimeGame_le`,
    `oneTimeStrongGame_le`)**: because each `(k, r, m)` admits a unique valid tag, strong
    unforgeability (`(m', t') ≠ (m, t)`) and ordinary unforgeability (`m' ≠ m`) coincide and are
-   bounded by `ε` ([BonehShoup2023], Theorem 7.3).
+   bounded by `ε` ([BonehShoup2023], Section 7.6, Lemma 7.11 and Theorem 7.12).
 4. **Adaptive multi-query issued-counter / issued-slot Carter–Wegman MAC (`CounterForger`,
    `counterSlotGame`, `counterGame`, `counterStrongGame`, `counterStrongGame_eq_counterSlotGame`,
    `counterSlotGame_le`, `counterGame_le`, `counterStrongGame_le`)**: when each signing query draws
@@ -100,7 +100,13 @@ This module formalizes:
    nonces `nonce n 0, ..., nonce n (Q n - 1)`, any `Q n`-query-bounded adaptive `CounterForger` has
    forgery probability at most `ε.toReal` plus the concrete `Q n`-query PRF distinguishing advantage
    of `prfMultiPadDistinguisher Q nonce test`, and negligible forgery probability when `family` is a
-   `PseudorandomFunction` and `ε` is `Negligible` ([BonehShoup2023], Section 7.4, Theorem 7.4).
+   `PseudorandomFunction` and `ε` is `Negligible` (after [BonehShoup2023], Section 7.5,
+   Theorem 7.10). This models the nonce-based Carter–Wegman construction under two restrictions
+   compared to Boneh–Shoup Attack Game 7.4: (a) the signer's counter schedule `nonce n i` fixes the
+   nonces rather than letting the adversary choose distinct nonces, and (b) `checkCounterSlot` /
+   `checkCounterGlobal` / `checkCounterStrong` accept forgeries only at issued counter slots
+   (`pads[idx]? = some r`) and reject unissued `idx`, which removes the `1 / |T|` unissued-nonce
+   guessing term.
 7. **Concrete instantiations** for Carter–Wegman polynomial hashing (`xpolyHash`, bound
    `(ℓ + 1) / |F|`), Boolean-matrix linear hashing (`BitString.LinearHash.hash`, bound `2⁻ᵐ`),
    subset-sum hashing (`BitString.SubsetSum.hash`, bound `1 / |G|`), and pairwise independent
@@ -148,7 +154,8 @@ This module formalizes:
   forgery probability.
 * `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_eq_oneTimeGame`,
   `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_le`,
-  `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_le`: Boneh–Shoup Theorem 7.3 (`≤ ε`).
+  `Cslib.Crypto.Protocols.CarterWegman.oneTimeStrongGame_le`: Boneh–Shoup Section 7.6, Lemma 7.11
+  and Theorem 7.12 (`≤ ε`).
 * `Cslib.Crypto.Protocols.CarterWegman.run_interpret_counterRealHandler`: simulation equivalence
   between real and simulated signing handlers under transcript mapping.
 * `Cslib.Crypto.Protocols.CarterWegman.counterStrongGame_eq_counterSlotGame`,
@@ -184,7 +191,7 @@ This module formalizes:
   `Cslib.Crypto.PseudorandomFunction.negligible_prfCounterGame`,
   `Cslib.Crypto.PseudorandomFunction.negligible_prfCounterStrongGame`: multi-query fresh-nonce
   PRF-masked Carter–Wegman security, `IsOraclePPT` admissibility, and asymptotic security
-  (Boneh–Shoup Section 7.4, Theorem 7.4).
+  (after Boneh–Shoup Section 7.5, Theorem 7.10).
 * `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_xpolyHash_le`,
   `Cslib.Crypto.Protocols.CarterWegman.counterGame_xpolyHash_le`,
   `Cslib.Crypto.Protocols.CarterWegman.oneTimeGame_linearHash_le`,
@@ -200,7 +207,7 @@ This module formalizes:
 * [M. N. Wegman, J. L. Carter, *New Hash Functions and Their Use in Authentication and Set
   Equality*][WegmanCarter1981]
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 7.4.
+  Version 0.6][BonehShoup2023], Sections 7.4–7.6.
 -/
 
 @[expose] public section
@@ -351,7 +358,7 @@ theorem zeroQueryGame_apply_true (seed : PMF K) (hash : K → M → Y) (forger :
 
 end ZeroQuery
 
-/-! ### Adaptive one-time Carter–Wegman EUF-CMA and SUF-CMA (Boneh–Shoup Theorem 7.3) -/
+/-! ### Adaptive one-time Carter–Wegman EUF-CMA and SUF-CMA (Boneh–Shoup Section 7.6) -/
 
 section OneTime
 
@@ -366,8 +373,8 @@ structure OneTimeForger (M Y : Type) where
   /-- Forgery distribution given the queried message `m` and its tag `t`. -/
   forge : M → Y → PMF (M × Y)
 
-/-- The adaptive one-time EUF-CMA experiment ([BonehShoup2023], Section 7.4, Theorem 7.3):
-the forger wins if `m' ≠ m` and `verify hash k r m' t' = true`. -/
+/-- The adaptive one-time EUF-CMA experiment ([BonehShoup2023], Section 7.6, Lemma 7.11 and
+Theorem 7.12): the forger wins if `m' ≠ m` and `verify hash k r m' t' = true`. -/
 noncomputable def oneTimeGame (seed : PMF K) (hash : K → M → Y) (forger : OneTimeForger M Y) :
     PMF Bool := do
   let k ← seed
@@ -430,8 +437,8 @@ theorem oneTimeGame_eq_bind_uniform (seed : PMF K) (hash : K → M → Y)
   congr 1; funext t
   rw [PMF.bind_comm seed (forger.forge m t)]
 
-/-- **One-time Carter–Wegman EUF-CMA security** ([BonehShoup2023], Section 7.4, Theorem 7.3;
-[WegmanCarter1981]): if `hash` is `ε`-almost-Δ-universal under `seed`
+/-- **One-time Carter–Wegman EUF-CMA security** ([BonehShoup2023], Section 7.6, Lemma 7.11 and
+Theorem 7.12; [WegmanCarter1981]): if `hash` is `ε`-almost-Δ-universal under `seed`
 (`IsDeltaUniversalHash seed hash ε`), then every adaptive one-time forger succeeds with
 probability at most `ε`. -/
 theorem oneTimeGame_le {seed : PMF K} {hash : K → M → Y} {ε : ℝ≥0∞}
@@ -1199,7 +1206,7 @@ theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfOneTimeStrongGame
 
 end PRFPad
 
-/-! ### Multi-query fresh-nonce PRF-masked Carter–Wegman MAC (Boneh–Shoup Section 7.4) -/
+/-! ### Multi-query fresh-nonce PRF-masked Carter–Wegman MAC (after Boneh–Shoup Section 7.5) -/
 
 section PRFCounter
 
@@ -1405,21 +1412,27 @@ noncomputable def prfPadSeqDist (family : List Bool → List Bool → List Bool)
     BitString.ofList n (prfOracle family n key (nonce i))
 
 /-- The multi-query fresh-nonce PRF-masked Carter–Wegman issued-slot EUF-CMA experiment
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+(after [BonehShoup2023], Section 7.5, Theorem 7.10), where the signer's counter schedule `nonce`
+fixes the nonces and `checkCounterSlot` accepts only issued counter indices (`pads[idx]? = some r`),
+rejecting unissued `idx`. -/
 noncomputable def prfCounterSlotGame (seed : PMF K) (family : List Bool → List Bool → List Bool)
     (n : ℕ) (nonce : ℕ → List Bool) (hash : K → M → BitString n)
     (forger : CounterForger M (BitString n)) : PMF Bool :=
   maskedCounterSlotGame seed (prfPadSeqDist family n nonce) hash forger
 
 /-- The multi-query fresh-nonce PRF-masked Carter–Wegman issued-counter EUF-CMA experiment
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+(after [BonehShoup2023], Section 7.5, Theorem 7.10), where the signer's counter schedule `nonce`
+fixes the nonces and `checkCounterGlobal` accepts only issued counter indices
+(`pads[idx]? = some r`), rejecting unissued `idx`. -/
 noncomputable def prfCounterGame (seed : PMF K) (family : List Bool → List Bool → List Bool)
     (n : ℕ) (nonce : ℕ → List Bool) (hash : K → M → BitString n)
     (forger : CounterForger M (BitString n)) : PMF Bool :=
   maskedCounterGame seed (prfPadSeqDist family n nonce) hash forger
 
 /-- The multi-query fresh-nonce PRF-masked Carter–Wegman issued-slot strong SUF-CMA experiment
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+(after [BonehShoup2023], Section 7.5, Theorem 7.10), where the signer's counter schedule `nonce`
+fixes the nonces and `checkCounterStrong` accepts only issued counter indices
+(`pads[idx]? = some r`), rejecting unissued `idx`. -/
 noncomputable def prfCounterStrongGame (seed : PMF K) (family : List Bool → List Bool → List Bool)
     (n : ℕ) (nonce : ℕ → List Bool) (hash : K → M → BitString n)
     (forger : CounterForger M (BitString n)) : PMF Bool :=
@@ -1542,11 +1555,12 @@ theorem eval_prfIdealGame_prfMultiPadDistinguisher {n : ℕ} (seed : PMF K)
   rw [← BitString.ofFn_ofList (hnonce_len i hi), ← BitString.ofFn_ofList (hnonce_len j hj), heq]
 
 /-- **Multi-query fresh-nonce PRF-masked Carter–Wegman issued-slot reduction**
-([BonehShoup2023], Section 7.4, Theorem 7.4): when `hash` is `ε`-almost-Δ-universal (`ε ≠ ⊤`),
-`forger` makes at most `Q n` signing queries, and `nonce n 0, ..., nonce n (Q n - 1)` are pairwise
-distinct `n`-bit nonces, the real-valued forgery probability in `prfCounterSlotGame` is at most
-`ε.toReal` plus the concrete PRF distinguishing advantage of `prfMultiPadDistinguisher Q nonce test`
-at parameter `n`. -/
+(after [BonehShoup2023], Section 7.5, Theorem 7.10): when `hash` is `ε`-almost-Δ-universal
+(`ε ≠ ⊤`), `forger` makes at most `Q n` signing queries, and `nonce n 0, ..., nonce n (Q n - 1)`
+are pairwise distinct `n`-bit nonces fixed by the signer's counter schedule, the real-valued
+issued-slot forgery probability in `prfCounterSlotGame` is at most `ε.toReal` plus the concrete PRF
+distinguishing advantage of `prfMultiPadDistinguisher Q nonce test` at parameter `n` (with
+unissued counter indices rejected by `checkCounterSlot`). -/
 theorem prfCounterSlotGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitString n} {ε : ℝ≥0∞}
     (hh : IsDeltaUniversalHash seed hash ε) (hε : ε ≠ ⊤)
     (family : List Bool → List Bool → List Bool)
@@ -1572,8 +1586,8 @@ theorem prfCounterSlotGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitSt
   linarith [le_abs_self ((prfCounterSlotGame seed family n (nonce n) hash forger true).toReal -
     (counterSlotGame seed hash forger true).toReal)]
 
-/-- **Multi-query fresh-nonce PRF-masked Carter–Wegman EUF-CMA reduction**
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+/-- **Multi-query fresh-nonce PRF-masked Carter–Wegman issued-counter EUF-CMA reduction**
+(after [BonehShoup2023], Section 7.5, Theorem 7.10). -/
 theorem prfCounterGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitString n} {ε : ℝ≥0∞}
     (hh : IsDeltaUniversalHash seed hash ε) (hε : ε ≠ ⊤)
     (family : List Bool → List Bool → List Bool)
@@ -1597,8 +1611,8 @@ theorem prfCounterGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitString
   exact hmono.trans
     (prfCounterSlotGame_le hh hε family Q nonce hforger hnonce_len hnonce_inj test htest)
 
-/-- **Multi-query fresh-nonce PRF-masked Carter–Wegman SUF-CMA reduction**
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+/-- **Multi-query fresh-nonce PRF-masked Carter–Wegman issued-slot SUF-CMA reduction**
+(after [BonehShoup2023], Section 7.5, Theorem 7.10). -/
 theorem prfCounterStrongGame_le {n : ℕ} {seed : PMF K} {hash : K → M → BitString n} {ε : ℝ≥0∞}
     (hh : IsDeltaUniversalHash seed hash ε) (hε : ε ≠ ⊤)
     (family : List Bool → List Bool → List Bool)
@@ -1675,7 +1689,10 @@ theorem isOraclePPT_prfMultiPadDistinguisher
     (by polytime)).isOraclePPTOn)).isOraclePPT
 
 /-- **Asymptotic multi-query fresh-nonce PRF-masked Carter–Wegman issued-slot security**
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+(after [BonehShoup2023], Section 7.5, Theorem 7.10). The query bound `hforger` and nonce
+conditions `hnonce_len`, `hnonce_inj` are required only eventually (`∀ᶠ n in Filter.atTop`), so
+any polynomial query budget `Q n` (where `Q n ≤ 2 ^ n` holds for all sufficiently large `n`) is
+covered without patching small `n`. -/
 theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterSlotGame
     {K M : ℕ → Type} [∀ n, DecidableEq (M n)]
     {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
@@ -1684,9 +1701,9 @@ theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterSlotGame
     (hε : Negligible ε)
     {Q : ℕ → ℕ} {nonce : ℕ → ℕ → List Bool}
     (forger : (n : ℕ) → CounterForger (M n) (BitString n))
-    (hforger : ∀ n s, ((forger n).forge s).IsQueryBounded (Q n))
-    (hnonce_len : ∀ n i, i < Q n → (nonce n i).length = n)
-    (hnonce_inj : ∀ n i, i < Q n → ∀ j < Q n, nonce n i = nonce n j → i = j)
+    (hforger : ∀ᶠ n in Filter.atTop, ∀ s, ((forger n).forge s).IsQueryBounded (Q n))
+    (hnonce_len : ∀ᶠ n in Filter.atTop, ∀ i < Q n, (nonce n i).length = n)
+    (hnonce_inj : ∀ᶠ n in Filter.atTop, ∀ i < Q n, ∀ j < Q n, nonce n i = nonce n j → i = j)
     (test : (k : ℕ) → (ℕ → BitString k) → ProbComp Bool)
     (htest_eval : ∀ n padSeq,
       counterPadSeqDistinguisher (seed n) (hash n) (forger n) padSeq =
@@ -1702,14 +1719,15 @@ theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterSlotGame
         (prfCounterSlotGame (seed n) family n (nonce n) (hash n) (forger n))) := by
   have hdist := hprf.secure (prfMultiPadDistinguisher Q nonce test)
     (isOraclePPT_prfMultiPadDistinguisher hQ hnonce htest_ppt)
-  refine negligible_of_le (hε.add hdist) fun n => ?_
+  refine negligible_of_eventually_le (hε.add hdist) ?_
+  filter_upwards [hforger, hnonce_len, hnonce_inj] with n hforger_n hlen_n hinj_n
   rw [← NNReal.coe_le_coe, Game.coe_succProbability, Pi.add_apply, NNReal.coe_add]
   simpa only [ENNReal.coe_toReal] using
-    prfCounterSlotGame_le (hh n) ENNReal.coe_ne_top family Q nonce (hforger n)
-      (hnonce_len n) (hnonce_inj n) test (htest_eval n)
+    prfCounterSlotGame_le (hh n) ENNReal.coe_ne_top family Q nonce hforger_n
+      hlen_n hinj_n test (htest_eval n)
 
-/-- **Asymptotic multi-query fresh-nonce PRF-masked Carter–Wegman EUF-CMA security**
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+/-- **Asymptotic multi-query fresh-nonce PRF-masked Carter–Wegman issued-counter EUF-CMA security**
+(after [BonehShoup2023], Section 7.5, Theorem 7.10). -/
 theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterGame
     {K M : ℕ → Type} [∀ n, DecidableEq (M n)]
     {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
@@ -1718,9 +1736,9 @@ theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterGame
     (hε : Negligible ε)
     {Q : ℕ → ℕ} {nonce : ℕ → ℕ → List Bool}
     (forger : (n : ℕ) → CounterForger (M n) (BitString n))
-    (hforger : ∀ n s, ((forger n).forge s).IsQueryBounded (Q n))
-    (hnonce_len : ∀ n i, i < Q n → (nonce n i).length = n)
-    (hnonce_inj : ∀ n i, i < Q n → ∀ j < Q n, nonce n i = nonce n j → i = j)
+    (hforger : ∀ᶠ n in Filter.atTop, ∀ s, ((forger n).forge s).IsQueryBounded (Q n))
+    (hnonce_len : ∀ᶠ n in Filter.atTop, ∀ i < Q n, (nonce n i).length = n)
+    (hnonce_inj : ∀ᶠ n in Filter.atTop, ∀ i < Q n, ∀ j < Q n, nonce n i = nonce n j → i = j)
     (test : (k : ℕ) → (ℕ → BitString k) → ProbComp Bool)
     (htest_eval : ∀ n padSeq,
       counterPadSeqDistinguisher (seed n) (hash n) (forger n) padSeq =
@@ -1740,8 +1758,8 @@ theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterGame
   exact ENNReal.toNNReal_mono (PMF.apply_ne_top _ _)
     (prfCounterGame_le_prfCounterSlotGame (seed n) family n (nonce n) (hash n) (forger n))
 
-/-- **Asymptotic multi-query fresh-nonce PRF-masked Carter–Wegman SUF-CMA security**
-([BonehShoup2023], Section 7.4, Theorem 7.4). -/
+/-- **Asymptotic multi-query fresh-nonce PRF-masked Carter–Wegman issued-slot SUF-CMA security**
+(after [BonehShoup2023], Section 7.5, Theorem 7.10). -/
 theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterStrongGame
     {K M : ℕ → Type} [∀ n, DecidableEq (M n)]
     {family : List Bool → List Bool → List Bool} (hprf : PseudorandomFunction family)
@@ -1750,9 +1768,9 @@ theorem _root_.Cslib.Crypto.PseudorandomFunction.negligible_prfCounterStrongGame
     (hε : Negligible ε)
     {Q : ℕ → ℕ} {nonce : ℕ → ℕ → List Bool}
     (forger : (n : ℕ) → CounterForger (M n) (BitString n))
-    (hforger : ∀ n s, ((forger n).forge s).IsQueryBounded (Q n))
-    (hnonce_len : ∀ n i, i < Q n → (nonce n i).length = n)
-    (hnonce_inj : ∀ n i, i < Q n → ∀ j < Q n, nonce n i = nonce n j → i = j)
+    (hforger : ∀ᶠ n in Filter.atTop, ∀ s, ((forger n).forge s).IsQueryBounded (Q n))
+    (hnonce_len : ∀ᶠ n in Filter.atTop, ∀ i < Q n, (nonce n i).length = n)
+    (hnonce_inj : ∀ᶠ n in Filter.atTop, ∀ i < Q n, ∀ j < Q n, nonce n i = nonce n j → i = j)
     (test : (k : ℕ) → (ℕ → BitString k) → ProbComp Bool)
     (htest_eval : ∀ n padSeq,
       counterPadSeqDistinguisher (seed n) (hash n) (forger n) padSeq =
