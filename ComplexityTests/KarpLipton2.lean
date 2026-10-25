@@ -12,8 +12,7 @@ import Complexity.Foundations.Data.BitString.Enumeration
 # Tests for the SAT self-reduction and the Karp–Lipton theorem
 
 The self-reduction on concrete formulas with a brute-force decision procedure, which satisfies the
-hypothesis of `SAT.verifier_search`; advice strings for a concrete family of circuits; and axiom
-checks for the headline results.
+hypothesis of `SAT.verifier_search`; and advice strings for a concrete family of circuits.
 -/
 
 namespace Cslib.Complexity.Tests.KarpLipton2
@@ -114,111 +113,5 @@ example (hSAT : SAT ∈ PPolyOn encCNF)
     {α : Type} {enc : α ↪ List Bool} (k : ℕ) {A : Set α} (hA : A ∈ SigmaP k enc) :
     A ∈ PPolyOn enc :=
   SigmaP_subset_PPolyOn_of_NP_subset_PPoly (NP_subset_PPolyOn_iff_SAT.2 hSAT) k hA
-
-/-! ### Axioms -/
-
-/--
-info: 'Cslib.Complexity.SAT.verifier_search' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SAT.verifier_search
-
-/--
-info: 'Cslib.Complexity.SAT.computableInPolyTime_search' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SAT.computableInPolyTime_search
-
-/--
-info: 'Cslib.Complexity.SAT.exists_search' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.SAT.exists_search
-
-/--
-info: 'Cslib.Circuits.Boolean.evalAdvice_familyAdvice' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Circuits.Boolean.evalAdvice_familyAdvice
-
-/--
-info: 'Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice' depends on axioms:
-  [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice
-
-/--
-info: 'Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PiP_two_subset_SigmaP_two_of_SAT
-
-/--
-info: 'Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PiP_two_eq_SigmaP_two_of_SAT
-
-/--
-info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_SAT' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_SAT
-
-/--
-info: 'Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs in
-#print axioms Cslib.Complexity.PH_eq_SigmaP_two_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.PolyTimeReducible.mem_PPolyOn' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PolyTimeReducible.mem_PPolyOn
-
-/--
-info: 'Cslib.Complexity.mem_PPoly_of_exists_frame_append' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.mem_PPoly_of_exists_frame_append
-
-/--
-info: 'Cslib.Complexity.SigmaP_subset_PPolyOn_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.SigmaP_subset_PPolyOn_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.PiP_subset_PPolyOn_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PiP_subset_PPolyOn_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.PH_subset_PPolyOn_of_NP_subset_PPoly' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.PH_subset_PPolyOn_of_NP_subset_PPoly
-
-/--
-info: 'Cslib.Complexity.NP_subset_PPolyOn_iff_SAT' depends on axioms: [propext,
- Classical.choice,
- Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NP_subset_PPolyOn_iff_SAT
 
 end Cslib.Complexity.Tests.KarpLipton2

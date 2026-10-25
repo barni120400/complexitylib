@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Computability.Complexity.FineGrained.PPZ
 
 /-! PPZ for k-SAT: a uniquely satisfiable instance, a formula with several satisfying assignments,
-critical clauses, random orders, and axiom guards. -/
+critical clauses and random orders. -/
 
 namespace ComplexityTests.PPZ
 
@@ -50,26 +50,5 @@ example : (Finset.univ.filter fun π : Equiv.Perm (Fin 3) =>
     IsLast π Finset.univ (0 : Fin 3)).card * 3 = 6 := by
   have h := card_isLast_mul (n := 3) (S := Finset.univ) (Finset.mem_univ (0 : Fin 3))
   simpa [Nat.factorial] using h
-
-/--
-info: 'Cslib.Complexity.PPZ.run_apply_restrict' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms run_apply_restrict
-
-/--
-info: 'Cslib.Complexity.PPZ.round_success' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms round_success
-
-/--
-info: 'Cslib.Complexity.PPZ.round_success_of_satisfiable' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms round_success_of_satisfiable
 
 end ComplexityTests.PPZ

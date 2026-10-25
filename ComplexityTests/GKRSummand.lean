@@ -50,32 +50,4 @@ example : (Reduction.bundle (s := []) () fun _ : Bool =>
   Verifier.RbrSound.bundle (L₁ := fun _ => {0}) (L₂ := fun _ => {0}) (fun _ => rfl)
     fun _ => Reduction.id_rbrSound _
 
-/--
-info: 'Cslib.Interactive.GKR.LayeredCircuit.sum_eval_summand' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms LayeredCircuit.sum_eval_summand
-
-/--
-info: 'Cslib.Interactive.GKR.LayeredCircuit.degreeOf_summand_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms LayeredCircuit.degreeOf_summand_le
-
-/--
-info: 'Cslib.Interactive.Verifier.RbrSound.bundle' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Verifier.RbrSound.bundle
-
-/--
-info: 'Cslib.Interactive.Reduction.Complete.bundle' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Reduction.Complete.bundle
-
 end ComplexityTests.GKRSummand

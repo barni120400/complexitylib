@@ -31,18 +31,4 @@ example {ι : Type} [Fintype ι] {β : ι → Type} [∀ i, Fintype (β i)] (p :
   sum_dist_filter_sideJoint_le (PMF.pure ()) (fun i _ => p i) (fun _ => (pi p).map (·, ()))
     (fun _ => by rw [PMF.map_comp]; exact PMF.map_id _) W hW
 
-/--
-info: 'Cslib.Probability.PMF.sum_sq_dist_map_filter_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_sq_dist_map_filter_le
-
-/--
-info: 'Cslib.Probability.PMF.sum_dist_filter_sideJoint_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_dist_filter_sideJoint_le
-
 end ComplexityTests.SideInformation

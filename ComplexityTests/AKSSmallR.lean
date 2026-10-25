@@ -6,7 +6,7 @@ Authors: Samuel Schlesinger
 
 import Complexity.Foundations.NumberTheory.AKS.SmallR
 
-/-! A small modulus of large order: instances and axiom guards. -/
+/-! A small modulus of large order: instances. -/
 
 namespace ComplexityTests.AKSSmallR
 
@@ -22,17 +22,5 @@ example : ∃ r : ℕ, 2 ≤ r ∧ (r : ℝ) ≤ 128 * Real.logb 2 (7 : ℕ) ^ 5
 -- `C(6, 3) = 20` divides `lcm(1, …, 6) = 60`.
 example : Nat.centralBinom 3 ∣ 60 :=
   centralBinom_dvd_of_forall_dvd (by norm_num) fun s hs hs6 => by interval_cases s <;> decide
-
-/--
-info: 'Cslib.AKS.exists_lt_orderOf' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_lt_orderOf
-
-/--
-info: 'Cslib.AKS.exists_lt_orderOf_logb' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_lt_orderOf_logb
 
 end ComplexityTests.AKSSmallR

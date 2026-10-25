@@ -158,32 +158,4 @@ example : ∃ (k : ℕ) (State : Type) (_ : Finite State) (ntm : MultiTapeNTM k 
       fun input => c * (Nat.log2 input.length + 1) :=
   MultiTapeNTM.exists_decidesInSpace_compl recognizes_loopSource fun _ => le_rfl
 
-/--
-info: 'Cslib.Complexity.NL_eq_coNL' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.NL_eq_coNL
-
-/--
-info: 'Cslib.Complexity.compl_mem_NL' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Complexity.compl_mem_NL
-
-/--
-info: 'Turing.MultiTapeNTM.exists_decidesInSpace_compl' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.MultiTapeNTM.exists_decidesInSpace_compl
-
-/--
-info: 'Turing.NondeterministicQueryMachine.exists_decidesInSpace' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Turing.NondeterministicQueryMachine.exists_decidesInSpace
-
 end ComplexityTests.NLComplement

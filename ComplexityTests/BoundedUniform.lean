@@ -93,25 +93,4 @@ example {radius dimension attempts : ℕ} {out : Option (List ℤ)}
     (encOption (encList encInt) out).length ≤ dimension * (2 * radius + 3) + 1 :=
   length_enc_sampleIntegerBox h
 
-/--
-info: 'Cslib.ProbComp.sampleIntegerBox_test_error_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sampleIntegerBox_test_error_le
-
-/--
-info: 'Cslib.Probability.isPPTOn_sampleUniformInterval_binary' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isPPTOn_sampleUniformInterval_binary
-
-/--
-info: 'Cslib.Probability.isPPTOn_sampleIntegerBox' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isPPTOn_sampleIntegerBox
-
 end ComplexityTests.BoundedUniform

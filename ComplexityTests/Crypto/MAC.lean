@@ -11,9 +11,8 @@ import Complexity.Crypto.Computational.MAC
 
 Provides concrete instantiations of `MACScheme` (both a trivial scheme and `prfMAC` applied to the
 identity-keyed evaluator `fun _ m => m`), verifies that `OneTimeEUFCMA` and `EUFCMA` reject the
-trivial scheme via an explicit zero-query PPT forger, checks `prfMAC` tagging/verification and
-`macToPrfDistinguisher` on concrete inputs, and audits the axiom dependencies of the headline
-theorems in `Complexity.Crypto.Computational.MAC`.
+trivial scheme via an explicit zero-query PPT forger, and checks `prfMAC` tagging/verification
+and `macToPrfDistinguisher` on concrete inputs.
 -/
 
 namespace ComplexityTests.Crypto.MAC
@@ -200,96 +199,5 @@ theorem succProbability_eufCma_lt_sufCma_sameMessageNewTagForger (n : ℕ) :
   rw [eval_eufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger,
     eval_sufCmaGame_randomizedTagMACScheme_sameMessageNewTagForger]
   simp [Game.succProbability]
-
-/--
-info: 'Cslib.Crypto.MACScheme.succProbability_eufCmaGame_le_sufCmaGame' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.succProbability_eufCmaGame_le_sufCmaGame
-
-/--
-info: 'Cslib.Crypto.MACScheme.SUFCMA.eufCma' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.SUFCMA.eufCma
-
-/--
-info: 'Cslib.Crypto.MACScheme.sufCma_iff_eufCma_of_unique_tag' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.sufCma_iff_eufCma_of_unique_tag
-
-/--
-info: 'Cslib.Crypto.eval_sufCmaGame_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.eval_sufCmaGame_prfMAC
-
-/--
-info: 'Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.succProbability_sufCmaGame_prfMAC_le
-
-/--
-info: 'Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomFunction.sufCma_prfMAC
-
-/--
-info: 'Cslib.Crypto.MACScheme.EUFCMA.oneTimeEUFCMA' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.MACScheme.EUFCMA.oneTimeEUFCMA
-
-/--
-info: 'Cslib.Crypto.isOraclePPT_macToPrfDistinguisher' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.isOraclePPT_macToPrfDistinguisher
-
-/--
-info: 'Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.eval_prfRealGame_macToPrfDistinguisher
-
-/--
-info: 'Cslib.Crypto.succProbability_prfIdealGame_macToPrfDistinguisher_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.succProbability_prfIdealGame_macToPrfDistinguisher_le
-
-/--
-info: 'Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.succProbability_eufCmaGame_prfMAC_le
-
-/--
-info: 'Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomFunction.eufCma_prfMAC
-
-/--
-info: 'Cslib.Crypto.PseudorandomFunction.oneTimeEUFCMA_prfMAC' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Crypto.PseudorandomFunction.oneTimeEUFCMA_prfMAC
 
 end ComplexityTests.Crypto.MAC

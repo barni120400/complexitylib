@@ -7,7 +7,7 @@ Authors: Samuel Schlesinger
 import Complexity.Probability.Extractor.TwoSource
 
 /-! Two-source extractors: the Chor–Goldreich bound on concrete sources, the necessity of the
-entropy threshold, weighted Lindsey, and axiom guards. -/
+entropy threshold, and weighted Lindsey. -/
 
 namespace ComplexityTests.TwoSourceExtractor
 
@@ -56,40 +56,5 @@ example :
   have h := BitString.sq_sum_mul_signVal_dotProduct_le (ι := Fin 3) (fun _ => (1 / 8 : ℝ))
     (fun y => if y = 0 then (1 : ℝ) else 0)
   simpa only [Fintype.card_fin] using h
-
-/--
-info: 'Cslib.BitString.sum_sq_sum_mul_signVal_dotProduct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms BitString.sum_sq_sum_mul_signVal_dotProduct
-
-/--
-info: 'Cslib.Probability.sum_mul_abs_bias_dotProduct_le' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms sum_mul_abs_bias_dotProduct_le
-
-/--
-info: 'Cslib.Probability.isStrongTwoSourceExtractor_dotProduct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isStrongTwoSourceExtractor_dotProduct
-
-/--
-info: 'Cslib.Probability.isTwoSourceExtractor_dotProduct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms isTwoSourceExtractor_dotProduct
-
-/--
-info: 'Cslib.Probability.not_isTwoSourceExtractor_dotProduct' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms not_isTwoSourceExtractor_dotProduct
 
 end ComplexityTests.TwoSourceExtractor

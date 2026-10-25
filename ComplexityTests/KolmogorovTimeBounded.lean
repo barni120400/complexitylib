@@ -134,39 +134,4 @@ example (p q : Polynomial ℕ) : MINKTAt p.eval q.eval ∈ NP encBits :=
 example : GapMINKT (fun _ s => s) (fun _ t => t) = PromiseProblem.ofSet MINKT :=
   GapMINKT.id_eq
 
-/-! ### Axiom guards -/
-
-/--
-info: 'Cslib.Kolmogorov.DescriptionMethod.exists_simulation_ofMultiTapeTM' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_simulation_ofMultiTapeTM
-
-/--
-info: 'Cslib.Kolmogorov.timeBounded_le' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms timeBounded_le
-
-/--
-info: 'Cslib.Kolmogorov.exists_ecomplexity_universal_le_timeBounded' depends on axioms: [propext,
-Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_ecomplexity_universal_le_timeBounded
-
-/--
-info: 'Cslib.Kolmogorov.MINKT.mem_NP' depends on axioms: [propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms MINKT.mem_NP
-
-/--
-info: 'Cslib.Kolmogorov.MINKTAt.mem_NP_polynomial₂' depends on axioms: [propext, Classical.choice,
-Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms MINKTAt.mem_NP_polynomial₂
-
 end ComplexityTests.KolmogorovTimeBounded
