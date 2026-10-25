@@ -132,9 +132,6 @@ theorem isPPTOn_test {α : Type} {input : α ↪ List Bool}
     (hword : ComputableInPolyTime word input encBits) :
     IsPPTOn input encBool
       (fun a => test (seedBits a) (commonBits a) (adversary a) (word a)) := by
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hseedBits
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hcommon
-  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime] at hword
   unfold test
   ppt
 

@@ -626,28 +626,28 @@ theorem isPPTOn_sufCmaGame (M : MACScheme) {adversary : Forger}
     (hadversary : IsOraclePPT (encPair encBits encBits) adversary) :
     IsPPTOn encUnary encBool (M.sufCmaGame adversary) := by
   have hrun := M.isPPTOn_run_signingPairOracle hadversary
-  have hcontains : ComputableTidilyInPolyTime
+  have hcontains : ComputableInPolyTime
       (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
         pair.2.2.contains pair.2.1)
       (encPair (encPair encUnary encBits)
         (encPair (encPair encBits encBits) (encList (encPair encBits encBits)))) encBool := by
-    have hlist : ComputableTidilyInPolyTime
+    have hlist : ComputableInPolyTime
         (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
           pair.2.2)
         (encPair (encPair encUnary encBits)
           (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
         (encList (encPair encBits encBits)) := by polytime
-    have helem : ComputableTidilyInPolyTime
+    have helem : ComputableInPolyTime
         (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
           pair.2.1)
         (encPair (encPair encUnary encBits)
           (encPair (encPair encBits encBits) (encList (encPair encBits encBits))))
         (encPair encBits encBits) := by polytime
     classical
-    convert ComputableTidilyInPolyTime.decide_mem hlist helem using 1
+    convert ComputableInPolyTime.decide_mem hlist helem using 1
     funext a
     rw [Bool.eq_iff_iff, List.contains_iff_mem, decide_eq_true_eq]
-  have hpost : ComputableTidilyInPolyTime
+  have hpost : ComputableInPolyTime
       (fun pair : (ℕ × List Bool) × ((List Bool × List Bool) × List (List Bool × List Bool)) =>
         (pair.2.1.1.length == pair.1.1) && !pair.2.2.contains pair.2.1 &&
           M.verify pair.1.2 pair.2.1.1 pair.2.1.2)

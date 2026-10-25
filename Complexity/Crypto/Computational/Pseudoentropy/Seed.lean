@@ -202,8 +202,8 @@ noncomputable def sampleWithSeed (n : ℕ) : ProbComp ((List Bool × Bool) × Li
 @[program_certificate]
 theorem isPPTOn_sampleWithSeed : IsPPTOn encUnary
     (encPair (encPair encBits encBool) encBits) seed.sampleWithSeed := by
-  have hlength := seed.length_isPolyTime.tidy
-  have hevaluate := seed.efficient.tidy
+  have hlength := seed.length_isPolyTime
+  have hevaluate := seed.efficient
   unfold sampleWithSeed
   ppt
 
