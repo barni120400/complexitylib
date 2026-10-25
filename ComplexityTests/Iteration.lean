@@ -429,7 +429,7 @@ example (c : Circuit signature (2 * (2 + 2)) (2 * (2 + 2)))
     (∃ out : Circuit signature (2 + 2) (2 + 2),
       out.Computes interpretation (ModulusCounter.power 1) ∧ out.size ≤ c.size) ∧
     2 ≤ c.size := by
-  obtain ⟨hsingle, hbatch⟩ := counterBatch_lower_bounds 1 (by decide : 0 < 2) c hc
+  obtain ⟨hsingle, hbatch⟩ := counterBatch_lower_bounds 1 two_pos c hc
   exact ⟨hsingle, hbatch power_one_two_ne_id⟩
 
 -- Combined upper and lower bounds for batched hard counter powers at k = 64.

@@ -86,7 +86,7 @@ example : IsPPTOn (encPair encUnary encUnary) (encOption encNat)
   · polytime
   · polytime
   · intro p
-    simp [Nat.log_pow (by decide : 1 < 2)]
+    simp [Nat.log_pow Nat.one_lt_two]
 
 example {radius dimension attempts : ℕ} {out : Option (List ℤ)}
     (h : out ∈ (ProbComp.eval (sampleIntegerBox radius dimension attempts)).support) :
