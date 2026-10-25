@@ -866,6 +866,7 @@ public import Complexity.Computability.Kolmogorov.Uncomputability
 public import Complexity.Computability.Languages.Slice
 public import Complexity.Computability.MCSP.AntiChecker
 public import Complexity.Computability.MCSP.Basic
+public import Complexity.Computability.MCSP.HardnessConsequences
 public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.MCSP.Partial
 public import Complexity.Computability.MCSP.PartialETH
