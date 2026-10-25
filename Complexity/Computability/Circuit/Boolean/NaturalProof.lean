@@ -257,11 +257,11 @@ theorem exists_complexity_truthTableTest_le (hC : truthTableLanguage C ∈ PPoly
 
 /-- A property that is natural for the class `P`, applied to truth tables, is `P/poly`-natural:
 a problem decided in time polynomial in the length of the truth table has circuits of polynomial
-size (`PPoly.of_mem_P`). -/
+size (`P_subset_PPolyOn`). -/
 theorem NaturalProof.IsNatural.PPoly_of_P
     (hC : IsNatural {L : Language Bool | (L : Set (List Bool)) ∈ Complexity.P
       Turing.MultiTapeTM.encBits} C) : IsNatural PPoly C :=
-  hC.mono (fun _ hL => PPoly.of_mem_P hL) fun _ => le_rfl
+  hC.mono (fun _ hL => mem_PPolyOn_encBits_iff.1 (P_subset_PPolyOn hL)) fun _ => le_rfl
 
 /-! ### The Razborov–Rudich distinguisher -/
 

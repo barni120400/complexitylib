@@ -509,7 +509,7 @@ of the satisfiable formulas, in `NP ⊆ Σ₂`, have no circuits of polynomial s
 theorem exists_mem_SigmaP_two_notMem_SIZE (k : ℕ) :
     ∃ L : Language Bool, (L : Set (List Bool)) ∈ SigmaP 2 encBits ∧
       ∀ c, L ∉ SIZE fun n => c * (n + 1) ^ k := by
-  by_cases hSAT : ∃ L ∈ PPoly, ∀ φ, φ ∈ SAT ↔ encCNF φ ∈ L
+  by_cases hSAT : SAT ∈ PPolyOn encCNF
   · refine ⟨language k, ?_, language_notMem_SIZE k⟩
     rw [← PH_eq_SigmaP_two_of_SAT hSAT]
     exact SigmaP_subset_PH 3 (language_mem_SigmaP_three k)
