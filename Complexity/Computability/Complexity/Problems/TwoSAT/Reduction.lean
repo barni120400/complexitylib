@@ -92,6 +92,7 @@ theorem mem_reachabilityFormula {I : STCONInstance} {c : Clause ℕ} :
 excluding `I` from `STCON`. -/
 private theorem notMem_STCON_of_eval_reachabilityFormula {I : STCONInstance} {σ : ℕ → Bool}
     (hσ : (reachabilityFormula I).eval σ = true) : I ∉ STCON := by
+  -- a satisfying assignment makes every reachable vertex true
   rw [mem_STCON]
   intro hst
   have hcl : ∀ c ∈ reachabilityFormula I, ∃ l ∈ c, σ l.1 = l.2 := fun c hc =>
@@ -101,17 +102,22 @@ private theorem notMem_STCON_of_eval_reachabilityFormula {I : STCONInstance} {σ
     induction hx with
     | refl =>
       obtain ⟨l, hl, hlσ⟩ := hcl _ (mem_reachabilityFormula.mpr (.inl rfl))
-      rw [List.mem_singleton] at hl; subst hl
+      rw [List.mem_singleton] at hl
+      subst hl
       exact hlσ
     | @tail y z _ hyz ih =>
-      have harc : arc I y z = true := by rw [arc, dite_eq_left ⟨y.isLt, z.isLt⟩]; exact hyz
+      have harc : arc I y z = true := by
+        rw [arc, dite_eq_left ⟨y.isLt, z.isLt⟩]
+        exact hyz
       obtain ⟨l, hl, hlσ⟩ := hcl _ (mem_reachabilityFormula.mpr (.inr (.inr ⟨y, z, harc, rfl⟩)))
       simp only [List.mem_cons, List.not_mem_nil, or_false] at hl
       rcases hl with rfl | rfl
-      · simp only at hlσ; exact absurd (ih.symm.trans hlσ) (by decide)
+      · simp only at hlσ
+        exact absurd (ih.symm.trans hlσ) (by decide)
       · exact hlσ
   obtain ⟨l, hl, hlσ⟩ := hcl _ (mem_reachabilityFormula.mpr (.inr (.inl rfl)))
-  rw [List.mem_singleton] at hl; subst hl
+  rw [List.mem_singleton] at hl
+  subst hl
   simp only at hlσ
   exact absurd ((key _ hst).symm.trans hlσ) (by decide)
 
@@ -123,6 +129,7 @@ theorem reachabilityFormula_mem_TwoSAT_iff (I : STCONInstance) :
     rcases mem_reachabilityFormula.mp hc with rfl | rfl | ⟨u, v, -, rfl⟩ <;> simp
   rw [mem_TwoSAT, and_iff_right hw]
   refine ⟨fun ⟨σ, hσ⟩ => notMem_STCON_of_eval_reachabilityFormula hσ, fun hst => ?_⟩
+  -- the reachable vertices give a satisfying assignment
   rw [mem_STCON] at hst
   classical
   let σ : ℕ → Bool := fun x => decide (∃ h : x < I.n, Relation.ReflTransGen I.Adj I.s ⟨x, h⟩)
@@ -194,12 +201,14 @@ private theorem reachesOut_literalCode_loop {b r exit : ℕ} {sign : Bool}
       P.ReachesOut w (P.Active B) (b + 1, regs') (b + 13, regs'.set 5 0)
         (q.bits.flatMap fun y => List.replicate 7 true ++ [y]) := by
   have hi (i : ℕ) (h : i < 23) := hcode i (length_literalCode b r sign exit ▸ h)
+  -- the seven markers before a digit
   have hmarks : ∀ (regs' : List ℕ), (∀ x ∈ regs', x ≤ B) →
       P.ReachesOut w (P.Active B) (b + 2, regs') (b + 9, regs') (List.replicate 7 true) :=
     fun _ hB' => ReachesOut.emit (hi 2 (by omega)) hB' <| ReachesOut.emit (hi 3 (by omega)) hB' <|
       ReachesOut.emit (hi 4 (by omega)) hB' <| ReachesOut.emit (hi 5 (by omega)) hB' <|
       ReachesOut.emit (hi 6 (by omega)) hB' <| ReachesOut.emit (hi 7 (by omega)) hB' <|
       ReachesOut.emit (hi 8 (by omega)) hB' <| ReachesOut.refl _
+  -- the digits
   intro q
   induction q using Nat.strong_induction_on with
   | _ q ih =>
@@ -213,7 +222,8 @@ private theorem reachesOut_literalCode_loop {b r exit : ℕ} {sign : Bool}
     rw [bits_of_pos hq0, List.flatMap_cons, List.append_assoc, List.singleton_append]
     refine (hmarks regs' hB').trans ?_
     have hqB : q ≤ B := by
-      rw [← hq, List.getD_eq_getElem _ _ hlen]; exact hB' _ (List.getElem_mem hlen)
+      rw [← hq, List.getD_eq_getElem _ _ hlen]
+      exact hB' _ (List.getElem_mem hlen)
     have hhalf := ih (q / 2) (by omega) (regs'.set 5 (q / 2)) (by simp [hlen])
       (by simpa using hlen) (List.forall_mem_set_of_forall_mem hB' (by omega))
     rw [List.set_set] at hhalf
@@ -236,10 +246,13 @@ theorem reachesOut_literalCode {b r exit : ℕ} {sign : Bool}
   have hi (i : ℕ) (h : i < 23) := hcode i (length_literalCode b r sign exit ▸ h)
   have hrB : regs.getD r 0 ≤ B := by
     rcases lt_or_ge r regs.length with hr | hr
-    · rw [List.getD_eq_getElem _ _ hr]; exact hB _ (List.getElem_mem hr)
-    · rw [List.getD_eq_default _ _ hr]; exact Nat.zero_le _
+    · rw [List.getD_eq_getElem _ _ hr]
+      exact hB _ (List.getElem_mem hr)
+    · rw [List.getD_eq_default _ _ hr]
+      exact Nat.zero_le _
   have hB0 : ∀ x ∈ regs.set 5 0, x ≤ B :=
     List.forall_mem_set_of_forall_mem hB (Nat.zero_le _)
+  -- the register, then the end of the literal
   have htail : P.ReachesOut w (P.Active B) (b + 13, regs.set 5 0) (exit, regs.set 5 0)
       [true, true, true, false, true, true, true, sign, true, false] :=
     ReachesOut.emit (hi 13 (by omega)) hB0 <| ReachesOut.emit (hi 14 (by omega)) hB0 <|
@@ -352,7 +365,8 @@ private theorem reachesOut_header_s (hB : I.n ≤ B) :
 private theorem reachesOut_header_t (hB : I.n ≤ B) :
     ∀ j ≤ (I.t : ℕ), writer.ReachesOut I.encode (writer.Active B)
       (4, [I.n, I.s, j, 0, 0, 0]) (6, [I.n, I.s, I.t, 0, 0, 0]) [] := by
-  have hs := I.s.isLt; have ht := I.t.isLt
+  have hs := I.s.isLt
+  have ht := I.t.isLt
   intro j hj
   induction h : (I.t : ℕ) - j generalizing j with
   | zero =>
@@ -388,7 +402,9 @@ private theorem reachesOut_entry (hB : I.n ≤ B) {u v : ℕ} (hu : u < I.n) (hv
     writer.ReachesOut I.encode (writer.Active B)
       (60, [I.n, I.s, I.t, u, v, 0]) (59, [I.n, I.s, I.t, u, v, 0])
       (if arc I u v then literalBits u false ++ literalBits v true ++ [false] else []) := by
-  have hs := I.s.isLt; have ht := I.t.isLt
+  -- an entry of the matrix
+  have hs := I.s.isLt
+  have ht := I.t.isLt
   have hb : ∀ z ∈ [I.n, (I.s : ℕ), (I.t : ℕ), u, v, 0], z ≤ B :=
     bounded6 hB (by omega) (by omega) (hu.le.trans hB) (hv.le.trans hB) (Nat.zero_le _)
   have hlit₁ : writer.CodeAt 61 (literalCode 61 3 false 84) := codeAt_literal fun i hi => by
@@ -398,7 +414,8 @@ private theorem reachesOut_entry (hB : I.n ≤ B) {u v : ℕ} (hu : u < I.n) (hv
   refine ReachesOut.read (show writer.instr 60 = _ from rfl) hb ?_
   simp only [eval_add, eval_mul, eval_reg, eval_const, List.getD_cons_zero,
     List.getD_cons_succ, I.getElem?_encode_matrix hu hv]
-  have harc : arc I u v = I.adj ⟨u, hu⟩ ⟨v, hv⟩ := by rw [arc, dite_eq_left ⟨hu, hv⟩]
+  have harc : arc I u v = I.adj ⟨u, hu⟩ ⟨v, hv⟩ := by
+    rw [arc, dite_eq_left ⟨hu, hv⟩]
   rw [← harc]
   cases arc I u v
   · exact ReachesOut.refl _
@@ -420,14 +437,17 @@ private theorem reachesOut_rows (hB : I.n ≤ B) {i₀ : ℕ} (hi₀ : i₀ ≤ 
       ((List.range I.n).flatMap fun u => (List.range I.n).flatMap fun v =>
         if arc I u v then literalBits u false ++ literalBits v true ++ [false] else []) ∧
       ∀ x ∈ regs, x ≤ B := by
-  have hs := I.s.isLt; have ht := I.t.isLt
+  have hs := I.s.isLt
+  have ht := I.t.isLt
   have hreg : ∀ {u v y : ℕ}, u ≤ I.n → v ≤ I.n → y ≤ I.n →
       ∀ z ∈ [I.n, (I.s : ℕ), (I.t : ℕ), u, v, y], z ≤ B := fun hu hv hy =>
     bounded6 hB (by omega) (by omega) (hu.trans hB) (hv.trans hB) (hy.trans hB)
   have hcode₁ : writer.CodeAt 54 (forCode 54 3 (reg 0) 57 108) := by
-    simp only [forCode, codeAt_cons, codeAt_nil, and_true]; exact ⟨rfl, rfl, rfl⟩
+    simp only [forCode, codeAt_cons, codeAt_nil, and_true]
+    exact ⟨rfl, rfl, rfl⟩
   have hcode₂ : writer.CodeAt 57 (forCode 57 4 (reg 0) 60 56) := by
-    simp only [forCode, codeAt_cons, codeAt_nil, and_true]; exact ⟨rfl, rfl, rfl⟩
+    simp only [forCode, codeAt_cons, codeAt_nil, and_true]
+    exact ⟨rfl, rfl, rfl⟩
   obtain ⟨regs, hreach, x, rfl, -, hx⟩ := reachesOut_forCode (w := I.encode) (N := I.n)
     (o := fun u => (List.range I.n).flatMap fun v =>
       if arc I u v then literalBits u false ++ literalBits v true ++ [false] else []) hcode₁
