@@ -52,8 +52,8 @@ section Indicator
 variable {R : Type*} [CommRing R] {k n : ℕ}
 
 theorem eval_indicatorAt (e : Fin k → Fin n) (a : Fin k → Bool) (v : Fin n → R) :
-    eval v (indicatorAt e a : MvPolynomial (Fin n) R) = LayeredCircuit.basis a (v ∘ e) := by
-  simp [indicatorAt, LayeredCircuit.basis, map_prod, apply_ite]
+    eval v (indicatorAt e a : MvPolynomial (Fin n) R) = eval (v ∘ e) (indicatorPoly a) := by
+  simp [indicatorAt, indicatorPoly, map_prod, apply_ite]
 
 /-- The degree of a variable `v` in an indicator polynomial is at most the number of `j` with
 `e j = v`. -/
@@ -114,7 +114,7 @@ the gate of layer `i + 1` fixed to the point `z`. -/
 noncomputable def wiringPoly (g : Gate) (i : ℕ) (z : Fin (C.width (i + 1)) → R) :
     MvPolynomial (Fin (C.width i + C.width i)) R :=
   ∑ a, if C.gate i a = g then
-    MvPolynomial.C (basis a z) *
+    MvPolynomial.C (eval z (indicatorPoly a)) *
       (indicatorAt (Fin.castAdd (C.width i)) (C.left i a) *
         indicatorAt (Fin.natAdd (C.width i)) (C.right i a))
   else 0

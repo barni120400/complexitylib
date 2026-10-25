@@ -28,7 +28,7 @@ def mulTwo : LayeredCircuit where
 
 -- The summand of the multiplication layer sums to the output's multilinear extension.
 example (W : (Fin (mulTwo.width 0) → Bool) → ℚ) (z : Fin (mulTwo.width 1) → ℚ) :
-    ∑ b, eval (LayeredCircuit.bitPoint b) (mulTwo.summand 0 W z) =
+    ∑ b, eval (bitPoint b) (mulTwo.summand 0 W z) =
       eval z (multilinearExtension (mulTwo.step 0 W)) :=
   mulTwo.sum_eval_summand 0 W z
 
