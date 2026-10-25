@@ -1996,6 +1996,7 @@ public import Complexity.Probability.CorrelatedSampling.Embeddability
 public import Complexity.Probability.CorrelatedSampling.Embedding
 public import Complexity.Probability.Divergence
 public import Complexity.Probability.Entropy
+public import Complexity.Probability.Entropy.BitString
 public import Complexity.Probability.EntropyConcentration
 public import Complexity.Probability.EntropyExtraction
 public import Complexity.Probability.Extractor.Basic

@@ -10242,3 +10242,38 @@ info: 'Cslib.Finset.card_pow_le_prod_card_image_restrict_erase' depends on axiom
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Finset.card_pow_le_prod_card_image_restrict_erase
+
+/--
+info: 'Cslib.Probability.PMF.entropy_ge_of_dist_uniform' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.entropy_ge_of_dist_uniform
+
+/--
+info: 'Cslib.Probability.PMF.entropy_ge_of_dist_uniform_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.entropy_ge_of_dist_uniform_le
+
+/--
+info: 'Cslib.Probability.PMF.sum_filter_mass_le_ge_of_entropy_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.sum_filter_mass_le_ge_of_entropy_ge
+
+/--
+info: 'Cslib.Probability.PMF.entropy_ofList_take_ge' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.entropy_ofList_take_ge
+
+/--
+info: 'Cslib.Probability.PMF.entropy_append_uniform' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.entropy_append_uniform
