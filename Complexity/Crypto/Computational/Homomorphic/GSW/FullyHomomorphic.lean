@@ -18,12 +18,20 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Pl
 Gentry's generic bootstrapping constructions are instantiated with GSW at the logarithmic-depth
 parameter family. The base scheme is `DepthParameters.scheme`, its decryption circuits are the
 actual raw-input decryptors, and its bootstrappability, correctness, widths and native runtime
-are proved without computational assumptions.
+are proved without computational assumptions. Bootstrappability is for Gentry's gate set
+Γ = {identity, NAND}: the schemes evaluate De Morgan circuits by compiling each De Morgan level
+into two NAND levels.
 
-* **Leveled FHE.** For every polynomially bounded depth family, the acyclic key-chain
-  construction evaluates all circuits of that depth, with polynomial widths independent of the
-  depth, native algorithms, and IND-CPA security assuming only decision LWE for this exact
-  family [Gentry2009, Theorems 3 and 4].
+The security premise is decision LWE for exactly this family: secret dimension `λ + 1`,
+centered-binomial noise of width `λ + 1`, and the quasi-polynomial modulus `2 ^ (16384 * t ^ 2)`
+with `t = 1 + ⌈log₂ (λ + 2)⌉`.
+
+* **Leveled FHE.** One polynomial-size decryption circuit family, one natively computable
+  decryption algorithm and fixed polynomial widths are chosen first. Then every polynomially
+  bounded depth family is covered by an actual scheme with that decryption algorithm, assuming
+  only decision LWE [Gentry2009, Definition 3 and Theorem 3]. Security is asymptotic IND-CPA, a
+  consequence of [Gentry2009, Theorem 4] without its exact loss. Native certificates are uniform
+  for each depth family; key generation reads only the unary security parameter.
 * **Fully homomorphic encryption.** The one-key self-loop construction evaluates every circuit,
   assuming decision LWE for this family *and* the separate one-key circular-security assumption
   `Encryption.CircularSecure` for the base scheme [Gentry2009, Section 2, the self-loop
@@ -36,13 +44,13 @@ concrete-security loss.
 ## Main results
 
 * `Cslib.Crypto.Homomorphic.GSW.DepthParameters.exists_leveled_of_decisionLWE`: leveled FHE.
-* `Cslib.Crypto.Homomorphic.GSW.DepthParameters.fullyHomomorphic_of_decisionLWE`: FHE under the
-  additional circular-security assumption.
+* `Cslib.Crypto.Homomorphic.GSW.DepthParameters.fullyHomomorphic_of_decisionLWE_of_circularSecure`:
+  FHE under the additional circular-security assumption.
 
 ## References
 
-* [C. Gentry, *Fully homomorphic encryption using ideal lattices*, Section 2, Theorems 3 and 4
-  and the self-loop construction][Gentry2009]
+* [C. Gentry, *Fully homomorphic encryption using ideal lattices*, Section 2, Definitions 1–5,
+  Theorems 3 and 4 and the self-loop construction][Gentry2009]
 * [C. Gentry, A. Sahai and B. Waters, Sections 3.2–3.4][GentrySahaiWaters2013]
 -/
 
@@ -53,49 +61,73 @@ namespace Cslib.Crypto.Homomorphic.GSW.DepthParameters
 open Circuits Probability Turing.MultiTapeTM
 open Parameters (dimension noise)
 
-/-- Leveled FHE from GSW: under decision LWE for this family, every polynomially bounded depth
-family is covered by one actual scheme with an efficiently computable budget. Its secret and
-ciphertext widths are polynomial and do not depend on the requested depth, its four algorithms
-are native, and it is IND-CPA. No circular-security assumption is used. -/
+/-- Leveled FHE from GSW under decision LWE for this family, with quasi-polynomial modulus.
+One polynomial-size circuit family computes the common decryption algorithm
+`Leveled.decrypt decryptionCircuits`, which is natively computable, and the key and ciphertext
+widths are fixed polynomials; all of these are chosen before the depth. Every polynomially
+bounded depth family is then covered by an actual scheme with an efficiently computable budget
+and exactly that decryption algorithm: it is correct for every circuit of the requested depth,
+has the fixed widths, native algorithms and IND-CPA security. No circular-security assumption is
+used. -/
 theorem exists_leveled_of_decisionLWE
-    (hLWE : DecisionLWE dimension samples width (fun k => noiseLaw (width k) (noise k)))
-    {depth : ℕ → ℕ} (hdepth : PolynomiallyBounded depth) :
-    ∃ budget : ℕ → ℕ,
-      ComputableInPolyTime budget encUnary encUnary ∧
-      (∀ k, depth k ≤ budget k) ∧
-      (Leveled.scheme decryptionCircuits budget).Correct ∧
-      (∀ k c, c.2.depth ≤ depth k → (Leveled.scheme decryptionCircuits budget).permitted k c) ∧
-      (Leveled.scheme decryptionCircuits budget).FixedWidth (fun k => 3 * secretWidth k + 1)
-        (fun k => ciphertextWidth k + 1) ∧
+    (hLWE : DecisionLWE dimension samples width (fun k => noiseLaw (width k) (noise k))) :
+    ∃ circuits : ∀ k, Circuit Boolean.signature
+        ((3 * secretWidth k + 1) + (ciphertextWidth k + 1)) 1,
+      PolynomiallyBounded (fun k => (circuits k).size) ∧
+      (∀ k (sk ciphertext : List Bool), sk.length = 3 * secretWidth k + 1 →
+        ciphertext.length = ciphertextWidth k + 1 →
+        (circuits k).eval Boolean.interpretation
+            (BitString.ofList ((3 * secretWidth k + 1) + (ciphertextWidth k + 1))
+              (sk ++ ciphertext)) 0 =
+          Leveled.decrypt decryptionCircuits k sk ciphertext) ∧
+      ComputableInPolyTime
+        (fun p : ℕ × List Bool × List Bool => Leveled.decrypt decryptionCircuits p.1 p.2.1 p.2.2)
+        (encPair encUnary (encPair encBits encBits)) encBool ∧
       PolynomiallyBounded (fun k => 3 * secretWidth k + 1) ∧
       PolynomiallyBounded (fun k => ciphertextWidth k + 1) ∧
-      IsPPTOn encUnary (encPair encBits encBits) (Leveled.scheme decryptionCircuits budget).keyGen ∧
-      IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
-        (fun p => (Leveled.scheme decryptionCircuits budget).encrypt p.1 p.2.1 p.2.2) ∧
-      ComputableInPolyTime
-        (fun p : ℕ × List Bool × List Bool =>
-          (Leveled.scheme decryptionCircuits budget).decrypt p.1 p.2.1 p.2.2)
-        (encPair encUnary (encPair encBits encBits)) encBool ∧
-      IsPPTOn
-        (encPair encUnary (encPair encBits
-          (encPair (Boolean.encCircuit 1) (encList encBits))))
-        encBits
-        (fun p => (Leveled.scheme decryptionCircuits budget).evaluate p.1 p.2.1 p.2.2.1 p.2.2.2) ∧
-      Encryption.INDCPA (Leveled.scheme decryptionCircuits budget).keyGen
-        (Leveled.scheme decryptionCircuits budget).encrypt := by
-  obtain ⟨budget, hbudget, hle, hcorrect, hpermitted, hwidth, hsecret, hciphertext, hkeyGen,
-      hencrypt, hdecrypt, hevaluate, hsecure⟩ :=
+      ∀ depth : ℕ → ℕ, PolynomiallyBounded depth →
+        ∃ budget : ℕ → ℕ,
+          ComputableInPolyTime budget encUnary encUnary ∧
+          (∀ k, depth k ≤ budget k) ∧
+          (Leveled.scheme decryptionCircuits budget).decrypt =
+            Leveled.decrypt decryptionCircuits ∧
+          (Leveled.scheme decryptionCircuits budget).Correct ∧
+          (∀ k c, c.2.depth ≤ depth k → (Leveled.scheme decryptionCircuits budget).permitted k c) ∧
+          (Leveled.scheme decryptionCircuits budget).FixedWidth (fun k => 3 * secretWidth k + 1)
+            (fun k => ciphertextWidth k + 1) ∧
+          IsPPTOn encUnary (encPair encBits encBits)
+            (Leveled.scheme decryptionCircuits budget).keyGen ∧
+          IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
+            (fun p => (Leveled.scheme decryptionCircuits budget).encrypt p.1 p.2.1 p.2.2) ∧
+          IsPPTOn
+            (encPair encUnary (encPair encBits
+              (encPair (Boolean.encCircuit 1) (encList encBits))))
+            encBits
+            (fun p =>
+              (Leveled.scheme decryptionCircuits budget).evaluate p.1 p.2.1 p.2.2.1 p.2.2.2) ∧
+          Encryption.INDCPA (Leveled.scheme decryptionCircuits budget).keyGen
+            (Leveled.scheme decryptionCircuits budget).encrypt := by
+  have hD := computableInPolyTime_decryptionCircuits.tidy
+  obtain ⟨circuits, hsize, hcircuits⟩ := Leveled.exists_decrypt_circuits decryptionCircuits hD
+  have hdecrypt := (Leveled.computableTidilyInPolyTime_scheme_decrypt decryptionCircuits hD
+    (fun _ => 0)).computableInPolyTime
+  obtain ⟨hsecret, hciphertext⟩ := Leveled.polynomiallyBounded_widths decryptionCircuits hD
+  refine ⟨circuits, hsize, fun k sk c hsk hc => hcircuits (fun _ => 0) k sk c hsk hc, hdecrypt,
+    hsecret, hciphertext, fun depth hdepth => ?_⟩
+  obtain ⟨budget, hbudget, hle, hcorrect, hpermitted, hwidth, -, -, hkeyGen, hencrypt, -,
+      hevaluate, hsecure⟩ :=
     Leveled.exists_scheme_of_polynomiallyBounded decryptionCircuits correct fixedWidth
-      bootstrappable (indCPA_scheme hLWE) isPPTOn_keyGen isPPTOn_encrypt isPPTOn_evaluate
-      computableInPolyTime_decryptionCircuits.tidy hdepth
-  exact ⟨budget, hbudget.computableInPolyTime, hle, hcorrect, hpermitted, hwidth, hsecret,
-    hciphertext, hkeyGen, hencrypt, hdecrypt.computableInPolyTime, hevaluate, hsecure⟩
+      bootstrappable (indCPA_scheme hLWE) isPPTOn_keyGen isPPTOn_encrypt isPPTOn_evaluate hD
+      hdepth
+  exact ⟨budget, hbudget.computableInPolyTime, hle, rfl, hcorrect, hpermitted, hwidth, hkeyGen,
+    hencrypt, hevaluate, hsecure⟩
 
-/-- Fully homomorphic encryption from GSW: under decision LWE for this family and the explicit
-one-key circular-security assumption for the base scheme, the self-loop construction correctly
-evaluates every finite circuit. Its widths are those of GSW, its decryption circuits have
-polynomial size, its four algorithms are native, and it is IND-CPA. -/
-theorem fullyHomomorphic_of_decisionLWE
+/-- Fully homomorphic encryption from GSW: under decision LWE for this family, with
+quasi-polynomial modulus, and the explicit one-key circular-security assumption for the base
+scheme, the self-loop construction correctly evaluates every finite circuit. Its widths are those
+of GSW, its decryption circuits have polynomial size, its four algorithms are native, and it is
+IND-CPA. -/
+theorem fullyHomomorphic_of_decisionLWE_of_circularSecure
     (hLWE : DecisionLWE dimension samples width (fun k => noiseLaw (width k) (noise k)))
     (hcircular : Encryption.CircularSecure scheme.keyGen scheme.encrypt) :
     (FixedKey.scheme decryptionCircuits).Correct ∧
