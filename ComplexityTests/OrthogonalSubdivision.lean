@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Erik Demaine
 -/
 
-import Complexity.Computability.Geometry.OrthogonalSubdivision
+import Complexity.Computability.Geometry.Orthogonal.Subdivision
 import Complexity.Foundations.Geometry.OrthogonalLayout
 
 /-! Regression instances for signed unit subdivision and continuous support preservation. -/
