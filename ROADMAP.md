@@ -317,7 +317,12 @@ existing developments, source credit and saved branches remain available for a f
    no-instances in [the tests](ComplexityTests/Hastad.lean), and
    [MaxExactThreeSAT](Complexity/Computability/PCP/Approximation/MaxExactThreeSAT.lean) proves the
    easy `7 / 8` random-assignment bound. The reduction to MAX-E3LIN/MAX-E3SAT and NP-hardness of
-   Label Cover (PCP theorem with parallel repetition) remain open.
+   Label Cover (PCP theorem with parallel repetition) remain open. For parallel repetition (#886),
+   [CorrelatedSampling](Complexity/Probability/CorrelatedSampling.lean) proves Holenstein's
+   correlated sampling step (agreement `≥ (1 - δ) / (1 + δ)`) and
+   [Embedding](Complexity/Probability/CorrelatedSampling/Embedding.lean) his local embedding lemma
+   (Lemma 8); the game API, the remaining embedding steps and the repetition theorem itself are not
+   yet formalized.
 6. **Williams’s ACC lower bound.** NEXP ⊄ ACC⁰: some language in nondeterministic exponential time
    has no polynomial-size, constant-depth nonuniform circuit family over unbounded-fan-in AND, OR,
    NOT and modular-counting gates with fixed moduli.
