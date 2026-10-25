@@ -58,9 +58,19 @@ theorem IsPPTOn.selectBest {α : Type} {input : α ↪ List Bool}
       (fun pair => OracleComp.selectStep (trials pair.1) (test pair.1) pair.2) := by
     unfold OracleComp.selectStep
     apply (htest'.countTrue htrials').map_with
-    apply ComputableInPolyTime.of_tidy
     dsimp only [OracleComp.selectUpdate, stateEncoding]
-    polytime
+    apply ComputableInPolyTime.prod
+    · exact ComputableInPolyTime.unary_succ.comp (by fun_prop)
+    · have hc := ComputableInPolyTime.unary_le'
+        (by fun_prop : ComputableInPolyTime
+          (fun pair : (α × (ℕ × ℕ × ℕ)) × ℕ => pair.1.2.2.2)
+          (encPair (encPair input (encPair encUnary (encPair encUnary encUnary))) encUnary)
+          encUnary)
+        (by fun_prop : ComputableInPolyTime
+          (fun pair : (α × (ℕ × ℕ × ℕ)) × ℕ => pair.2)
+          (encPair (encPair input (encPair encUnary (encPair encUnary encUnary))) encUnary)
+          encUnary)
+      simpa only [decide_eq_true_eq] using hc.ite (by fun_prop) (by fun_prop)
   have hloop := (IsPPTOn.iterateWith_spec (stateEncoding := stateEncoding)
     (initial := fun _ => (0, 0, 0))
     (step := fun a => OracleComp.selectStep (trials a) (test a)) hcount (by fun_prop) hstep
