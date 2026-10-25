@@ -401,8 +401,7 @@ Whether a new definition needs checked examples on both sides (an instance where
 where it fails) is for the author and reviewers to judge; reviewers may ask for them when a
 definition could be vacuous or trivially satisfied.
 
-Use the trusted core's definitions (see Design commitments) rather than adding parallel notions;
-extend or generalize the core instead.
+Reuse existing definitions rather than adding parallel notions; extend or generalize them instead.
 
 ## Curated formal abstracts
 
@@ -453,15 +452,6 @@ are not versioned.
   upstream `ComputableInTimeAndSpace…` and the notions built on it, such as `ComputableInPolyTime`.
   The tidy computability calculus is being deleted (#862); tidiness survives only as a machine-level
   kernel inside the Machines layer, used inside proofs of plain rules.
-- **Trusted core.** The definitions everything else rests on: the machine model and resource
-  predicates (`Machines/Turing/MultiTape/PolyTime.lean`, `…/Complexity/Space.lean`,
-  `…/Complexity/LogSpace.lean`, `…/Encodings/Basic.lean`), the main classes
-  (`Computability/Complexity/Classes/{P,NP,BPP,RP,EXP,PH,Space,LogSpace}.lean`) and the reductions
-  (`Computability/Reduction/ManyOne.lean`,
-  `Computability/Complexity/Reduction/{ManyOne,TruthTable}.lean`). A PR that changes a core
-  definition's meaning states what changed and why, either proves the new definition equivalent to
-  the old one or migrates every client, and is approved by a reviewer outside the authoring fleet;
-  the delegated-review exception does not apply. Do not add parallel definitions of core notions.
 - Programs are `PFunctor.FreeM` values; a machine's clocked run is itself a program.
 - The universal machine is an interpreter program certified by the calculus, not a hand-built
   machine.
