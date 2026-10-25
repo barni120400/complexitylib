@@ -191,7 +191,6 @@ theorem isPPTOn_sampleKeyInputsSerialized
       (fun a => sampleKeyInputsSerialized (n a) (m a) (w a) (η a)) := by
   have hn := hn.tidy
   have hm := hm.tidy
-  have hw := hw.tidy
   have hη := hη.tidy
   have hsecret := hw.sampleBinaryNat.replicate hn
   have hpublicPart := hsecret.replicate hm

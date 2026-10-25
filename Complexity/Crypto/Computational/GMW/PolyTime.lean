@@ -843,7 +843,7 @@ theorem isPPTOn_gmwInteract {α : Type} {enc : α ↪ List Bool}
   dsimp only [gmwInteract]
   apply hcoins.bind_with
   simp only [bind_pure_comp]
-  apply IsPPTOn.map ?_ (ComputableTidilyInPolyTime.fst encBits (encPair encUnary encBits))
+  apply IsPPTOn.map ?_ (ComputableInPolyTime.fst encBits (encPair encUnary encBits))
   apply isPPTOn_runTwoRound_honest hV hg <;> fun_prop
 
 end Cslib.Crypto.GMW

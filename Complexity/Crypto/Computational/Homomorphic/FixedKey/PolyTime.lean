@@ -173,7 +173,7 @@ theorem isPPTOn_evaluate {c : α → Σ m, Circuit Boolean.signature m 1}
   have hparts := hview.comp hc
   exact (isPPTOn_evaluateCircuit hencrypt D hD hevaluate (.of_tidy hn)
     (.of_tidy hpublic.fst') (.of_tidy hpublic.snd') (.of_tidy hinputs)
-    (.of_tidy hparts.fst') (.of_tidy hparts.snd')).map (ComputableTidilyInPolyTime.headD [])
+    (.of_tidy hparts.fst') (.of_tidy hparts.snd')).map (ComputableInPolyTime.headD [])
 
 include hD in
 /-- Unary input arity in the emitted decryption circuit bounds both unchanged widths

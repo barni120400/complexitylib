@@ -405,7 +405,7 @@ theorem isPPTOn_splice {Param : Type} {input : Param ↪ List Bool} {output : α
   unfold splice
   apply (hreplacement.replicate hbefore).bind_with
   apply ((horiginal.preprocess
-    (ComputableTidilyInPolyTime.fst input (encList (encPair output encBool)))).replicate
+    (ComputableInPolyTime.fst input (encList (encPair output encBool)))).replicate
       (hafter.comp (ComputableTidilyInPolyTime.fst input
         (encList (encPair output encBool))))).bind_with
   apply isPPTOn_save c d <;> exact .of_tidy (by fun_prop)

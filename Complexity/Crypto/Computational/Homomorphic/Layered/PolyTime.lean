@@ -204,7 +204,7 @@ theorem isPPTOn_evaluateLayers
     ((ComputableTidilyInPolyTime.length (encList Boolean.Layered.encNode)).comp hlayers)
     ((ComputableTidilyInPolyTime.const 0).prod hinputs) hstep hgrowth.polyBounded
     (fun a state next hnext => ?_)
-  · exact hloop.map (ComputableTidilyInPolyTime.snd encUnary (encList encBits))
+  · exact hloop.map (ComputableInPolyTime.snd encUnary (encList encBits))
   rw [evaluateLayerStep, ProbComp.eval_map, PMF.mem_support_map_iff] at hnext
   obtain ⟨outputs, houtputs, rfl⟩ := hnext
   have hbounds := evaluateLayer_bounds D (n a) ((publicKeys a).getD state.1 [])

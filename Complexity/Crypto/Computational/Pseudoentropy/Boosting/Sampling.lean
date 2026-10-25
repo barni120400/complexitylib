@@ -170,9 +170,9 @@ theorem isPPTOn_sampleWeight {α : Type} {input : α ↪ List Bool}
     IsPPTOn input encBool (fun a =>
       sampleWeight (bound a) (rateNumerator a) (threshold a) (votes a) (truth a)) := by
   unfold sampleWeight
-  exact isPPTOn_sampleDyadicCoin hbound.tidy
+  exact isPPTOn_sampleDyadicCoin hbound
     (isPolyTime_weightNumerator (ComputableInPolyTime.unary_dyadicSize.comp hbound)
-      hrate hthreshold hvotes htruth).tidy
+      hrate hthreshold hvotes htruth)
 
 attribute [program_certificate] isPPTOn_sampleWeight
 

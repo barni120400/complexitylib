@@ -160,10 +160,10 @@ theorem isPPTOn_clippedPredict {α : Type} {input : α ↪ List Bool}
     IsPPTOn input encBool (fun a => clippedPredict (bound a) (numerator a) (votes a)) := by
   unfold clippedPredict
   apply isPPTOn_sampleDyadicCoin
-  · exact (ComputableInPolyTime.unary_dyadicSize.comp hbound).tidy
+  · exact ComputableInPolyTime.unary_dyadicSize.comp hbound
   · exact (show ComputableInPolyTime
       (fun a => dyadicSize (bound a) + numerator a * (2 * (votes a).count true) -
-        numerator a * (votes a).length) input encUnary by fun_prop).tidy
+        numerator a * (votes a).length) input encUnary by fun_prop)
 
 attribute [program_certificate] isPPTOn_clippedPredict
 

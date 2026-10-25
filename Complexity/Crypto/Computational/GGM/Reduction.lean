@@ -112,7 +112,7 @@ theorem isPPTOn_sampleGame {Caller : Type} {input : Caller ↪ List Bool}
     obtain ⟨hcache', hreply, hgrowth⟩ := expansionOracle_bounds generator
       (pure expansion) (width a) (depth a) request.2 cache hcache result hresult
     exact ⟨hcache', by lia, by lia⟩
-  exact hrun.map (ComputableTidilyInPolyTime.fst _ _)
+  exact hrun.map (ComputableInPolyTime.fst _ _)
 
 /-- Insert one challenge among simulated uniform and generated expansions at a chosen level. -/
 noncomputable def levelTest (generator : List Bool → List Bool) (adversary : OracleDistinguisher)

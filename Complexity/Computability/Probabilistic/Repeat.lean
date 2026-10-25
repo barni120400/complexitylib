@@ -77,7 +77,7 @@ theorem IsPPTOn.replicate_bool {α : Type} {input : α ↪ List Bool}
     (hcount : ComputableTidilyInPolyTime count input encUnary) :
     IsPPTOn input encBits (fun a => OracleComp.replicate (count a) (program a)) := by
   simpa only [id_map'] using (hprogram.replicate hcount).map
-    ComputableTidilyInPolyTime.listToBits
+    ComputableInPolyTime.listToBits
 
 /-- Count successes in independent trials, charging all collected bits and the unary result. -/
 @[program_certificate]

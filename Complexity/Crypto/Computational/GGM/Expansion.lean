@@ -164,7 +164,7 @@ theorem isPPTOn_expansionGame {Caller : Type} {input : Caller ↪ List Bool}
       expansionOracle_bounds generator (sample a) (width a) (depth a) request.2 cache hcache
         result hresult
     exact ⟨hcache', by lia, by lia⟩
-  exact hrun.map (ComputableTidilyInPolyTime.fst _ _)
+  exact hrun.map (ComputableInPolyTime.fst _ _)
 
 private def expandCache (generator : List Bool → List Bool) (n : ℕ) (cache : Cache) : Cache :=
   cache.map (fun entry => (entry.1, (generator entry.2).take (2 * n)))

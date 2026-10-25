@@ -49,7 +49,7 @@ theorem isPPTOn_sampleUniformInterval {α : Type} {input : α ↪ List Bool}
       (fun a => sampleUniformInterval (bound a) (attempts a)) := by
   have hb := hbound.tidy
   have ha := hattempts.tidy
-  have hs := (isPPTOn_sampleBoundedIndex hb).replicate ha
+  have hs := (isPPTOn_sampleBoundedIndex hbound).replicate ha
   have hfind : ComputableTidilyInPolyTime
       (fun p : α × List ℕ => p.2.find? (fun value => decide (value < bound p.1)))
       (encPair input (encList encUnary)) (encOption encUnary) := by fun_prop
@@ -122,7 +122,7 @@ theorem isPPTOn_sampleIntegerBox {α : Type} {input : α ↪ List Bool}
       (encList (encOption encInt)) (encOption (encList encInt)) := by
     unfold collectBox
     fun_prop
-  exact (((hs.map_with (.of_tidy hcoordinate)).replicate hd).map hcollect)
+  exact (((hs.map_with (.of_tidy hcoordinate)).replicate hd).map (.of_tidy hcollect))
 
 /-- The complete framed optional output has a direct linear bound in dimension and unary
 radius; failure encodes as the empty word. -/

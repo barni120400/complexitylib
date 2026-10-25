@@ -141,7 +141,7 @@ theorem isPPT_prfIdealGame {adversary : OracleDistinguisher}
         PMF.mem_support_pure_iff] at hresult
       subst result
       exact ⟨hcache, by simp, by lia⟩
-  exact ((hrun.map (ComputableTidilyInPolyTime.fst _ _)).isPPT).congr
+  exact ((hrun.map (ComputableInPolyTime.fst _ _)).isPPT).congr
     (fun n _ => (prfIdealGame_eq_cached adversary n).symm)
 
 end Cslib.Crypto

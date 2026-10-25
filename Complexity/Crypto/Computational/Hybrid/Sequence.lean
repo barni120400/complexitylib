@@ -227,7 +227,7 @@ theorem isPPTOn_sequenceTest {Param : Type} {input : Param ↪ List Bool} {sampl
     (hchallenge : ComputableInPolyTime challenge input sample) :
     IsPPTOn input encBool
       (fun a => sequenceTest (replacement a) (original a) (count a) (test a) (challenge a)) := by
-  have hfirst := isPPTOn_sampleDyadicIndex hcount.tidy
+  have hfirst := isPPTOn_sampleDyadicIndex hcount
   have ha := ComputableInPolyTime.fst input encUnary
   have hi := ComputableInPolyTime.snd input encUnary
   have htest' : IsPPTOn (encPair (encPair input encUnary) (encList sample)) encBool

@@ -192,6 +192,6 @@ theorem isPPTOn_hybridGame {generator : List Bool → List Bool}
     obtain ⟨hcache', hreply, hgrowth⟩ :=
       frontierOracle_bounds generator pair.1 pair.2 request.2 cache hcache result hresult
     exact ⟨hcache', by lia, by lia⟩
-  exact hrun.map (ComputableTidilyInPolyTime.fst _ _)
+  exact hrun.map (ComputableInPolyTime.fst _ _)
 
 end Cslib.Crypto.GGM
