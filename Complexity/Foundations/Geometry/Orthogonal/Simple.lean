@@ -18,6 +18,10 @@ public import Complexity.Foundations.Geometry.Orthogonal
 * `Cslib.Orthogonal.IsSimple`: no repeated listed points, and distinct consecutive segments have
   only common endpoint contacts. In conjunction with proper segments, this excludes retracing,
   self-crossings, and contacts between nonadjacent segments.
+
+## References
+
+The finite-route simplicity certificate and elementary proofs are original.
 -/
 
 @[expose] public section
@@ -54,5 +58,14 @@ between distinct segments. All contacts are tested in the real plane. -/
 def IsSimple (r : Route) : Prop :=
   r.Nodup ∧ ∀ e ∈ r.consecutivePairs, ∀ f ∈ r.consecutivePairs,
     e ≠ f → EndpointContacts e.1 e.2 f.1 f.2
+
+/-- Removing the initial listed point preserves continuous simplicity. -/
+theorem IsSimple.of_cons {a : Point} {r : Route} (h : IsSimple (a :: r)) : IsSimple r := by
+  cases r with
+  | nil => simp [IsSimple, List.consecutivePairs]
+  | cons b r =>
+    refine ⟨h.1.tail, ?_⟩
+    intro e he f hf hne
+    exact h.2 e (List.mem_cons_of_mem (a, b) he) f (List.mem_cons_of_mem (a, b) hf) hne
 
 end Cslib.Orthogonal

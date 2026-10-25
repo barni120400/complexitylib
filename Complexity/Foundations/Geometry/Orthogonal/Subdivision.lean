@@ -10,7 +10,10 @@ module
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 import Complexity.Foundations.Data.List.Counting
 import Mathlib.Data.List.Nodup
-import Mathlib.Tactic
+import Mathlib.Tactic.Abel
+import Mathlib.Tactic.NormNum
+import Mathlib.Tactic.Positivity
+import Mathlib.Tactic.SplitIfs
 
 /-!
 # Unit subdivision of finite orthogonal routes
@@ -36,6 +39,10 @@ import Mathlib.Tactic
 * `Cslib.Orthogonal.subdivideWithin_eq_of_wireLength_le`: recover full subdivision from a
   sufficient total-wire budget.
 * `Cslib.Orthogonal.subdivideWithin_length_le`: explicit bounded output size.
+
+## References
+
+The unit-walk construction and bounded enumeration are original.
 -/
 
 @[expose] public section
@@ -88,7 +95,10 @@ private theorem segment_step_union (a d : Point) (k : ℕ) (hd : UnitVector d) :
   rcases a with ⟨x, y⟩
   rcases hd with rfl | rfl | rfl | rfl
   all_goals ext p
-  all_goals norm_num [segment, realPoint, Prod.smul_mk, nsmul_eq_mul]
+  all_goals norm_num only [segment, realPoint, Prod.smul_mk, nsmul_eq_mul,
+    Prod.fst_add, Prod.snd_add, mul_one, mul_zero, mul_neg_one, add_zero, Int.cast_add,
+    Int.cast_one, Int.cast_zero, Int.cast_neg, Int.cast_natCast, Nat.cast_add, Nat.cast_one,
+    Set.mem_union]
   all_goals
     first
     | rw [mem_horizontal, mem_horizontal, mem_horizontal]
@@ -161,7 +171,10 @@ theorem add_length_direction {a b : Point} (h : a.1 = b.1 ∨ a.2 = b.2) :
   rcases a with ⟨ax, ay⟩
   rcases b with ⟨bx, by'⟩
   unfold direction
-  split_ifs <;> ext <;> norm_num [length, nsmul_eq_mul] <;>
+  split_ifs <;> ext <;>
+    norm_num only [length, Prod.smul_mk, Int.nsmul_eq_mul, Nat.cast_add, Nat.cast_natAbs,
+    Int.cast_abs, Int.cast_sub, Int.cast_eq, mul_one, nsmul_zero, mul_neg_one,
+    Prod.mk_add_mk, add_zero] <;>
     (try simp only [abs_eq_max_neg]) <;> omega
 
 /-- Unit subdivision of one segment, including both endpoints. -/
@@ -291,10 +304,7 @@ theorem subdivide_last {r : Route} (hr : IsOrthogonal r) :
     | nil => rfl
     | cons b r =>
       have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
-      have htail : IsOrthogonal (b :: r) := by
-        intro e he
-        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
-          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      have htail : IsOrthogonal (b :: r) := hr.of_cons
       rw [subdivide, last_join (segmentWalk_last hab) (subdivide_head (b :: r)), ih htail,
         List.getLast?_cons_cons]
 
@@ -308,10 +318,7 @@ theorem support_subdivide {r : Route} (hr : IsOrthogonal r) :
     | nil => rfl
     | cons b r =>
       have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
-      have htail : IsOrthogonal (b :: r) := by
-        intro e he
-        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
-          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      have htail : IsOrthogonal (b :: r) := hr.of_cons
       rw [subdivide, support_join (segmentWalk_last hab) (subdivide_head (b :: r)),
         support_segmentWalk hab, ih htail, support_cons_cons]
 
@@ -325,10 +332,7 @@ theorem subdivide_unit {r : Route} (hr : IsOrthogonal r) {e : Point × Point}
     | nil => simp [subdivide, List.consecutivePairs] at he
     | cons b r =>
       have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
-      have htail : IsOrthogonal (b :: r) := by
-        intro e he
-        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
-          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      have htail : IsOrthogonal (b :: r) := hr.of_cons
       rw [subdivide, consecutivePairs_join (segmentWalk_last hab) (subdivide_head (b :: r)),
         List.mem_append] at he
       rcases he with he | he
@@ -345,21 +349,10 @@ theorem wireLength_subdivide {r : Route} (hr : IsOrthogonal r) :
     | nil => rfl
     | cons b r =>
       have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
-      have htail : IsOrthogonal (b :: r) := by
-        intro e he
-        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
-          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      have htail : IsOrthogonal (b :: r) := hr.of_cons
       rw [subdivide, wireLength_join (segmentWalk_last hab) (subdivide_head (b :: r)),
         wireLength_segmentWalk, ih htail]
       rfl
-
-/-- A pair of lattice points one Manhattan unit apart forms a proper axis-aligned segment. -/
-theorem axisAligned_of_length_eq_one {a b : Point} (h : length a b = 1) : AxisAligned a b := by
-  rcases a with ⟨ax, ay⟩
-  rcases b with ⟨bx, by'⟩
-  simp only [length] at h
-  simp only [AxisAligned, ne_eq, Prod.mk.injEq]
-  omega
 
 /-- Unit subdivision is itself a proper orthogonal route. -/
 theorem subdivide_orthogonal {r : Route} (hr : IsOrthogonal r) : IsOrthogonal (subdivide r) :=
@@ -409,10 +402,7 @@ theorem subdivide_eq_flatMap {r : Route} (hr : IsOrthogonal r) :
     | nil => simp [subdivide, List.consecutivePairs]
     | cons b r =>
       have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
-      have htail : IsOrthogonal (b :: r) := by
-        intro e he
-        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
-          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      have htail : IsOrthogonal (b :: r) := hr.of_cons
       rw [subdivide, join_eq_dropLast_append (segmentWalk_last hab) (subdivide_head (b :: r)),
         ih htail]
       simp only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons, List.flatMap_cons,
@@ -467,7 +457,8 @@ theorem walk_nodup (a d : Point) (k : ℕ) (hd : UnitVector d) : (walk a d k).No
   all_goals
     have hx := congrArg Prod.fst hij
     have hy := congrArg Prod.snd hij
-    norm_num [nsmul_eq_mul] at hx hy
+    simp only [Prod.smul_mk, Int.nsmul_eq_mul, mul_one, nsmul_zero, Prod.fst_add,
+      Prod.snd_add, add_zero, mul_neg_one, add_right_inj, Nat.cast_inj, neg_inj] at hx hy
     omega
 
 /-- The unit walk along one segment has no repeated listed point. -/
@@ -533,18 +524,8 @@ theorem subdivide_nodup {r : Route} (hr : IsOrthogonal r) (hs : IsSimple r) :
     | nil => simp [subdivide]
     | cons b r =>
       have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
-      have htail : IsOrthogonal (b :: r) := by
-        intro e he
-        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
-          List.zip_cons_cons, List.mem_cons] using Or.inr he)
-      have hstail : IsSimple (b :: r) := by
-        refine ⟨hs.1.tail, ?_⟩
-        intro e he f hf hne
-        apply hs.2 e _ f _ hne
-        · simpa only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons,
-            List.mem_cons] using Or.inr he
-        · simpa only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons,
-            List.mem_cons] using Or.inr hf
+      have htail : IsOrthogonal (b :: r) := hr.of_cons
+      have hstail : IsSimple (b :: r) := hs.of_cons
       have hnd := ih htail hstail
       obtain ⟨rest, hsub⟩ := List.head?_eq_some_iff.1 (subdivide_head (b :: r))
       have hrest : (b :: rest).Nodup := by simpa only [hsub] using hnd

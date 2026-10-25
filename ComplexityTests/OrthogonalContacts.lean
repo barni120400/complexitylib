@@ -5,6 +5,7 @@ Authors: Erik Demaine
 -/
 
 import Complexity.Foundations.Geometry.Orthogonal.Separation
+import Complexity.Foundations.Geometry.Orthogonal.Simple
 
 /-! Finite checks and continuous geometric consequences, including forbidden overlaps. -/
 
@@ -48,5 +49,10 @@ example : routeContactCheck [] [(1, 1)] [(1, 1)] = false := by decide
 -- These diagonal segments intersect at (1/2, 1/2), with no common integer point.
 -- A certificate checking just lattice-point intersections would miss this contact.
 example : segmentContactCheck [] (0, 0) (1, 1) (0, 1) (1, 0) = false := by decide
+
+-- Tail certificates expose the actual suffix without reconstructing segment membership.
+example (a : Point) (r : Route) (h : IsOrthogonal (a :: r)) : IsOrthogonal r := h.of_cons
+example (a : Point) (r : Route) (h : IsSimple (a :: r)) : IsSimple r := h.of_cons
+example : AxisAligned (0, 0) (-1, 0) := axisAligned_of_length_eq_one (by decide)
 
 end ComplexityTests.OrthogonalContacts
