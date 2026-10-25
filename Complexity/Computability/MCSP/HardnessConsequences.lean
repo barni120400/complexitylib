@@ -13,6 +13,7 @@ public import Complexity.Computability.Complexity.Classes.ZPP
 public import Complexity.Computability.MCSP.NP
 import Complexity.Computability.Circuit.Boolean.Advice
 import Complexity.Computability.Circuit.Boolean.PolynomialTime
+import Complexity.Computability.Complexity.Classes.Hierarchy.Nondeterministic
 import Complexity.Computability.Complexity.Classes.Padding
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString
@@ -27,33 +28,47 @@ import Complexity.Foundations.Data.Nat.PolynomialBound.Closure
 
 If the Minimum Circuit Size Problem (`Cslib.MCSP`) is `NP`-hard under polynomial-time many-one
 reductions (`Cslib.Complexity.NPHard`), several structural collapses and class separations follow
-[Kabanets and Cai][KabanetsCai2000], [Murray and Williams][MurrayWilliams2017]:
+[Murray and Williams][MurrayWilliams2017]:
 
 1. **Collapse of `NEXP` to `EXP` under `EXP ⊆ P/poly`**
-   (`Cslib.Complexity.NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly`,
-   `Cslib.Complexity.EXP_eq_NEXP_of_NPHard_MCSP_of_EXP_subset_PPoly`,
-   [Murray and Williams, Theorem 4.1][MurrayWilliams2017]):
-   For any problem `A ∈ NEXP`, its exponentially padded version lies in `NP`, and an `NP`-hardness
-   reduction `R` maps padded instances `z (enc a)` of length `2 ^ poly(|enc a|)` to `MCSP`
-   instances `R (z (enc a))`. Reading the `(R (z (enc a))).table` bit at position `y` defines a
-   problem in `EXP` on pairs `(enc a, y)`, hence in `P/poly` when `EXP ⊆ P/poly`. Hardwiring
-   `enc a` into the `P/poly` circuits bounds the circuit complexity of `(R (z (enc a))).function`
-   by a fixed polynomial `s_bound |enc a|` on arity `m_bound |enc a|`. Consequently, membership of
-   `R (z (enc a))` in `MCSP` depends only on the capped threshold
+   (`Cslib.Complexity.NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly`,
+   `Cslib.Complexity.EXP_eq_NEXP_of_MCSP_npHard_of_EXP_subset_PPoly`,
+   [Murray and Williams, Section 4.1, Theorem 4.1, p. 13][MurrayWilliams2017]):
+   Murray and Williams state Theorem 4.1 as:
+   > "If every sparse language in `NP` has a polynomial-time reduction to `MCSP`, then
+   > `EXP ⊂ P/poly ⟹ EXP = NEXP`."
+
+   The Lean theorems here assume full `NPHard MCSP.encInstance MCSP` (which implies the hypothesis
+   for every language in `NP`, and in particular every tally/sparse language in `NP`), so they
+   formalize the full-`NPHard` specialization of Theorem 4.1. For any problem `A ∈ NEXP`, its
+   exponentially padded version `ntm.padded c` lies in `NP`, and the `NP`-hardness reduction `R`
+   (applied only to `ntm.padded c`) maps padded instances `z (enc a)` of length `2 ^ poly(|enc a|)`
+   to `MCSP` instances `R (z (enc a))`. Reading the `(R (z (enc a))).table` bit at position `y`
+   defines a problem in `EXP` on pairs `(enc a, y)`, hence in `P/poly` when `EXP ⊆ P/poly`.
+   Hardwiring `enc a` into the `P/poly` circuits bounds the circuit complexity of
+   `(R (z (enc a))).function` by a fixed polynomial `s_bound |enc a|` on arity `m_bound |enc a|`.
+   Consequently, membership of `R (z (enc a))` in `MCSP` depends only on the capped threshold
    `min (s_bound |enc a|) (R (z (enc a))).threshold`, and brute-force enumeration of all circuit
    certificates of that size (`Cslib.MCSP.boundedMCSPSearch`) takes time `2 ^ poly(|enc a|)` and
    decides `A` in `EXP`.
-2. **Separation `EXP ⊈ NP ∩ P/poly` and `EXP ⊈ ZPP`**
+2. **Separation `EXP ⊈ NP ∩ P/poly` and `EXP ≠ ZPP`**
    (`Cslib.Complexity.not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard`,
    `Cslib.Complexity.EXP_ne_NP_inter_PPolyOn_of_MCSP_npHard`,
    `Cslib.Complexity.not_EXP_subset_RP_of_MCSP_npHard`,
    `Cslib.Complexity.not_EXP_subset_ZPP_of_MCSP_npHard`,
    `Cslib.Complexity.EXP_ne_ZPP_of_MCSP_npHard`,
-   [Murray and Williams, Theorem 1.6][MurrayWilliams2017]):
-   Combining Theorem 4.1 with the nondeterministic time hierarchy theorem `NEXP ⊈ NP`
-   (`Cslib.Complexity.not_NEXP_subset_NP`) shows that `EXP ⊆ NP ∩ P/poly` is impossible if `MCSP`
-   is `NP`-hard. Since `ZPP ⊆ RP ⊆ NP ∩ P/poly`, `NP`-hardness of `MCSP` implies `EXP ⊈ RP` and
-   `EXP ≠ ZPP`.
+   [Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]):
+   Murray and Williams state Theorem 1.6 as:
+   > "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
+   > Consequently, `EXP ≠ ZPP`."
+
+   Combining Theorem 4.1 with `NEXP ⊈ NP` (`Cslib.Complexity.not_NEXP_subset_NP`, proved in
+   `Complexity.Computability.Complexity.Classes.Hierarchy.Nondeterministic` by double-exponential
+   padding from the deterministic time hierarchy) shows that `EXP ⊆ NP ∩ P/poly` (equivalently
+   `EXP = NP ∩ P/poly`, since `NP ∩ P/poly ⊆ NP ⊆ EXP`) is impossible if `MCSP` is `NP`-hard.
+   As an immediate corollary via `ZPP ⊆ RP ⊆ NP ∩ P/poly` (`RP_subset_NP`, `RP_subset_PPolyOn`),
+   `NP`-hardness of `MCSP` under arbitrary polynomial-time many-one reductions implies `EXP ⊈ RP`
+   and `EXP ≠ ZPP`.
 3. **Karp–Lipton collapse from `MCSP ∈ P/poly`**
    (`Cslib.Complexity.NP_subset_PPolyOn_of_MCSP_npHard_of_mem_PPolyOn`,
    `Cslib.Complexity.PH_eq_SigmaP_two_of_MCSP_npHard_of_mem_PPolyOn`):
@@ -71,24 +86,23 @@ reductions (`Cslib.Complexity.NPHard`), several structural collapses and class s
   `Cslib.MCSP.boundedMCSPSearch_eq_true_iff`,
   `Cslib.MCSP.boundedMCSPSearch_ofFn_eq_true_iff`: polynomial-time complexity and correctness of
   bounded circuit search.
-* `Cslib.Complexity.NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly`,
-  `Cslib.Complexity.EXP_eq_NEXP_of_NPHard_MCSP_of_EXP_subset_PPoly`: if `MCSP` is `NP`-hard and
-  `EXP ⊆ P/poly`, then `EXP = NEXP`.
+* `Cslib.Complexity.NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly`,
+  `Cslib.Complexity.EXP_eq_NEXP_of_MCSP_npHard_of_EXP_subset_PPoly`: full-`NPHard` specialization
+  of Murray–Williams Theorem 4.1 (`EXP ⊆ P/poly ⟹ EXP = NEXP`).
 * `Cslib.Complexity.not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard`,
-  `Cslib.Complexity.EXP_ne_NP_inter_PPolyOn_of_MCSP_npHard`: if `MCSP` is `NP`-hard, then
-  `EXP ⊈ NP ∩ P/poly`.
+  `Cslib.Complexity.EXP_ne_NP_inter_PPolyOn_of_MCSP_npHard`: Murray–Williams Theorem 1.6
+  (`EXP ≠ NP ∩ P/poly` from `NP`-hardness of `MCSP`).
 * `Cslib.Complexity.not_EXP_subset_RP_of_MCSP_npHard`,
   `Cslib.Complexity.EXP_ne_RP_of_MCSP_npHard`,
   `Cslib.Complexity.not_EXP_subset_ZPP_of_MCSP_npHard`,
-  `Cslib.Complexity.EXP_ne_ZPP_of_MCSP_npHard`: if `MCSP` is `NP`-hard, then `EXP ⊈ RP` and
-  `EXP ≠ ZPP`.
+  `Cslib.Complexity.EXP_ne_ZPP_of_MCSP_npHard`: corollaries `EXP ⊈ RP` and `EXP ≠ ZPP` from
+  `NP`-hardness of `MCSP`.
 * `Cslib.Complexity.NP_subset_PPolyOn_of_MCSP_npHard_of_mem_PPolyOn`,
   `Cslib.Complexity.PH_eq_SigmaP_two_of_MCSP_npHard_of_mem_PPolyOn`: if `MCSP` is `NP`-hard and in
   `P/poly`, then `NP ⊆ P/poly` and `PH = Σ₂`.
 
 ## References
 
-* [V. Kabanets, J.-Y. Cai, *Circuit minimization problem*][KabanetsCai2000]
 * [C. D. Murray, R. R. Williams, *On the (non) NP-hardness of computing circuit
   complexity*][MurrayWilliams2017]
 -/
@@ -352,11 +366,16 @@ namespace Cslib.Complexity
 open _root_.Turing _root_.Turing.MultiTapeTM Circuits Circuits.Boolean MCSP
 open ComputableTidilyInPolyTime
 
-/-- **Murray–Williams Theorem 4.1 (`NEXP ⊆ EXP`)** [Murray and Williams, Theorem 4.1]
-[MurrayWilliams2017]: if `MCSP` is `NP`-hard under polynomial-time many-one reductions and
-`EXP encBits ⊆ PPolyOn encBits`, then `NEXP enc ⊆ EXP enc` for every encoding `enc` of
-instances. -/
-theorem NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly
+/-- **Murray–Williams Theorem 4.1 (`NEXP ⊆ EXP`, full-`NPHard` specialization)**
+[Murray and Williams, Section 4.1, Theorem 4.1, p. 13][MurrayWilliams2017]:
+> "If every sparse language in `NP` has a polynomial-time reduction to `MCSP`, then
+> `EXP ⊂ P/poly ⟹ EXP = NEXP`."
+
+This theorem assumes full `NPHard MCSP.encInstance MCSP` (which implies the hypothesis for every
+language in `NP`, and in particular every tally/sparse language in `NP`; the proof applies `hHard`
+only to the unary-padded language `ntm.padded c`), and shows that if `EXP encBits ⊆ PPolyOn encBits`
+then `NEXP enc ⊆ EXP enc` for every encoding `enc` of instances. -/
+theorem NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly
     (hHard : NPHard MCSP.encInstance MCSP) (hEXP : EXP encBits ⊆ PPolyOn encBits)
     {α : Type} (enc : α ↪ List Bool) :
     NEXP enc ⊆ EXP enc := by
@@ -393,7 +412,7 @@ theorem NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly
   let L_pad : Set (List Bool × List Bool) :=
     (fun p : List Bool × List Bool => (z p.1, p.2)) ⁻¹' B_bit
   have hL_pad_EXP : L_pad ∈ EXP (encPair encBits encBits) :=
-    preimage_pad_prod_id_mem_EXP (enc := encBits) hB_bit hf hnf
+    preimage_pad_prod_id_mem_EXP (enc := encBits) hB_bit hf
   obtain ⟨M, hM_PPoly, hM⟩ := EXP_encPair_subset_PPolyOn_of_EXP_subset_PPoly hEXP hL_pad_EXP
   obtain ⟨c_R, d_R, hR_len⟩ := hR.tidy.polyBounded_length.exists_le
   simp only [encBits_apply] at hR_len
@@ -478,7 +497,7 @@ theorem NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly
       hS (ComputableInPolyTime.snd encBits encUnary), fun _ => Iff.rfl⟩
   have hEXP_pre :
       (fun a : α => (z (enc a), 2 ^ g (enc a).length)) ⁻¹' B_search ∈ EXP enc :=
-    preimage_pad_prod_two_pow_mem_EXP hB_search hf hnf hg (fun n => Nat.le_add_left n _)
+    preimage_pad_prod_two_pow_mem_EXP hB_search hf hnf hg
   have hA_eq : A = (fun a : α => (z (enc a), 2 ^ g (enc a).length)) ⁻¹' B_search := by
     ext a
     set x := enc a
@@ -517,33 +536,48 @@ theorem NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly
     exact (hpad_iff.trans (hR_iff (z x))).trans hsearch_iff.symm
   exact hA_eq ▸ hEXP_pre
 
-/-- **Murray–Williams Theorem 4.1 (`EXP = NEXP`)** [Murray and Williams, Theorem 4.1]
-[MurrayWilliams2017]: if `MCSP` is `NP`-hard and `EXP encBits ⊆ PPolyOn encBits`, then
-`EXP enc = NEXP enc` for every encoding `enc` of instances. -/
-theorem EXP_eq_NEXP_of_NPHard_MCSP_of_EXP_subset_PPoly
+/-- **Murray–Williams Theorem 4.1 (`EXP = NEXP`, full-`NPHard` specialization)**
+[Murray and Williams, Section 4.1, Theorem 4.1, p. 13][MurrayWilliams2017]:
+> "If every sparse language in `NP` has a polynomial-time reduction to `MCSP`, then
+> `EXP ⊂ P/poly ⟹ EXP = NEXP`."
+
+This theorem assumes full `NPHard MCSP.encInstance MCSP` (the full-`NPHard` specialization of
+Theorem 4.1) and shows that if `EXP encBits ⊆ PPolyOn encBits` then `EXP enc = NEXP enc` for every
+encoding `enc` of instances. -/
+theorem EXP_eq_NEXP_of_MCSP_npHard_of_EXP_subset_PPoly
     (hHard : NPHard MCSP.encInstance MCSP) (hEXP : EXP encBits ⊆ PPolyOn encBits)
     {α : Type} (enc : α ↪ List Bool) :
     EXP enc = NEXP enc :=
-  EXP_subset_NEXP.antisymm (NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly hHard hEXP enc)
+  EXP_subset_NEXP.antisymm (NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly hHard hEXP enc)
 
-/-- **Murray–Williams Theorem 1.6 (`EXP ⊈ NP ∩ P/poly`)** [Murray and Williams, Theorem 1.6]
-[MurrayWilliams2017]: if `MCSP` is `NP`-hard, then `EXP` is not contained in `NP ∩ P/poly`. -/
+/-- **Murray–Williams Theorem 1.6 (`EXP ⊈ NP ∩ P/poly`)**
+[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]:
+> "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
+> Consequently, `EXP ≠ ZPP`."
+
+Since `NP ∩ P/poly ⊆ NP ⊆ EXP`, `EXP ≠ NP ∩ P/poly` is equivalent to
+`¬ (EXP encBits ⊆ NP encBits ∩ PPolyOn encBits)`. -/
 theorem not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard
     (hHard : NPHard MCSP.encInstance MCSP) :
     ¬ (EXP encBits ⊆ NP encBits ∩ PPolyOn encBits) := by
   intro h
   exact not_NEXP_subset_NP
-    ((NEXP_subset_EXP_of_NPHard_MCSP_of_EXP_subset_PPoly hHard (fun _ hA => (h hA).2)
+    ((NEXP_subset_EXP_of_MCSP_npHard_of_EXP_subset_PPoly hHard (fun _ hA => (h hA).2)
       encBits).trans fun _ hA => (h hA).1)
 
-/-- If `MCSP` is `NP`-hard, then `EXP ≠ NP ∩ P/poly`. -/
+/-- **Murray–Williams Theorem 1.6 (`EXP ≠ NP ∩ P/poly`)**
+[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]:
+> "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
+> Consequently, `EXP ≠ ZPP`." -/
 theorem EXP_ne_NP_inter_PPolyOn_of_MCSP_npHard
     (hHard : NPHard MCSP.encInstance MCSP) :
     EXP encBits ≠ NP encBits ∩ PPolyOn encBits :=
   fun h => not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard hHard h.le
 
-/-- If `MCSP` is `NP`-hard, then `EXP ⊈ RP` [Kabanets and Cai][KabanetsCai2000],
-[Murray and Williams, Theorem 1.6][MurrayWilliams2017]. -/
+/-- Corollary of **Murray–Williams Theorem 1.6** (`not_EXP_subset_NP_inter_PPolyOn_of_MCSP_npHard`)
+[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]: if `MCSP` is `NP`-hard
+under arbitrary polynomial-time many-one reductions, then `EXP ⊈ RP`, via `RP ⊆ NP`
+(`RP_subset_NP`) and `RP ⊆ BPP ⊆ P/poly` (`RP_subset_PPolyOn`). -/
 theorem not_EXP_subset_RP_of_MCSP_npHard
     (hHard : NPHard MCSP.encInstance MCSP) :
     ¬ (EXP encBits ⊆ RP encBits) :=
@@ -556,15 +590,18 @@ theorem EXP_ne_RP_of_MCSP_npHard
     EXP encBits ≠ RP encBits :=
   fun h => not_EXP_subset_RP_of_MCSP_npHard hHard h.le
 
-/-- **Murray–Williams Theorem 1.6 (`EXP ⊈ ZPP`)** [Murray and Williams, Theorem 1.6]
-[MurrayWilliams2017]: if `MCSP` is `NP`-hard, then `EXP ⊈ ZPP`. -/
+/-- **Murray–Williams Theorem 1.6 (`EXP ⊈ ZPP`)**
+[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]: if `MCSP` is `NP`-hard,
+then `EXP ⊈ ZPP`. -/
 theorem not_EXP_subset_ZPP_of_MCSP_npHard
     (hHard : NPHard MCSP.encInstance MCSP) :
     ¬ (EXP encBits ⊆ ZPP encBits) :=
   fun h => not_EXP_subset_RP_of_MCSP_npHard hHard (h.trans ZPP_subset_RP)
 
-/-- **Murray–Williams Theorem 1.6 (`EXP ≠ ZPP`)** [Murray and Williams, Theorem 1.6]
-[MurrayWilliams2017]: if `MCSP` is `NP`-hard, then `EXP ≠ ZPP`. -/
+/-- **Murray–Williams Theorem 1.6 (`EXP ≠ ZPP`)**
+[Murray and Williams, Section 1.1, Theorem 1.6, p. 5][MurrayWilliams2017]:
+> "If `MCSP` is `NP`-hard under polynomial-time reductions, then `EXP ≠ NP ∩ P/poly`.
+> Consequently, `EXP ≠ ZPP`." -/
 theorem EXP_ne_ZPP_of_MCSP_npHard
     (hHard : NPHard MCSP.encInstance MCSP) :
     EXP encBits ≠ ZPP encBits :=

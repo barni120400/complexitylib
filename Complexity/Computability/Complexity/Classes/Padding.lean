@@ -507,10 +507,10 @@ theorem preimage_append_two_pow_mem_NEXP {B : Set (List Bool)} (hB : B ∈ NP en
 
 /-- Pulling back `B ∈ P (encPair encBits encBits)` along
 `(a, y) ↦ (frame (enc a) ++ List.replicate (2 ^ f (enc a).length) true, y)`, where `f` is
-polynomial-time in unary with `n ≤ f n`, gives a problem in `EXP (encPair enc encBits)`. -/
+polynomial-time in unary, gives a problem in `EXP (encPair enc encBits)`. -/
 theorem preimage_pad_prod_id_mem_EXP {B : Set (List Bool × List Bool)}
     (hB : B ∈ P (encPair encBits encBits)) {f : ℕ → ℕ}
-    (hf : Turing.MultiTapeTM.ComputableInPolyTime f encUnary encUnary) (_hn : ∀ n, n ≤ f n) :
+    (hf : Turing.MultiTapeTM.ComputableInPolyTime f encUnary encUnary) :
     (fun p : α × List Bool =>
       (frame (enc p.1) ++ List.replicate (2 ^ f (enc p.1).length) true, p.2)) ⁻¹' B ∈
       EXP (encPair enc encBits) := by
@@ -616,12 +616,11 @@ theorem preimage_pad_prod_id_mem_EXP {B : Set (List Bool × List Bool)}
 
 /-- Pulling back `B ∈ P (encPair encBits encUnary)` along
 `a ↦ (frame (enc a) ++ List.replicate (2 ^ f (enc a).length) true, 2 ^ g (enc a).length)`, where
-`f` and `g` are polynomial-time in unary with `n ≤ f n` and `n ≤ g n`, gives a problem in
-`EXP enc`. -/
+`f` and `g` are polynomial-time in unary with `n ≤ f n`, gives a problem in `EXP enc`. -/
 theorem preimage_pad_prod_two_pow_mem_EXP {B : Set (List Bool × ℕ)}
     (hB : B ∈ P (encPair encBits encUnary)) {f g : ℕ → ℕ}
     (hf : Turing.MultiTapeTM.ComputableInPolyTime f encUnary encUnary) (hnf : ∀ n, n ≤ f n)
-    (hg : Turing.MultiTapeTM.ComputableInPolyTime g encUnary encUnary) (_hng : ∀ n, n ≤ g n) :
+    (hg : Turing.MultiTapeTM.ComputableInPolyTime g encUnary encUnary) :
     (fun a : α =>
       (frame (enc a) ++ List.replicate (2 ^ f (enc a).length) true,
         2 ^ g (enc a).length)) ⁻¹' B ∈ EXP enc := by

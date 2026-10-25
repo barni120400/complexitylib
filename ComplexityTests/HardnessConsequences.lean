@@ -21,10 +21,6 @@ open _root_.Turing _root_.Turing.MultiTapeTM
 
 /-! ### Concrete Evaluation and Non-Vacuity Checks -/
 
--- `NP_ssubset_NEXP` yields a concrete language in `NEXP` that is not in `NP`.
-example : ∃ L : Set (List Bool), L ∈ NEXP encBits ∧ L ∉ NP encBits :=
-  Set.exists_of_ssubset NP_ssubset_NEXP
-
 -- Concrete bounded MCSP search on the 1-input identity truth table `[false, true]` at threshold 0:
 -- `certLength 1 0 = 1`, so budget `2 ^ 1 = 2` suffices to find the 0-gate wire circuit.
 example : MCSP.boundedMCSPSearch [false, true] 0 2 = true := by
