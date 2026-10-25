@@ -13,13 +13,14 @@ public import Mathlib.Data.Matrix.ColumnRowPartitioned
 /-!
 # Invertibility and Schur complements for 2×2 block matrices over general rings
 
-This module establishes invertibility criteria, factorizations, and explicit inverses for 2×2
-block matrices over arbitrary (possibly noncommutative) rings `R`.
+This module establishes invertibility criteria and factorizations for 2×2 block matrices over
+arbitrary (possibly noncommutative) rings `R`.
 
-Mathlib's `Mathlib.LinearAlgebra.Matrix.SchurComplement` proves analogous results for commutative
-rings (`[CommRing α]`). The lemmas here generalize those results to arbitrary rings `[Ring R]`,
-which is required when the matrix entries themselves are matrices (e.g. in rational circuit
-evaluations).
+Mathlib's `Mathlib.LinearAlgebra.Matrix.SchurComplement` proves analogous results
+(`fromBlocks_eq_of_invertible₁₁`, `isUnit_fromBlocks_iff_of_invertible₁₁`,
+`isUnit_fromBlocks_zero₂₁`) for commutative rings (`[CommRing α]`). The lemmas here generalize those
+results to the $D = 0$ cases over arbitrary rings `[Ring R]`, which is required when the matrix
+entries themselves are matrices (e.g. in rational circuit evaluations).
 
 ## Main results
 
@@ -31,7 +32,6 @@ evaluations).
   corner and an invertible corner.
 * `Matrix.isUnit_fromBlocks_zero₂₂_iff`: invertibility of a block matrix with a zero corner via
   its Schur complement.
-* `Matrix.fromBlocks_zero₂₂_inverse`: explicit inverse for a block matrix with a zero corner.
 
 ## References
 
@@ -69,26 +69,28 @@ theorem isUnit_fromBlocks_diagonal_iff (A : Matrix ι ι R) (D : Matrix κ κ R)
     rw [hu] at hh hh'
     refine ⟨isUnit_iff_exists.mpr ⟨(↑u⁻¹ : Matrix (ι ⊕ κ) (ι ⊕ κ) R).toBlocks₁₁, ?_, ?_⟩,
       isUnit_iff_exists.mpr ⟨(↑u⁻¹ : Matrix (ι ⊕ κ) (ι ⊕ κ) R).toBlocks₂₂, ?_, ?_⟩⟩
-    · have h := congrArg Matrix.toBlocks₁₁ hh
-      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-      ext i j
-      have hx := congrFun (congrFun h i) j
-      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
-    · have h := congrArg Matrix.toBlocks₁₁ hh'
-      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-      ext i j
-      have hx := congrFun (congrFun h i) j
-      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
-    · have h := congrArg Matrix.toBlocks₂₂ hh
-      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-      ext i j
-      have hx := congrFun (congrFun h i) j
-      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
-    · have h := congrArg Matrix.toBlocks₂₂ hh'
-      rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
-      ext i j
-      have hx := congrFun (congrFun h i) j
-      simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+    all_goals
+      first
+      | have h := congrArg Matrix.toBlocks₁₁ hh
+        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+        ext i j
+        have hx := congrFun (congrFun h i) j
+        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+      | have h := congrArg Matrix.toBlocks₁₁ hh'
+        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+        ext i j
+        have hx := congrFun (congrFun h i) j
+        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+      | have h := congrArg Matrix.toBlocks₂₂ hh
+        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+        ext i j
+        have hx := congrFun (congrFun h i) j
+        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
+      | have h := congrArg Matrix.toBlocks₂₂ hh'
+        rw [← fromBlocks_toBlocks u.inv, fromBlocks_multiply] at h
+        ext i j
+        have hx := congrFun (congrFun h i) j
+        simpa [Matrix.toBlocks₁₁, Matrix.toBlocks₂₂, Matrix.submatrix, Matrix.one_apply] using hx
   · rintro ⟨⟨u, rfl⟩, ⟨v, rfl⟩⟩
     apply isUnit_iff_exists.mpr
     refine ⟨fromBlocks (↑u⁻¹) 0 0 (↑v⁻¹), ?_, ?_⟩ <;>
@@ -117,40 +119,5 @@ theorem isUnit_fromBlocks_zero₂₂_iff (A A' : Matrix ι ι R) (B : Matrix ι 
   rw [← hu, ← hv, Units.isUnit_mul_units, Units.isUnit_units_mul, isUnit_fromBlocks_diagonal_iff]
   have hA : IsUnit A := isUnit_iff_exists.mpr ⟨A', hAA', hA'A⟩
   simp [hA, Matrix.neg_mul, IsUnit.neg_iff]
-
-/-- An inverse of a block matrix with a zero corner and an invertible corner, whose corner block
-is the inverse of the Schur complement. -/
-theorem fromBlocks_zero₂₂_inverse (A A' : Matrix ι ι R) (B : Matrix ι κ R) (C : Matrix κ ι R)
-    (a b : Matrix κ κ R) (hAA' : A * A' = 1) (hA'A : A' * A = 1)
-    (ha : C * A' * B = a) (hab : a * b = 1) (hba : b * a = 1) :
-    ∃ M : Matrix (ι ⊕ κ) (ι ⊕ κ) R,
-      fromBlocks A B C 0 * M = 1 ∧ M * fromBlocks A B C 0 = 1 ∧
-      fromCols (0 : Matrix κ ι R) (-1) * M *
-        fromRows (0 : Matrix ι κ R) (1 : Matrix κ κ R) = b := by
-  let U : (Matrix (ι ⊕ κ) (ι ⊕ κ) R)ˣ :=
-    ⟨fromBlocks 1 0 (C * A') 1, fromBlocks 1 0 (-(C * A')) 1,
-      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul],
-      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul]⟩
-  let V : (Matrix (ι ⊕ κ) (ι ⊕ κ) R)ˣ :=
-    ⟨fromBlocks 1 (A' * B) 0 1, fromBlocks 1 (-(A' * B)) 0 1,
-      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul],
-      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul]⟩
-  let D : (Matrix (ι ⊕ κ) (ι ⊕ κ) R)ˣ :=
-    ⟨fromBlocks A 0 0 (-a), fromBlocks A' 0 0 (-b),
-      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul, hAA', hab],
-      by simp [fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul, hA'A, hba]⟩
-  have hS : (↑(U * D * V) : Matrix (ι ⊕ κ) (ι ⊕ κ) R) = fromBlocks A B C 0 := by
-    change fromBlocks 1 0 (C * A') 1 * fromBlocks A 0 0 (-a) *
-      fromBlocks 1 (A' * B) 0 1 = _
-    rw [← ha]
-    simpa [Matrix.neg_mul] using (fromBlocks_zero₂₂_schur_factor A A' B C hAA' hA'A).symm
-  refine ⟨↑(U * D * V)⁻¹, ?_, ?_, ?_⟩
-  · rw [← hS]; exact (U * D * V).mul_inv
-  · rw [← hS]; exact (U * D * V).inv_mul
-  · change fromCols (0 : Matrix κ ι R) (-1) *
-      (V.inv * (D.inv * U.inv)) * fromRows (0 : Matrix ι κ R) (1 : Matrix κ κ R) = b
-    simp [V, D, U, fromBlocks_multiply, Matrix.mul_zero, Matrix.zero_mul,
-      Matrix.fromCols_mul_fromBlocks, fromCols_mul_fromRows,
-      Matrix.mul_assoc, Matrix.neg_mul, Matrix.mul_neg]
 
 end Matrix
