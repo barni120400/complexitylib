@@ -60,6 +60,7 @@ enumerative coding for weight-bounded words (Theorem 4.3) is in
   `Cslib.Circuits.Boolean.WeightedThreshold.length_le_sum_choose_gateActivity_of_isChain`:
   alternating-run capacity bounds along `scalarScore w`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_card_attainableTranscripts_of_direction`,
+  `WeightedThreshold.two_pow_lt_mul_max_card_attainableTranscripts_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_of_direction`,
   `Cslib.Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_sum_choose_gateActivity_of_direction`:
   rectangle-free scalar activity bounds (Corollary 4.2).
