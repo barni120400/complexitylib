@@ -36,7 +36,7 @@ separate obligations.
 
 ## References
 
-* [S. Arora, B. Barak, *Computational Complexity: A Modern Approach*, Section 2.3][AroraBarak09]
+This indexed-list formulation of gadget gluing and its proofs are original.
 -/
 
 @[expose] public section
