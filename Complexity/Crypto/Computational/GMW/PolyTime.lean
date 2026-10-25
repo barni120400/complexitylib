@@ -683,7 +683,7 @@ theorem isPPTOn_gmwSampleSimCoins {α : Type} {input : α ↪ List Bool}
   · apply IsPPTOn.replicate
     · apply ComputableInPolyTime.sampleList
       fun_prop
-    · exact ComputableInPolyTime.tidy (by fun_prop)
+    · fun_prop
   · fun_prop
 
 /-- Run one simulated GMW attempt with pre-sampled unopened pads `pads` (without any witness). -/
@@ -758,7 +758,7 @@ private theorem isPPTOn_gmwSimAttempt {α : Type} {enc : α ↪ List Bool}
   apply IsPPTOn.replicate
   · apply ComputableInPolyTime.sampleList
     fun_prop
-  · exact ComputableInPolyTime.tidy (by fun_prop)
+  · fun_prop
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
 theorem isPPTOn_gmwSimulator {α : Type} {enc : α ↪ List Bool}
@@ -776,7 +776,7 @@ theorem isPPTOn_gmwSimulator {α : Type} {enc : α ↪ List Bool}
   have hf := hf.tidy
   have hattempt := isPPTOn_gmwSimAttempt hg hlen hf hV
   dsimp only [gmwSimulator]
-  apply IsPPTOn.map (hattempt.replicate (ComputableInPolyTime.tidy (by fun_prop)))
+  apply IsPPTOn.map (hattempt.replicate (by fun_prop))
   exact computableInPolyTime_gmwFirstSuccess ComputableInPolyTime.id'
 
 attribute [local fun_prop] ComputableInPolyTime.tidy in
@@ -884,7 +884,7 @@ theorem isPPTOn_gmwInteract {α : Type} {enc : α ↪ List Bool}
     · apply IsPPTOn.replicate
       · apply ComputableInPolyTime.sampleList
         fun_prop
-      · exact ComputableInPolyTime.tidy (by fun_prop)
+      · fun_prop
     · fun_prop
   dsimp only [gmwInteract]
   apply hcoins.bind_with

@@ -626,15 +626,15 @@ theorem leveled_witness (hLWE : DecisionLWE) :
         Native (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget) ∧
         ChosenMessageSecure (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget) := by
   let D := GSW.DepthParameters.decryptionCircuits
-  have hD := GSW.DepthParameters.computableInPolyTime_decryptionCircuits.tidy
+  have hD := GSW.DepthParameters.computableInPolyTime_decryptionCircuits
   have hkeyGen := GSW.DepthParameters.isPPTOn_keyGen
   have hencrypt := GSW.DepthParameters.isPPTOn_encrypt
   have hevaluate := GSW.DepthParameters.isPPTOn_evaluate
   obtain ⟨circuits, hsize, hcircuits⟩ := Leveled.exists_decrypt_circuits D hD
   obtain ⟨hsecret, hciphertext⟩ := Leveled.polynomiallyBounded_widths D hD
   refine ⟨circuits, hsize, hsecret, hciphertext, fun budget hbudget => ?_⟩
-  have hb : ComputableTidilyInPolyTime budget encUnary encUnary :=
-    CryptographyBridge.polyTime_iff.mp hbudget
+  have hb : ComputableInPolyTime budget encUnary encUnary :=
+    .of_tidy (CryptographyBridge.polyTime_iff.mp hbudget)
   obtain ⟨hcorrect, hwidth, -, -, hsecure⟩ :=
     Leveled.correct_fixedWidth_indCPA D GSW.DepthParameters.correct
       GSW.DepthParameters.fixedWidth GSW.DepthParameters.bootstrappable
@@ -645,7 +645,7 @@ theorem leveled_witness (hLWE : DecisionLWE) :
     fixedWidths_of_fixedWidth hwidth fun _ _ h => h,
     native_of (Leveled.isPPTOn_scheme_keyGen hkeyGen hencrypt D budget hb)
       (Leveled.isPPTOn_scheme_encrypt hencrypt D budget)
-      (Leveled.computableTidilyInPolyTime_scheme_decrypt D hD budget).computableInPolyTime
+      (Leveled.computableInPolyTime_scheme_decrypt D hD budget)
       (Leveled.isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hb),
     chosenMessageSecure_of_indCPA hsecure⟩
 
