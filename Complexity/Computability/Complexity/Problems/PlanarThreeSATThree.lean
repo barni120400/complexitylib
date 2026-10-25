@@ -14,6 +14,7 @@ public import Complexity.Computability.Complexity.Problems.Graph.OrthogonalDrawi
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
 import Complexity.Computability.Complexity.Problems.SAT.Planar.Completeness
 import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
+import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 import Complexity.Computability.Complexity.Problems.SAT.Planar.Size
 import Complexity.Computability.Complexity.Problems.SAT.Planar.Bounds
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
@@ -41,6 +42,8 @@ by returning one empty clause and a one-vertex drawing.
 
 ## Main results
 
+* `PlanarThreeSATThree_npHard`, `DrawnPlanarThreeSATThree_npHard`: NP-hardness with an
+  existential or supplied integer orthogonal incidence drawing.
 * `computableInPolyTime_toDrawnPlanarThreeSATThree`,
   `computableInPolyTime_toPlanarThreeSATThree`: native polynomial-time computation.
 * `satisfiable_toPlanarThreeSAT_iff`: total correctness after occurrence splitting.
@@ -135,6 +138,62 @@ theorem satisfiable_toPlanarThreeSATThree_iff (φ : CNF ℕ) :
       exact hg ht
     simp [toPlanarThreeSATThree, toDrawnPlanarThreeSATThree, hg, CNF.Satisfiable, hn]
 
+/-- Every total output, including the rejection branch, has the claimed actual drawing. -/
+theorem isPlanarOrthogonalDrawing_toDrawnPlanarThreeSATThree (φ : CNF ℕ) :
+    Graph.IsPlanarOrthogonalDrawing (SAT.incidenceGraph (toPlanarThreeSATThree φ))
+      (toDrawnPlanarThreeSATThree φ).2 := by
+  by_cases hg : ThreeSATThree.syntaxCheck φ = true
+  · have hs := (ThreeSATThree.syntaxCheck_iff φ).1 hg
+    simpa only [toPlanarThreeSATThree, toDrawnPlanarThreeSATThree, hg, ↓reduceIte] using
+      SAT.PlanarCompile.isPlanarOrthogonalDrawing hs.1 hs.2
+  · simpa [toPlanarThreeSATThree, toDrawnPlanarThreeSATThree, hg] using
+      rejection_drawing
+
+/-- Correctness for the supplied-drawing target, on every source formula. -/
+theorem mem_DrawnPlanarThreeSATThree_toDrawnPlanarThreeSATThree_iff (φ : CNF ℕ) :
+    toDrawnPlanarThreeSATThree φ ∈ DrawnPlanarThreeSATThree ↔ φ ∈ ThreeSATThree := by
+  constructor
+  · intro h
+    exact (satisfiable_toPlanarThreeSATThree_iff φ).1 h.1.2.2
+  · intro h
+    exact ⟨⟨width_toPlanarThreeSATThree φ, count_vars_toPlanarThreeSATThree φ,
+      (satisfiable_toPlanarThreeSATThree_iff φ).2 h⟩,
+        isPlanarOrthogonalDrawing_toDrawnPlanarThreeSATThree φ⟩
+
+/-- Correctness when the target problem requires the drawing's existence. -/
+theorem mem_PlanarThreeSATThree_toPlanarThreeSATThree_iff (φ : CNF ℕ) :
+    toPlanarThreeSATThree φ ∈ PlanarThreeSATThree ↔ φ ∈ ThreeSATThree := by
+  constructor
+  · intro h
+    exact (satisfiable_toPlanarThreeSATThree_iff φ).1 h.1.2.2
+  · intro h
+    exact ⟨⟨width_toPlanarThreeSATThree φ, count_vars_toPlanarThreeSATThree φ,
+      (satisfiable_toPlanarThreeSATThree_iff φ).2 h⟩, (toDrawnPlanarThreeSATThree φ).2,
+        isPlanarOrthogonalDrawing_toDrawnPlanarThreeSATThree φ⟩
+
+/-- Native polynomial-time reduction to a formula with its actual orthogonal drawing. -/
+theorem polyTimeReducible_ThreeSATThree_DrawnPlanarThreeSATThree :
+    PolyTimeReducible encCNF (encPair encCNF Graph.encOrthogonalDrawing)
+      ThreeSATThree DrawnPlanarThreeSATThree :=
+  ⟨toDrawnPlanarThreeSATThree, computableInPolyTime_toDrawnPlanarThreeSATThree,
+    fun φ => (mem_DrawnPlanarThreeSATThree_toDrawnPlanarThreeSATThree_iff φ).symm⟩
+
+/-- Native polynomial-time reduction to a formula admitting an orthogonal drawing. -/
+theorem polyTimeReducible_ThreeSATThree_PlanarThreeSATThree :
+    PolyTimeReducible encCNF encCNF ThreeSATThree PlanarThreeSATThree :=
+  ⟨toPlanarThreeSATThree, computableInPolyTime_toPlanarThreeSATThree,
+    fun φ => (mem_PlanarThreeSATThree_toPlanarThreeSATThree_iff φ).symm⟩
+
+/-- Orthogonal planar 3SAT-3 with the drawing supplied is NP-hard under binary encodings. -/
+theorem DrawnPlanarThreeSATThree_npHard :
+    NPHard (encPair encCNF Graph.encOrthogonalDrawing) DrawnPlanarThreeSATThree :=
+  ThreeSATThree_npHard.trans polyTimeReducible_ThreeSATThree_DrawnPlanarThreeSATThree
+
+/-- Satisfiability of occurrence-three, width-three formulas admitting an integer orthogonal
+incidence drawing is NP-hard under the ordinary binary formula encoding. -/
+theorem PlanarThreeSATThree_npHard : NPHard encCNF PlanarThreeSATThree :=
+  ThreeSATThree_npHard.trans polyTimeReducible_ThreeSATThree_PlanarThreeSATThree
+
 /-- Explicit linear grid sides for the total supplied-drawing compiler. -/
 theorem toDrawnPlanarThreeSATThree_fits (φ : CNF ℕ) :
     Graph.drawingFits (toDrawnPlanarThreeSATThree φ).2
@@ -191,6 +250,24 @@ theorem computableInPolyTime_toPlanarThreeSAT :
 theorem satisfiable_toPlanarThreeSAT_iff (φ : CNF ℕ) :
     (toPlanarThreeSAT φ).Satisfiable ↔ φ ∈ ThreeSAT :=
   (satisfiable_toPlanarThreeSATThree_iff (toThreeSATThree φ)).trans
+    (mem_ThreeSATThree_toThreeSATThree_iff φ)
+
+/-- The composed output has its actual orthogonal drawing for every original CNF input. -/
+theorem isPlanarOrthogonalDrawing_toDrawnPlanarThreeSAT (φ : CNF ℕ) :
+    Graph.IsPlanarOrthogonalDrawing (SAT.incidenceGraph (toPlanarThreeSAT φ))
+      (toDrawnPlanarThreeSAT φ).2 :=
+  isPlanarOrthogonalDrawing_toDrawnPlanarThreeSATThree (toThreeSATThree φ)
+
+/-- The original 3SAT language reduces to the supplied-drawing target by the composed compiler. -/
+theorem mem_DrawnPlanarThreeSATThree_toDrawnPlanarThreeSAT_iff (φ : CNF ℕ) :
+    toDrawnPlanarThreeSAT φ ∈ DrawnPlanarThreeSATThree ↔ φ ∈ ThreeSAT :=
+  (mem_DrawnPlanarThreeSATThree_toDrawnPlanarThreeSATThree_iff (toThreeSATThree φ)).trans
+    (mem_ThreeSATThree_toThreeSATThree_iff φ)
+
+/-- The composed formula output belongs to the existential-drawing target exactly on 3SAT. -/
+theorem mem_PlanarThreeSATThree_toPlanarThreeSAT_iff (φ : CNF ℕ) :
+    toPlanarThreeSAT φ ∈ PlanarThreeSATThree ↔ φ ∈ ThreeSAT :=
+  (mem_PlanarThreeSATThree_toPlanarThreeSATThree_iff (toThreeSATThree φ)).trans
     (mem_ThreeSATThree_toThreeSATThree_iff φ)
 
 /-- Linear grid sides are measured against the original formula's clause/literal size. -/

@@ -54,4 +54,19 @@ example : ¬(toPlanarThreeSAT [[(7, true)], [(7, false)]]).Satisfiable := by
 example : Graph.drawingFits (toDrawnPlanarThreeSAT [[(2 ^ 100, true)]]).2 40320 40320 :=
   toDrawnPlanarThreeSAT_fits _
 
+-- The final language theorem includes the generated continuous drawing certificate.
+example : toDrawnPlanarThreeSAT [[(2 ^ 100, true)]] ∈ DrawnPlanarThreeSATThree := by
+  apply (mem_DrawnPlanarThreeSATThree_toDrawnPlanarThreeSAT_iff _).2
+  exact ⟨by decide, ⟨fun _ => true, rfl⟩⟩
+
+-- Rejection still emits a valid isolated-vertex drawing, but cannot enter the SAT language.
+example : Graph.IsPlanarOrthogonalDrawing
+    (SAT.incidenceGraph (toPlanarThreeSATThree
+      [[(0, true), (1, true), (2, true), (3, true)]]))
+    (toDrawnPlanarThreeSATThree [[(0, true), (1, true), (2, true), (3, true)]]).2 :=
+  isPlanarOrthogonalDrawing_toDrawnPlanarThreeSATThree _
+
+example : ([[]], [(0, 0)], []) ∉ DrawnPlanarThreeSATThree := by
+  simp [DrawnPlanarThreeSATThree, ThreeSATThree, CNF.Satisfiable]
+
 end ComplexityTests.PlanarThreeSATThree
