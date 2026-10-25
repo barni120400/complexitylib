@@ -856,10 +856,13 @@ public import Complexity.Computability.Interactive.Sumcheck
 public import Complexity.Computability.Kolmogorov.AverageCase
 public import Complexity.Computability.Kolmogorov.Basic
 public import Complexity.Computability.Kolmogorov.ChainRule
+public import Complexity.Computability.Kolmogorov.Conditional
 public import Complexity.Computability.Kolmogorov.Depth
 public import Complexity.Computability.Kolmogorov.Incompressibility
 public import Complexity.Computability.Kolmogorov.Invariance
 public import Complexity.Computability.Kolmogorov.MINKT
+public import Complexity.Computability.Kolmogorov.MINcKT
+public import Complexity.Computability.Kolmogorov.MKtP
 public import Complexity.Computability.Kolmogorov.MultiTape
 public import Complexity.Computability.Kolmogorov.NisanWigderson
 public import Complexity.Computability.Kolmogorov.Partrec
