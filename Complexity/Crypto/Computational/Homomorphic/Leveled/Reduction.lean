@@ -21,8 +21,13 @@ exact state and adds the ordinary fresh-ciphertext tag to the base challenge.
 
 `leveledAdversary` combines the two encrypted-link hybrid reductions (`E.linkAdversary` for the
 `false` and message-swapped `true` challenge worlds) and the dyadically weighted `zeroLinkAdversary`
-into a single two-stage base IND-CPA adversary, realizing Gentry's concrete-security reduction
-([Gentry2009], Section 2, Theorem 4, p. 171).
+into a single two-stage base IND-CPA adversary, realizing Gentry's Theorem 4 concrete-security
+reduction up to a constant factor ([Gentry2009], Section 2, Theorem 4, p. 171): writing
+`d = budget n` and `ℓ = capacity n`, the exact loss is `4 * dyadicSize (2 * d) * dyadicSize ℓ`
+(between `4 * (2 * d + 1) * (ℓ + 1)` and `16 * (2 * d + 1) * (ℓ + 1)`, so within a constant factor
+of Gentry's `ℓ * (d + 1)`). `isPPT_leveledAdversary` proves the asymptotic efficiency consequence
+that the reduction is uniform strict PPT whenever the adversary, base scheme, depth and capacity
+are; the multiplicative runtime bound (`poly(ℓ, d)` times that of the adversary) is not proved here.
 
 ## Main definitions
 

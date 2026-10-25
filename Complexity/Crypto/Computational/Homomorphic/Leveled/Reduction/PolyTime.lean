@@ -19,8 +19,9 @@ import Complexity.Tactic.PPT
 The public-artifact test charges both adaptive adversary stages and the complete tagged
 challenge. The zero-link adversary charges the generated key list, all zero-link encryptions,
 public serialization and the adversary's saved state. `isPPT_leveledAdversary` certifies the
-unified two-stage reduction combining the two `linkAdversary` directions and the dyadically
-weighted `zeroLinkAdversary`.
+asymptotic runtime consequence of [Gentry2009, Section 2, Theorem 4, p. 171]: the unified
+two-stage reduction is uniform strict PPT whenever the adversary, base scheme, depth and capacity
+are (without proving the multiplicative `poly(ℓ, d)` runtime factor relative to the adversary).
 
 ## Main results
 

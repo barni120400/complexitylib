@@ -64,9 +64,11 @@ Priorities live in this list and in the tiers of [#897].
   family instantiates the generic theorem: leveled FHE under decision LWE with quasi-polynomial
   modulus for exactly that family, and FHE under the additional one-key circular-security
   assumption. The checked formal abstract `gsw-fhe` states both endpoints with GSW's algorithms
-  written out. Open in [#1104]: a uniform generator for the leveled scheme's wrapper decryption
-  circuits (uniform compactness), reuse of evaluated ciphertexts as fresh inputs (multi-hop
-  evaluation), and Gentry's exact concrete-security loss.
+  written out, and the concrete-security reduction for the leveled scheme matches Gentry's Theorem 4
+  advantage loss up to a constant factor. Open in [#1104]: a uniform generator for the leveled
+  scheme's wrapper decryption circuits (uniform compactness), reuse of evaluated ciphertexts as
+  fresh inputs (multi-hop evaluation), and the exact constant and multiplicative runtime bound in
+  Gentry's Theorem 4.
 - **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
   multiparty functionality admits a protocol secure against static malicious corruptions, with
   real/ideal simulation and abort, under the standard communication assumptions.

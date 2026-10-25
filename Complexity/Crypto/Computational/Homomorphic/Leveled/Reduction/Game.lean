@@ -21,8 +21,11 @@ experiment, including the adversary's retained state and the fresh-ciphertext ta
 Combining the two encrypted-link hybrid reductions (`E.linkAdversary` for the `false` and
 message-swapped `true` challenge worlds) with the dyadically weighted `zeroLinkAdversary` yields
 `leveledAdversary`, whose base IND-CPA game achieves the exact concrete-security loss
-`4 * dyadicSize (2 * budget n) * dyadicSize (capacity n)`, bounded by
-`16 * (2 * budget n + 1) * (capacity n + 1)` ([Gentry2009], Section 2, Theorem 4, p. 171).
+`4 * dyadicSize (2 * budget n) * dyadicSize (capacity n)`, bounded between
+`4 * (2 * budget n + 1) * (capacity n + 1)` and `16 * (2 * budget n + 1) * (capacity n + 1)` and
+therefore matching Gentry's Theorem 4 loss `ℓ(d + 1)` up to a constant factor ([Gentry2009],
+Section 2, Theorem 4, p. 171; the constant arises from the `2 * budget n` encrypted links, dyadic
+power-of-two index rounding, and the four-way branch selector with one inactive branch).
 
 ## Main results
 
@@ -38,8 +41,8 @@ message-swapped `true` challenge worlds) with the dyadically weighted `zeroLinkA
 * `Cslib.Crypto.Homomorphic.Leveled.advantage_game_eq_leveledAdversary`: exact unsigned advantage
   identity with factor `4 * dyadicSize (2 * budget n) * dyadicSize (capacity n)`.
 * `Cslib.Crypto.Homomorphic.Leveled.advantage_game_le_mul_leveledAdversary`: concrete polynomial
-  loss bound `16 * (2 * budget n + 1) * (capacity n + 1)`.
-* `Cslib.Crypto.Homomorphic.Leveled.advantage_game_le`: three-reduction triangle inequality bound.
+  loss bound `16 * (2 * budget n + 1) * (capacity n + 1)` (Gentry's Theorem 4 up to a constant
+  factor).
 
 ## References
 
@@ -420,67 +423,5 @@ theorem advantage_game_le_mul_leveledAdversary (E : Scheme) (budget capacity : �
           (ProbComp.eval (Encryption.game E.keyGen E.encrypt
             (leveledAdversary E (fun n => 2 * budget n) capacity adversary) true n)) := by
         ring
-
-/-- Three-reduction triangle inequality bound decomposing the leveled scheme's chosen-message
-advantage into the `false`-world `linkAdversary` hop, the `zeroLinkAdversary` hop, and the
-`true`-world `linkAdversary` hop. -/
-theorem advantage_game_le (E : Scheme) (budget capacity : ℕ → ℕ)
-    (adversary : Encryption.Adversary) (n width : ℕ)
-    (hwidth : ∀ keys ∈ (ProbComp.eval (E.keyGen n)).support, keys.2.length = width)
-    (hcapacity : width ≤ capacity n) :
-    Game.advantage
-      (ProbComp.eval (Encryption.game (fun n => keyGen E n (budget n)) (encrypt E)
-        adversary false n))
-      (ProbComp.eval (Encryption.game (fun n => keyGen E n (budget n)) (encrypt E)
-        adversary true n)) ≤
-    (dyadicSize (2 * budget n) : ℝ≥0) * dyadicSize (capacity n) *
-      Game.advantage
-        (ProbComp.eval (Encryption.game E.keyGen E.encrypt
-          (E.linkAdversary (fun n => 2 * budget n) capacity (publicKeyGame E adversary false))
-          false n))
-        (ProbComp.eval (Encryption.game E.keyGen E.encrypt
-          (E.linkAdversary (fun n => 2 * budget n) capacity (publicKeyGame E adversary false))
-          true n)) +
-    Game.advantage
-      (ProbComp.eval (Encryption.game E.keyGen E.encrypt
-        (zeroLinkAdversary E (fun n => 2 * budget n) adversary) false n))
-      (ProbComp.eval (Encryption.game E.keyGen E.encrypt
-        (zeroLinkAdversary E (fun n => 2 * budget n) adversary) true n)) +
-    (dyadicSize (2 * budget n) : ℝ≥0) * dyadicSize (capacity n) *
-      Game.advantage
-        (ProbComp.eval (Encryption.game E.keyGen E.encrypt
-          (E.linkAdversary (fun n => 2 * budget n) capacity (publicKeyGame E adversary true))
-          false n))
-        (ProbComp.eval (Encryption.game E.keyGen E.encrypt
-          (E.linkAdversary (fun n => 2 * budget n) capacity (publicKeyGame E adversary true))
-          true n)) := by
-  rw [eval_game_keyGen E budget adversary false n, eval_game_keyGen E budget adversary true n]
-  have h1 := Game.advantage_triangle
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) (2 * budget n) >>=
-      publicKeyGame E adversary false n))
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) 0 >>=
-      publicKeyGame E adversary false n))
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) (2 * budget n) >>=
-      publicKeyGame E adversary true n))
-  have h2 := Game.advantage_triangle
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) 0 >>=
-      publicKeyGame E adversary false n))
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) 0 >>=
-      publicKeyGame E adversary true n))
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) (2 * budget n) >>=
-      publicKeyGame E adversary true n))
-  rw [Game.advantage_comm
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) 0 >>=
-      publicKeyGame E adversary true n))
-    (ProbComp.eval (E.publicKeyChainHybrid n (2 * budget n) (2 * budget n) >>=
-      publicKeyGame E adversary true n))] at h2
-  rw [E.publicKeyChainHybrid_advantage_linkAdversary (fun n => 2 * budget n) capacity
-    (publicKeyGame E adversary false) n width hwidth hcapacity] at h1
-  rw [E.publicKeyChainHybrid_advantage_linkAdversary (fun n => 2 * budget n) capacity
-    (publicKeyGame E adversary true) n width hwidth hcapacity,
-    ← eval_zeroLinkAdversary E (fun n => 2 * budget n) adversary false n width hwidth,
-    ← eval_zeroLinkAdversary E (fun n => 2 * budget n) adversary true n width hwidth] at h2
-  rw [← eval_zeroLinkAdversary E (fun n => 2 * budget n) adversary false n width hwidth] at h1
-  exact (h1.trans (add_le_add_right h2 _)).trans_eq (add_assoc _ _ _).symm
 
 end Cslib.Crypto.Homomorphic.Leveled

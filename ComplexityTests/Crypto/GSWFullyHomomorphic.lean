@@ -17,7 +17,7 @@ namespace ComplexityTests.Crypto.GSWFullyHomomorphic
 
 open Cslib Cslib.Crypto Cslib.Circuits Cslib.Circuits.Boolean Cslib.Crypto.Homomorphic
 open Cslib.Crypto.Homomorphic.GSW Cslib.Crypto.Homomorphic.GSW.DepthParameters
-open Cslib.Probability
+open Cslib.Probability Turing.MultiTapeTM
 open Parameters (dimension noise)
 
 -- At security parameter zero the base secret holds one 65536-bit residue, and a ciphertext is a
@@ -26,6 +26,17 @@ open Parameters (dimension noise)
 example : secretWidth 0 = 65536 ∧ ciphertextWidth 0 = 131072 ^ 2 ∧
     3 * secretWidth 0 + 1 = 196609 := by
   decide +kernel
+
+/-- For any polynomial-time unary budget family and strict-PPT leveled adversary, the composed
+decision-LWE distinguisher for the leveled GSW reduction is native strict PPT. -/
+example {budget : ℕ → ℕ} (hbudget : ComputableInPolyTime budget encUnary encUnary)
+    {adversary : Encryption.Adversary} (hadversary : adversary.IsPPT) :
+    IsPPT encBool
+      (lweDistinguisher dimension samples width
+        (Leveled.leveledAdversary scheme (fun k => 2 * budget k) secretWidth adversary)) :=
+  GSW.isPPT_lweDistinguisher Parameters.computableTidilyInPolyTime_dimension
+    computableTidilyInPolyTime_samples computableTidilyInPolyTime_width
+    (isPPT_leveledAdversary hbudget hadversary)
 
 /-- Under decision LWE alone, one leveled scheme evaluates the compiled NAND circuit, whose
 depth is two, on all supported fresh encryptions. -/

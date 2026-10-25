@@ -30,10 +30,11 @@ with `t = 1 + ⌈log₂ (λ + 2)⌉`.
   decryption algorithm and fixed polynomial widths are chosen first. Then every polynomially
   bounded depth family is covered by an actual scheme with that decryption algorithm, assuming
   only decision LWE [Gentry2009, Definition 3 and Theorem 3]. Security is proved both
-  asymptotically (`exists_leveled_of_decisionLWE`) and with Gentry's concrete-security reduction
-  loss (`advantage_leveled_eq` and `advantage_leveled_le`, [Gentry2009, Section 2, Theorem 4,
-  p. 171]). Native certificates are uniform for each depth family; key generation reads only the
-  unary security parameter.
+  asymptotically (`exists_leveled_of_decisionLWE`) and with a concrete-security reduction matching
+  Gentry's Theorem 4 up to a constant factor (`advantage_leveled_eq` and `advantage_leveled_le`,
+  [Gentry2009, Section 2, Theorem 4, p. 171], with asymptotic `IsPPT` rather than a multiplicative
+  runtime bound relative to the adversary). Native certificates are uniform for each depth family;
+  key generation reads only the unary security parameter.
 * **Fully homomorphic encryption.** The one-key self-loop construction evaluates every circuit,
   assuming decision LWE for this family *and* the separate one-key circular-security assumption
   `Encryption.CircularSecure` for the base scheme [Gentry2009, Section 2, the self-loop

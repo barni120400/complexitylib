@@ -23,8 +23,10 @@ complete encrypted-key chain, and message selection occurs after the adversary s
 Two public-artifact hybrids replace secret encryptions by zero encryptions in the two challenge
 worlds, and `zeroLinkAdversary` simulates the intervening zero-link experiment. The unified
 two-stage reduction `leveledAdversary` combines all three hops into a single base IND-CPA
-adversary with exact loss `4 * dyadicSize (2 * budget n) * dyadicSize (capacity n) ≤
-16 * (2 * budget n + 1) * (capacity n + 1)` ([Gentry2009], Section 2, Theorem 4, p. 171).
+adversary with concrete loss `4 * dyadicSize (2 * budget n) * dyadicSize (capacity n) ≤
+16 * (2 * budget n + 1) * (capacity n + 1)`, matching Gentry's Theorem 4 ([Gentry2009], Section 2,
+p. 171) up to a constant factor from power-of-two coin sampling and NAND-compiled depth `2 * d`,
+with asymptotic `IsPPT` rather than a multiplicative runtime bound relative to the adversary.
 Correctness, evaluation efficiency, compactness, a concrete base cryptosystem and fixed-key
 unbounded-depth bootstrapping are separate results or obligations.
 
