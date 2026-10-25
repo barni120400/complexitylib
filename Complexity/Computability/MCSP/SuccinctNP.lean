@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Circuit.Boolean.Encoding.Certificate
 public import Complexity.Computability.Complexity.Classes.NP
+public import Complexity.Computability.MCSP.NP
 public import Complexity.Computability.MCSP.Succinct
 public import Complexity.Foundations.Data.BitString.Enumeration
 import Complexity.Computability.Circuit.Boolean.Hierarchy
@@ -24,22 +25,23 @@ We define standard string encodings for instances of the Succinct Minimum Circui
 (`Cslib.SuccinctMCSP.Instance`) and prove that `SuccinctMCSP` belongs to `NP` under both encodings:
 * `Cslib.SuccinctMCSP.enc`: encodes the arity in unary (`encUnary`), the canonical list of
   input-output samples using `encList (encPair encBits encBool)`, and the threshold in unary
-  (`encUnary`), matching [OliveiraPichSanthanam2019, Section 3 and proof of Theorem 1.4].
+  (`encUnary`). This is equivalent up to field order and list framing (`t` is implicit in `encList`)
+  to the encoding `⟨1^n, 1^s, 1^t, (x_1, b_1), …, (x_t, b_t)⟩` of
+  [OliveiraPichSanthanam2019, Section 4.1, proof of Theorem 1.4], and the two are computable from
+  each other in polynomial time.
 * `Cslib.SuccinctMCSP.encBinary`: encodes the arity in unary, the canonical list of samples, and
   the threshold in binary (`encNat`).
 
 Any consistent sample set `samples` on `n` variables is satisfied by the sparse DNF indicator
 function `sampleFunction samples` of circuit complexity at most `samples.card * (2 * n + 3) + 1`
 (`complexity_sampleFunction_le`). A certificate for `SuccinctMCSP` can therefore be capped at
-`budget n samples.card s = min s (samples.card * (2 * n + 3) + 1)` gates, which is polynomial in
-the encoded instance length even when `samples.card ≪ 2 ^ n` and the threshold `s` is given in
-binary. The verifier decodes the circuit via `readCertificate`, checks well-formedness via
-`codeCheck`, and evaluates the circuit only on the listed samples.
+`MCSP.sampleBudget n samples.card s = min s (samples.card * (2 * n + 3) + 1)` gates, which is
+polynomial in the encoded instance length even when `samples.card ≪ 2 ^ n` and the threshold `s` is
+given in binary. The verifier instantiates `MCSP.checkCertificateOn` with the listed samples.
 
 ## Main definitions
 
 * `Cslib.SuccinctMCSP.sampleFunction`: indicator function of the positive samples.
-* `Cslib.SuccinctMCSP.budget`: certificate gate budget `min s (t * (2 * n + 3) + 1)`.
 * `Cslib.SuccinctMCSP.enumSamples`, `Cslib.SuccinctMCSP.rawSamples`: canonical duplicate-free
   enumeration of an instance's samples.
 * `Cslib.SuccinctMCSP.toRaw`: embedding of `SuccinctMCSP.Instance` into raw data.
@@ -50,8 +52,8 @@ binary. The verifier decodes the circuit via `readCertificate`, checks well-form
 
 * `Cslib.SuccinctMCSP.complexity_sampleFunction_le`: sparse synthesis bound in the number of
   samples.
-* `Cslib.SuccinctMCSP.mem_iff_exists_circuit_le_budget`: `SuccinctMCSP` membership with gate count
-  capped at `budget`.
+* `Cslib.SuccinctMCSP.mem_iff_exists_circuit_le_sampleBudget`: `SuccinctMCSP` membership with gate
+  count capped at `MCSP.sampleBudget`.
 * `Cslib.SuccinctMCSP.mem_of_verifier_eq_true`, `Cslib.SuccinctMCSP.exists_verifier_append`:
   soundness and padded completeness of `SuccinctMCSP.verifier`.
 * `Cslib.SuccinctMCSP.isVerifier`, `Cslib.SuccinctMCSP.isVerifier_encBinary`: verifier correctness.
@@ -80,36 +82,21 @@ open Circuits Circuits.Boolean Turing.MultiTapeTM Complexity
 def sampleFunction {n : ℕ} (samples : Finset (BitString n × Bool)) : BooleanFunction n :=
   fun y => decide ((y, true) ∈ samples)
 
-/-- Starting from the constant `false` circuit and updating one positive sample at a time shows that
+/-- Restricting the constant `true` function to the positive inputs in `samples` shows that
 `sampleFunction samples` has circuit complexity at most `samples.card * (2 * n + 3) + 1`. -/
 theorem complexity_sampleFunction_le {n : ℕ} (samples : Finset (BitString n × Bool)) :
     complexity interpretation (single (sampleFunction samples)) ≤
       samples.card * (2 * n + 3) + 1 := by
   classical
-  induction samples using Finset.induction_on with
-  | empty =>
-    have heq : sampleFunction (∅ : Finset (BitString n × Bool)) = fun _ => false := rfl
-    simpa [heq] using (Synthesis.const false).complexity_le
-  | @insert p s hp ih =>
-    rw [Finset.card_insert_of_notMem hp, add_one_mul]
-    rcases p with ⟨a, _ | _⟩
-    · have heq : sampleFunction (insert (a, false) s) = sampleFunction s := by
-        funext y
-        simp [sampleFunction]
-      rw [heq]
-      omega
-    · have heq : sampleFunction (insert (a, true) s) =
-          Function.update (sampleFunction s) a true := by
-        funext y
-        by_cases hy : y = a
-        · subst hy
-          simp [sampleFunction]
-        · simp [sampleFunction, hy]
-      rw [heq]
-      calc complexity interpretation (single (Function.update (sampleFunction s) a true))
-          ≤ complexity interpretation (single (sampleFunction s)) + (2 * n + 3) :=
-            complexity_update_le _ a true
-        _ ≤ s.card * (2 * n + 3) + (2 * n + 3) + 1 := by omega
+  let S : Finset (BitString n) := (samples.filter fun p => p.2 = true).image Prod.fst
+  have heq : sampleFunction samples = fun y => decide (y ∈ S) && true := by
+    funext y
+    simp [S, sampleFunction]
+  have hcard : S.card ≤ samples.card :=
+    Finset.card_image_le.trans (Finset.card_filter_le _ _)
+  rw [heq]
+  exact (complexity_mask_le (fun _ => true) S).trans
+    (Nat.add_le_add_right (Nat.mul_le_mul_right _ hcard) 1)
 
 /-- When `x` has no contradictory samples, `sampleFunction x.samples` agrees with every sample in
 `x.samples`. -/
@@ -122,27 +109,22 @@ theorem sampleFunction_agrees {x : Instance}
     exact fun htrue => hcons y ⟨htrue, hp⟩
   · simp [sampleFunction, hp]
 
-/-- The number of gates a certificate for `SuccinctMCSP` may describe: the threshold `s`, capped at
-the sample-set bound `t * (2 * n + 3) + 1` that every consistent set of `t` samples on `n` inputs
-meets. -/
-def budget (n t s : ℕ) : ℕ := min s (t * (2 * n + 3) + 1)
-
 /-- An instance is in `SuccinctMCSP` if and only if it is satisfied by a circuit of size at most
-`budget x.arity x.samples.card x.threshold`. -/
-theorem mem_iff_exists_circuit_le_budget {x : Instance} :
+`MCSP.sampleBudget x.arity x.samples.card x.threshold`. -/
+theorem mem_iff_exists_circuit_le_sampleBudget {x : Instance} :
     x ∈ SuccinctMCSP ↔
       ∃ c : Circuit signature x.arity 1,
-        c.size ≤ budget x.arity x.samples.card x.threshold ∧
+        c.size ≤ MCSP.sampleBudget x.arity x.samples.card x.threshold ∧
         ∀ p ∈ x.samples, c.eval interpretation p.1 0 = p.2 := by
   constructor
   · intro hx
     rcases le_total x.threshold (x.samples.card * (2 * x.arity + 3) + 1) with hle | hle
     · obtain ⟨c, hc, hp⟩ := hx
-      exact ⟨c, by rw [budget, Nat.min_eq_left hle]; exact hc, hp⟩
+      exact ⟨c, by rw [MCSP.sampleBudget, Nat.min_eq_left hle]; exact hc, hp⟩
     · have hcons : ∀ y : BitString x.arity, ¬((y, true) ∈ x.samples ∧ (y, false) ∈ x.samples) :=
         fun y ⟨ht, hf⟩ => notMem_of_mem_samples ht hf hx
       obtain ⟨c, hc, hsize⟩ := complexity_le_iff.mp (complexity_sampleFunction_le x.samples)
-      refine ⟨c, by rw [budget, Nat.min_eq_right hle]; exact hsize, fun p hp => ?_⟩
+      refine ⟨c, by rw [MCSP.sampleBudget, Nat.min_eq_right hle]; exact hsize, fun p hp => ?_⟩
       rw [Circuit.computes_single_iff.mp hc p.1]
       exact sampleFunction_agrees hcons hp
   · rintro ⟨c, hc, hp⟩
@@ -215,7 +197,10 @@ def toRaw : Instance ↪ (ℕ × List (List Bool × Bool)) × ℕ :=
 theorem toRaw_apply (x : Instance) : toRaw x = ((x.arity, rawSamples x), x.threshold) := rfl
 
 /-- Instances of `SuccinctMCSP` encoded by the arity in unary, the framed list of samples, and the
-threshold in unary [OliveiraPichSanthanam2019, Section 3 and proof of Theorem 1.4]. -/
+threshold in unary. This is equivalent up to field order and list framing (`t` is implicit in
+`encList`) to `⟨1^n, 1^s, 1^t, (x_1, b_1), …, (x_t, b_t)⟩` in
+[OliveiraPichSanthanam2019, Section 4.1, proof of Theorem 1.4], and both encodings are computable
+from each other in polynomial time. -/
 def enc : Instance ↪ List Bool :=
   toRaw.trans (encPair (encPair encUnary (encList (encPair encBits encBool))) encUnary)
 
@@ -252,18 +237,11 @@ private theorem arity_and_card_le_length_enc_of_encT (encT : ℕ ↪ List Bool) 
 
 /-! ### Verifier and correctness -/
 
-/-- The verifier on raw data `(((n, samples), s), w)`: decodes a circuit on `n` inputs with at most
-`min s (samples.length * (2 * n + 3) + 1)` gates from `w`, checks that it is a valid circuit code,
-and checks that it agrees with every sample in `samples`. -/
+/-- The verifier on raw data `(((n, samples), s), w)`: instantiates `MCSP.checkCertificateOn` on
+the sample list `samples` at gate budget `MCSP.sampleBudget n samples.length s`. -/
 def rawVerifier (r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool) : Bool :=
-  let n := r.1.1.1
-  let samples := r.1.1.2
-  let s := r.1.2
-  let w := r.2
-  let S := min s (samples.length * (2 * n + 3) + 1)
-  let c := readCertificate n S w
-  (codeCheck n c.1 && decide (c.2 < n + c.1.length)) &&
-    samples.all fun p => evalOutput p.1 c.1 c.2 == p.2
+  MCSP.checkCertificateOn r.1.1.2 Prod.fst (fun p out => out == p.2)
+    r.1.1.1 (MCSP.sampleBudget r.1.1.1 r.1.1.2.length r.1.2) r.2
 
 /-- The `NP` verifier for `SuccinctMCSP`. -/
 def verifier (p : Instance × List Bool) : Bool :=
@@ -275,90 +253,51 @@ theorem verifier_eq_rawVerifier (p : Instance × List Bool) :
 
 theorem verifier_eq (x : Instance) (w : List Bool) :
     verifier (x, w) =
-      ((codeCheck x.arity
-          (readCertificate x.arity (budget x.arity x.samples.card x.threshold) w).1 &&
-        decide ((readCertificate x.arity (budget x.arity x.samples.card x.threshold) w).2 <
-          x.arity +
-            (readCertificate x.arity (budget x.arity x.samples.card x.threshold) w).1.length)) &&
-        (rawSamples x).all fun p =>
-          evalOutput p.1
-            (readCertificate x.arity (budget x.arity x.samples.card x.threshold) w).1
-            (readCertificate x.arity (budget x.arity x.samples.card x.threshold) w).2 == p.2) := by
+      MCSP.checkCertificateOn (rawSamples x) Prod.fst (fun p out => out == p.2)
+        x.arity (MCSP.sampleBudget x.arity x.samples.card x.threshold) w := by
   change rawVerifier (((x.arity, rawSamples x), x.threshold), w) = _
-  unfold rawVerifier budget
+  unfold rawVerifier
   dsimp only
-  simp only [length_rawSamples]
-
-/-- The polynomial bounding the length of certificates for `SuccinctMCSP`. -/
-noncomputable def certPolynomial : Polynomial ℕ := 40 * (Polynomial.X + 1) ^ 4
+  rw [length_rawSamples]
 
 private theorem certLength_le_enc_of_encT (encT : ℕ ↪ List Bool) (x : Instance) :
-    certLength x.arity (budget x.arity x.samples.card x.threshold) ≤
-      certPolynomial.eval
+    certLength x.arity (MCSP.sampleBudget x.arity x.samples.card x.threshold) ≤
+      MCSP.certPolynomial.eval
         (encPair (encPair encUnary (encList (encPair encBits encBool))) encT (toRaw x)).length := by
-  set L := (encPair (encPair encUnary (encList (encPair encBits encBool))) encT (toRaw x)).length
   obtain ⟨hn, hcard⟩ := arity_and_card_le_length_enc_of_encT encT x
-  have hS : budget x.arity x.samples.card x.threshold ≤ L * (2 * L + 3) + 1 :=
-    (Nat.min_le_right _ _).trans (Nat.add_le_add_right
-      (Nat.mul_le_mul hcard (by omega)) 1)
-  simp only [certPolynomial, Polynomial.eval_mul, Polynomial.eval_pow, Polynomial.eval_add,
-    Polynomial.eval_X, Polynomial.eval_one, Polynomial.eval_ofNat, certLength]
-  nlinarith
+  exact MCSP.certLength_sampleBudget_le hn hcard
 
 /-- **Soundness of the verifier.** An instance with an accepted certificate, of any length, is in
 `SuccinctMCSP`. -/
 theorem mem_of_verifier_eq_true {x : Instance} {w : List Bool} (hw : verifier (x, w) = true) :
     x ∈ SuccinctMCSP := by
   rw [verifier_eq] at hw
-  set S := budget x.arity x.samples.card x.threshold
-  set r := readCertificate x.arity S w
-  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true, codeCheck_eq_true_iff,
-    beq_iff_eq] at hw
-  obtain ⟨⟨hcode, hout⟩, hall⟩ := hw
-  have hsome : (Circuit.ofCode x.arity 1 (r.1, [r.2]) : Option (Circuit signature _ 1)).isSome :=
-    Circuit.isSome_ofCode_iff.2 ⟨hcode, rfl, by simpa using hout⟩
-  set c : Circuit signature x.arity 1 := (Circuit.ofCode x.arity 1 (r.1, [r.2])).get hsome
-  have hc : c.code = (r.1, [r.2]) := Circuit.code_of_ofCode_eq_some (Option.some_get _).symm
-  have houtput : (c.outputs 0).toNat = r.2 := by
-    have := congrArg (fun p => p.2.headD 0) hc
-    simpa [Circuit.code] using this
-  refine ⟨c, ?_, fun p hp => ?_⟩
-  · calc c.size = r.1.length := by rw [← Circuit.length_code_fst, hc]
-      _ ≤ S := length_readCertificate_le _ _ _
-      _ ≤ x.threshold := Nat.min_le_left _ _
-  · rw [Circuit.eval_eq_evalOutput, houtput, show c.code.1 = r.1 by rw [hc]]
-    exact hall (List.ofFn p.1, p.2) ((ofFn_mem_rawSamples_iff x p.1 p.2).mpr hp)
+  obtain ⟨c, hcS, hall⟩ := MCSP.exists_circuit_of_checkCertificateOn hw
+  refine ⟨c, hcS.trans (Nat.min_le_left _ _), fun p hp => ?_⟩
+  simpa using hall (List.ofFn p.1, p.2)
+    ((ofFn_mem_rawSamples_iff x p.1 p.2).mpr hp) p.1 rfl
 
 /-- **Completeness of the verifier.** Every instance in `SuccinctMCSP` has a certificate of length
-`certLength x.arity (budget x.arity x.samples.card x.threshold)` that is accepted whatever bits
-follow it. -/
+`certLength x.arity (MCSP.sampleBudget x.arity x.samples.card x.threshold)` that is accepted
+whatever bits follow it. -/
 theorem exists_verifier_append {x : Instance} (hx : x ∈ SuccinctMCSP) :
     ∃ u : List Bool,
-      u.length = certLength x.arity (budget x.arity x.samples.card x.threshold) ∧
+      u.length = certLength x.arity (MCSP.sampleBudget x.arity x.samples.card x.threshold) ∧
       ∀ extra, verifier (x, u ++ extra) = true := by
-  obtain ⟨C, hcS, hagree⟩ := mem_iff_exists_circuit_le_budget.mp hx
-  have hcode : Program.IsCodeFrom signature x.arity 0 C.code.1 := by
-    rw [← Program.isSome_ofCode_iff, Circuit.code, Program.ofCode_code]
-    rfl
-  refine ⟨certificate x.arity (budget x.arity x.samples.card x.threshold) C.code.1
-      (C.outputs 0).toNat,
-    length_certificate_code C hcS, fun extra => ?_⟩
-  rw [verifier_eq]
-  simp only [readCertificate_certificate_code_append C hcS, Bool.and_eq_true,
-    codeCheck_eq_true_iff.2 hcode, decide_eq_true_eq, List.all_eq_true, beq_iff_eq, true_and]
-  refine ⟨by rw [Circuit.length_code_fst]; exact (C.outputs 0).toNat_lt, fun p hp => ?_⟩
+  obtain ⟨C, hcS, hagree⟩ := mem_iff_exists_circuit_le_sampleBudget.mp hx
+  simp only [verifier_eq]
+  refine MCSP.exists_checkCertificateOn_append hcS fun p hp => ?_
   obtain ⟨y, hy, heq⟩ := mem_rawSamples_iff.mp hp
-  rw [← heq, ← Circuit.eval_eq_evalOutput]
-  exact hagree (y, p.2) hy
+  exact ⟨y, heq.symm, by simp [hagree (y, p.2) hy]⟩
 
 /-- `SuccinctMCSP.verifier` verifies `SuccinctMCSP` under `enc` (unary threshold). -/
-theorem isVerifier : IsVerifier enc certPolynomial verifier SuccinctMCSP := by
+theorem isVerifier : IsVerifier enc MCSP.certPolynomial verifier SuccinctMCSP := by
   refine IsVerifier.of_padding (fun x w _ hw => mem_of_verifier_eq_true hw) fun x hx => ?_
   obtain ⟨u, hu, hV⟩ := exists_verifier_append hx
   exact ⟨u, hu ▸ certLength_le_enc_of_encT encUnary x, fun k => hV _⟩
 
 /-- `SuccinctMCSP.verifier` verifies `SuccinctMCSP` under `encBinary` (binary threshold). -/
-theorem isVerifier_encBinary : IsVerifier encBinary certPolynomial verifier SuccinctMCSP := by
+theorem isVerifier_encBinary : IsVerifier encBinary MCSP.certPolynomial verifier SuccinctMCSP := by
   refine IsVerifier.of_padding (fun x w _ hw => mem_of_verifier_eq_true hw) fun x hx => ?_
   obtain ⟨u, hu, hV⟩ := exists_verifier_append hx
   exact ⟨u, hu ▸ certLength_le_enc_of_encT encNat x, fun k => hV _⟩
@@ -387,70 +326,27 @@ theorem computableInPolyTime_rawVerifier :
       (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool => r.1.1.2.length)
       encIn encUnary :=
     (ComputableInPolyTime.length_list encSample).comp hsamples
-  have hcap : ComputableInPolyTime
-      (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool =>
-        r.1.1.2.length * (2 * r.1.1.1 + 3) + 1)
-      encIn encUnary := by
-    fun_prop
   have hs : ComputableInPolyTime
       (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool => r.1.2)
       encIn encNat :=
     (ComputableInPolyTime.fst _ _).snd'
   have hS : ComputableInPolyTime
       (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool =>
-        min r.1.2 (r.1.1.2.length * (2 * r.1.1.1 + 3) + 1))
-      encIn encUnary := by
-    simpa only [min_comm] using ComputableInPolyTime.binary_min_unary' hcap hs
+        MCSP.sampleBudget r.1.1.1 r.1.1.2.length r.1.2)
+      encIn encUnary :=
+    MCSP.computableInPolyTime_sampleBudget hn hlen hs
   have hw : ComputableInPolyTime
       (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool => r.2)
       encIn encBits :=
     ComputableInPolyTime.snd _ _
-  have hc := computableInPolyTime_readCertificate hn hS hw
-  have hcode := computableInPolyTime_codeCheck hn hc.fst'
-  have hbound : ComputableInPolyTime
-      (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool =>
-        decide ((readCertificate r.1.1.1
-          (min r.1.2 (r.1.1.2.length * (2 * r.1.1.1 + 3) + 1)) r.2).2 <
-          r.1.1.1 + (readCertificate r.1.1.1
-            (min r.1.2 (r.1.1.2.length * (2 * r.1.1.1 + 3) + 1)) r.2).1.length))
-      encIn encBool :=
-    .of_tidy (ComputableTidilyInPolyTime.binary_lt' hc.snd'.tidy
-      (ComputableInPolyTime.unary_to_binary.comp (ComputableInPolyTime.unary_add.comp
-        (hn.prod ((ComputableInPolyTime.length_list encGate).comp hc.fst')))).tidy)
-  have hout : ComputableInPolyTime
-      (fun q : (((ℕ × List (List Bool × Bool)) × ℕ) × List Bool) × (List Bool × Bool) =>
-        evalOutput q.2.1
-          (readCertificate q.1.1.1.1
-            (min q.1.1.2 (q.1.1.1.2.length * (2 * q.1.1.1.1 + 3) + 1)) q.1.2).1
-          (readCertificate q.1.1.1.1
-            (min q.1.1.2 (q.1.1.1.2.length * (2 * q.1.1.1.1 + 3) + 1)) q.1.2).2)
-      (encPair encIn encSample) encBool :=
-    computableInPolyTime_evalOutput
-      (ComputableInPolyTime.snd encIn encSample).fst'
-      (hc.comp (ComputableInPolyTime.fst encIn encSample)).fst'
-      (hc.comp (ComputableInPolyTime.fst encIn encSample)).snd'
-  have htest : ComputableInPolyTime
-      (fun q : (((ℕ × List (List Bool × Bool)) × ℕ) × List Bool) × (List Bool × Bool) =>
-        evalOutput q.2.1
-          (readCertificate q.1.1.1.1
-            (min q.1.1.2 (q.1.1.1.2.length * (2 * q.1.1.1.1 + 3) + 1)) q.1.2).1
-          (readCertificate q.1.1.1.1
-            (min q.1.1.2 (q.1.1.1.2.length * (2 * q.1.1.1.1 + 3) + 1)) q.1.2).2 == q.2.2)
-      (encPair encIn encSample) encBool :=
-    ComputableInPolyTime.beq hout (ComputableInPolyTime.snd encIn encSample).snd'
-  have hall : ComputableInPolyTime
-      (fun r : ((ℕ × List (List Bool × Bool)) × ℕ) × List Bool =>
-        r.1.1.2.all fun p =>
-          evalOutput p.1
-            (readCertificate r.1.1.1
-              (min r.1.2 (r.1.1.2.length * (2 * r.1.1.1 + 3) + 1)) r.2).1
-            (readCertificate r.1.1.1
-              (min r.1.2 (r.1.1.2.length * (2 * r.1.1.1 + 3) + 1)) r.2).2 == p.2)
-      encIn encBool :=
-    .of_tidy (ComputableTidilyInPolyTime.allWithInput hsamples.tidy htest.tidy)
-  unfold rawVerifier
-  exact ComputableInPolyTime.bool_and.comp
-    ((ComputableInPolyTime.bool_and.comp (hcode.prod hbound)).prod hall)
+  have haccept : ComputableInPolyTime
+      (fun q : ((((ℕ × List (List Bool × Bool)) × ℕ) × List Bool) × (List Bool × Bool)) × Bool =>
+        q.2 == q.1.2.2)
+      (encPair (encPair encIn encSample) encBool) encBool :=
+    ComputableInPolyTime.beq (ComputableInPolyTime.snd _ _)
+      (ComputableInPolyTime.fst _ _).snd'.snd'
+  exact MCSP.computableInPolyTime_checkCertificateOn hn hS hw hsamples
+    (ComputableInPolyTime.fst encBits encBool) haccept
 
 /-- The `SuccinctMCSP` verifier is computable in polynomial time under `encBinary`. -/
 theorem computableInPolyTime_verifier_encBinary :
@@ -488,13 +384,13 @@ theorem computableInPolyTime_verifier :
   exact (computableInPolyTime_rawVerifier.comp hconv).comp hraw
 
 /-- **`SuccinctMCSP` is in `NP`** under `SuccinctMCSP.enc` (unary arity, framed sample list, and
-unary threshold) [OliveiraPichSanthanam2019, Section 3 and proof of Theorem 1.4]. -/
+unary threshold) [OliveiraPichSanthanam2019, Section 4.1, proof of Theorem 1.4]. -/
 theorem mem_NP : SuccinctMCSP ∈ NP enc :=
-  ⟨certPolynomial, verifier, computableInPolyTime_verifier, isVerifier⟩
+  ⟨MCSP.certPolynomial, verifier, computableInPolyTime_verifier, isVerifier⟩
 
 /-- **`SuccinctMCSP` is in `NP`** under `SuccinctMCSP.encBinary` (unary arity, framed sample list,
 and binary threshold). -/
 theorem mem_NP_encBinary : SuccinctMCSP ∈ NP encBinary :=
-  ⟨certPolynomial, verifier, computableInPolyTime_verifier_encBinary, isVerifier_encBinary⟩
+  ⟨MCSP.certPolynomial, verifier, computableInPolyTime_verifier_encBinary, isVerifier_encBinary⟩
 
 end Cslib.SuccinctMCSP

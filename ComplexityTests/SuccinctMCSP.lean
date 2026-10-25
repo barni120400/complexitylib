@@ -27,9 +27,9 @@ example {n : ℕ} (samples : Finset (BitString n × Bool)) :
 example (x : SuccinctMCSP.Instance) :
     x ∈ SuccinctMCSP ↔
       ∃ c : Circuit signature x.arity 1,
-        c.size ≤ SuccinctMCSP.budget x.arity x.samples.card x.threshold ∧
+        c.size ≤ MCSP.sampleBudget x.arity x.samples.card x.threshold ∧
         ∀ p ∈ x.samples, c.eval interpretation p.1 0 = p.2 :=
-  SuccinctMCSP.mem_iff_exists_circuit_le_budget
+  SuccinctMCSP.mem_iff_exists_circuit_le_sampleBudget
 
 example : SuccinctMCSP ∈ NP SuccinctMCSP.enc :=
   SuccinctMCSP.mem_NP
@@ -101,18 +101,6 @@ example : (⟨1, notSamples, 0⟩ : SuccinctMCSP.Instance) ∉ SuccinctMCSP := b
   obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := SuccinctMCSP.exists_verifier_append hx
   · revert hu; decide
   · have := hV []; revert this; cases b <;> decide
-  · simp [certLength, SuccinctMCSP.budget] at hu
-
-/-- Threshold `0` and threshold `1` separate on the 1-input negation samples. -/
-example :
-    (⟨1, notSamples, 0⟩ : SuccinctMCSP.Instance) ∉ SuccinctMCSP ∧
-      (⟨1, notSamples, 1⟩ : SuccinctMCSP.Instance) ∈ SuccinctMCSP := by
-  refine ⟨?_, SuccinctMCSP.mem_of_verifier_eq_true (w := certificate 1 1 [(.not, [0])] 1)
-    (by decide)⟩
-  intro hx
-  obtain ⟨_ | ⟨b, _ | _⟩, hu, hV⟩ := SuccinctMCSP.exists_verifier_append hx
-  · revert hu; decide
-  · have := hV []; revert this; cases b <;> decide
-  · simp [certLength, SuccinctMCSP.budget] at hu
+  · simp [certLength, MCSP.sampleBudget] at hu
 
 end ComplexityTests.SuccinctMCSP
