@@ -34,25 +34,38 @@ Kolmogorov complexity `Cslib.Kolmogorov.levinKt` ($\mathrm{Kt}$):
   `two_pow_lt_ncard_setOf_exists_optimal_levinKt_le_two_pow`):**
   Every string $x$ admits an optimal $\mathrm{Kt}$-witness $(p, s)$ with $s > 0$ and
   $|p| + \lceil \log_2 s \rceil = \mathrm{Kt}(x)$. Following
-  [Liu and Pass, Section 3.1, Fact 3.1][LiuPass2021Crypto], if any witness $(p, s)$ satisfying
-  $|p| + \lceil \log_2 s \rceil \le \mathrm{Kt}(x)$ runs for more than
+  [Liu and Pass, Section 3.1, Fact 3.1, p. 10][LiuPass2021Crypto], if any witness $(p, s)$
+  satisfying $|p| + \lceil \log_2 s \rceil \le \mathrm{Kt}(x)$ runs for more than
   $2^{\mathrm{copyOverhead} + \lceil \log_2(|x| + 1) \rceil + m}$ steps, then $K(x) < |x| - m$;
   consequently, all but fewer than $2^{n - m}$ strings of length $n$ have an optimal
   $\mathrm{Kt}$-witness running in at most
-  $2^{\mathrm{copyOverhead} + \lceil \log_2(n + 1) \rceil + m}$ steps.
+  $2^{\mathrm{copyOverhead} + \lceil \log_2(n + 1) \rceil + m}$ steps. Here the extra
+  $\lceil \log_2(n + 1) \rceil$ term in the exponent (relative to Liu–Pass's $2^c / \varepsilon$
+  bound from Fact 2.1, $\mathrm{Kt}(x) \le |x| + c$) comes from our multi-tape bound
+  `levinKt_le_length_add`
+  ($\mathrm{Kt}(x) \le |x| + \mathrm{copyOverhead} + \lceil \log_2(|x| + 1) \rceil$).
 * **`MKtP ∈ E ⊆ EXP` (`MKtP.mem_E`, `MKtP.mem_EXP`, `MKtPAt.mem_EXP`):**
-  `Cslib.Kolmogorov.MKtP` is the set of pairs `(x, k) : List Bool × ℕ` (encoded by
-  `encPair encBits encUnary`) with `levinKt x ≤ k`, and `Cslib.Kolmogorov.MKtPAt s` is the
-  fixed-threshold language `{x | levinKt x ≤ s x.length}`
-  ([Allender et al., Definition 9][AllenderBuhrmanKouckyVanMelkebeekRonneburger2006];
-  [Oliveira and Santhanam, Section A, Definition 44][OliveiraSanthanam2018];
-  [Liu and Pass, Section 2.2][LiuPass2021Crypto]). Enumerating candidate programs `Ladner.word j`
-  of length at most `k` and running `universalTMRunFor` for $2^{k - |p|}$ steps places `MKtP` in
-  `E (encPair encBits encUnary)` and `EXP (encPair encBits encUnary)`, and places `MKtPAt s` in
-  `EXP encBits` whenever `s` is computable in polynomial time in unary.
+  `Cslib.Kolmogorov.MKtP` is the set of pairs `(x, k) : List Bool × ℕ` with `levinKt x ≤ k`, and
+  `Cslib.Kolmogorov.MKtPAt s` is the fixed-threshold language `{x | levinKt x ≤ s x.length}`
+  ([Liu and Pass, Section 2.2][LiuPass2021Crypto];
+  [Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018]; compare
+  `R_Kt ∈ E` in
+  [Allender et al., Definitions 1 and 6][AllenderBuhrmanKouckyVanMelkebeekRonneburger2006]).
+  While [Liu and Pass, Section 2.2][LiuPass2021Crypto] encode the threshold $k$ in binary as a
+  $\lceil \log_2 n \rceil$-bit integer (since $\mathrm{Kt}(x) \le |x| + O(\log |x|)$ makes larger
+  thresholds trivial), here `MKtP` is paired with the unary threshold encoding
+  `encPair encBits encUnary` so that $k + 1 \le |(x, 1^k)|$ holds unconditionally for arbitrary
+  $k \in \mathbb{N}$ without a syntactic $k < 2 |x|$ side condition; for nontrivial thresholds
+  $k \le O(|x|)$ and for every polynomial-time unary threshold $s$ in `MKtPAt s`, the unary
+  encoding has polynomial length and `EXP` membership transfers via `PolyTimeReducible.mem_EXP`.
+  Enumerating candidate programs `Ladner.word j` of length at most `k` and running
+  `universalTMRunFor` for $2^{k - |p|}$ steps places `MKtP` in `E (encPair encBits encUnary)` and
+  `EXP (encPair encBits encUnary)`, and places `MKtPAt s` in `EXP encBits` whenever `s` is
+  computable in polynomial time in unary.
 * **Promise problem `GapMKtP` (`Cslib.Kolmogorov.GapMKtP`):**
   The promise problem separating $\mathrm{Kt}(x) \le s_1(|x|)$ from $\mathrm{Kt}(x) > s_2(|x|)$
-  for $s_1 \le s_2$ ([Oliveira and Santhanam, Section A, Definition 44][OliveiraSanthanam2018]).
+  for $s_1 \le s_2$
+  ([Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018]).
 
 ## Main definitions
 
@@ -74,9 +87,7 @@ Kolmogorov complexity `Cslib.Kolmogorov.levinKt` ($\mathrm{Kt}$):
   `Cslib.Kolmogorov.encard_setOf_forall_optimal_levinKt_two_pow_lt`,
   `Cslib.Kolmogorov.two_pow_lt_ncard_setOf_exists_optimal_levinKt_le_two_pow`:
   running-time bound for optimal `Kt`-witnesses ([Liu and Pass, Section 3.1,
-  Fact 3.1][LiuPass2021Crypto]).
-* `Cslib.Complexity.PolyTimeReducible.mem_EXP`: `EXP` is closed under polynomial-time many-one
-  reductions.
+  Fact 3.1, p. 10][LiuPass2021Crypto]).
 * `Cslib.Kolmogorov.MKtP.computableInPolyTime_boundedSearch`,
   `Cslib.Kolmogorov.MKtP.boundedSearch_eq_true_iff_of_two_pow_le`: polynomial-time certificate and
   exactness of `MKtP.boundedSearch`.
@@ -100,50 +111,6 @@ Kolmogorov complexity `Cslib.Kolmogorov.levinKt` ($\mathrm{Kt}$):
 -/
 
 @[expose] public section
-
-namespace Cslib.Complexity
-
-open _root_.Turing _root_.Turing.MultiTapeTM Filter
-
-variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool} {A : Set α} {B : Set β}
-
-/-- **`EXP` is closed under polynomial-time many-one reductions.** -/
-theorem PolyTimeReducible.mem_EXP (hAB : PolyTimeReducible encA encB A B) (hB : B ∈ EXP encB) :
-    A ∈ EXP encA := by
-  obtain ⟨f, hf, hred⟩ := hAB
-  obtain ⟨k, hk⟩ := mem_EXP_iff.mp hB
-  obtain ⟨t, s, ht, hs, h⟩ := hf.tidy
-  obtain ⟨c, d, hcd⟩ := (ht.add hs).exists_le
-  have hfO : ComputableInO f encA encB (fun a => c * ((encA a).length + 1) ^ d)
-      (fun a => c * ((encA a).length + 1) ^ d) :=
-    .of_tidy ((ComputableTidilyInO.of_bounds h 1 (fun _ => by omega) (fun _ => by omega)
-      fun a => (h.length_le a).trans (by omega)).mono_le (fun a => hcd _) (fun a => hcd _))
-  have hlen (a : α) : (encB (f a)).length ≤ c * ((encA a).length + 1) ^ d :=
-    (h.length_le a).trans ((Nat.le_add_right _ _).trans (hcd a))
-  have hpre : f ⁻¹' B ∈ DTIME encA
-      (fun n => c * (n + 1) ^ d + 2 ^ (c * (n + 1) ^ d) ^ k) := by
-    refine preimage_mem_DTIME (C := 1) hk hfO fun a => ?_
-    have hpow : 2 ^ (encB (f a)).length ^ k ≤ 2 ^ (c * ((encA a).length + 1) ^ d) ^ k :=
-      Nat.pow_le_pow_right (by norm_num) (Nat.pow_le_pow_left (hlen a) k)
-    omega
-  have hA_eq : A = f ⁻¹' B := Set.ext hred
-  rw [hA_eq]
-  have hpoly : PolynomiallyBounded
-      (fun n => c * (n + 1) ^ d + (c * (n + 1) ^ d) ^ k + 1) := by fun_prop
-  obtain ⟨D, hD⟩ := hpoly
-  refine mem_EXP_iff.mpr ⟨D, DTIME_mono_of_eventually_le ?_ hpre⟩
-  filter_upwards [hD] with n hn
-  set M := c * (n + 1) ^ d + (c * (n + 1) ^ d) ^ k
-  have h1 : c * (n + 1) ^ d ≤ 2 ^ M :=
-    (Nat.le_add_right _ _).trans (Nat.lt_two_pow_self.le)
-  have h2 : 2 ^ (c * (n + 1) ^ d) ^ k ≤ 2 ^ M :=
-    Nat.pow_le_pow_right (by norm_num) (Nat.le_add_left _ _)
-  calc
-    c * (n + 1) ^ d + 2 ^ (c * (n + 1) ^ d) ^ k ≤ 2 ^ M + 2 ^ M := Nat.add_le_add h1 h2
-    _ = 2 ^ (M + 1) := by rw [← two_mul, pow_succ']
-    _ ≤ 2 ^ n ^ D := Nat.pow_le_pow_right (by norm_num) hn
-
-end Cslib.Complexity
 
 namespace Cslib.Kolmogorov
 
@@ -205,7 +172,10 @@ theorem exists_length_add_clog_eq_levinKt (x : List Bool) :
 /-- **[Liu and Pass, Section 3.1, Fact 3.1, p. 10][LiuPass2021Crypto]:**
 If $(p, s)$ outputs $x$ within $s$ steps with $|p| + \lceil \log_2 s \rceil \le \mathrm{Kt}(x)$, and
 $s > 2^{\mathrm{copyOverhead} + \lceil \log_2(|x| + 1) \rceil + m}$ (with $m \le |x|$), then the
-plain Kolmogorov complexity of $x$ satisfies $K(x) < |x| - m$. -/
+plain Kolmogorov complexity of $x$ satisfies $K(x) < |x| - m$. The extra
+$\lceil \log_2(|x| + 1) \rceil$ term in the exponent (relative to Liu–Pass's $2^c / \varepsilon$
+from Fact 2.1, $\mathrm{Kt}(x) \le |x| + c$) comes from `levinKt_le_length_add`
+($\mathrm{Kt}(x) \le |x| + \mathrm{copyOverhead} + \lceil \log_2(|x| + 1) \rceil$). -/
 theorem plain_lt_of_levinKtNat_witness_two_pow_lt {x p : List Bool} {s m : ℕ}
     (hm : m ≤ x.length)
     (hp : x ∈ (universalTM.run p).runFor s)
@@ -223,7 +193,8 @@ theorem plain_lt_of_levinKtNat_witness_two_pow_lt {x p : List Bool} {s m : ℕ}
 /-- **[Liu and Pass, Section 3.1, Fact 3.1, p. 10][LiuPass2021Crypto]:**
 For $m \le n$, fewer than $2^{n - m}$ strings $x \in \{0, 1\}^n$ have the property that every
 optimal $\mathrm{Kt}$-witness $(p, s)$ for $x$ runs for more than
-$2^{\mathrm{copyOverhead} + \lceil \log_2(n + 1) \rceil + m}$ steps. -/
+$2^{\mathrm{copyOverhead} + \lceil \log_2(n + 1) \rceil + m}$ steps (with the extra
+$\lceil \log_2(n + 1) \rceil$ term coming from `levinKt_le_length_add`). -/
 theorem encard_setOf_forall_optimal_levinKt_two_pow_lt {n m : ℕ} (hm : m ≤ n) :
     {x : List Bool | x.length = n ∧
       ∀ (p : List Bool) (s : ℕ),
@@ -239,7 +210,8 @@ theorem encard_setOf_forall_optimal_levinKt_two_pow_lt {n m : ℕ} (hm : m ≤ n
 /-- **[Liu and Pass, Section 3.1, Fact 3.1, p. 10][LiuPass2021Crypto]:**
 For $m \le n$, all but fewer than $2^{n - m}$ of the $2^n$ strings of length $n$ admit an optimal
 $\mathrm{Kt}$-witness $(p, s)$ running in at most
-$2^{\mathrm{copyOverhead} + \lceil \log_2(n + 1) \rceil + m}$ steps. -/
+$2^{\mathrm{copyOverhead} + \lceil \log_2(n + 1) \rceil + m}$ steps (with the extra
+$\lceil \log_2(n + 1) \rceil$ term coming from `levinKt_le_length_add`). -/
 theorem two_pow_lt_ncard_setOf_exists_optimal_levinKt_le_two_pow {n m : ℕ} (hm : m ≤ n) :
     2 ^ n <
       {x : List Bool | x.length = n ∧
@@ -270,10 +242,13 @@ theorem two_pow_lt_ncard_setOf_exists_optimal_levinKt_le_two_pow {n m : ℕ} (hm
 /-! ### The Minimum `Kt` Problem (`MKtP`) and `MKtP ∈ E ⊆ EXP` -/
 
 /-- **The Minimum `Kt` Problem (`MKtP`)**
-([Allender et al., Definition 9][AllenderBuhrmanKouckyVanMelkebeekRonneburger2006];
-[Oliveira and Santhanam, Section A, Definition 44][OliveiraSanthanam2018];
-[Liu and Pass, Section 2.2][LiuPass2021Crypto]): the set of pairs `(x, k) : List Bool × ℕ`
-(encoded by `encPair encBits encUnary`) such that `levinKt x ≤ k`. -/
+([Liu and Pass, Section 2.2][LiuPass2021Crypto];
+[Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018]): the set of pairs
+`(x, k) : List Bool × ℕ` such that `levinKt x ≤ k`. In Complexitylib's complexity-class statements
+below (`MKtP.mem_E`, `MKtP.mem_EXP`), `MKtP` is encoded by `encPair encBits encUnary` (with the
+threshold `k` in unary rather than the $\lceil \log_2 n \rceil$-bit binary representation of
+[Liu and Pass, Section 2.2][LiuPass2021Crypto]) so that $k + 1 \le |(x, 1^k)|$ holds for all
+$k \in \mathbb{N}$ without a side condition bounding $k$. -/
 def MKtP : Set (List Bool × ℕ) :=
   {xk | levinKt xk.1 ≤ xk.2}
 
@@ -397,8 +372,8 @@ theorem mem_E : MKtP ∈ E (encPair encBits encUnary) := by
   exact mem_E_iff.mpr ⟨c + 1, hpre⟩
 
 /-- **`MKtP` is in `EXP`** with respect to `encPair encBits encUnary`
-([Allender et al.][AllenderBuhrmanKouckyVanMelkebeekRonneburger2006];
-[Liu and Pass, Section 2.2][LiuPass2021Crypto]). -/
+([Liu and Pass, Section 2.2][LiuPass2021Crypto]; compare `R_Kt ∈ E` in
+[Allender et al., Definition 6][AllenderBuhrmanKouckyVanMelkebeekRonneburger2006]). -/
 theorem mem_EXP : MKtP ∈ EXP (encPair encBits encUnary) :=
   E_subset_EXP mem_E
 
@@ -407,7 +382,7 @@ end MKtP
 /-! ### Fixed-threshold formulation (`MKtPAt`) -/
 
 /-- **Fixed-threshold `MKtP`** (`MKtPAt s`,
-[Oliveira and Santhanam, Section A, Definition 44][OliveiraSanthanam2018];
+[Oliveira and Santhanam, Appendix A, Definition 44, p. 34][OliveiraSanthanam2018];
 [Liu and Pass, Section 2.2][LiuPass2021Crypto]): the language of binary strings `x` with
 `levinKt x ≤ s x.length`. -/
 def MKtPAt (s : ℕ → ℕ) : Set (List Bool) :=

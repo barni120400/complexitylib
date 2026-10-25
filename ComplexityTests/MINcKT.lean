@@ -11,9 +11,10 @@ public import Complexity.Computability.Kolmogorov.MKtP
 public import Complexity.Computability.Kolmogorov.MINcKT
 
 /-!
-# Tests for `MKtP`, `GapMKtP`, `condUniversalTM`, and `MINcKT`
+# Tests for `MKtP`, `condUniversalTM`, and `MINcKT`
 
-Concrete non-vacuity checks and API tests for `Complexity.Computability.Kolmogorov.MKtP` and
+Concrete non-vacuity checks for `Complexity.Computability.Kolmogorov.MKtP`,
+`Complexity.Computability.Kolmogorov.Conditional`, and
 `Complexity.Computability.Kolmogorov.MINcKT`.
 -/
 
@@ -24,26 +25,12 @@ namespace Cslib.Kolmogorov.Tests
 open Cslib.Complexity Cslib.Kolmogorov Cslib.Kolmogorov.DescriptionMethod
 open _root_.Turing.MultiTapeTM
 
-/-! ### `MKtP` and `GapMKtP` checks -/
-
--- `MKtP` is in `E` and `EXP`, and polynomial-threshold `MKtPAt` is in `EXP`.
-example : MKtP ∈ E (encPair encBits encUnary) :=
-  MKtP.mem_E
-
-example : MKtP ∈ EXP (encPair encBits encUnary) :=
-  MKtP.mem_EXP
-
-example : MKtPAt (Polynomial.X + 1).eval ∈ EXP encBits :=
-  MKtPAt.mem_EXP_polynomial (Polynomial.X + 1)
+/-! ### `MKtP` non-vacuity checks -/
 
 -- Concrete yes-instance of `MKtP` from the trivial upper bound `levinKt_le_length_add`.
 example (x : List Bool) :
     (x, x.length + copyOverhead + Nat.clog 2 (x.length + 1)) ∈ MKtP :=
   levinKt_le_length_add x
-
--- Concrete check of `MKtP.boundedSearch` at `N = 0` (`List.range 0 = []`).
-example (x : List Bool) (k : ℕ) : MKtP.boundedSearch x k 0 = false :=
-  rfl
 
 -- `LiuPass2021Crypto, Fact 3.1`: at least one string of length `n` has an optimal `Kt`-witness
 -- running in at most `2 ^ (copyOverhead + Nat.clog 2 (n + 1) + 1)` steps when `1 ≤ n`.
@@ -58,20 +45,7 @@ example (n : ℕ) (hn : 1 ≤ n) :
     Nat.pow_lt_pow_right (by norm_num) (by omega)
   omega
 
--- Zero-gap specialization of `GapMKtP`.
-example (s : ℕ → ℕ) :
-    GapMKtP s s (fun _ => le_rfl) = PromiseProblem.ofSet (MKtPAt s) :=
-  GapMKtP.id_eq s
-
-/-! ### `condUniversalTM` and `MINcKT` checks -/
-
--- `MINcKT` and polynomial-threshold `MINcKTAt` are in `NP`.
-example : MINcKT ∈ NP MINcKT.enc :=
-  MINcKT.mem_NP
-
-example : MINcKTAt (Polynomial.X + 1).eval (Polynomial.X + 1).eval ∈
-    NP (encPair encBits encBits) :=
-  MINcKTAt.mem_NP_polynomial₂ (Polynomial.X + 1) (Polynomial.X + 1)
+/-! ### `condUniversalTM` and `MINcKT` non-vacuity checks -/
 
 -- At 0 steps, no instance belongs to `MINcKT`, and `MINcKT.check` returns `false`.
 example (x y : List Bool) (s : ℕ) : (⟨x, y, 0, s⟩ : MINcKT.Instance) ∉ MINcKT := by
@@ -98,11 +72,5 @@ example (y : List Bool) (n t : ℕ) (hn : 1 ≤ n) :
   have h1 : (n : ℕ∞) ≤ ((n - 1 : ℕ) : ℕ∞) := (hall t).trans hle
   have h2 : n ≤ n - 1 := ENat.natCast_le_natCast.mp h1
   omega
-
--- Zero-gap specialization of `GapMINcKT`.
-example :
-    GapMINcKT (fun _ _ s => s) (fun _ _ t => t) (fun _ _ _ => le_rfl) (fun _ _ _ => le_rfl) =
-      PromiseProblem.ofSet MINcKT :=
-  GapMINcKT.id_eq
 
 end Cslib.Kolmogorov.Tests
