@@ -11,6 +11,7 @@ public import Complexity.Foundations.BooleanAnalysis.MultilinearExtension
 public import Mathlib.Algebra.BigOperators.Expect
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.InformationTheory.Hamming
+public import Mathlib.LinearAlgebra.AffineSpace.AffineMap
 import Mathlib.Algebra.BigOperators.Field
 import Mathlib.Algebra.Order.BigOperators.Expect
 import Mathlib.Tactic.FieldSimp
@@ -33,9 +34,15 @@ The *multilinearity test* picks a uniformly random direction `i` and a uniformly
 reads `f` on the whole axis-parallel line through `x` in direction `i`, and accepts when that
 restriction is affine. Its rejection probability `Cslib.Code.multilinearityTestRejection` is the
 average, over the directions, of the proportion of lines in that direction on which `f` is not
-affine. This is the test of [Babai, Fortnow, Lund, Section 5.1][BabaiFortnowLund1991] with the
-tolerance `δ = 0`: it reads whole lines, where their subtest samples `m₁ + 2` points of a line,
-and it samples one random direction, where their test samples lines in every direction.
+affine. In the terms of [Babai, Fortnow, Lund, Definition 5.3][BabaiFortnowLund1991], it accepts
+exactly the *correct* lines, those on which `f` is linear; `wrongPoints f i` collects the points
+of the lines in direction `i` that are not correct. Their `δ`-wrong lines are those on which `f`
+is not `δ`-approximately linear, and since their `δ`-approximation is strict (fewer than `δ |X|`
+disagreements, Definition 3.4), for every `δ ∈ (0, 1]` a `δ`-wrong line is not correct. So the
+proportion of lines in direction `i` that are not correct bounds their proportion of wrong lines
+for every such `δ`. Our test differs from theirs (Section 5.1) in reading whole lines, where their
+subtest samples `m₁ + 2` points of a line, and in sampling one random direction, where their test
+samples lines in every direction.
 
 * **Completeness and zero-error soundness**: the test rejects with probability zero exactly when
   `f` is multilinear (`Cslib.Code.multilinearityTestRejection_eq_zero_iff`).
@@ -45,36 +52,39 @@ and it samples one random direction, where their test samples lines in every dir
   So `f` is within relative distance `n * 2 ^ (n - 1) * ρ` of a multilinear function, where `ρ` is
   the rejection probability (`Cslib.Code.exists_isMultilinear_hammingDist_div_le`).
 
-The quantitative bound is ours, and it is weaker than the literature's: its constant is
+The quantitative bound is original, and it is weaker than the literature's: its constant is
 exponential in the dimension. Its proof adapts the interpolation step in the proof of
 [Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991] and inducts on the dimension, without
 their self-improvement lemma: interpolating multilinear approximations of the two best
 slices `x 0 = t₁` and `x 0 = t₂` gives a multilinear function that agrees with `f` on every
 direction-`0` line that is affine and on which both slices are correct. Babai, Fortnow and Lund
-prove a bound polynomial in the dimension: if every direction has fewer than an `ε` fraction of
-wrong lines, then `f` is `3 n ^ 2 (ε + δ + 1 / N)`-close to multilinear when `N ≥ 40 n ^ 2`,
-`δ ≤ 1 / (400 n ^ 2)` and `ε ≤ 1 / (800 n ^ 3)` [Babai, Fortnow, Lund, Theorem 5.13]
+prove a bound polynomial in the dimension: if in every direction the proportion of `δ`-wrong
+lines is less than `ε`, then `f` is `3 n ^ 2 (ε + δ + 1 / N)`-approximately multilinear when
+`N ≥ 40 n ^ 2`, `δ ≤ 1 / (400 n ^ 2)` and `ε ≤ 1 / (800 n ^ 3)` [Babai, Fortnow, Lund, Theorem 5.13]
 [BabaiFortnowLund1991]. That bound, which needs their expansion, self-improvement and tree coloring
 lemmas, is not formalized here.
 
 ## Main definitions
 
 * `Cslib.Code.lineRestrict`: the restriction of a function to an axis-parallel line.
-* `Cslib.Code.IsAffine`: a function of one variable is affine.
+* `Cslib.Code.IsAffineFun`: a function of one variable is affine.
 * `Cslib.Code.IsMultilinear`: every axis-parallel restriction is affine.
 * `Cslib.Code.wrongPoints`: the points whose line in a given direction is not affine.
 * `Cslib.Code.multilinearityTestRejection`: the rejection probability of the multilinearity test.
 
 ## Main results
 
-* `Cslib.Code.IsAffine.eq_of_eq_of_eq`: affine functions agreeing at two points are equal.
+* `Cslib.Code.IsAffineFun.eq_of_eq_of_eq`: affine functions agreeing at two points are equal.
 * `Cslib.Code.IsMultilinear.eq_zero_of_forall_bitPoint`: a multilinear function vanishing on the
   cube vanishes.
 * `Cslib.Code.isMultilinear_eval_multilinearExtension`,
   `Cslib.Code.isMultilinear_iff_eq_eval_multilinearExtension`: multilinear functions are the
   multilinear extensions of functions on the cube.
+* `Cslib.Code.isAffineFun_iff_exists_affineMap`: affine functions of one variable are affine maps.
+* `Cslib.BitString.indicatorPoly_mem_restrictDegree`,
+  `Cslib.BitString.multilinearExtension_mem_restrictDegree`: multilinear extensions have degree at
+  most one in each variable.
 * `Cslib.Code.isMultilinear_eval_of_mem_restrictDegree`,
-  `Cslib.Code.multilinearExtension_mem_restrictDegree`,
   `Cslib.Code.isMultilinear_iff_exists_mem_restrictDegree`: multilinear functions are the
   evaluations of polynomials of degree at most one in each variable.
 * `Cslib.Code.multilinearityTestRejection_eq_zero_iff`: completeness and zero-error soundness.
@@ -99,67 +109,89 @@ variable {F ι : Type*} [Field F]
 
 /-! ### Affine functions of one variable -/
 
-/-- A function of one variable is *affine* when it is `t ↦ a * t + b` for some `a` and `b`.
-Babai, Fortnow and Lund call such functions linear. -/
-def IsAffine (g : F → F) : Prop :=
+/-- A function of one variable over a field is *affine* when it is `t ↦ a * t + b` for some `a`
+and `b`, that is, the underlying function of an affine map `F →ᵃ[F] F`
+(`Cslib.Code.isAffineFun_iff_exists_affineMap`). Babai, Fortnow and Lund call such functions
+linear. This is not `Cslib.BitString.IsAffine`, which asks that a map preserve sums of three
+points. -/
+def IsAffineFun (g : F → F) : Prop :=
   ∃ a b : F, ∀ t, g t = a * t + b
 
-instance [Fintype F] [DecidableEq F] : DecidablePred (IsAffine (F := F)) :=
+instance [Fintype F] [DecidableEq F] : DecidablePred (IsAffineFun (F := F)) :=
   fun g => inferInstanceAs (Decidable (∃ a b : F, ∀ t, g t = a * t + b))
 
 /-- An affine function is determined by its values at `0` and `1`. -/
-theorem isAffine_iff {g : F → F} : IsAffine g ↔ ∀ t, g t = (g 1 - g 0) * t + g 0 := by
+theorem isAffineFun_iff {g : F → F} : IsAffineFun g ↔ ∀ t, g t = (g 1 - g 0) * t + g 0 := by
   refine ⟨fun ⟨a, b, h⟩ t => ?_, fun h => ⟨_, _, h⟩⟩
   rw [h t, h 1, h 0]
   ring
 
+/-- Affine functions of one variable are the underlying functions of Mathlib's affine maps. -/
+theorem isAffineFun_iff_exists_affineMap {g : F → F} :
+    IsAffineFun g ↔ ∃ φ : F →ᵃ[F] F, ⇑φ = g := by
+  constructor
+  · rintro ⟨a, b, h⟩
+    refine ⟨a • AffineMap.id F F + AffineMap.const F F b, funext fun t => ?_⟩
+    simp [h t]
+  · rintro ⟨φ, rfl⟩
+    refine ⟨φ.linear 1, φ 0, fun t => ?_⟩
+    have hl : φ.linear t = φ.linear 1 * t := by
+      calc φ.linear t = φ.linear (t • 1) := by rw [smul_eq_mul, mul_one]
+        _ = t • φ.linear 1 := map_smul _ _ _
+        _ = φ.linear 1 * t := by rw [smul_eq_mul, mul_comm]
+    rw [← hl]
+    exact congrFun φ.decomp t
+
 /-- A constant function is affine. -/
-theorem isAffine_const (c : F) : IsAffine fun _ : F => c :=
+theorem isAffineFun_const (c : F) : IsAffineFun fun _ : F => c :=
   ⟨0, c, fun t => by ring⟩
 
 /-- The identity is affine. -/
-theorem isAffine_id : IsAffine fun t : F => t :=
+theorem isAffineFun_id : IsAffineFun fun t : F => t :=
   ⟨1, 0, fun t => by ring⟩
 
 /-- `t ↦ 1 - t` is affine. -/
-theorem isAffine_one_sub : IsAffine fun t : F => 1 - t :=
+theorem isAffineFun_one_sub : IsAffineFun fun t : F => 1 - t :=
   ⟨-1, 1, fun t => by ring⟩
 
 /-- The sum of affine functions is affine. -/
-theorem IsAffine.add {g h : F → F} (hg : IsAffine g) (hh : IsAffine h) :
-    IsAffine fun t => g t + h t := by
+theorem IsAffineFun.add {g h : F → F} (hg : IsAffineFun g) (hh : IsAffineFun h) :
+    IsAffineFun fun t => g t + h t := by
   obtain ⟨a, b, hg⟩ := hg
   obtain ⟨c, d, hh⟩ := hh
   exact ⟨a + c, b + d, fun t => by simp only [hg, hh]; ring⟩
 
 /-- The difference of affine functions is affine. -/
-theorem IsAffine.sub {g h : F → F} (hg : IsAffine g) (hh : IsAffine h) :
-    IsAffine fun t => g t - h t := by
+theorem IsAffineFun.sub {g h : F → F} (hg : IsAffineFun g) (hh : IsAffineFun h) :
+    IsAffineFun fun t => g t - h t := by
   obtain ⟨a, b, hg⟩ := hg
   obtain ⟨c, d, hh⟩ := hh
   exact ⟨a - c, b - d, fun t => by simp only [hg, hh]; ring⟩
 
 /-- A constant multiple of an affine function is affine. -/
-theorem IsAffine.const_mul {g : F → F} (hg : IsAffine g) (c : F) : IsAffine fun t => c * g t := by
+theorem IsAffineFun.const_mul {g : F → F} (hg : IsAffineFun g) (c : F) :
+    IsAffineFun fun t => c * g t := by
   obtain ⟨a, b, hg⟩ := hg
   exact ⟨c * a, c * b, fun t => by simp only [hg]; ring⟩
 
 /-- An affine function times a constant is affine. -/
-theorem IsAffine.mul_const {g : F → F} (hg : IsAffine g) (c : F) : IsAffine fun t => g t * c := by
+theorem IsAffineFun.mul_const {g : F → F} (hg : IsAffineFun g) (c : F) :
+    IsAffineFun fun t => g t * c := by
   simpa only [mul_comm _ c] using hg.const_mul c
 
 /-- A finite sum of affine functions is affine. -/
-theorem isAffine_sum {κ : Type*} (s : Finset κ) {g : κ → F → F} (hg : ∀ k ∈ s, IsAffine (g k)) :
-    IsAffine fun t => ∑ k ∈ s, g k t := by
+theorem isAffineFun_sum {κ : Type*} (s : Finset κ) {g : κ → F → F}
+    (hg : ∀ k ∈ s, IsAffineFun (g k)) :
+    IsAffineFun fun t => ∑ k ∈ s, g k t := by
   classical
   induction s using Finset.induction_on with
-  | empty => simpa using isAffine_const (0 : F)
+  | empty => simpa using isAffineFun_const (0 : F)
   | insert k s hk ih =>
     simp only [Finset.sum_insert hk]
     exact (hg k (mem_insert_self k s)).add (ih fun k' hk' => hg k' (mem_insert_of_mem hk'))
 
 /-- **Affine functions agreeing at two points are equal.** -/
-theorem IsAffine.eq_of_eq_of_eq {g h : F → F} (hg : IsAffine g) (hh : IsAffine h) {s u : F}
+theorem IsAffineFun.eq_of_eq_of_eq {g h : F → F} (hg : IsAffineFun g) (hh : IsAffineFun h) {s u : F}
     (hsu : s ≠ u) (hs : g s = h s) (hu : g u = h u) : g = h := by
   obtain ⟨a, b, hg⟩ := hg
   obtain ⟨c, d, hh⟩ := hh
@@ -172,6 +204,42 @@ theorem IsAffine.eq_of_eq_of_eq {g h : F → F} (hg : IsAffine g) (hh : IsAffine
   subst hbd
   funext t
   rw [hg, hh]
+
+/-! ### Multilinear extensions have degree at most one in each variable -/
+
+section RestrictDegree
+
+variable {R : Type*} [CommRing R]
+
+/-- An indicator polynomial has degree at most one in each variable. -/
+theorem _root_.Cslib.BitString.indicatorPoly_mem_restrictDegree [Fintype ι] (a : ι → Bool) :
+    (indicatorPoly a : MvPolynomial ι R) ∈ restrictDegree ι R 1 := by
+  classical
+  nontriviality R
+  rw [mem_restrictDegree]
+  intro s hs j
+  refine (degreeOf_le_iff.mp ?_) s hs
+  refine (degreeOf_prod_le j _ _).trans ?_
+  calc ∑ k, degreeOf j (if a k then X k else 1 - X k : MvPolynomial ι R)
+      ≤ ∑ k, if j = k then 1 else 0 := sum_le_sum fun k _ => by
+        have hX : degreeOf j (X k : MvPolynomial ι R) = if j = k then 1 else 0 := degreeOf_X j k
+        by_cases hk : a k
+        · simp only [hk, ite_true, hX, le_refl]
+        · simp only [hk, Bool.false_eq_true, ite_false]
+          refine (degreeOf_sub_le _ _ _).trans ?_
+          rw [hX, ← C_1, degreeOf_C]
+          simp
+    _ = 1 := by simp
+
+/-- The multilinear extension of a function on the cube has degree at most one in each
+variable. -/
+theorem _root_.Cslib.BitString.multilinearExtension_mem_restrictDegree [Fintype ι] [DecidableEq ι]
+    (g : (ι → Bool) → R) : multilinearExtension g ∈ restrictDegree ι R 1 :=
+  Submodule.sum_mem _ fun a _ => by
+    rw [C_mul']
+    exact Submodule.smul_mem _ _ (indicatorPoly_mem_restrictDegree a)
+
+end RestrictDegree
 
 /-! ### Multilinear functions -/
 
@@ -187,7 +255,7 @@ def lineRestrict (f : (ι → F) → F) (x : ι → F) (i : ι) (t : F) : F :=
 /-- A function on `F ^ ι` is *multilinear* when its restriction to every axis-parallel line is
 affine [Babai, Fortnow, Lund, Definition 5.1][BabaiFortnowLund1991]. -/
 def IsMultilinear (f : (ι → F) → F) : Prop :=
-  ∀ x i, IsAffine (lineRestrict f x i)
+  ∀ x i, IsAffineFun (lineRestrict f x i)
 
 omit [Field F] in
 /-- The restriction of `f` to a line, read at the point where the line passes through `x`, is
@@ -235,7 +303,7 @@ private theorem IsMultilinear.eq_zero_aux [Fintype ι] {h : (ι → F) → F} (h
         have := card_le_card hsub
         rw [card_erase_of_mem hmem] at this
         omega
-      have hline := (hh x i).eq_of_eq_of_eq (isAffine_const 0) zero_ne_one
+      have hline := (hh x i).eq_of_eq_of_eq (isAffineFun_const 0) zero_ne_one
         (hc 0 (Or.inl rfl)) (hc 1 (Or.inr rfl))
       simpa using congrFun hline (x i)
     · push Not at hb
@@ -269,10 +337,10 @@ theorem isMultilinear_eval_multilinearExtension [Fintype ι] (g : (ι → Bool) 
       apply_update (fun j (s : F) => if a j then s else 1 - s) x i t j
   unfold lineRestrict
   simp only [eval_multilinearExtension_eq_sum, eval_indicatorPoly_apply, key]
-  refine isAffine_sum _ fun a _ => (IsAffine.mul_const ?_ _).const_mul (g a)
+  refine isAffineFun_sum _ fun a _ => (IsAffineFun.mul_const ?_ _).const_mul (g a)
   split_ifs
-  · exact isAffine_id
-  · exact isAffine_one_sub
+  · exact isAffineFun_id
+  · exact isAffineFun_one_sub
 
 /-- **Multilinear functions are multilinear extensions**: a function on `F ^ ι` is multilinear
 exactly when it evaluates the multilinear extension of its values on the cube. -/
@@ -292,44 +360,16 @@ theorem isMultilinear_eval_of_mem_restrictDegree [Finite ι] {P : MvPolynomial �
   intro x i
   unfold lineRestrict
   simp only [eval_eq']
-  refine isAffine_sum _ fun s hs => IsAffine.const_mul ?_ _
+  refine isAffineFun_sum _ fun s hs => IsAffineFun.const_mul ?_ _
   have key (t : F) : (∏ j, update x i t j ^ s j) =
       t ^ s i * ∏ j ∈ univ \ {i}, x j ^ s j := by
     rw [← prod_update_of_mem (mem_univ i)]
     exact prod_congr rfl fun j _ => apply_update (fun j (y : F) => y ^ s j) x i t j
   simp only [key]
-  refine IsAffine.mul_const ?_ _
+  refine IsAffineFun.mul_const ?_ _
   rcases Nat.le_one_iff_eq_zero_or_eq_one.mp ((mem_restrictDegree ι P 1).mp hP s hs i) with h | h
-  · simpa [h] using isAffine_const (1 : F)
-  · simpa [h] using isAffine_id
-
-omit [DecidableEq ι] in
-/-- An indicator polynomial has degree at most one in each variable. -/
-theorem indicatorPoly_mem_restrictDegree [Fintype ι] (a : ι → Bool) :
-    (indicatorPoly a : MvPolynomial ι F) ∈ restrictDegree ι F 1 := by
-  classical
-  rw [mem_restrictDegree]
-  intro s hs j
-  refine (degreeOf_le_iff.mp ?_) s hs
-  refine (degreeOf_prod_le j _ _).trans ?_
-  calc ∑ k, degreeOf j (if a k then X k else 1 - X k : MvPolynomial ι F)
-      ≤ ∑ k, if j = k then 1 else 0 := sum_le_sum fun k _ => by
-        have hX : degreeOf j (X k : MvPolynomial ι F) = if j = k then 1 else 0 := degreeOf_X j k
-        by_cases hk : a k
-        · simp only [hk, ite_true, hX, le_refl]
-        · simp only [hk, Bool.false_eq_true, ite_false]
-          refine (degreeOf_sub_le _ _ _).trans ?_
-          rw [hX, ← C_1, degreeOf_C]
-          simp
-    _ = 1 := by simp
-
-/-- The multilinear extension of a function on the cube has degree at most one in each
-variable. -/
-theorem multilinearExtension_mem_restrictDegree [Fintype ι] (g : (ι → Bool) → F) :
-    multilinearExtension g ∈ restrictDegree ι F 1 :=
-  Submodule.sum_mem _ fun a _ => by
-    rw [C_mul']
-    exact Submodule.smul_mem _ _ (indicatorPoly_mem_restrictDegree a)
+  · simpa [h] using isAffineFun_const (1 : F)
+  · simpa [h] using isAffineFun_id
 
 /-- **Multilinear functions are polynomials of degree at most one in each variable.** -/
 theorem isMultilinear_iff_exists_mem_restrictDegree [Finite ι] {f : (ι → F) → F} :
@@ -351,14 +391,14 @@ variable [DecidableEq ι] [Fintype ι] [Fintype F] [DecidableEq F]
 /-- The points whose axis-parallel line in direction `i` carries a restriction of `f` that is not
 affine. Each wrong line contributes all of its `|F|` points. -/
 def wrongPoints (f : (ι → F) → F) (i : ι) : Finset (ι → F) :=
-  {x | ¬IsAffine (lineRestrict f x i)}
+  {x | ¬IsAffineFun (lineRestrict f x i)}
 
 /-- The rejection probability of the multilinearity test on `f`: the probability, over a uniformly
 random direction `i` and a uniformly random point `x`, that the restriction of `f` to the
 axis-parallel line through `x` in direction `i` is not affine. The test reads `f` on the whole
 line. -/
 noncomputable def multilinearityTestRejection (f : (ι → F) → F) : ℝ :=
-  𝔼 i, 𝔼 x, if IsAffine (lineRestrict f x i) then 0 else 1
+  𝔼 i, 𝔼 x, if IsAffineFun (lineRestrict f x i) then 0 else 1
 
 /-- The rejection probability averages, over the directions, the proportion of wrong points. -/
 theorem multilinearityTestRejection_eq (f : (ι → F) → F) :
@@ -377,7 +417,7 @@ theorem multilinearityTestRejection_nonneg (f : (ι → F) → F) :
 probability zero exactly when `f` is multilinear. -/
 theorem multilinearityTestRejection_eq_zero_iff {f : (ι → F) → F} :
     multilinearityTestRejection f = 0 ↔ IsMultilinear f := by
-  have h01 (x : ι → F) (i : ι) : 0 ≤ (if IsAffine (lineRestrict f x i) then (0 : ℝ) else 1) := by
+  have h01 (x : ι → F) (i : ι) : 0 ≤ (if IsAffineFun (lineRestrict f x i) then (0 : ℝ) else 1) := by
     split_ifs <;> norm_num
   rw [multilinearityTestRejection, expect_eq_zero_iff_of_nonneg fun i _ =>
     expect_nonneg fun x _ => h01 x i]
@@ -417,12 +457,13 @@ private theorem lineRestrict_succ (f : (Fin (n + 1) → F) → F) (x : Fin (n + 
 /-- The wrong points of `f` in direction `j.succ` are those of its slices in direction `j`. -/
 private theorem card_wrongPoints_succ (f : (Fin (n + 1) → F) → F) (j : Fin n) :
     #(wrongPoints f j.succ) = ∑ t, #(wrongPoints (fun y => f (Fin.cons t y)) j) := by
-  have : wrongPoints f j.succ = ({x | ¬IsAffine (lineRestrict (fun y => f (Fin.cons (x 0) y))
+  have : wrongPoints f j.succ = ({x | ¬IsAffineFun (lineRestrict (fun y => f (Fin.cons (x 0) y))
       (Fin.tail x) j)} : Finset (Fin (n + 1) → F)) := by
     ext x
     simp only [wrongPoints, mem_filter, mem_univ, true_and, lineRestrict_succ]
   rw [this]
-  exact card_filter_zero_tail (fun t y => ¬IsAffine (lineRestrict (fun y => f (Fin.cons t y)) y j))
+  exact card_filter_zero_tail
+    (fun t y => ¬IsAffineFun (lineRestrict (fun y => f (Fin.cons t y)) y j))
 
 omit [DecidableEq F] in
 /-- The sum of the two smallest of `q ≥ 2` natural numbers, times `q`, is at most twice their
@@ -449,11 +490,11 @@ private theorem exists_two_mul_le_sum (D : F → ℕ) :
   nlinarith
 
 /-- **Quantitative soundness of the multilinearity test**, with a constant exponential in the
-dimension: some multilinear `g` differs from `f` on at most `∑ i, 2 ^ i * #(wrongPoints f i)`
-points of `F ^ n`. The proof interpolates multilinear approximations of the two best slices
-`x 0 = t₁` and `x 0 = t₂` and inducts on the dimension. This adapts the interpolation step in
-the proof of [Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991], without their
-self-improvement lemma. -/
+dimension (an original bound): some multilinear `g` differs from `f` on at most
+`∑ i, 2 ^ i * #(wrongPoints f i)` points of `F ^ n`. The proof interpolates multilinear
+approximations of the two best slices `x 0 = t₁` and `x 0 = t₂` and inducts on the dimension.
+This adapts the interpolation step in the proof of
+[Babai, Fortnow, Lund, Lemma 5.11][BabaiFortnowLund1991], without their self-improvement lemma. -/
 theorem exists_isMultilinear_hammingDist_le (f : (Fin n → F) → F) :
     ∃ g, IsMultilinear g ∧ hammingDist f g ≤ ∑ i : Fin n, 2 ^ (i : ℕ) * #(wrongPoints f i) := by
   induction n with

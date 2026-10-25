@@ -15,8 +15,9 @@ Over `ZMod 3` in two variables, the product `x 0 * x 1` is multilinear, so it ev
 multilinear extension of its values on the cube and passes the test with probability one. The
 square `x 0 ^ 2` is not affine on any line in direction `0` and is affine on every line in
 direction `1`, so the test rejects it with probability exactly `1 / 2`. Over `ZMod 5`, corrupting
-the product at one point makes five lines in each direction wrong, and quantitative soundness
-then gives a multilinear function within `5 + 2 * 5 = 15` of the `25` points.
+the product at one point makes one line in each direction wrong, with five wrong points each, and
+quantitative soundness then gives a multilinear function within `5 + 2 * 5 = 15` of the `25`
+points.
 -/
 
 namespace ComplexityTests.Code.Multilinearity
@@ -37,12 +38,12 @@ private theorem isMultilinear_prod2 {F : Type*} [Field F] : IsMultilinear (prod2
       funext t
       simp [lineRestrict, prod2]
     rw [this]
-    exact isAffine_id.mul_const _
+    exact isAffineFun_id.mul_const _
   · have : lineRestrict prod2 x 1 = fun t => x 0 * t := by
       funext t
       simp [lineRestrict, prod2]
     rw [this]
-    exact isAffine_id.const_mul _
+    exact isAffineFun_id.const_mul _
 
 -- The product evaluates the multilinear extension of its values on the cube.
 example (x : Fin 2 → ZMod 3) :
@@ -57,7 +58,7 @@ example : multilinearityTestRejection (prod2 (F := ZMod 3)) = 0 :=
 private def sq0 (x : Fin 2 → ZMod 3) : ZMod 3 := x 0 ^ 2
 
 -- `t ↦ t ^ 2` is not affine over `ZMod 3`: it takes the values `0, 1, 1`.
-example : ¬IsAffine fun t : ZMod 3 => t ^ 2 := by decide
+example : ¬IsAffineFun fun t : ZMod 3 => t ^ 2 := by decide
 
 -- Every point is wrong in direction `0` and none in direction `1`.
 private theorem card_wrongPoints_sq0_zero : #(wrongPoints sq0 0) = 9 := by decide
