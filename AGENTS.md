@@ -332,9 +332,10 @@ submitting a PR; quick success does not satisfy that requirement.
   tests, abstracts and guide) in the same change. Delete existing deprecated aliases when touching
   their area. Revisit this rule before the first supported release.
 - `ComplexityTests/Axioms.lean` audits all declarations stored in imported `Complexity` modules
-  for dependencies beyond `propext`, `Classical.choice` and `Quot.sound` and keeps its existing
-  named guards. Add named `#print axioms` guards for an epic's headline theorems to the epic's
-  own test module.
+  for dependencies beyond `propext`, `Classical.choice` and `Quot.sound`. Because that audit
+  already covers the standard set, add a named `#print axioms` guard only when a result is meant
+  to depend on fewer axioms than these three, for example a choice-free result; place it in the
+  epic's own test module.
 - Watch for vacuous hypotheses: when a structure bundles bounds, provide at least one instance in
   the test suite.
 
