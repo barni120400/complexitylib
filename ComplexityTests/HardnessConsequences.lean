@@ -39,16 +39,16 @@ example : MCSP.boundedMCSPSearch [true, false] 0 2 = false := by
 example : MCSP.boundedMCSPSearch [true, false] 1 32 = true := by
   decide
 
--- Applying `boundedMCSPSearch_eq_true_iff` to certify that the 1-input negation truth table
--- `[true, false]` has circuit complexity `1`.
-example : complexity interpretation (single (MCSP.tableFunction 1 [true, false])) = 1 := by
-  have hle : complexity interpretation (single (MCSP.tableFunction 1 [true, false])) ≤ 1 :=
-    (MCSP.boundedMCSPSearch_eq_true_iff (m := 1) (S := 1) (K := 32) rfl (by decide)).mp (by decide)
+-- Applying `boundedMCSPSearch_eq_true_iff` at `S = 0, K = 2` (`certLength 1 0 = 1`) to certify
+-- that `[false, true]` has complexity `0` while `[true, false]` requires at least `1` gate.
+example : complexity interpretation (single (MCSP.tableFunction 1 [false, true])) = 0 :=
+  Nat.eq_zero_of_le_zero
+    ((MCSP.boundedMCSPSearch_eq_true_iff (m := 1) (S := 0) (K := 2) rfl (by decide)).mp (by decide))
+
+example : 1 ≤ complexity interpretation (single (MCSP.tableFunction 1 [true, false])) := by
   have hgt : ¬ (complexity interpretation (single (MCSP.tableFunction 1 [true, false])) ≤ 0) := by
     rw [← MCSP.boundedMCSPSearch_eq_true_iff (m := 1) (S := 0) (K := 2) rfl (by decide)]
     decide
   omega
-
-end ComplexityTests.HardnessConsequences
 
 end ComplexityTests.HardnessConsequences
