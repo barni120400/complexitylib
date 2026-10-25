@@ -37,6 +37,7 @@ include these constants; the polynomial gate bound does not certify constructor 
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.eval_withPadding`: table values returned for all requests.
 * `Cslib.Circuits.Boolean.eval_batchLookupCircuit`: arbitrary repeated queries are answered exactly.
 * `Cslib.Circuits.Boolean.batchLookupCircuit.size_withPadding`: exact total gate count.
 * `Cslib.Circuits.Boolean.size_batchLookupCircuit_le`: a bound linear in table size plus request

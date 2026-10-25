@@ -47,6 +47,7 @@ encoding, and, following the original development, for the stages of the dense t
 
 ## Main results
 
+* `Rational.intBits_step_le`: bit-length bound on values computed in one stage.
 * `Rational.detRows_eq`: `detRows (rowsOf A) = A.det`.
 * `Rational.detRows_eq_det_ofRows`: on any list of rows, `detRows` is the determinant of the
   square matrix it denotes, of dimension the number of rows.

@@ -27,6 +27,7 @@ and stuck configurations; there is no clock rescaling or simulation overhead.
 
 ## Main results
 
+* `Turing.MultiTapeMachine.tmEquiv`: equivalence with upstream's deterministic machine type.
 * `Turing.MultiTapeMachine.step_toTM`: deterministic steps commute with conversion.
 * `Turing.MultiTapeMachine.step_toNTM_iff`: nondeterministic steps commute with conversion.
 -/

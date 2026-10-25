@@ -48,6 +48,8 @@ enumerative coding for weight-bounded words (Theorem 4.3) is in
 
 ## Main results
 
+* `Circuits.Boolean.WeightedThreshold.two_pow_lt_mul_max_card_attainableTranscripts_of_direction`:
+  sharp attainable-transcript capacity bound.
 * `Cslib.Circuits.Boolean.WeightedThreshold.eval_eq_of_scalarScore_between`,
   `Cslib.Circuits.Boolean.WeightedThreshold.transcript_eq_of_scalarScore_between`: order-convexity
   of gate evaluations and transcripts along `scalarScore w`.

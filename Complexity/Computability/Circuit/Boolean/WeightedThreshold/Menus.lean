@@ -56,6 +56,8 @@ internal weights (`two_pow_lt_of_directionMenus_intWeight`, `two_pow_lt_of_direc
 
 ## Main results
 
+* `Cslib.Circuits.Boolean.WeightedThreshold.cost_menuBlockDecomposition`: capacity cost factors
+  across directions.
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_two_pow_gateSupport`: bounded internal
   fan-in `k` bounds `|biasMenu p gate|` by `2 ^ k`.
 * `Cslib.Circuits.Boolean.WeightedThreshold.card_biasMenu_le_one_add_sum_natAbs`,
