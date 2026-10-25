@@ -4,12 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Samuel Schlesinger
 -/
 
-import Complexity.Probability.CorrelatedSampling
+import Complexity.Probability.CorrelatedSampling.Embedding
+import Complexity.Probability.StatisticalDistance.Coupling
 
 /-! # Correlated sampling
 
 Parties holding the same distribution always agree, and every party samples its own distribution.
-For a point mass against a uniform bit, the agreement bound is `1/3`.
+For a point mass against a uniform bit, the agreement bound is `1/3`. When both parties already
+know the target kernel, the local embedding is exact.
 -/
 
 namespace ComplexityTests.CorrelatedSampling
@@ -42,6 +44,20 @@ example : 1 / 3 ≤
   norm_num at h ⊢
   exact h
 
+-- If both parties hold the target kernel, local sampling reproduces `(x, y, s, s)` exactly.
+example {X Y S : Type} [Fintype X] [Fintype Y] [Fintype S] (P : PMF (X × Y)) (q : PMF S) :
+    dist (P.bind fun xy => (localSample (fun _ => q) (fun _ => q) (fun _ => q) xy.1 xy.2).map
+        (xy, ·))
+      (P.bind fun xy => (q.map fun s => (s, s)).map (xy, ·)) = 0 := by
+  refine le_antisymm ?_ dist_nonneg
+  simpa using dist_embed_le P (fun _ => q) (fun _ => q) (fun _ => q)
+
+-- The coupling inequality: a uniform bit and the constant `true` differ with probability `1/2`.
+example : dist ((Cslib.Probability.PMF.uniformOfFintype Bool).map id)
+    ((Cslib.Probability.PMF.uniformOfFintype Bool).map fun _ => true) ≤
+      ((Cslib.Probability.PMF.uniformOfFintype Bool).toOuterMeasure {b | id b ≠ true}).toReal :=
+  Cslib.Probability.PMF.dist_map_map_le _ _ _
+
 /--
 info: 'Cslib.Probability.CorrelatedSampling.map_firstIn_weightedOrder' depends on axioms:
 [propext, Classical.choice, Quot.sound]
@@ -69,5 +85,19 @@ info: 'Cslib.Probability.CorrelatedSampling.disagree_le' depends on axioms:
 -/
 #guard_msgs (whitespace := lax) in
 #print axioms disagree_le
+
+/--
+info: 'Cslib.Probability.CorrelatedSampling.dist_embed_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms dist_embed_le
+
+/--
+info: 'Cslib.Probability.PMF.dist_map_map_le' depends on axioms:
+[propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs (whitespace := lax) in
+#print axioms Cslib.Probability.PMF.dist_map_map_le
 
 end ComplexityTests.CorrelatedSampling
