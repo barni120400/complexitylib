@@ -10,11 +10,12 @@ module
 public import Complexity.Logics.Propositional.CNF
 public import Complexity.Probability.PMF
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+import Complexity.Foundations.Data.BitString.Isolation
 import Complexity.Probability.PMF.Event
 import Mathlib.Analysis.MeanInequalities
 
 /-!
-# The satisfiability coding lemma and PPZ for unique k-SAT
+# The satisfiability coding lemma and PPZ for k-SAT
 
 The PPZ algorithm of Paturi, Pudlák and Zane processes the variables of a CNF formula in a uniformly
 random order. A variable is *forced* if, after substituting the values already chosen, some clause
@@ -31,6 +32,12 @@ variables (`card_isLast_mul`), so for clauses of at most `k` literals at most `(
 variables are unforced on average. By the arithmetic–geometric mean inequality, one round finds
 `σ` with probability at least `2^{-(1 - 1/k) n}` (`round_success`).
 
+Without uniqueness, the same argument applies to the variables `I(σ)` whose flips falsify the
+formula, and one round outputs `σ` with probability at least `2^{-(n - |I(σ)| / k)}`
+(`round_apply_ge`). Since `∑_σ 2^{|I(σ)|} ≥ 2^n` over the satisfying assignments
+(`Cslib.BitString.two_pow_le_sum_two_pow_isolation`), one round finds some satisfying assignment
+with probability at least `2^{-(1 - 1/k) n}` (`round_success_of_satisfiable`).
+
 ## Main definitions
 
 * `Cslib.Complexity.PPZ.forced`: the value forced on a variable by a unit clause.
@@ -41,11 +48,17 @@ variables are unforced on average. By the arithmetic–geometric mean inequality
 
 * `Cslib.Complexity.PPZ.run_apply_restrict`: a round in a fixed order produces the solution with
   probability `2^{-u}`.
+* `Cslib.Complexity.PPZ.exists_critical_of_flip`: a variable whose flip falsifies the formula
+  has a critical clause.
 * `Cslib.Complexity.PPZ.exists_critical`: critical clauses of a uniquely satisfiable formula.
 * `Cslib.Complexity.PPZ.card_isLast_mul`: a fixed variable comes last among `m` variables in a
   `1 / m` fraction of the orders.
+* `Cslib.Complexity.PPZ.round_apply_ge`: PPZ outputs a satisfying assignment `σ` with probability
+  at least `2^{-(n - |I| / k)}` when the flips of the variables in `I` falsify the formula.
 * `Cslib.Complexity.PPZ.round_success`: PPZ finds the unique satisfying assignment of a k-CNF
   formula with probability at least `2^{-(1 - 1/k) n}`.
+* `Cslib.Complexity.PPZ.round_success_of_satisfiable`: PPZ finds a satisfying assignment of a
+  satisfiable k-CNF formula with probability at least `2^{-(1 - 1/k) n}`.
 
 ## References
 
@@ -284,18 +297,15 @@ theorem card_vars_le (c : Clause (Fin n)) : (vars c).card ≤ c.length :=
 def IsCritical (σ : Fin n → Bool) (x : Fin n) (c : Clause (Fin n)) : Prop :=
   (∃ l ∈ c, l.1 = x) ∧ ∀ l ∈ c, if l.1 = x then l.2 = σ x else σ l.1 ≠ l.2
 
-/-- **Critical clauses exist** for every variable of the unique satisfying assignment: flipping
-the variable falsifies some clause. -/
-theorem exists_critical {φ : CNF (Fin n)} {σ : Fin n → Bool} (hσ : φ.eval σ = true)
-    (huniq : ∀ τ, φ.eval τ = true → τ = σ) (x : Fin n) : ∃ c ∈ φ, IsCritical σ x c := by
+/-- **Critical clauses exist** for every variable whose flip falsifies `φ`. -/
+theorem exists_critical_of_flip {φ : CNF (Fin n)} {σ : Fin n → Bool} (hσ : φ.eval σ = true)
+    {x : Fin n} (hflip : φ.eval (Function.update σ x (!σ x)) ≠ true) :
+    ∃ c ∈ φ, IsCritical σ x c := by
   set τ := Function.update σ x (!σ x)
-  have hτ : φ.eval τ ≠ true := fun h => by
-    have := congrFun (huniq τ h) x
-    simp [τ] at this
   obtain ⟨c, hc, hcτ⟩ : ∃ c ∈ φ, c.eval τ ≠ true := by
     by_contra hall
     push Not at hall
-    exact hτ ((CNF.eval_eq_true_iff τ φ).mpr hall)
+    exact hflip ((CNF.eval_eq_true_iff τ φ).mpr hall)
   have hfalse : ∀ l ∈ c, τ l.1 ≠ l.2 := fun l hl e =>
     hcτ ((Clause.eval_eq_true_iff τ c).mpr ⟨l, hl, e⟩)
   have hall : ∀ l ∈ c, if l.1 = x then l.2 = σ x else σ l.1 ≠ l.2 := by
@@ -313,6 +323,14 @@ theorem exists_critical {φ : CNF (Fin n)} {σ : Fin n → Bool} (hσ : φ.eval 
   have := hall l hl
   rw [ite_eq_right hx] at this
   exact this hls
+
+/-- **Critical clauses exist** for every variable of the unique satisfying assignment: flipping
+the variable falsifies some clause. -/
+theorem exists_critical {φ : CNF (Fin n)} {σ : Fin n → Bool} (hσ : φ.eval σ = true)
+    (huniq : ∀ τ, φ.eval τ = true → τ = σ) (x : Fin n) : ∃ c ∈ φ, IsCritical σ x c :=
+  exists_critical_of_flip hσ fun h => by
+    have := congrFun (huniq _ h) x
+    simp at this
 
 /-- `x` comes after every other variable of `S` in the order `π`. -/
 def IsLast (π : Equiv.Perm (Fin n)) (S : Finset (Fin n)) (x : Fin n) : Prop :=
@@ -441,31 +459,35 @@ theorem card_isLast_mul {S : Finset (Fin n)} {x : Fin n} (hx : x ∈ S) :
 
 /-! ### The success probability -/
 
-/-- With critical clauses `C`, the unforced variables of a run that agrees with `σ` are among the
-variables that do not come last in their critical clause. -/
-theorem unforcedCount_le {φ : CNF (Fin n)} {σ : Fin n → Bool} {C : Fin n → Clause (Fin n)}
-    (hC : ∀ x, C x ∈ φ ∧ IsCritical σ x (C x)) (π : Equiv.Perm (Fin n)) :
-    unforcedCount φ σ π n ≤ (univ.filter fun x => ¬ IsLast π (vars (C x)) x).card := by
+/-- With critical clauses `C` for the variables of `I`, the unforced variables of a run that agrees
+with `σ` are among the variables that are not in `I` or do not come last in their critical
+clause. -/
+theorem unforcedCount_le {φ : CNF (Fin n)} {σ : Fin n → Bool} {I : Finset (Fin n)}
+    {C : Fin n → Clause (Fin n)} (hC : ∀ x ∈ I, C x ∈ φ ∧ IsCritical σ x (C x))
+    (π : Equiv.Perm (Fin n)) :
+    unforcedCount φ σ π n ≤ (univ.filter fun x => ¬ (x ∈ I ∧ IsLast π (vars (C x)) x)).card := by
   refine card_le_card_of_injOn (fun j => π j) (fun j hj => ?_) (fun i _ j _ h => π.injective h)
   simp only [coe_filter, mem_univ, true_and, Set.mem_ofPred_eq] at hj ⊢
-  intro hlast
-  have := forced_ne_none_of_isLast (hC (π j)).1 (hC (π j)).2 hlast
+  rintro ⟨hI, hlast⟩
+  have := forced_ne_none_of_isLast (hC (π j) hI).1 (hC (π j) hI).2 hlast
   rw [Equiv.symm_apply_apply] at this
   exact this hj.2
 
-/-- **The PPZ algorithm for unique k-SAT** [Paturi, Pudlák, Zane][PPZ1997]: if `σ` is the only
-satisfying assignment of a CNF formula on `n` variables whose clauses have at most `k ≥ 1` literals,
-one round of PPZ outputs `σ` with probability at least `2^{-(1 - 1/k) n}`. -/
-theorem round_success {k : ℕ} (hk : 1 ≤ k) {φ : CNF (Fin n)} {σ : Fin n → Bool}
-    (hσ : φ.eval σ = true) (huniq : ∀ τ, φ.eval τ = true → τ = σ)
+/-- **One satisfying assignment.** Let `σ` satisfy a CNF formula on `n` variables whose clauses have
+at most `k ≥ 1` literals, and let `I` be a set of variables whose flips falsify the formula. Then
+one round of PPZ outputs `σ` with probability at least `2^{-(n - |I| / k)}`. -/
+theorem round_apply_ge {k : ℕ} (hk : 1 ≤ k) {φ : CNF (Fin n)} {σ : Fin n → Bool}
+    (hσ : φ.eval σ = true) {I : Finset (Fin n)}
+    (hI : ∀ x ∈ I, φ.eval (Function.update σ x (!σ x)) ≠ true)
     (hlen : ∀ c ∈ φ, c.length ≤ k) :
-    (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) ≤ ((round φ) fun x => some (σ x)).toReal := by
+    (2 : ℝ) ^ (-((n : ℝ) - I.card / k)) ≤ ((round φ) fun x => some (σ x)).toReal := by
   classical
-  choose C hC using fun x => exists_critical hσ huniq x
-  have hC' : ∀ x, C x ∈ φ ∧ IsCritical σ x (C x) := fun x => ⟨(hC x).1, (hC x).2⟩
+  choose! C hC using fun x hx => exists_critical_of_flip hσ (hI x hx)
   set nf : Equiv.Perm (Fin n) → ℕ := fun π => unforcedCount φ σ π n
   set N := n.factorial
   have hN : (0 : ℝ) < N := by exact_mod_cast Nat.factorial_pos n
+  have hcardPerm : (univ : Finset (Equiv.Perm (Fin n))).card = N := by
+    rw [card_univ, Fintype.card_perm, Fintype.card_fin]
   -- The success probability is the average of `2^{-nf π}`.
   have hprob : ((round φ) fun x => some (σ x)).toReal =
       ∑ π : Equiv.Perm (Fin n), (N : ℝ)⁻¹ * (1 / 2 : ℝ) ^ nf π := by
@@ -482,55 +504,65 @@ theorem round_success {k : ℕ} (hk : 1 ≤ k) {φ : CNF (Fin n)} {σ : Fin n �
       Fintype.card_perm, Fintype.card_fin, ENNReal.toReal_pow, ENNReal.toReal_inv]
     norm_num
     rfl
-  -- The average number of unforced variables is at most `(1 - 1/k) n`.
-  have havg : ∑ π : Equiv.Perm (Fin n), (N : ℝ)⁻¹ * nf π ≤ (1 - 1 / (k : ℝ)) * n := by
-    have hcount : ∀ x : Fin n, (N : ℝ) / k ≤
-        ((univ.filter fun π : Equiv.Perm (Fin n) => IsLast π (vars (C x)) x).card : ℝ) := by
+  -- The average number of unforced variables is at most `n - |I| / k`.
+  have havg : ∑ π : Equiv.Perm (Fin n), (N : ℝ)⁻¹ * nf π ≤ (n : ℝ) - I.card / k := by
+    have hterm : ∀ x : Fin n, ((univ.filter fun π : Equiv.Perm (Fin n) =>
+        ¬ (x ∈ I ∧ IsLast π (vars (C x)) x)).card : ℝ) ≤ N - if x ∈ I then (N : ℝ) / k else 0 := by
       intro x
-      have hxv : x ∈ vars (C x) := by
-        obtain ⟨⟨l, hl, hlx⟩, -⟩ := (hC x).2
-        exact List.mem_toFinset.mpr (List.mem_map.mpr ⟨l, hl, hlx⟩)
-      have hvk : ((vars (C x)).card : ℝ) ≤ k := by
-        exact_mod_cast (card_vars_le _).trans (hlen _ (hC x).1)
-      have hvpos : (0 : ℝ) < (vars (C x)).card := by exact_mod_cast card_pos.mpr ⟨x, hxv⟩
-      have hmul' : ((univ.filter fun π : Equiv.Perm (Fin n) => IsLast π (vars (C x)) x).card : ℝ) *
-          (vars (C x)).card = N := by exact_mod_cast card_isLast_mul hxv
-      rw [div_le_iff₀ (by exact_mod_cast hk)]
-      calc
-        (N : ℝ) = _ * (vars (C x)).card := hmul'.symm
-        _ ≤ _ * k := by gcongr
+      split_ifs with hx
+      · have hxv : x ∈ vars (C x) := by
+          obtain ⟨⟨l, hl, hlx⟩, -⟩ := (hC x hx).2
+          exact List.mem_toFinset.mpr (List.mem_map.mpr ⟨l, hl, hlx⟩)
+        have hvk : ((vars (C x)).card : ℝ) ≤ k := by
+          exact_mod_cast (card_vars_le _).trans (hlen _ (hC x hx).1)
+        have hmul : ((univ.filter fun π : Equiv.Perm (Fin n) =>
+            IsLast π (vars (C x)) x).card : ℝ) * (vars (C x)).card = N := by
+          exact_mod_cast card_isLast_mul hxv
+        have hlast : (N : ℝ) / k ≤ ((univ.filter fun π : Equiv.Perm (Fin n) =>
+            IsLast π (vars (C x)) x).card : ℝ) := by
+          rw [div_le_iff₀ (by exact_mod_cast hk)]
+          calc
+            (N : ℝ) = _ * (vars (C x)).card := hmul.symm
+            _ ≤ _ * k := by gcongr
+        have hsplit : (univ.filter fun π : Equiv.Perm (Fin n) =>
+            ¬ (x ∈ I ∧ IsLast π (vars (C x)) x)) =
+            univ \ (univ.filter fun π : Equiv.Perm (Fin n) => IsLast π (vars (C x)) x) := by
+          ext π
+          simp [hx]
+        rw [hsplit, card_sdiff_of_subset (filter_subset _ _), hcardPerm,
+          Nat.cast_sub (hcardPerm ▸ card_le_univ _)]
+        linarith
+      · have : (univ.filter fun π : Equiv.Perm (Fin n) =>
+            ¬ (x ∈ I ∧ IsLast π (vars (C x)) x)) = univ := by
+          ext π
+          simp [hx]
+        rw [this, hcardPerm, sub_zero]
     have hsum : ∑ π : Equiv.Perm (Fin n), (nf π : ℝ) ≤
-        ∑ x : Fin n, ((N : ℝ) - (univ.filter fun π : Equiv.Perm (Fin n) =>
-          IsLast π (vars (C x)) x).card) := by
+        ∑ x : Fin n, ((N : ℝ) - if x ∈ I then (N : ℝ) / k else 0) := by
       calc
         ∑ π : Equiv.Perm (Fin n), (nf π : ℝ) ≤ ∑ π : Equiv.Perm (Fin n),
-            ((univ.filter fun x => ¬ IsLast π (vars (C x)) x).card : ℝ) :=
-          sum_le_sum fun π _ => by exact_mod_cast unforcedCount_le hC' π
+            ((univ.filter fun x => ¬ (x ∈ I ∧ IsLast π (vars (C x)) x)).card : ℝ) :=
+          sum_le_sum fun π _ => by exact_mod_cast unforcedCount_le hC π
         _ = ∑ x : Fin n, ((univ.filter fun π : Equiv.Perm (Fin n) =>
-              ¬ IsLast π (vars (C x)) x).card : ℝ) := by
+              ¬ (x ∈ I ∧ IsLast π (vars (C x)) x)).card : ℝ) := by
           simp only [card_filter]
           push_cast
           rw [sum_comm]
-        _ = _ := by
-          refine sum_congr rfl fun x _ => ?_
-          rw [filter_not, card_sdiff_of_subset (filter_subset _ _), card_univ, Fintype.card_perm,
-            Fintype.card_fin, Nat.cast_sub (card_le_univ _ |>.trans_eq (by
-              rw [Fintype.card_perm, Fintype.card_fin]))]
+        _ ≤ _ := sum_le_sum fun x _ => hterm x
     calc
       ∑ π : Equiv.Perm (Fin n), (N : ℝ)⁻¹ * nf π =
           (N : ℝ)⁻¹ * ∑ π : Equiv.Perm (Fin n), (nf π : ℝ) := by
         rw [mul_sum]
-      _ ≤ (N : ℝ)⁻¹ * ∑ _x : Fin n, ((N : ℝ) - N / k) := by
+      _ ≤ (N : ℝ)⁻¹ * ∑ x : Fin n, ((N : ℝ) - if x ∈ I then (N : ℝ) / k else 0) := by
         gcongr
-        exact hsum.trans (sum_le_sum fun x _ => by linarith [hcount x])
-      _ = (1 - 1 / (k : ℝ)) * n := by
-        rw [sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul]
+      _ = (n : ℝ) - I.card / k := by
+        rw [sum_sub_distrib, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul, sum_ite_mem,
+          univ_inter, sum_const, nsmul_eq_mul]
         field_simp
   -- The arithmetic–geometric mean inequality.
   have hw : ∑ _π : Equiv.Perm (Fin n), (N : ℝ)⁻¹ = 1 := by
-    rw [sum_const, card_univ, Fintype.card_perm, Fintype.card_fin, nsmul_eq_mul]
+    rw [sum_const, hcardPerm, nsmul_eq_mul]
     field_simp
-    rfl
   have hamgm := Real.geom_mean_le_arith_mean_weighted (univ : Finset (Equiv.Perm (Fin n)))
     (fun _ => (N : ℝ)⁻¹) (fun π => (1 / 2 : ℝ) ^ nf π) (fun _ _ => by positivity) hw
     (fun _ _ => by positivity)
@@ -542,10 +574,91 @@ theorem round_success {k : ℕ} (hk : 1 ≤ k) {φ : CNF (Fin n)} {σ : Fin n �
   rw [hprob]
   refine le_trans ?_ (hprod ▸ hamgm)
   calc
-    (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) = (1 / 2 : ℝ) ^ ((1 - 1 / (k : ℝ)) * n) := by
+    (2 : ℝ) ^ (-((n : ℝ) - I.card / k)) = (1 / 2 : ℝ) ^ ((n : ℝ) - I.card / k) := by
       rw [Real.rpow_neg zero_le_two, show (1 / 2 : ℝ) = 2⁻¹ by norm_num,
         Real.inv_rpow zero_le_two]
     _ ≤ (1 / 2 : ℝ) ^ ∑ π : Equiv.Perm (Fin n), (N : ℝ)⁻¹ * nf π :=
       Real.rpow_le_rpow_of_exponent_ge (by norm_num) (by norm_num) havg
+
+/-- **The PPZ algorithm for unique k-SAT** [Paturi, Pudlák, Zane][PPZ1997]: if `σ` is the only
+satisfying assignment of a CNF formula on `n` variables whose clauses have at most `k ≥ 1` literals,
+one round of PPZ outputs `σ` with probability at least `2^{-(1 - 1/k) n}`. -/
+theorem round_success {k : ℕ} (hk : 1 ≤ k) {φ : CNF (Fin n)} {σ : Fin n → Bool}
+    (hσ : φ.eval σ = true) (huniq : ∀ τ, φ.eval τ = true → τ = σ)
+    (hlen : ∀ c ∈ φ, c.length ≤ k) :
+    (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) ≤ ((round φ) fun x => some (σ x)).toReal := by
+  have h := round_apply_ge hk hσ (I := univ) (fun x _ hflip => by
+    have := congrFun (huniq _ hflip) x
+    simp at this) hlen
+  rw [card_univ, Fintype.card_fin] at h
+  convert h using 2
+  ring
+
+/-- **The PPZ algorithm for k-SAT** [Paturi, Pudlák, Zane][PPZ1997]: for every satisfiable CNF
+formula on `n` variables whose clauses have at most `k ≥ 1` literals, one round of PPZ outputs a
+satisfying assignment with probability at least `2^{-(1 - 1/k) n}`. Each satisfying assignment `σ`
+is output with probability at least `2^{-(n - I(σ)/k)}`, where `I(σ)` counts the variables whose
+flips falsify the formula, and `∑_σ 2^{I(σ) - n} ≥ 1`
+(`Cslib.BitString.two_pow_le_sum_two_pow_isolation`). -/
+theorem round_success_of_satisfiable {k : ℕ} (hk : 1 ≤ k) {φ : CNF (Fin n)}
+    (hsat : φ.Satisfiable) (hlen : ∀ c ∈ φ, c.length ≤ k) :
+    (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) ≤
+      ((round φ).toOuterMeasure {τ | ∃ σ, φ.eval σ = true ∧ τ = fun x => some (σ x)}).toReal := by
+  classical
+  set S : Finset (Fin n → Bool) := univ.filter fun σ => φ.eval σ = true
+  have hS : S.Nonempty := let ⟨σ, hσ⟩ := hsat; ⟨σ, by simp [S, hσ]⟩
+  have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast hk
+  set g : (Fin n → Bool) → (Fin n → Option Bool) := fun σ x => some (σ x)
+  have hg : Function.Injective g := fun σ τ h => funext fun x =>
+    Option.some_injective _ (congrFun h x)
+  -- The event contains the images of the satisfying assignments.
+  have hevent : ∑ σ ∈ S, ((round φ) (g σ)).toReal ≤
+      ((round φ).toOuterMeasure {τ | ∃ σ, φ.eval σ = true ∧ τ = fun x => some (σ x)}).toReal := by
+    rw [Cslib.Probability.PMF.toOuterMeasure_apply_toReal,
+      ← sum_image (f := fun τ => ((round φ) τ).toReal) fun σ _ τ _ h => hg h]
+    refine le_trans (le_of_eq (sum_congr rfl fun τ hτ => ?_))
+      (sum_le_sum_of_subset_of_nonneg (subset_univ _) fun τ _ _ => ?_)
+    · obtain ⟨σ, hσ, rfl⟩ := mem_image.mp hτ
+      have : g σ ∈ {τ | ∃ σ, φ.eval σ = true ∧ τ = fun x => some (σ x)} :=
+        ⟨σ, (mem_filter.mp hσ).2, rfl⟩
+      simp only [this, ite_true]
+    · split_ifs
+      · exact ENNReal.toReal_nonneg
+      · exact le_rfl
+  -- Each satisfying assignment contributes `2^{-(1 - 1/k) n} · 2^{isolation - n}`.
+  have hterm : ∀ σ ∈ S, (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) *
+      ((2 : ℝ) ^ (Cslib.BitString.isolation S σ) / 2 ^ n) ≤ ((round φ) (g σ)).toReal := by
+    intro σ hσ
+    set I := univ.filter fun x => Function.update σ x (!σ x) ∉ S
+    have hI : ∀ x ∈ I, φ.eval (Function.update σ x (!σ x)) ≠ true := by
+      intro x hx
+      simpa [I, S] using hx
+    refine le_trans ?_ (round_apply_ge hk (mem_filter.mp hσ).2 hI hlen)
+    have hiso : (Cslib.BitString.isolation S σ : ℝ) = I.card := rfl
+    have hIn : (I.card : ℝ) ≤ n := by exact_mod_cast (card_le_univ I).trans_eq (Fintype.card_fin n)
+    rw [← Real.rpow_natCast 2 (Cslib.BitString.isolation S σ), ← Real.rpow_natCast 2 n,
+      ← Real.rpow_sub two_pos, ← Real.rpow_add two_pos, hiso]
+    apply Real.rpow_le_rpow_of_exponent_le one_le_two
+    have : ((I.card : ℝ) - n) ≤ ((I.card : ℝ) - n) / k := by
+      rw [le_div_iff₀ (by linarith)]
+      nlinarith
+    have hrw : -((n : ℝ) - I.card / k) = -((1 - 1 / (k : ℝ)) * n) + ((I.card : ℝ) - n) / k := by
+      field_simp
+      ring
+    rw [hrw]
+    linarith
+  -- The isolation inequality.
+  have hiso := Cslib.BitString.two_pow_le_sum_two_pow_isolation S hS
+  have hisoR : (1 : ℝ) ≤ ∑ σ ∈ S, (2 : ℝ) ^ (Cslib.BitString.isolation S σ) / 2 ^ n := by
+    rw [← sum_div, le_div_iff₀ (by positivity), one_mul]
+    exact_mod_cast hiso
+  calc
+    (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) ≤ (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) *
+        ∑ σ ∈ S, (2 : ℝ) ^ (Cslib.BitString.isolation S σ) / 2 ^ n :=
+      le_mul_of_one_le_right (by positivity) hisoR
+    _ = ∑ σ ∈ S, (2 : ℝ) ^ (-((1 - 1 / (k : ℝ)) * n)) *
+        ((2 : ℝ) ^ (Cslib.BitString.isolation S σ) / 2 ^ n) := by rw [mul_sum]
+    _ ≤ ∑ σ ∈ S, ((round φ) (g σ)).toReal := sum_le_sum hterm
+    _ ≤ _ := hevent
 
 end Cslib.Complexity.PPZ
