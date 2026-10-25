@@ -78,8 +78,7 @@ theorem computableInSpace_eval : ∃ t, ComputableInBigO
   let tS := ReadMachine.stateT encState T stateBudget
   let tMax (I : Instance) : ℕ := ∑ i ∈ Finset.range (rounds I + 1),
     tS (machine.toStepMachine.run (encInstance I) i).state
-  refine ⟨_, ComputableTidilyInBigO.computableInBigO <|
-    (hT.computableTidilyInTimeAndSpace (fun I : Instance => List.ofFn I.tree.eval)
+  refine ⟨_, (hT.computableInBigO (fun I : Instance => List.ofFn I.tree.eval)
     rounds hr (fun I => by rw [encBits_apply, ho]) (tMax := tMax)
     (sMax := fun I => 5 * 2 ^ 12 * spaceBound I.ell I.height +
       2 * (encNat ((encInstance I).length + 1)).length + 6) fun I i hi => ⟨?_, ?_⟩).weaken
