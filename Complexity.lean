@@ -1833,6 +1833,7 @@ public import Complexity.Foundations.Geometry.Euclidean.Angle.Cap
 public import Complexity.Foundations.Geometry.Euclidean.Angle.Unoriented.Basic
 public import Complexity.Foundations.Geometry.Orthogonal
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
+public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
 public import Complexity.Foundations.Geometry.OrthogonalLayout
 public import Complexity.Foundations.GroupTheory.Perm.Fin
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
