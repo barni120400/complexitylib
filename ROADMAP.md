@@ -1271,6 +1271,11 @@ Jukna coverage below is an additional target beyond the V1 port:
     components, stated as theory without concrete ciphersuites.
 
   The design is on #643, and the TQBF, PCP and GMW bridges are recorded there.
+* **GKR delegation (#892).** [Layered](Complexity/Computability/Interactive/GKR/Layered.lean)
+  defines layered arithmetic circuits and proves the GKR identity expressing the multilinear
+  extension of a layer through the wiring predicates and the layer below. Open: the GKR protocol
+  itself (layer-by-layer sumcheck and the line reduction, with completeness and soundness), its
+  efficiency under uniformity, and the route to NEXP ⊆ MIP.
 * **Classic symmetric constructions (#640, track D).** Proved: PRF-based MACs (#677), keyed
   collision-resistant hash families and Merkle–Damgård (#678), universal hashing (#663),
   [Carter–Wegman MACs from Δ-universal hashing](Complexity/Crypto/Protocols/MAC/CarterWegman.lean)
