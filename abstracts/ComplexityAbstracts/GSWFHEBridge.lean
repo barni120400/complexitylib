@@ -12,12 +12,16 @@ import Complexity.Crypto.Computational.Homomorphic.GSW.FullyHomomorphic
 
 /-! # Bridge for fully homomorphic encryption from GSW
 
-The public abstract states the GSW laws, both assumptions and every claimed property in
-elementary terms. This bridge identifies them with the library's serialized programs, its
-decision-LWE and circular-security experiments, `Scheme.Correct`, `Scheme.FixedWidth`, native
-certificates and `Encryption.INDCPA`, and assembles the leveled endpoint for every efficiently
-computable budget from the generic bootstrapping lemmas. The bridge introduces no notation or
-elaboration rules.
+The public abstract states the GSW algorithms, both assumptions and every claimed property in
+elementary terms, and asserts that suitable bootstrapping machinery exists. This bridge proves
+that the library's constructions are such machinery: `leveled_witness` for
+`Leveled.scheme GSW.DepthParameters.decryptionCircuits budget` and `fullyHomomorphic_witness` for
+`FixedKey.scheme GSW.DepthParameters.decryptionCircuits`. It identifies their encryption,
+decryption and fixed-key generation with the explicit GSW algorithms, identifies the assumptions
+with the library's decision-LWE and circular-security experiments, and derives the elementary
+properties from `Scheme.Correct`, `Scheme.FixedWidth`, the native certificates and
+`Encryption.INDCPA`. The leveled endpoint is assembled for every efficiently computable budget
+from the generic bootstrapping lemmas. The bridge introduces no notation or elaboration rules.
 -/
 
 namespace ComplexityTests.Abstracts.GSWFHEBridge
@@ -98,6 +102,18 @@ noncomputable def encryption (security : ℕ) (publicKey : List Bool) (message :
   return ciphertextWord (dimension security) (samples security) (width security)
     publicKey message coins
 
+def decryption (security : ℕ) (secret ciphertext : List Bool) : Bool :=
+  let n := dimension security
+  let w := width security
+  let value := (((matrixEntry (n + 1) w ciphertext (w - 1) 0 : ℤ) -
+    (((List.range n).map fun j =>
+      matrixEntry (n + 1) w ciphertext (w - 1) (j + 1) * matrixEntry n w secret 0 j).sum : ℕ)) %
+        (2 ^ w : ℤ)).toNat
+  decide (2 ^ w ≤ 4 * value ∧ 4 * value < 3 * 2 ^ w)
+
+def decryptionWord (security : ℕ) (word : List Bool) : Bool :=
+  decryption security (word.take (secretWidth security)) (word.drop (secretWidth security))
+
 noncomputable def uniformMatrixWord (m k w : ℕ) : PMF (List Bool) :=
   (Cslib.Probability.PMF.uniformOfFintype (Fin m → Fin k → ZMod (2 ^ w))).map
     (fun A => (List.ofFn fun i => (List.ofFn fun j => lowBits w (A i j).val).flatten).flatten)
@@ -117,6 +133,45 @@ noncomputable def selfEncryption (real : Bool) (security : ℕ) : PMF (List Bool
 
 def CircularSecure : Prop :=
   Randomized.Indistinguishable (selfEncryption true) (selfEncryption false)
+
+noncomputable def selfLoopKeyGeneration (security : ℕ) : PMF (List Bool × List Bool) := do
+  let keys ← keyGeneration security
+  let encryptedKey ← keys.2.mapM (encryption security keys.1)
+  return (Encoding.encPair Encoding.encBits (Encoding.encList Encoding.encBits)
+    (keys.1, encryptedKey), keys.2)
+
+/-! The abstract defines its framing decoders by recursion. Recursive definitions in two files
+are not definitionally equal, so the definitions that read framed keys take the decoders as
+parameters, and the theorems assume only that they agree with the library's decoders. -/
+
+section Decoders
+
+variable (unframe dropFrame : List Bool → List Bool)
+
+noncomputable def leveledEncryption (security : ℕ) (publicKey : List Bool) (bit : Bool) :
+    PMF (List Bool) :=
+  (encryption security (unframe (unframe publicKey)) bit).map (List.cons false)
+
+def leveledDecryption (security : ℕ) (secret ciphertext : List Bool) : Bool :=
+  decryptionWord security
+    ((if ciphertext.headD false then dropFrame secret else unframe secret) ++ ciphertext.tail)
+
+noncomputable def selfLoopEncryption (security : ℕ) (publicKey : List Bool) (bit : Bool) :
+    PMF (List Bool) :=
+  encryption security (unframe publicKey) bit
+
+end Decoders
+
+def selfLoopDecryption (security : ℕ) (secret ciphertext : List Bool) : Bool :=
+  decryptionWord security (secret ++ ciphertext)
+
+def EncryptsAndDecrypts (S : Homomorphic.Scheme)
+    (encrypt : ℕ → List Bool → Bool → PMF (List Bool))
+    (decrypt : ℕ → List Bool → List Bool → Bool) : Prop :=
+  (∀ security publicKey bit,
+    ProbComp.eval (S.encrypt security publicKey bit) = encrypt security publicKey bit) ∧
+  ∀ security secret ciphertext, S.decrypt security secret ciphertext =
+    decrypt security secret ciphertext
 
 def Homomorphic (S : Homomorphic.Scheme)
     (allowed : ℕ → (Σ k, Circuits.Circuit Circuits.Boolean.signature k 1) → Prop) : Prop :=
@@ -191,6 +246,44 @@ def ChosenMessageSecure (S : Homomorphic.Scheme) : Prop :=
       nndist (Randomized.probability (chosenMessageGame S choose guess false security))
         (Randomized.probability (chosenMessageGame S choose guess true security)))
 
+/-! ### The framing decoders -/
+
+/-- A function with the defining equations of the abstract's `unframe` is the library's
+`unframe`. -/
+theorem unframe_eq_of {unframe : List Bool → List Bool} (hnil : unframe [] = [])
+    (hone : unframe [true] = []) (hfalse : ∀ rest, unframe (false :: rest) = [])
+    (hpair : ∀ b rest, unframe (true :: b :: rest) = b :: unframe rest) :
+    ∀ word, unframe word = Turing.MultiTapeTM.unframe word
+  | [] => hnil
+  | [true] => hone
+  | false :: rest => hfalse rest
+  | true :: b :: rest => by
+    rw [hpair, unframe_eq_of hnil hone hfalse hpair rest]
+    rfl
+
+/-- A function with the defining equations of the abstract's `dropFrame` is the library's
+`dropFrame`. -/
+theorem dropFrame_eq_of {dropFrame : List Bool → List Bool} (hnil : dropFrame [] = [])
+    (hone : dropFrame [true] = []) (hfalse : ∀ rest, dropFrame (false :: rest) = rest)
+    (hpair : ∀ b rest, dropFrame (true :: b :: rest) = dropFrame rest) :
+    ∀ word, dropFrame word = Turing.MultiTapeTM.dropFrame word
+  | [] => hnil
+  | [true] => hone
+  | false :: rest => hfalse rest
+  | true :: b :: rest => by
+    rw [hpair, dropFrame_eq_of hnil hone hfalse hpair rest]
+    rfl
+
+/-- The first framed word of a list of framed words, or the empty word if there is none. -/
+private theorem getD_frames (word : List Bool) :
+    ((frames word).map Decoder.bits.decode).getD 0 [] = Turing.MultiTapeTM.unframe word := by
+  by_cases h : word = []
+  · subst h
+    rw [frames_nil]
+    rfl
+  · rw [frames_of_ne_nil h]
+    rfl
+
 /-! ### The GSW laws are the library's serialized programs -/
 
 private theorem independentList_eval {α : Type} (count : ℕ) (program : ProbComp α) :
@@ -224,7 +317,7 @@ private theorem encryption_eq (security : ℕ) (publicKey : List Bool) (message 
     PMF.monad_pure_eq_pure]
   rfl
 
-/-- The named GSW key generation and encryption have exactly the explicit laws. -/
+/-- The library's GSW key generation and encryption have exactly the explicit laws. -/
 theorem base_scheme (security : ℕ) :
     ProbComp.eval (GSW.DepthParameters.scheme.keyGen security) = keyGeneration security ∧
       ∀ publicKey message,
@@ -232,6 +325,81 @@ theorem base_scheme (security : ℕ) :
           encryption security publicKey message :=
   ⟨(keyGeneration_eq security).symm, fun publicKey message =>
     (encryption_eq security publicKey message).symm⟩
+
+/-- Serialized decryption reads only the first `n w` secret bits and the first `N²` ciphertext
+bits, with missing bits read as `false`. -/
+private theorem decryptSerialized_congr {n w : ℕ}
+    {secret secret' ciphertext ciphertext' : List Bool}
+    (hsecret : ∀ i < n * w, secret.getD i false = secret'.getD i false)
+    (hciphertext : ∀ i < (n + 1) * w * ((n + 1) * w),
+      ciphertext.getD i false = ciphertext'.getD i false) :
+    GSW.decryptSerialized n w secret ciphertext =
+      GSW.decryptSerialized n w secret' ciphertext' := by
+  have hs : Cslib.Matrix.ofBinary 1 n w secret = Cslib.Matrix.ofBinary 1 n w secret' := by
+    have h : BitString.ofList (1 * (n * w)) secret = BitString.ofList (1 * (n * w)) secret' := by
+      funext i
+      exact hsecret i (by have := i.2; omega)
+    unfold Cslib.Matrix.ofBinary
+    rw [h]
+  have hc : GSW.decodeCiphertext n w ciphertext = GSW.decodeCiphertext n w ciphertext' := by
+    have h : BitString.ofList ((n + 1) * (w * ((n + 1) * w))) ciphertext =
+        BitString.ofList ((n + 1) * (w * ((n + 1) * w))) ciphertext' := by
+      funext i
+      exact hciphertext i (by have := i.2; rwa [Nat.mul_assoc])
+    unfold GSW.decodeCiphertext
+    rw [h]
+  rw [GSW.decryptSerialized_eq, GSW.decryptSerialized_eq, GSW.decodeSecret, GSW.decodeSecret,
+    hs, hc]
+
+/-- **The decryption circuit computes `decryptionWord` on every word.** The circuit reads the
+word padded with `false` or truncated to its input width, and GSW decryption ignores the bits
+beyond its widths. -/
+theorem eval_decryptionCircuit (security : ℕ) (word : List Bool) :
+    (GSW.DepthParameters.decryptionCircuits.circuit security).eval Circuits.Boolean.interpretation
+      (BitString.ofList (GSW.DepthParameters.secretWidth security +
+        GSW.DepthParameters.ciphertextWidth security) word) 0 =
+      decryptionWord security word := by
+  have hsw : GSW.DepthParameters.secretWidth security = secretWidth security := rfl
+  have hcw : GSW.DepthParameters.ciphertextWidth security =
+      (dimension security + 1) * width security * ((dimension security + 1) * width security) :=
+    rfl
+  obtain ⟨full, hfull⟩ : ∃ full, full = List.ofFn (BitString.ofList
+      (GSW.DepthParameters.secretWidth security + GSW.DepthParameters.ciphertextWidth security)
+        word) := ⟨_, rfl⟩
+  have hlength : full.length =
+      GSW.DepthParameters.secretWidth security + GSW.DepthParameters.ciphertextWidth security := by
+    rw [hfull, List.length_ofFn]
+  have hget : ∀ i < GSW.DepthParameters.secretWidth security +
+      GSW.DepthParameters.ciphertextWidth security, full[i]? = word[i]?.getD false := by
+    intro i hi
+    rw [List.getElem?_eq_getElem (by rw [hlength]; exact hi)]
+    simp only [hfull, List.getElem_ofFn, BitString.ofList, List.getD_eq_getElem?_getD]
+  have hsplit : BitString.ofList
+      (GSW.DepthParameters.secretWidth security + GSW.DepthParameters.ciphertextWidth security)
+        word = BitString.ofList
+      (GSW.DepthParameters.secretWidth security + GSW.DepthParameters.ciphertextWidth security)
+        (full.take (GSW.DepthParameters.secretWidth security) ++
+          full.drop (GSW.DepthParameters.secretWidth security)) := by
+    rw [List.take_append_drop, hfull, BitString.ofList_ofFn]
+  rw [hsplit, GSW.DepthParameters.decryptionCircuits.correct security _ _
+    (by rw [List.length_take, hlength]; omega) (by rw [List.length_drop, hlength]; omega)]
+  change GSW.decryptSerialized (dimension security) (width security) _ _ =
+    decryption security (word.take (secretWidth security)) (word.drop (secretWidth security))
+  rw [decryptSerialized_congr (secret' := word.take (secretWidth security))
+    (ciphertext' := word.drop (secretWidth security))]
+  · have hw : width security ≠ 0 := (GSW.DepthParameters.width_pos security).ne'
+    unfold GSW.decryptSerialized
+    simp only [hw, ite_false]
+    rfl
+  · intro i hi
+    have hi' : i < secretWidth security := hi
+    simp only [List.getD_eq_getElem?_getD,
+      List.getElem?_take_of_lt (show i < GSW.DepthParameters.secretWidth security from hi'),
+      List.getElem?_take_of_lt hi', hget i (by rw [hsw]; omega), Option.getD_some]
+  · intro i hi
+    simp only [List.getD_eq_getElem?_getD, List.getElem?_drop]
+    rw [hget _ (by rw [hsw, hcw]; omega), Option.getD_some]
+    rfl
 
 /-! ### The two assumptions -/
 
@@ -248,6 +416,7 @@ private theorem uniformPublic_eq (security : ℕ) :
     uniformPublic security = LWE.uniformEnsemble dimension samples width security :=
   uniformMatrixWord_eq _ _ _
 
+/-- The elementary decision-LWE assumption is the library's, for this family. -/
 theorem decisionLWE_iff : DecisionLWE ↔
     Crypto.DecisionLWE GSW.Parameters.dimension GSW.DepthParameters.samples
       GSW.DepthParameters.width
@@ -273,20 +442,23 @@ private theorem mapM_eval {α β : Type} (program : α → ProbComp β) (inputs 
     simp only [List.mapM_cons, ProbComp.eval_bind, ProbComp.eval_pure, ih,
       PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure]
 
+private theorem encryption_fun_eq (security : ℕ) : encryption security =
+    fun publicKey message =>
+      ProbComp.eval (GSW.DepthParameters.scheme.encrypt security publicKey message) := by
+  funext publicKey message
+  exact encryption_eq security publicKey message
+
 private theorem selfEncryption_eq (real : Bool) (security : ℕ) :
     selfEncryption real security =
       (ProbComp.eval (Encryption.circularPublicKey GSW.DepthParameters.scheme.keyGen
         GSW.DepthParameters.scheme.encrypt real security)).map
         Encryption.encCircularPublicKey := by
-  have hencrypt : encryption security = fun publicKey message =>
-      ProbComp.eval (GSW.DepthParameters.scheme.encrypt security publicKey message) := by
-    funext publicKey message
-    exact encryption_eq security publicKey message
-  simp only [selfEncryption, Encryption.circularPublicKey, hencrypt, mapM_eval,
+  simp only [selfEncryption, Encryption.circularPublicKey, encryption_fun_eq, mapM_eval,
     ProbComp.eval_bind, ProbComp.eval_pure, PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure,
     PMF.map_bind, PMF.pure_map, (base_scheme security).1]
   rfl
 
+/-- The elementary circular-security assumption is the library's, for GSW at this family. -/
 theorem circularSecure_iff : CircularSecure ↔
     Encryption.CircularSecure GSW.DepthParameters.scheme.keyGen
       GSW.DepthParameters.scheme.encrypt := by
@@ -300,7 +472,52 @@ theorem circularSecure_iff : CircularSecure ↔
   rw [h true, h false]
   rfl
 
-/-! ### The claimed properties from the library's notions -/
+/-! ### The library's bootstrapped schemes use the explicit algorithms -/
+
+/-- The library's leveled scheme, for every budget, encrypts with a tag and GSW encryption under
+the chain's first public key, and decrypts with the tag-selected endpoint secret. -/
+theorem leveled_encryptsAndDecrypts (budget : ℕ → ℕ) :
+    EncryptsAndDecrypts (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget)
+      (leveledEncryption Turing.MultiTapeTM.unframe)
+      (leveledDecryption Turing.MultiTapeTM.unframe Turing.MultiTapeTM.dropFrame) := by
+  refine ⟨fun security publicKey bit => ?_, fun security secret ciphertext => ?_⟩
+  · have hkey : (Leveled.publicKeyDecoder.decode publicKey).1.getD 0 [] =
+        Turing.MultiTapeTM.unframe (Turing.MultiTapeTM.unframe publicKey) :=
+      getD_frames _
+    change ProbComp.eval (List.cons false <$> GSW.DepthParameters.scheme.encrypt security
+      ((Leveled.publicKeyDecoder.decode publicKey).1.getD 0 []) bit) = _
+    rw [ProbComp.eval_map, (base_scheme security).2, hkey]
+    rfl
+  · have hkey : Leveled.secretKeyDecoder.decode secret =
+        (Turing.MultiTapeTM.unframe secret, Turing.MultiTapeTM.dropFrame secret) := rfl
+    simp only [Leveled.scheme, Leveled.decrypt, hkey, eval_decryptionCircuit]
+    rfl
+
+/-- The library's fixed-key key generation is the self-loop key generation. -/
+theorem fixedKey_keyGen (security : ℕ) :
+    ProbComp.eval ((FixedKey.scheme GSW.DepthParameters.decryptionCircuits).keyGen security) =
+      selfLoopKeyGeneration security := by
+  simp only [FixedKey.scheme, FixedKey.keyGen, Scheme.encryptBits, selfLoopKeyGeneration,
+    encryption_fun_eq, mapM_eval, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.monad_bind_eq_bind, PMF.monad_pure_eq_pure, (base_scheme security).1]
+  rfl
+
+/-- The library's fixed-key scheme encrypts with GSW under the first framed component of its
+public key and decrypts with GSW on the concatenated key and ciphertext. -/
+theorem fixedKey_encryptsAndDecrypts :
+    EncryptsAndDecrypts (FixedKey.scheme GSW.DepthParameters.decryptionCircuits)
+      (selfLoopEncryption Turing.MultiTapeTM.unframe) selfLoopDecryption := by
+  refine ⟨fun security publicKey bit => ?_, fun security secret ciphertext => ?_⟩
+  · change ProbComp.eval (GSW.DepthParameters.scheme.encrypt security
+      (FixedKey.publicKeyDecoder.decode publicKey).1 bit) = _
+    rw [(base_scheme security).2]
+    rfl
+  · simp only [FixedKey.scheme, FixedKey.decrypt, selfLoopDecryption, eval_decryptionCircuit]
+
+/-! ### The claimed properties from the library's notions
+
+Each lemma proves the direction the conclusions need: the library's notion implies the
+elementary one. -/
 
 theorem homomorphic_of_correct {S : Homomorphic.Scheme} (hS : S.Correct)
     {allowed : ℕ → (Σ k, Circuits.Circuit Circuits.Boolean.signature k 1) → Prop}
@@ -352,15 +569,22 @@ theorem chosenMessageSecure_of_indCPA {S : Homomorphic.Scheme}
     Asymptotics.SuperpolynomialDecay, Crypto.Game.advantage, Crypto.Game.succProbability,
     Randomized.probability] using h
 
-/-! ### The headline theorems -/
+/-! ### Provenance: the library's schemes are the witnesses -/
 
-theorem leveled (hLWE : DecisionLWE) :
+/-- **The library's leveled scheme witnesses `leveled`.** For every budget computable in unary
+polynomial time, `Leveled.scheme GSW.DepthParameters.decryptionCircuits budget` has every
+property that the abstract's `leveled` asserts, with one decryption circuit family chosen
+before the budget. -/
+theorem leveled_witness (hLWE : DecisionLWE) :
     ∃ circuit : ∀ security, Circuits.Circuit Circuits.Boolean.signature
         ((3 * secretWidth security + 1) + (ciphertextWidth security + 1)) 1,
       PolynomiallyBounded (fun security => (circuit security).size) ∧
       PolynomiallyBounded (fun security => 3 * secretWidth security + 1) ∧
       PolynomiallyBounded (fun security => ciphertextWidth security + 1) ∧
       ∀ budget : ℕ → ℕ, Computation.PolyTime budget Encoding.encUnary Encoding.encUnary →
+        EncryptsAndDecrypts (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget)
+          (leveledEncryption Turing.MultiTapeTM.unframe)
+          (leveledDecryption Turing.MultiTapeTM.unframe Turing.MultiTapeTM.dropFrame) ∧
         DecryptsWith (Leveled.scheme GSW.DepthParameters.decryptionCircuits budget)
           (fun security => 3 * secretWidth security + 1)
           (fun security => ciphertextWidth security + 1) circuit ∧
@@ -386,7 +610,7 @@ theorem leveled (hLWE : DecisionLWE) :
     Leveled.correct_fixedWidth_indCPA D GSW.DepthParameters.correct
       GSW.DepthParameters.fixedWidth GSW.DepthParameters.bootstrappable
       (GSW.DepthParameters.indCPA_scheme (decisionLWE_iff.mp hLWE)) hkeyGen hencrypt hD hb
-  exact ⟨fun security => hcircuits budget security,
+  exact ⟨leveled_encryptsAndDecrypts budget, fun security => hcircuits budget security,
     homomorphic_of_correct hcorrect fun _ _ h => h,
     fixedWidths_of_fixedWidth hwidth fun _ _ h => h,
     native_of (Leveled.isPPTOn_scheme_keyGen hkeyGen hencrypt D budget hb)
@@ -395,12 +619,19 @@ theorem leveled (hLWE : DecisionLWE) :
       (Leveled.isPPTOn_scheme_evaluate hencrypt D hD hevaluate budget hb),
     chosenMessageSecure_of_indCPA hsecure⟩
 
-theorem fullyHomomorphic (hLWE : DecisionLWE) (hcircular : CircularSecure) :
-    DecryptsWith (FixedKey.scheme GSW.DepthParameters.decryptionCircuits) secretWidth
-        ciphertextWidth GSW.DepthParameters.decryptionCircuits.circuit ∧
-      PolynomiallyBounded
+/-- **The library's fixed-key scheme witnesses `fullyHomomorphic`**, with GSW's own decryption
+circuits `GSW.DepthParameters.decryptionCircuits.circuit`. -/
+theorem fullyHomomorphic_witness (hLWE : DecisionLWE) (hcircular : CircularSecure) :
+    PolynomiallyBounded
         (fun security => (GSW.DepthParameters.decryptionCircuits.circuit security).size) ∧
       PolynomiallyBounded secretWidth ∧ PolynomiallyBounded ciphertextWidth ∧
+      (∀ security, ProbComp.eval
+        ((FixedKey.scheme GSW.DepthParameters.decryptionCircuits).keyGen security) =
+          selfLoopKeyGeneration security) ∧
+      EncryptsAndDecrypts (FixedKey.scheme GSW.DepthParameters.decryptionCircuits)
+        (selfLoopEncryption Turing.MultiTapeTM.unframe) selfLoopDecryption ∧
+      DecryptsWith (FixedKey.scheme GSW.DepthParameters.decryptionCircuits) secretWidth
+        ciphertextWidth GSW.DepthParameters.decryptionCircuits.circuit ∧
       Homomorphic (FixedKey.scheme GSW.DepthParameters.decryptionCircuits) (fun _ _ => True) ∧
       FixedWidths (FixedKey.scheme GSW.DepthParameters.decryptionCircuits) (fun _ _ => True)
         secretWidth ciphertextWidth ∧
@@ -410,10 +641,58 @@ theorem fullyHomomorphic (hLWE : DecisionLWE) (hcircular : CircularSecure) :
       hdecrypt, hevaluate, hsecure⟩ :=
     GSW.DepthParameters.fullyHomomorphic_of_decisionLWE_of_circularSecure
       (decisionLWE_iff.mp hLWE) (circularSecure_iff.mp hcircular)
-  exact ⟨(FixedKey.decryptionCircuits GSW.DepthParameters.decryptionCircuits).correct, hsize,
-    hsecret, hciphertext,
+  exact ⟨hsize, hsecret, hciphertext, fixedKey_keyGen, fixedKey_encryptsAndDecrypts,
+    (FixedKey.decryptionCircuits GSW.DepthParameters.decryptionCircuits).correct,
     homomorphic_of_correct hcorrect fun security C _ => hpermitted security C,
     fixedWidths_of_fixedWidth hwidth fun security C _ => hpermitted security C,
     native_of hkeyGen hencrypt hdecrypt hevaluate, chosenMessageSecure_of_indCPA hsecure⟩
+
+/-! ### The headline theorems
+
+The decoders are those of the abstract; they agree with the library's on every word. -/
+
+theorem leveled {unframe dropFrame : List Bool → List Bool}
+    (hunframe : ∀ word, unframe word = Turing.MultiTapeTM.unframe word)
+    (hdropFrame : ∀ word, dropFrame word = Turing.MultiTapeTM.dropFrame word)
+    (hLWE : DecisionLWE) :
+    ∃ circuit : ∀ security, Circuits.Circuit Circuits.Boolean.signature
+        ((3 * secretWidth security + 1) + (ciphertextWidth security + 1)) 1,
+      PolynomiallyBounded (fun security => (circuit security).size) ∧
+      PolynomiallyBounded (fun security => 3 * secretWidth security + 1) ∧
+      PolynomiallyBounded (fun security => ciphertextWidth security + 1) ∧
+      ∀ budget : ℕ → ℕ, Computation.PolyTime budget Encoding.encUnary Encoding.encUnary →
+        ∃ S : Homomorphic.Scheme,
+          EncryptsAndDecrypts S (leveledEncryption unframe)
+            (leveledDecryption unframe dropFrame) ∧
+          DecryptsWith S (fun security => 3 * secretWidth security + 1)
+            (fun security => ciphertextWidth security + 1) circuit ∧
+          Homomorphic S (fun security C => C.2.depth ≤ budget security) ∧
+          FixedWidths S (fun security C => C.2.depth ≤ budget security)
+            (fun security => 3 * secretWidth security + 1)
+            (fun security => ciphertextWidth security + 1) ∧
+          Native S ∧ ChosenMessageSecure S := by
+  obtain rfl : unframe = Turing.MultiTapeTM.unframe := funext hunframe
+  obtain rfl : dropFrame = Turing.MultiTapeTM.dropFrame := funext hdropFrame
+  obtain ⟨circuit, hsize, hsecret, hciphertext, h⟩ := leveled_witness hLWE
+  exact ⟨circuit, hsize, hsecret, hciphertext, fun budget hbudget =>
+    ⟨_, h budget hbudget⟩⟩
+
+theorem fullyHomomorphic {unframe : List Bool → List Bool}
+    (hunframe : ∀ word, unframe word = Turing.MultiTapeTM.unframe word)
+    (hLWE : DecisionLWE) (hcircular : CircularSecure) :
+    ∃ circuit : ∀ security, Circuits.Circuit Circuits.Boolean.signature
+        (secretWidth security + ciphertextWidth security) 1,
+      PolynomiallyBounded (fun security => (circuit security).size) ∧
+      PolynomiallyBounded secretWidth ∧ PolynomiallyBounded ciphertextWidth ∧
+      ∃ S : Homomorphic.Scheme,
+        (∀ security, ProbComp.eval (S.keyGen security) = selfLoopKeyGeneration security) ∧
+        EncryptsAndDecrypts S (selfLoopEncryption unframe) selfLoopDecryption ∧
+        DecryptsWith S secretWidth ciphertextWidth circuit ∧
+        Homomorphic S (fun _ _ => True) ∧
+        FixedWidths S (fun _ _ => True) secretWidth ciphertextWidth ∧
+        Native S ∧ ChosenMessageSecure S := by
+  obtain rfl : unframe = Turing.MultiTapeTM.unframe := funext hunframe
+  obtain ⟨hsize, hsecret, hciphertext, h⟩ := fullyHomomorphic_witness hLWE hcircular
+  exact ⟨_, hsize, hsecret, hciphertext, _, h⟩
 
 end ComplexityTests.Abstracts.GSWFHEBridge

@@ -22,22 +22,48 @@ that family. Publishing an encryption of the secret key under its own public key
 homomorphic encryption, under a second, separately stated assumption: this self-encryption is
 indistinguishable from an encryption of zeros.
 
-The construction is named, not restated. The theorems concern the library's GSW scheme
-`Cslib.Crypto.Homomorphic.GSW.DepthParameters.scheme`, its raw-input decryption circuits
-`DepthParameters.decryptionCircuits`, Gentry's acyclic leveled construction
-`Cslib.Crypto.Homomorphic.Leveled.scheme` and the self-loop construction
-`Cslib.Crypto.Homomorphic.FixedKey.scheme`. A reader inspects these algorithms in the library:
-GSW key generation, encryption, decryption and layered NAND evaluation; the logarithmic-depth
-decryption circuit; the key chain, refreshing and serialization of the bootstrapped schemes; and
-the compilation of De Morgan circuits into NAND layers. `#check_abstract` permits exactly the
-modules these definitions need, and the shared foundations.
+**The core is written out.** GSW key generation, encryption and decryption at the parameter
+family are stated below as explicit algorithms, and both assumptions are stated on them. The
+leveled scheme of `leveled` encrypts and decrypts exactly with these algorithms behind a one-bit
+tag and a framed pair of secret keys. The fully homomorphic scheme of `fullyHomomorphic` encrypts
+and decrypts exactly with them, and its key generation is exactly Gentry's self-loop key: a GSW
+key pair together with encryptions of its secret-key bits under its own public key.
 
-Both assumptions, and every property claimed of the construction, are stated below. Besides
-upstream mathematics, plain machines and the shared foundations, the statements use only three
-library notions, each explained where it first appears: the record `Cslib.Crypto.Homomorphic.Scheme`
-of four algorithms, the output distribution `Cslib.ProbComp.eval` of a randomized program, and
-the binary circuit code `Cslib.Circuits.Boolean.encCircuit`. `base_scheme` identifies the named
-GSW key generation and encryption with the explicit laws on which the assumptions are stated.
+**Only the bootstrapping machinery is existential:** homomorphic evaluation, the leveled scheme's
+key chain and the polynomial-size decryption circuits. The theorems state that such machinery
+exists with elementary properties: correctness for the allowed circuits, fixed key and ciphertext
+widths, one decryption circuit family for all depths, native efficiency and IND-CPA security.
+These properties exclude trivial witnesses. Decryption is the fixed GSW decryption, and
+evaluated ciphertexts have the fixed ciphertext width, so evaluation cannot leave the computation
+to decryption: it must output a word of that width that GSW decryption maps to the circuit's
+output. Nor can evaluation work in the clear. Evaluation is efficient and accepts the challenge
+ciphertext of the IND-CPA game, so if the public key revealed the secret key that decrypts
+evaluated ciphertexts, an adversary could evaluate a depth-zero circuit, whose output is its
+input, on the challenge and read the hidden bit.
+
+**Provenance (not part of the checked statements).** The library's constructions witness both
+theorems. In the namespace `Cslib.Crypto.Homomorphic`, write `D` for GSW's decryption circuits
+`GSW.DepthParameters.decryptionCircuits`. Then `GSWFHEBridge.leveled_witness` proves the
+properties of `leveled` for `Leveled.scheme D budget`, and
+`GSWFHEBridge.fullyHomomorphic_witness` proves those of `fullyHomomorphic` for
+`FixedKey.scheme D`. A reader need not inspect them: the statements below do not depend on their
+definitions.
+
+**What a reader inspects.** The definitions and statements in this file, the displayed shared
+foundations, and the eight library modules that `#check_abstract` allows at the end of the file,
+each a foundational model:
+* `Crypto.Computational.Homomorphic.Basic`: the record `Cslib.Crypto.Homomorphic.Scheme` of four
+  algorithms, with an unused fifth field, explained before `EncryptsAndDecrypts`.
+* `Languages.Probabilistic.Basic`: randomized programs `Cslib.ProbComp`, whose only randomness is
+  uniform choice from finite ranges, and their output law `Cslib.ProbComp.eval`.
+* `Computability.Circuit.Boolean.Encoding`: the binary circuit code
+  `Cslib.Circuits.Boolean.encCircuit`, the input format of native evaluation, explained before
+  `Native`.
+* Under `Computability.Machines.Turing.MultiTape`, the encodings from which that code is
+  assembled: framing (`Encodings.Basic`), pairs (`Encodings.Pair`), lists (`Encodings.List`),
+  binary numbers (`Encodings.Nat`), and unary numbers, `n` written as `n` ones
+  (`Complexity.Primitives`; only `encUnary` is reached there, and no tidy notion is).
+Lean checks every proof through `GSWFHEBridge`.
 
 The claims are perfect correctness on supported fresh encryptions, fixed key and ciphertext
 widths, polynomial-size decryption circuits, uniform native strict polynomial-time algorithms and
@@ -93,6 +119,10 @@ Residues modulo `2 ^ w` are written with exactly `w` bits, least significant fir
 is the matrix `[B t + e | B]` in row-major order, its noisy column first; a secret key lists the
 residues of `t`; a ciphertext lists every bit of `μ G + R A`, its rows indexed by `(i, k)` and its
 columns by `(j, l)`. These words are the actual inputs and outputs of the native algorithms.
+
+Keys of the bootstrapped schemes are framed words (`Encoding.frame` in the shared foundations).
+`unframe` reads the first framed word and `dropFrame` returns what follows it; both are defined
+on every word.
 -/
 
 /-- Write exactly `w` digits, least significant first, including leading zeros. -/
@@ -136,11 +166,26 @@ def ciphertextWord (n m w : ℕ) (publicKey : List Bool) (message : Bool)
       (List.range (n + 1)).flatMap fun j =>
         lowBits w (ciphertextEntry n m w publicKey message coins i k j)
 
-/-! ## GSW key generation and encryption
+/-- The first framed word: keep `b` from each leading pair `true, b`, and stop at the first
+`false` or when fewer than two bits remain. Thus `unframe (Encoding.frame u ++ v) = u`. -/
+def unframe : List Bool → List Bool
+  | true :: b :: rest => b :: unframe rest
+  | _ => []
+
+/-- What follows the first framed word: skip the leading pairs `true, b` and one `false`. Thus
+`dropFrame (Encoding.frame u ++ v) = v`; a word that ends inside its first frame leaves nothing. -/
+def dropFrame : List Bool → List Bool
+  | true :: _ :: rest => dropFrame rest
+  | false :: rest => rest
+  | _ => []
+
+/-! ## GSW key generation, encryption and decryption
 
 Key generation samples a uniform secret `t`, a uniform matrix `B` and independent signed errors
 `e`, and publishes `[B t + e | B]`. Encryption of a bit `μ` samples a uniform 0/1 matrix `R` and
-outputs the bits of `μ G + R A` [GentrySahaiWaters2013, Sections 3.1–3.2].
+outputs the bits of `μ G + R A`. Decryption multiplies one row of a ciphertext by `(1, -t)`,
+which for a fresh ciphertext gives `μ 2 ^ (w - 1)` plus the small error `⟨R_i, e⟩`, and rounds
+[GentrySahaiWaters2013, Sections 3.1–3.2].
 -/
 
 /-- Collect independent draws in their original order; the empty list requires no draw. -/
@@ -178,6 +223,29 @@ noncomputable def encryption (security : ℕ) (publicKey : List Bool) (message :
       (Cslib.Probability.PMF.uniformOfFintype Bool)))
   return ciphertextWord (dimension security) (samples security) (width security)
     publicKey message coins
+
+/-- **GSW decryption** [GentrySahaiWaters2013, Section 3.1]. Take row `(0, w - 1)` of the
+ciphertext matrix, whose gadget entry is `2 ^ (w - 1)` in column `0`, and multiply it by
+`(1, -t)` modulo `2 ^ w`. For a fresh encryption `μ G + R A` this gives
+`value = μ 2 ^ (w - 1) + ⟨R_(0, w - 1), e⟩`. Decryption outputs `true` exactly when `value` lies
+in the middle half `[2 ^ w / 4, 3 · 2 ^ w / 4)` of the residues: GSW's rounding of
+`value / 2 ^ (w - 1)` to the nearest integer, read modulo 2, with halves rounded up. It reads
+the first `n w` bits of the secret word and is defined on every pair of words. -/
+def decryption (security : ℕ) (secret ciphertext : List Bool) : Bool :=
+  let n := dimension security
+  let w := width security
+  let value := (((matrixEntry (n + 1) w ciphertext (w - 1) 0 : ℤ) -
+    (((List.range n).map fun j =>
+      matrixEntry (n + 1) w ciphertext (w - 1) (j + 1) * matrixEntry n w secret 0 j).sum : ℕ)) %
+        (2 ^ w : ℤ)).toNat
+  decide (2 ^ w ≤ 4 * value ∧ 4 * value < 3 * 2 ^ w)
+
+/-- GSW decryption of one word that holds a secret key followed by a ciphertext, the input
+order of a decryption circuit: the first `secretWidth` bits are the key and the rest is the
+ciphertext. For a key of exactly `secretWidth` bits,
+`decryptionWord security (secret ++ ciphertext) = decryption security secret ciphertext`. -/
+def decryptionWord (security : ℕ) (word : List Bool) : Bool :=
+  decryption security (word.take (secretWidth security)) (word.drop (secretWidth security))
 
 /-! ## The two assumptions
 
@@ -217,12 +285,57 @@ noncomputable def selfEncryption (real : Bool) (security : ℕ) : PMF (List Bool
 /-- **One-key circular security of GSW at this family.** Encryptions of the secret key under its
 own public key are indistinguishable from encryptions of zeros. This is the one-key, bitwise
 case of the key-dependent-message security that Gentry's self-loop construction assumes
-[Gentry2009, Section 2]. It is a separate assumption: it is not derived from decision LWE or
-from IND-CPA. -/
+[Gentry2009, Section 2, p. 172]. It is a separate assumption: it is not derived from decision
+LWE or from IND-CPA. -/
 def CircularSecure : Prop :=
   Randomized.Indistinguishable (selfEncryption true) (selfEncryption false)
 
-/-! ## The named construction
+/-! ## The algorithms fixed by the theorems
+
+The leveled scheme adds a one-bit tag to GSW ciphertexts. Its secret key frames two GSW secret
+keys: one for fresh ciphertexts (tag `false`) and one for evaluated ciphertexts (tag `true`).
+The fully homomorphic scheme uses GSW ciphertexts and secret keys unchanged; its public key
+frames a GSW public key followed by the framed list of encryptions of the secret-key bits.
+-/
+
+/-- **Leveled encryption.** A fresh ciphertext is the tag bit `false` followed by a GSW
+encryption under `unframe (unframe publicKey)`, the first framed word inside the first framed
+component of the public key. A public key that frames a list of GSW public keys, followed by any
+further data, is thus used through the first key in the list. -/
+noncomputable def leveledEncryption (security : ℕ) (publicKey : List Bool) (bit : Bool) :
+    PMF (List Bool) :=
+  (encryption security (unframe (unframe publicKey)) bit).map (List.cons false)
+
+/-- **Leveled decryption.** A secret key `Encoding.frame first ++ last` holds two GSW secret
+keys. The leading tag bit of the ciphertext selects `first` (`unframe secret`) when `false` and
+`last` (`dropFrame secret`) when `true`; GSW decryption then reads the selected key followed by
+the rest of the ciphertext. -/
+def leveledDecryption (security : ℕ) (secret ciphertext : List Bool) : Bool :=
+  decryptionWord security
+    ((if ciphertext.headD false then dropFrame secret else unframe secret) ++ ciphertext.tail)
+
+/-- **Gentry's self-loop key** [Gentry2009, Section 2, p. 172]. Sample one GSW key pair and
+encrypt every secret-key bit under its own public key. The public key is the GSW public key
+together with these encryptions, in the encoding of `selfEncryption true`; the secret key is the
+GSW secret key. -/
+noncomputable def selfLoopKeyGeneration (security : ℕ) : PMF (List Bool × List Bool) := do
+  let keys ← keyGeneration security
+  let encryptedKey ← keys.2.mapM (encryption security keys.1)
+  return (Encoding.encPair Encoding.encBits (Encoding.encList Encoding.encBits)
+    (keys.1, encryptedKey), keys.2)
+
+/-- **Self-loop encryption.** GSW encryption under the first framed component of the public
+key, which is the GSW public key in a key from `selfLoopKeyGeneration`. -/
+noncomputable def selfLoopEncryption (security : ℕ) (publicKey : List Bool) (bit : Bool) :
+    PMF (List Bool) :=
+  encryption security (unframe publicKey) bit
+
+/-- **Self-loop decryption.** GSW decryption of the secret key followed by the ciphertext; for a
+secret key of `secretWidth` bits this is `decryption security secret ciphertext`. -/
+def selfLoopDecryption (security : ℕ) (secret ciphertext : List Bool) : Bool :=
+  decryptionWord security (secret ++ ciphertext)
+
+/-! ## Homomorphic encryption
 
 A `Cslib.Crypto.Homomorphic.Scheme` is a record of four algorithms on bit strings, each taking
 the security parameter: `keyGen` samples a public and a secret key; `encrypt` encrypts one bit
@@ -231,55 +344,22 @@ single-output De Morgan circuit with its number of inputs, and a list of ciphert
 field, `permitted`, is not used by any claim below. Randomized algorithms are terminating
 programs whose only randomness is uniform choice from finite ranges (`Cslib.ProbComp`), and
 `Cslib.ProbComp.eval` is their output distribution.
--/
-
-/-- GSW at this family. Evaluation compiles the circuit into NAND layers, evaluates them with
-GSW's homomorphic NAND, and ignores the public key. -/
-noncomputable def baseScheme : Cslib.Crypto.Homomorphic.Scheme :=
-  Cslib.Crypto.Homomorphic.GSW.DepthParameters.scheme
-
-/-- The named GSW algorithms have exactly the key-generation and encryption laws above, so the
-two assumptions concern the actual base scheme. -/
-theorem base_scheme (security : ℕ) :
-    Cslib.ProbComp.eval (baseScheme.keyGen security) = keyGeneration security ∧
-      ∀ publicKey message, Cslib.ProbComp.eval (baseScheme.encrypt security publicKey message) =
-        encryption security publicKey message :=
-  GSWFHEBridge.base_scheme security
-
-/-- GSW's raw-input decryption circuit, secret-key bits first. It is the circuit that the
-bootstrapped schemes evaluate homomorphically. -/
-def decryptionCircuit (security : ℕ) :
-    Cslib.Circuits.Circuit Cslib.Circuits.Boolean.signature
-      (secretWidth security + ciphertextWidth security) 1 :=
-  Cslib.Crypto.Homomorphic.GSW.DepthParameters.decryptionCircuits.circuit security
-
-/-- **Gentry's acyclic leveled scheme** [Gentry2009, Section 2]. For a depth budget `budget`,
-key generation samples `2 · budget + 1` independent GSW keys and encrypts each secret key under
-the next public key. Evaluation compiles the circuit into NAND layers, padded to exactly
-`2 · budget` layers, and each layer moves every wire to the next key. A NAND gate encrypts the
-bits of its two input ciphertexts under the next key and homomorphically evaluates two copies of
-the decryption circuit joined by NAND, using the encrypted previous secret key; a carried wire
-uses the decryption circuit alone; a constant is a fresh encryption. A one-bit tag tells
-decryption whether to use the first or the last secret key. -/
-noncomputable def leveledScheme (budget : ℕ → ℕ) : Cslib.Crypto.Homomorphic.Scheme :=
-  Cslib.Crypto.Homomorphic.Leveled.scheme
-    Cslib.Crypto.Homomorphic.GSW.DepthParameters.decryptionCircuits budget
-
-/-- **Gentry's self-loop scheme** [Gentry2009, Section 2]. The public key is one GSW public key
-together with encryptions of its own secret-key bits. Evaluation is layered as in the leveled
-scheme, with as many layers as the circuit needs, but every layer uses that same key. The secret
-key and the ciphertexts are those of GSW. -/
-noncomputable def fixedKeyScheme : Cslib.Crypto.Homomorphic.Scheme :=
-  Cslib.Crypto.Homomorphic.FixedKey.scheme
-    Cslib.Crypto.Homomorphic.GSW.DepthParameters.decryptionCircuits
-
-/-! ## Homomorphic encryption
 
 Circuits are single-output De Morgan circuits (constants, negation, binary conjunction and
 disjunction) given as a pair of their number of inputs `C.1` and the circuit `C.2`. The upstream
 `depth` is the largest number of gates on a path to the output, where inputs have depth zero and
 every gate, including a constant, adds one; `size` is the number of gates.
 -/
+
+/-- The scheme encrypts with the law `encrypt` and decrypts with the function `decrypt`, on every
+security parameter, key and bit or ciphertext, including malformed keys and ciphertexts. -/
+def EncryptsAndDecrypts (S : Cslib.Crypto.Homomorphic.Scheme)
+    (encrypt : ℕ → List Bool → Bool → PMF (List Bool))
+    (decrypt : ℕ → List Bool → List Bool → Bool) : Prop :=
+  (∀ security publicKey bit,
+    Cslib.ProbComp.eval (S.encrypt security publicKey bit) = encrypt security publicKey bit) ∧
+  ∀ security secret ciphertext, S.decrypt security secret ciphertext =
+    decrypt security secret ciphertext
 
 /-- **Correctness for a class of circuits** [Gentry2009, Section 1.1]. Under every supported key
 pair, every supported fresh encryption decrypts to its bit; and every allowed circuit, evaluated
@@ -381,14 +461,18 @@ def ChosenMessageSecure (S : Cslib.Crypto.Homomorphic.Scheme) : Prop :=
 
 /-! ## Main results
 
+`Cslib.PolynomiallyBounded f` means that a fixed power bounds `f` eventually: some `d` has
+`f security ≤ security ^ d` for all large `security`.
+
 Gentry's Definition 3 asks for one decryption circuit shared by all depths, correctness for
 every circuit up to the depth, and algorithms polynomial in the parameter and the depth
 [Gentry2009, Definition 3]. In `leveled`, one polynomial-size circuit family is chosen first.
-Then for every depth budget computable in unary polynomial time, the leveled scheme with that
-budget decrypts with this circuit family, is correct for every circuit of depth at most the
-budget, has fixed polynomial widths, native algorithms and IND-CPA security. Any polynomially
-bounded depth `d(security) ≤ c (security + 1) ^ e` is covered by the budget
-`c (security + 1) ^ e`. The runtime polynomial may depend on the budget function.
+Then for every depth budget computable in unary polynomial time, a scheme exists that encrypts
+and decrypts with the leveled algorithms above, decrypts with this circuit family, is correct for
+every circuit of depth at most the budget, has fixed polynomial widths, native algorithms and
+IND-CPA security. Any polynomially bounded depth `d(security) ≤ c (security + 1) ^ e` is covered
+by the budget `c (security + 1) ^ e`. The runtime polynomial may depend on the budget function,
+so it need not be one polynomial in the parameter and the depth.
 -/
 
 /-- **Leveled fully homomorphic encryption from decision LWE** [Gentry2009, Theorem 3]. Only the
@@ -401,99 +485,57 @@ theorem leveled (hLWE : DecisionLWE) :
       Cslib.PolynomiallyBounded (fun security => 3 * secretWidth security + 1) ∧
       Cslib.PolynomiallyBounded (fun security => ciphertextWidth security + 1) ∧
       ∀ budget : ℕ → ℕ, Computation.PolyTime budget Encoding.encUnary Encoding.encUnary →
-        DecryptsWith (leveledScheme budget) (fun security => 3 * secretWidth security + 1)
-          (fun security => ciphertextWidth security + 1) circuit ∧
-        Homomorphic (leveledScheme budget) (fun security C => C.2.depth ≤ budget security) ∧
-        FixedWidths (leveledScheme budget) (fun security C => C.2.depth ≤ budget security)
-          (fun security => 3 * secretWidth security + 1)
-          (fun security => ciphertextWidth security + 1) ∧
-        Native (leveledScheme budget) ∧ ChosenMessageSecure (leveledScheme budget) := by
-  unfold leveledScheme; exact GSWFHEBridge.leveled hLWE
+        ∃ S : Cslib.Crypto.Homomorphic.Scheme,
+          EncryptsAndDecrypts S leveledEncryption leveledDecryption ∧
+          DecryptsWith S (fun security => 3 * secretWidth security + 1)
+            (fun security => ciphertextWidth security + 1) circuit ∧
+          Homomorphic S (fun security C => C.2.depth ≤ budget security) ∧
+          FixedWidths S (fun security C => C.2.depth ≤ budget security)
+            (fun security => 3 * secretWidth security + 1)
+            (fun security => ciphertextWidth security + 1) ∧
+          Native S ∧ ChosenMessageSecure S :=
+  GSWFHEBridge.leveled
+    (GSWFHEBridge.unframe_eq_of rfl rfl (fun _ => rfl) (fun _ _ => rfl))
+    (GSWFHEBridge.dropFrame_eq_of rfl rfl (fun _ => rfl) (fun _ _ => rfl)) hLWE
 
 /-- **Fully homomorphic encryption from decision LWE and circular security** [Gentry2009,
-Definition 2 and Section 2]. The self-loop scheme decrypts with GSW's decryption circuit, is
-correct for every circuit, keeps GSW's widths, has native algorithms and is IND-CPA, assuming
-decision LWE for this family and, separately, one-key circular security of GSW. -/
+Definition 2 and Section 2]. A scheme whose key generation is the self-loop key and which
+encrypts and decrypts with GSW is correct for every circuit, keeps GSW's widths, decrypts with
+polynomial-size circuits, has native algorithms and is IND-CPA, assuming decision LWE for this
+family and, separately, one-key circular security of GSW. -/
 theorem fullyHomomorphic (hLWE : DecisionLWE) (hcircular : CircularSecure) :
-    DecryptsWith fixedKeyScheme secretWidth ciphertextWidth decryptionCircuit ∧
-      Cslib.PolynomiallyBounded (fun security => (decryptionCircuit security).size) ∧
+    ∃ circuit : ∀ security, Cslib.Circuits.Circuit Cslib.Circuits.Boolean.signature
+        (secretWidth security + ciphertextWidth security) 1,
+      Cslib.PolynomiallyBounded (fun security => (circuit security).size) ∧
       Cslib.PolynomiallyBounded secretWidth ∧ Cslib.PolynomiallyBounded ciphertextWidth ∧
-      Homomorphic fixedKeyScheme (fun _ _ => True) ∧
-      FixedWidths fixedKeyScheme (fun _ _ => True) secretWidth ciphertextWidth ∧
-      Native fixedKeyScheme ∧ ChosenMessageSecure fixedKeyScheme := by
-  unfold fixedKeyScheme decryptionCircuit; exact GSWFHEBridge.fullyHomomorphic hLWE hcircular
+      ∃ S : Cslib.Crypto.Homomorphic.Scheme,
+        (∀ security, Cslib.ProbComp.eval (S.keyGen security) = selfLoopKeyGeneration security) ∧
+        EncryptsAndDecrypts S selfLoopEncryption selfLoopDecryption ∧
+        DecryptsWith S secretWidth ciphertextWidth circuit ∧
+        Homomorphic S (fun _ _ => True) ∧
+        FixedWidths S (fun _ _ => True) secretWidth ciphertextWidth ∧
+        Native S ∧ ChosenMessageSecure S :=
+  GSWFHEBridge.fullyHomomorphic
+    (GSWFHEBridge.unframe_eq_of rfl rfl (fun _ => rfl) (fun _ _ => rfl)) hLWE hcircular
 
 end ComplexityTests.Abstracts.GSWFHEAbstract
 
 /--
-info: abstract audit passed for `ComplexityTests.Abstracts.GSWFHEAbstract`: 41 root declarations,
-593 dependencies checked
+info: abstract audit passed for `ComplexityTests.Abstracts.GSWFHEAbstract`: 56 root declarations,
+313 dependencies checked
 -/
 #guard_msgs (whitespace := lax) in
 #check_abstract ComplexityTests.Abstracts.GSWFHEAbstract allowing [
   -- shared foundations
   ComplexityAbstracts.Encoding, ComplexityAbstracts.Computation, ComplexityAbstracts.Randomized,
-  -- the bit-encryption interface, GSW and its parameter family
+  -- the scheme record and randomized programs
   Complexity.Crypto.Computational.Homomorphic.Basic,
-  Complexity.Crypto.Computational.Homomorphic.GSW.Parameters,
-  Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters,
-  Complexity.Crypto.Computational.Homomorphic.GSW.DepthParameters.Scheme,
-  Complexity.Crypto.Computational.Homomorphic.GSW.Sampling.Serialized,
-  Complexity.Crypto.Computational.Homomorphic.GSW.Serialized,
-  Complexity.Crypto.Computational.Homomorphic.GSW.Serialized.Evaluation,
-  Complexity.Crypto.Computational.Homomorphic.GSW.CircuitEvaluation,
-  -- the logarithmic-depth decryption circuit
-  Complexity.Crypto.Computational.Homomorphic.GSW.DecryptionCircuit,
-  Complexity.Computability.Circuit.Balanced,
-  Complexity.Computability.Circuit.Boolean.CarryLookahead,
-  Complexity.Computability.Circuit.Boolean.CarrySave,
-  Complexity.Computability.Circuit.Boolean.CarrySave.Reduce,
-  Complexity.Computability.Circuit.Boolean.Formula,
-  Complexity.Computability.Circuit.Boolean.Gates,
-  Complexity.Computability.Circuit.Boolean.Modular.InnerProduct,
-  Complexity.Computability.Circuit.Boolean.Modular.Multiply,
-  Complexity.Computability.Circuit.Boolean.Modular.PartialProduct,
-  Complexity.Computability.Circuit.Boolean.Modular.Subtract,
-  Complexity.Computability.Circuit.Formula,
-  Complexity.Computability.Circuit.Parallel,
-  Complexity.Computability.Circuit.Pi,
-  Complexity.Foundations.Data.List.BalancedFold,
-  -- Gentry's bootstrapping constructions
-  Complexity.Crypto.Computational.Encryption.Circular,
-  Complexity.Crypto.Computational.Homomorphic.Circuit,
-  Complexity.Crypto.Computational.Homomorphic.Evaluation,
-  Complexity.Crypto.Computational.Homomorphic.FixedKey.Basic,
-  Complexity.Crypto.Computational.Homomorphic.FixedKey.Encoding,
-  Complexity.Crypto.Computational.Homomorphic.KeyChain,
-  Complexity.Crypto.Computational.Homomorphic.Layered,
-  Complexity.Crypto.Computational.Homomorphic.Leveled.Basic,
-  Complexity.Crypto.Computational.Homomorphic.Leveled.Encoding,
-  Complexity.Crypto.Computational.Homomorphic.Refresh,
-  -- circuit codes, depth and NAND layering
-  Complexity.Computability.Circuit.Boolean.DepthTime,
+  Complexity.Languages.Probabilistic.Basic,
+  -- the binary circuit code and the encodings it is assembled from
   Complexity.Computability.Circuit.Boolean.Encoding,
-  Complexity.Computability.Circuit.Boolean.EvaluationTime,
-  Complexity.Computability.Circuit.Boolean.Layered,
-  Complexity.Computability.Circuit.Boolean.Layered.Compile,
-  Complexity.Computability.Circuit.Boolean.Layered.Padding,
-  Complexity.Computability.Circuit.Depth,
-  -- binary encodings and decoders
-  Complexity.Computability.Machines.Turing.MultiTape.Complexity.Degree,
-  Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives,
   Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic,
-  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder,
+  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair,
   Complexity.Computability.Machines.Turing.MultiTape.Encodings.List,
   Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat,
-  Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair,
-  Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Degree,
-  Complexity.Foundations.Data.BitString.List,
-  Complexity.Foundations.Data.BitString.List.Binary,
-  Complexity.Foundations.Data.Matrix.Binary,
-  -- probabilistic programs and their samplers
-  Complexity.Languages.Probabilistic.Basic,
-  Complexity.Languages.Probabilistic.BitString,
-  Complexity.Languages.Probabilistic.CenteredBinomial,
-  Complexity.Languages.Probabilistic.Iteration,
-  Complexity.Languages.Probabilistic.Repeat,
-  Complexity.Languages.Probabilistic.UniformNat
+  Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives
 ]
