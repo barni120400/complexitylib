@@ -50,6 +50,12 @@ families (`valid := fun _ _ => true`).
   resistant compression families.
 * `Cslib.Crypto.HashFamily`: unrestricted collision-resistant hash families on arbitrary bit
   strings.
+* `Cslib.Crypto.CollisionFinderFor`, `Cslib.Crypto.isCollisionFor`,
+  `Cslib.Crypto.collisionGameFor`, `Cslib.Crypto.CollisionResistantForOn`,
+  `Cslib.Crypto.CollisionResistantFor`: setup-parameterized keyed collision-finding experiment and
+  collision resistance for families `H : (d : Param) → List Bool → List Bool → Digest d` indexed by
+  a public setup parameter `d ← setup n` and taking values in `Digest d` (used for group-indexed
+  $\mathbb{Z}_q$-valued hashes such as $H' : \mathbb{G}^3 \to \mathbb{Z}_q$ in Cramer–Shoup).
 
 ## Main results
 
@@ -65,6 +71,12 @@ families (`valid := fun _ _ => true`).
   resistance.
 * `Cslib.Crypto.not_collisionResistantOn_of_le_succProbability`: finding collisions with
   probability bounded away from zero refutes collision resistance.
+* `Cslib.Crypto.CollisionResistantForOn.negligible`,
+  `Cslib.Crypto.CollisionResistantForOn.of_negligible`,
+  `Cslib.Crypto.collisionGameFor_unit_eq`,
+  `Cslib.Crypto.succProbability_collisionGameFor_pure_le`,
+  `Cslib.Crypto.CollisionResistantOn.collisionResistantForOn`: setup-parameterized collision
+  resistance properties and reduction from standard word-level `CollisionResistantOn`.
 
 ## References
 
@@ -358,5 +370,217 @@ structure HashFamily (H : List Bool → List Bool → List Bool) : Prop where
   /-- Finding two distinct bit strings of any lengths with the same digest under a uniform `n`-bit
   key is hard for every uniform strict PPT adversary. -/
   collisionResistant : CollisionResistant H
+
+/-! ### Setup-parameterized keyed collision-resistant hash families
+
+Verbatim from [BonehShoup2023], Section 8.1.1 (printed pp. 290–291):
+
+> **Definition 8.2 (Keyless hash functions).** A **(keyless) hash function** is an efficient
+> algorithm $H$, along with two families of spaces with system parameterization $P$:
+> $$\mathcal{M} = \{\mathcal{M}_{\lambda, \Lambda}\}_{\lambda, \Lambda}, \quad \text{and} \quad
+> \mathcal{T} = \{\mathcal{T}_{\lambda, \Lambda}\}_{\lambda, \Lambda},$$
+> such that
+> 1. $\mathcal{M}$, and $\mathcal{T}$ are efficiently recognizable.
+> 2. Algorithm $H$ is an efficient deterministic algorithm that on input
+>    $\lambda \in \mathbb{Z}_{\ge 1}$, $\Lambda \in \text{Supp}(P(\lambda))$, and
+>    $m \in \mathcal{M}_{\lambda, \Lambda}$, outputs an element of $\mathcal{T}_{\lambda, \Lambda}$.
+>
+> In defining collision resistance, we parameterize Attack Game 8.1 by the security parameter
+> $\lambda$. The asymptotic game is shown in Fig. 8.3. The advantage $\text{CRadv}[\mathcal{A}, H]$
+> is then a function of $\lambda$. Definition 8.1 should be read as saying that
+> $\text{CRadv}[\mathcal{A}, H](\lambda)$ is a negligible function.
+-/
+
+/-- A setup-parameterized collision finder receives the unary security parameter `n`, the public
+setup parameter `d : Param`, and the `n`-bit hash key `k`, and outputs a candidate colliding pair
+`(m₁, m₂)`. -/
+abbrev CollisionFinderFor (Param : Type) :=
+  ℕ → Param × List Bool → ProbComp (List Bool × List Bool)
+
+/-- Test whether `(m₁, m₂)` is a valid collision for `H d k` at security parameter `n` and public
+parameter `d` under the domain predicate `valid`. -/
+def isCollisionFor {Param : Type} {Digest : Param → Type} [∀ d, DecidableEq (Digest d)]
+    (H : (d : Param) → List Bool → List Bool → Digest d)
+    (valid : ℕ → Param → List Bool → Bool)
+    (n : ℕ) (d : Param) (k m₁ m₂ : List Bool) : Bool :=
+  valid n d m₁ && valid n d m₂ && (m₁ != m₂) && decide (H d k m₁ = H d k m₂)
+
+@[simp]
+theorem isCollisionFor_eq_true_iff {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)] {H : (d : Param) → List Bool → List Bool → Digest d}
+    {valid : ℕ → Param → List Bool → Bool} {n : ℕ} {d : Param} {k m₁ m₂ : List Bool} :
+    isCollisionFor H valid n d k m₁ m₂ = true ↔
+      valid n d m₁ = true ∧ valid n d m₂ = true ∧ m₁ ≠ m₂ ∧ H d k m₁ = H d k m₂ := by
+  simp only [isCollisionFor, Bool.and_eq_true, bne_iff_ne, decide_eq_true_eq, and_assoc]
+
+/-- Parameterized collision testing is symmetric in the two candidate messages. -/
+theorem isCollisionFor_comm {Param : Type} {Digest : Param → Type} [∀ d, DecidableEq (Digest d)]
+    (H : (d : Param) → List Bool → List Bool → Digest d)
+    (valid : ℕ → Param → List Bool → Bool) (n : ℕ) (d : Param) (k m₁ m₂ : List Bool) :
+    isCollisionFor H valid n d k m₁ m₂ = isCollisionFor H valid n d k m₂ m₁ := by
+  rw [Bool.eq_iff_iff, isCollisionFor_eq_true_iff, isCollisionFor_eq_true_iff]
+  tauto
+
+@[simp]
+theorem isCollisionFor_self {Param : Type} {Digest : Param → Type} [∀ d, DecidableEq (Digest d)]
+    (H : (d : Param) → List Bool → List Bool → Digest d)
+    (valid : ℕ → Param → List Bool → Bool) (n : ℕ) (d : Param) (k m : List Bool) :
+    isCollisionFor H valid n d k m m = false := by
+  simp [isCollisionFor]
+
+/-- The setup-parameterized keyed collision-finding experiment: draw `d ← setup n` and a uniform
+`n`-bit key `k ← BitString.sampleList n`, run `adversary n (d, k)` to obtain `(m₁, m₂)`, and accept
+when `isCollisionFor H valid n d k m₁ m₂` holds. -/
+noncomputable def collisionGameFor {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)]
+    (setup : ℕ → PMF Param) (H : (d : Param) → List Bool → List Bool → Digest d)
+    (valid : ℕ → Param → List Bool → Bool)
+    (adversary : CollisionFinderFor Param) (n : ℕ) : Game := do
+  let d ← setup n
+  let k ← ProbComp.eval (BitString.sampleList n)
+  let pair ← ProbComp.eval (adversary n (d, k))
+  return isCollisionFor H valid n d k pair.1 pair.2
+
+/-- Collision resistance of a setup-parameterized keyed hash family `H` on `valid` against every
+uniform strict PPT collision finder. -/
+def CollisionResistantForOn {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)]
+    (encParam : Param ↪ List Bool) (setup : ℕ → PMF Param)
+    (H : (d : Param) → List Bool → List Bool → Digest d)
+    (valid : ℕ → Param → List Bool → Bool) : Prop :=
+  Game.Indistinguishable
+    (collisionGameFor setup H valid)
+    (fun _ _ => PMF.pure false)
+    (fun adversary =>
+      IsPPTOn (encPair encUnary (encPair encParam encBits)) (encPair encBits encBits)
+        (fun p => adversary p.1 p.2))
+
+/-- Unrestricted collision resistance of a setup-parameterized keyed hash family `H`. -/
+abbrev CollisionResistantFor {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)]
+    (encParam : Param ↪ List Bool) (setup : ℕ → PMF Param)
+    (H : (d : Param) → List Bool → List Bool → Digest d) : Prop :=
+  CollisionResistantForOn encParam setup H (fun _ _ _ => true)
+
+/-- Setup-parameterized collision resistance gives negligible collision-finding probability for
+every strict PPT collision finder. -/
+theorem CollisionResistantForOn.negligible {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)] {encParam : Param ↪ List Bool}
+    {setup : ℕ → PMF Param} {H : (d : Param) → List Bool → List Bool → Digest d}
+    {valid : ℕ → Param → List Bool → Bool}
+    (h : CollisionResistantForOn encParam setup H valid)
+    (adversary : CollisionFinderFor Param)
+    (hPPT : IsPPTOn (encPair encUnary (encPair encParam encBits)) (encPair encBits encBits)
+      (fun p => adversary p.1 p.2)) :
+    Negligible (fun n => Game.succProbability (collisionGameFor setup H valid adversary n)) := by
+  simpa only [Game.advantage_pure_false] using h adversary hPPT
+
+/-- Establish setup-parameterized collision resistance by bounding every strict PPT adversary's
+success probability. -/
+theorem CollisionResistantForOn.of_negligible {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)] {encParam : Param ↪ List Bool}
+    {setup : ℕ → PMF Param} {H : (d : Param) → List Bool → List Bool → Digest d}
+    {valid : ℕ → Param → List Bool → Bool}
+    (h : ∀ adversary : CollisionFinderFor Param,
+      IsPPTOn (encPair encUnary (encPair encParam encBits)) (encPair encBits encBits)
+        (fun p => adversary p.1 p.2) →
+      Negligible (fun n => Game.succProbability (collisionGameFor setup H valid adversary n))) :
+    CollisionResistantForOn encParam setup H valid := by
+  intro adversary hPPT
+  simpa only [Game.advantage_pure_false] using h adversary hPPT
+
+@[simp]
+theorem isCollisionFor_unit (H : List Bool → List Bool → List Bool)
+    (valid : ℕ → List Bool → Bool) (n : ℕ) (k m₁ m₂ : List Bool) :
+    isCollisionFor (Param := Unit) (Digest := fun _ => List Bool)
+      (fun _ => H) (fun m _ => valid m) n () k m₁ m₂ =
+      isCollision H valid n k m₁ m₂ := by
+  rw [Bool.eq_iff_iff, isCollisionFor_eq_true_iff, isCollision_eq_true_iff]
+
+/-- The unparameterized `collisionGame` is the `Param = Unit`, `Digest _ = List Bool` case of
+`collisionGameFor`. -/
+theorem collisionGameFor_unit_eq (H : List Bool → List Bool → List Bool)
+    (valid : ℕ → List Bool → Bool) (adversary : CollisionFinder) (n : ℕ) :
+    collisionGameFor (Param := Unit) (Digest := fun _ => List Bool)
+      (fun _ => PMF.pure ()) (fun _ => H) (fun m _ => valid m)
+      (fun m p => adversary m p.2) n =
+      ProbComp.eval (collisionGame H valid adversary n) := by
+  simp only [collisionGameFor, collisionGame, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.monad_bind_eq_bind, PMF.pure_bind, PMF.monad_pure_eq_pure, isCollisionFor_unit]
+
+/-- For a deterministic setup `setup n = PMF.pure (d n)`, if `toDigest (d n)` is injective on
+valid `H k`-outputs for `n`-bit keys `k`, then the parameterized collision game has success
+probability at most that of the standard word-level `collisionGame` for `H`. -/
+theorem succProbability_collisionGameFor_pure_le {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)]
+    (d : ℕ → Param) (H : List Bool → List Bool → List Bool)
+    (toDigest : (p : Param) → List Bool → Digest p)
+    (valid : ℕ → List Bool → Bool)
+    (adversary : CollisionFinderFor Param) (n : ℕ)
+    (hinj : ∀ k, k.length = n → ∀ m₁ m₂,
+      valid n m₁ = true → valid n m₂ = true →
+      toDigest (d n) (H k m₁) = toDigest (d n) (H k m₂) → H k m₁ = H k m₂) :
+    Game.succProbability
+      (collisionGameFor (fun m => PMF.pure (d m)) (fun p k x => toDigest p (H k x))
+        (fun m _ x => valid m x) adversary n) ≤
+      Game.succProbability
+        (ProbComp.eval (collisionGame H valid (fun m k => adversary m (d m, k)) n)) := by
+  unfold Game.succProbability
+  apply ENNReal.toNNReal_mono (PMF.apply_ne_top _ _)
+  simp only [collisionGameFor, collisionGame, ProbComp.eval_bind, ProbComp.eval_pure,
+    PMF.monad_bind_eq_bind, PMF.pure_bind]
+  apply PMF.bind_apply_mono_on_support
+  intro k hk
+  have hklen : k.length = n := by
+    rw [BitString.eval_sampleList] at hk
+    exact BitString.length_of_mem_support_uniformList hk
+  apply PMF.bind_apply_mono_on_support
+  intro pair _
+  cases hcol :
+    isCollisionFor (fun p k x => toDigest p (H k x)) (fun m _ x => valid m x)
+      n (d n) k pair.1 pair.2
+  · simp
+  · rw [isCollisionFor_eq_true_iff] at hcol
+    have hcol' : isCollision H valid n k pair.1 pair.2 = true := by
+      rw [isCollision_eq_true_iff]
+      exact ⟨hcol.1, hcol.2.1, hcol.2.2.1, hinj k hklen pair.1 pair.2 hcol.1 hcol.2.1 hcol.2.2.2⟩
+    rw [hcol']
+    exact le_rfl
+
+/-- **Bridge from word-level `CollisionResistantOn` to `CollisionResistantForOn`**: when
+`d : ℕ → Param` is computable in polynomial time and `toDigest (d n)` is eventually injective on
+valid `H k`-outputs for `n`-bit keys `k`, collision resistance of `H` implies parameterized
+collision resistance of `fun p k x => toDigest p (H k x)` under `setup n = PMF.pure (d n)`. -/
+theorem CollisionResistantOn.collisionResistantForOn {Param : Type} {Digest : Param → Type}
+    [∀ d, DecidableEq (Digest d)] {encParam : Param ↪ List Bool}
+    {d : ℕ → Param} {H : List Bool → List Bool → List Bool}
+    {toDigest : (p : Param) → List Bool → Digest p}
+    {valid : ℕ → List Bool → Bool}
+    (hCR : CollisionResistantOn H valid)
+    (hd : ComputableInPolyTime d encUnary encParam)
+    (hinj : ∀ᶠ n in Filter.atTop, ∀ k, k.length = n → ∀ m₁ m₂,
+      valid n m₁ = true → valid n m₂ = true →
+      toDigest (d n) (H k m₁) = toDigest (d n) (H k m₂) → H k m₁ = H k m₂) :
+    CollisionResistantForOn encParam (fun m => PMF.pure (d m))
+      (fun p k x => toDigest p (H k x)) (fun m _ x => valid m x) := by
+  apply CollisionResistantForOn.of_negligible
+  intro adversary hadversary
+  let redAdversary : CollisionFinder := fun n k => adversary n (d n, k)
+  have hpre : ComputableInPolyTime
+      (fun p : ℕ × List Bool => (p.1, (d p.1, p.2)))
+      (encPair encUnary encBits)
+      (encPair encUnary (encPair encParam encBits)) := by
+    have hn : ComputableInPolyTime (fun p : ℕ × List Bool => p.1)
+        (encPair encUnary encBits) encUnary := by fun_prop
+    have hk : ComputableInPolyTime (fun p : ℕ × List Bool => p.2)
+        (encPair encUnary encBits) encBits := by fun_prop
+    exact hn.prod ((hd.comp hn).prod hk)
+  have hredPPT : IsPPT (encPair encBits encBits) redAdversary := by
+    change IsPPTOn (encPair encUnary encBits) (encPair encBits encBits)
+      (fun p => redAdversary p.1 p.2)
+    exact hadversary.preprocess hpre
+  refine negligible_of_eventually_le (hCR.negligible redAdversary hredPPT) ?_
+  filter_upwards [hinj] with n hn
+  exact succProbability_collisionGameFor_pure_le d H toDigest valid adversary n hn
 
 end Cslib.Crypto
