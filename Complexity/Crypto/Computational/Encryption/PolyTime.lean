@@ -22,24 +22,22 @@ ciphertext; no independent bound on those intermediate values is assumed.
 
 ## Main results
 
-* `Cslib.Crypto.Encryption.computableTidilyInPolyTime_sameLength`,
-  `Cslib.Crypto.Encryption.computableInPolyTime_sameLength`: the equal-length word predicate
-  `sameLength` is computable in polynomial time.
-* `Cslib.Crypto.Encryption.AdversaryOf.IsPPT.clamp`,
-  `Cslib.Crypto.Encryption.INDCPAOf.indcpaWith`,
-  `Cslib.Crypto.Encryption.INDCPAOf.wordINDCPA`: clamping a uniform strict PPT adversary by a
-  polynomial-time validity predicate `valid` preserves `AdversaryOf.IsPPT`, so unrestricted
-  `INDCPAOf` implies `INDCPAWith` (and in particular `INDCPAOf encBits` implies `WordINDCPA`).
-* `Cslib.Crypto.Encryption.isPPTOn_gameWith`, `Cslib.Crypto.Encryption.isPPTOn_wordGame`,
-  `Cslib.Crypto.Encryption.isPPTOn_game`: the experiments are uniform strict PPT when their inputs
-  are efficiently computed and the honest algorithms and adversary have native certificates.
+* `Cslib.Crypto.Encryption.isPPTOn_gameOn`, `Cslib.Crypto.Encryption.isPPTOn_game`: the
+  experiments are uniform strict PPT when their inputs are efficiently computed, the admissibility
+  predicate is computable in polynomial time, and the honest algorithms and adversary have native
+  certificates.
+* `Cslib.Crypto.Encryption.AdversaryOf.IsPPT.restrict`: restricting a uniform strict PPT adversary
+  by a polynomial-time admissibility predicate keeps it uniform strict PPT.
+* `Cslib.Crypto.Encryption.INDCPAOf.indcpaOn`, `Cslib.Crypto.Encryption.INDCPAOf.wordINDCPA`:
+  unrestricted IND-CPA implies IND-CPA under every polynomial-time admissibility predicate, in
+  particular `WordINDCPA` for bit-word encryption.
 * `Cslib.Crypto.Encryption.exists_keyLength_bound`: key generation supplies an executable unary
   polynomial bounding all supported public and secret keys.
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023],
-  Section 11.2, Attack Game 11.1.
+  Section 11.2, Attack Game 11.1, p. 436.
 -/
 
 @[expose] public section
@@ -48,82 +46,14 @@ namespace Cslib.Crypto.Encryption
 
 open Probability Turing.MultiTapeTM
 
-/-- The equal-length challenge-pair predicate `sameLength` on bit words is tidily computable in
-polynomial time. -/
+/-- The chosen-message experiment `gameOn valid` has a strict clock in the full encoded caller input
+when `valid` is computable in polynomial time. -/
 @[fun_prop]
-theorem computableTidilyInPolyTime_sameLength :
-    ComputableTidilyInPolyTime (fun p : List Bool × List Bool => sameLength p.1 p.2)
-      (encPair encBits encBits) encBool := by
-  unfold sameLength
-  polytime
-
-/-- The equal-length challenge-pair predicate `sameLength` on bit words is computable in polynomial
-time. -/
-@[fun_prop]
-theorem computableInPolyTime_sameLength :
-    ComputableInPolyTime (fun p : List Bool × List Bool => sameLength p.1 p.2)
-      (encPair encBits encBits) encBool :=
-  computableTidilyInPolyTime_sameLength.computableInPolyTime
-
-/-- Clamping a uniform strict PPT adversary by a polynomial-time challenge-pair validity predicate
-`valid` preserves `AdversaryOf.IsPPT`. -/
-theorem AdversaryOf.IsPPT.clamp {Msg : Type} {encMsg : Msg ↪ List Bool}
-    {valid : Msg → Msg → Bool}
-    (hvalid : ComputableInPolyTime (fun p : Msg × Msg => valid p.1 p.2)
-      (encPair encMsg encMsg) encBool)
-    {adversary : AdversaryOf Msg} (hadversary : AdversaryOf.IsPPT encMsg adversary) :
-    AdversaryOf.IsPPT encMsg (adversary.clamp valid) where
-  choose := by
-    have hchoose := hadversary.choose
-    have hvalid' := hvalid.tidy
-    let EOut := encPair (encPair encMsg encMsg) encBits
-    let E := encPair (encPair encUnary encBits) EOut
-    have hcond : ComputableTidilyInPolyTime
-        (fun p : (ℕ × List Bool) × (Msg × Msg) × List Bool =>
-          true && valid p.2.1.1 p.2.1.2) E encBool := by
-      dsimp only [E, EOut]; fun_prop
-    have hsel : ComputableTidilyInPolyTime
-        (fun p : (ℕ × List Bool) × (Msg × Msg) × List Bool =>
-          selectChallenge valid true p.2.1) E encMsg := by
-      unfold selectChallenge
-      exact hcond.cond (by dsimp only [E, EOut]; fun_prop) (by dsimp only [E, EOut]; fun_prop)
-    have hpost : ComputableTidilyInPolyTime
-        (fun p : (ℕ × List Bool) × (Msg × Msg) × List Bool =>
-          ((p.2.1.1, selectChallenge valid true p.2.1), p.2.2)) E EOut :=
-      (ComputableTidilyInPolyTime.prod (by dsimp only [E, EOut]; fun_prop) hsel).prod
-        (by dsimp only [E, EOut]; fun_prop)
-    unfold Probability.IsPPT AdversaryOf.clamp
-    exact hchoose.on.bind_with hpost.isPPTOn
-  guess := hadversary.guess
-
-/-- Unrestricted `INDCPAOf encMsg` implies `INDCPAWith encMsg valid` for any polynomial-time
-challenge-pair validity predicate `valid`. -/
-theorem INDCPAOf.indcpaWith {Msg : Type} {encMsg : Msg ↪ List Bool}
-    {valid : Msg → Msg → Bool}
-    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
-    {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
-    (h : INDCPAOf encMsg keyGen encrypt)
-    (hvalid : ComputableInPolyTime (fun p : Msg × Msg => valid p.1 p.2)
-      (encPair encMsg encMsg) encBool) :
-    INDCPAWith encMsg valid keyGen encrypt := by
-  intro adversary hadversary
-  simpa only [eval_game_clamp] using h (adversary.clamp valid) (hadversary.clamp hvalid)
-
-/-- Unrestricted `INDCPAOf encBits` implies `WordINDCPA` (equal-length word IND-CPA). -/
-theorem INDCPAOf.wordINDCPA
-    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
-    {encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool)}
-    (h : INDCPAOf encBits keyGen encrypt) :
-    WordINDCPA keyGen encrypt :=
-  h.indcpaWith computableInPolyTime_sameLength
-
-/-- The chosen-message experiment `gameWith valid` has a strict clock in the full encoded caller
-input when `valid` is tidily computable in polynomial time. -/
-@[fun_prop]
-theorem isPPTOn_gameWith {Msg : Type} {encMsg : Msg ↪ List Bool}
-    {valid : Msg → Msg → Bool}
-    (hvalid : ComputableTidilyInPolyTime (fun p : Msg × Msg => valid p.1 p.2)
-      (encPair encMsg encMsg) encBool)
+theorem isPPTOn_gameOn {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {valid : ℕ → List Bool → Msg → Msg → Bool}
+    (hvalid : ComputableInPolyTime
+      (fun p : ℕ × List Bool × Msg × Msg => valid p.1 p.2.1 p.2.2.1 p.2.2.2)
+      (encPair encUnary (encPair encBits (encPair encMsg encMsg))) encBool)
     {keyGen : ℕ → ProbComp (List Bool × List Bool)}
     {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
@@ -131,31 +61,19 @@ theorem isPPTOn_gameWith {Msg : Type} {encMsg : Msg ↪ List Bool}
       (fun p => encrypt p.1 p.2.1 p.2.2))
     {adversary : AdversaryOf Msg} (hadversary : AdversaryOf.IsPPT encMsg adversary)
     {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
-    IsPPTOn input encBool (fun a => gameWith valid keyGen encrypt adversary (bit a) (n a)) := by
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbit : ComputableInPolyTime bit input encBool) :
+    IsPPTOn input encBool (fun a => gameOn valid keyGen encrypt adversary (bit a) (n a)) := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
-  unfold gameWith selectChallenge
+  have hvalid' := hvalid.tidy
+  have hn' := hn.tidy
+  have hbit' := hbit.tidy
+  unfold gameOn
   ppt
 
-/-- The equal-length bit-word chosen-message experiment `wordGame` has a strict clock in the full
-encoded caller input. -/
-@[fun_prop]
-theorem isPPTOn_wordGame
-    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
-    {encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool)}
-    (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
-    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encBits)) encBits
-      (fun p => encrypt p.1 p.2.1 p.2.2))
-    {adversary : WordAdversary} (hadversary : adversary.IsPPT)
-    {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
-    IsPPTOn input encBool (fun a => wordGame keyGen encrypt adversary (bit a) (n a)) :=
-  isPPTOn_gameWith computableTidilyInPolyTime_sameLength hkeyGen hencrypt hadversary hn hbit
-
-/-- The actual chosen-message experiment has a strict clock in the full encoded caller input. -/
+/-- The unrestricted chosen-message experiment has a strict clock in the full encoded caller
+input. -/
 @[fun_prop]
 theorem isPPTOn_game {Msg : Type} {encMsg : Msg ↪ List Bool}
     {keyGen : ℕ → ProbComp (List Bool × List Bool)}
@@ -167,11 +85,51 @@ theorem isPPTOn_game {Msg : Type} {encMsg : Msg ↪ List Bool}
     {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
     (hn : ComputableTidilyInPolyTime n input encUnary)
     (hbit : ComputableTidilyInPolyTime bit input encBool) :
-    IsPPTOn input encBool (fun a => game keyGen encrypt adversary (bit a) (n a)) := by
-  have hchoose := hadversary.choose
-  have hguess := hadversary.guess
-  unfold game
-  ppt
+    IsPPTOn input encBool (fun a => game keyGen encrypt adversary (bit a) (n a)) :=
+  isPPTOn_gameOn (ComputableTidilyInPolyTime.const true).computableInPolyTime hkeyGen hencrypt
+    hadversary hn.computableInPolyTime hbit.computableInPolyTime
+
+/-- Restricting a uniform strict PPT adversary by a polynomial-time admissibility predicate keeps
+it uniform strict PPT: `choose` additionally evaluates `valid` and prepends one bit to the saved
+state, and `guess` branches on that bit. -/
+theorem AdversaryOf.IsPPT.restrict {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {valid : ℕ → List Bool → Msg → Msg → Bool}
+    (hvalid : ComputableInPolyTime
+      (fun p : ℕ × List Bool × Msg × Msg => valid p.1 p.2.1 p.2.2.1 p.2.2.2)
+      (encPair encUnary (encPair encBits (encPair encMsg encMsg))) encBool)
+    {adversary : AdversaryOf Msg} (hadversary : AdversaryOf.IsPPT encMsg adversary) :
+    AdversaryOf.IsPPT encMsg (adversary.restrict valid) where
+  choose := by
+    have hchoose := hadversary.choose
+    have hvalid' := hvalid.tidy
+    unfold Probability.IsPPT AdversaryOf.restrict
+    ppt
+  guess := by
+    have hguess := hadversary.guess
+    unfold AdversaryOf.restrict
+    ppt
+
+/-- Unrestricted IND-CPA implies IND-CPA under every polynomial-time admissibility predicate. -/
+theorem INDCPAOf.indcpaOn {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {valid : ℕ → List Bool → Msg → Msg → Bool}
+    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
+    {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
+    (h : INDCPAOf encMsg keyGen encrypt)
+    (hvalid : ComputableInPolyTime
+      (fun p : ℕ × List Bool × Msg × Msg => valid p.1 p.2.1 p.2.2.1 p.2.2.2)
+      (encPair encUnary (encPair encBits (encPair encMsg encMsg))) encBool) :
+    INDCPAOn valid encMsg keyGen encrypt := by
+  intro adversary hadversary
+  simpa only [eval_game_restrict] using
+    h (adversary.restrict valid) (hadversary.restrict hvalid)
+
+/-- Unrestricted bit-word IND-CPA implies `WordINDCPA`. -/
+theorem INDCPAOf.wordINDCPA
+    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
+    {encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool)}
+    (h : INDCPAOf encBits keyGen encrypt) :
+    WordINDCPA keyGen encrypt :=
+  h.indcpaOn (ComputableInPolyTime.of_tidy (by polytime))
 
 /-- Strict PPT key generation supplies an executable unary polynomial bounding the total public
 and secret key material on every supported execution. No width function is assumed computable. -/

@@ -19,12 +19,17 @@ PPT algorithms. Their clocks charge the unary security parameter and the complet
 including the saved state. The adversary may retain the public key in that state.
 
 This is the single-challenge public-key experiment of
-[Boneh and Shoup, Section 11.2, Attack Game 11.1][BonehShoup2023]. Specializations to single-bit
-messages (`Adversary`, `INDCPA`) and bit-word messages (`WordAdversary`, `wordGame`, `WordINDCPA`,
-enforcing the textbook equal-length challenge requirement `m₀.length = m₁.length` via `sameLength`)
-are provided as abbreviations. For public-key encryption, further encryptions can be computed from
-the public key. The separate multi-challenge equivalence of their Theorem 11.1 is not formalized
-here. Encryption correctness and efficiency of the honest algorithms remain separate properties.
+[Boneh and Shoup, Section 11.2, Attack Game 11.1, p. 436][BonehShoup2023]. That game requires the
+two challenge messages to have the same length. Here admissibility is a Boolean predicate
+`valid : ℕ → List Bool → Msg → Msg → Bool` on the security parameter, the public key and the
+challenge pair: `gameOn valid` outputs `false` in both experiments when the pair is invalid, so an
+invalid pair contributes no advantage. The unrestricted experiment `game` and notion `INDCPAOf`
+are the always-true case. Single-bit messages (`Adversary`, `INDCPA`) are unrestricted, and
+bit-word messages (`WordAdversary`, `WordINDCPA`) use the equal-length predicate
+`fun _ _ m₀ m₁ => m₀.length == m₁.length`. For public-key encryption, further encryptions can be
+computed from the public key. The separate multi-challenge equivalence of their Theorem 11.1 is
+not formalized here. Encryption correctness and efficiency of the honest algorithms remain separate
+properties.
 
 ## Main definitions
 
@@ -33,29 +38,28 @@ here. Encryption correctness and efficiency of the honest algorithms remain sepa
   state, for typed, bit, and bit-word messages.
 * `Cslib.Crypto.Encryption.AdversaryOf.IsPPT`, `Cslib.Crypto.Encryption.Adversary.IsPPT`,
   `Cslib.Crypto.Encryption.WordAdversary.IsPPT`: native uniform admissibility of both stages.
-* `Cslib.Crypto.Encryption.selectChallenge`, `Cslib.Crypto.Encryption.sameLength`,
-  `Cslib.Crypto.Encryption.AdversaryOf.clamp`: challenge-pair validity selection, equal-length
-  word predicate, and adversary clamping.
-* `Cslib.Crypto.Encryption.gameWith`, `Cslib.Crypto.Encryption.game`,
-  `Cslib.Crypto.Encryption.wordGame`: the key-generation and challenge-encryption experiments.
-* `Cslib.Crypto.Encryption.INDCPAWith`, `Cslib.Crypto.Encryption.INDCPAOf`,
+* `Cslib.Crypto.Encryption.gameOn`, `Cslib.Crypto.Encryption.game`: the key-generation and
+  challenge-encryption experiment, with and without a challenge-pair admissibility predicate.
+* `Cslib.Crypto.Encryption.INDCPAOn`, `Cslib.Crypto.Encryption.INDCPAOf`,
   `Cslib.Crypto.Encryption.INDCPA`, `Cslib.Crypto.Encryption.WordINDCPA`: negligible distinguishing
   advantage for every admissible adversary, fixed before the security parameter.
+* `Cslib.Crypto.Encryption.AdversaryOf.restrict`: the adversary that plays `gameOn valid` inside
+  the unrestricted `game`, by recording validity in its saved state.
 
 ## Main results
 
-* `Cslib.Crypto.Encryption.eval_game_clamp`: running `game` on `adversary.clamp valid` agrees
-  distributionally with `gameWith valid`.
-* `Cslib.Crypto.Encryption.eval_gameWith`, `Cslib.Crypto.Encryption.eval_game`: the experiments
+* `Cslib.Crypto.Encryption.eval_gameOn`, `Cslib.Crypto.Encryption.eval_game`: the experiments
   depend only on the public-key marginal.
-* `Cslib.Crypto.Encryption.INDCPAWith.congr`, `Cslib.Crypto.Encryption.INDCPAOf.congr`,
-  `Cslib.Crypto.Encryption.INDCPA.congr`, `Cslib.Crypto.Encryption.WordINDCPA.congr`:
-  distributionally equal honest algorithms have the same security guarantee.
+* `Cslib.Crypto.Encryption.eval_game_restrict`: `game` on `adversary.restrict valid` has the same
+  output distribution as `gameOn valid` on `adversary`.
+* `Cslib.Crypto.Encryption.INDCPAOn.congr`, `Cslib.Crypto.Encryption.INDCPAOf.congr`,
+  `Cslib.Crypto.Encryption.INDCPA.congr`: distributionally equal honest algorithms have the same
+  security guarantee.
 
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*][BonehShoup2023],
-  Section 11.2 and Section 11.3.2.
+  Section 11.2 (Attack Game 11.1, p. 436) and Section 11.3.2.
 -/
 
 @[expose] public section
@@ -95,173 +99,78 @@ abbrev WordAdversary : Type := AdversaryOf (List Bool)
 /-- Native uniform strict PPT admissibility for a bit-word chosen-message adversary. -/
 abbrev WordAdversary.IsPPT (adversary : WordAdversary) : Prop := AdversaryOf.IsPPT encBits adversary
 
-/-- Select the challenge message from `choice : Msg × Msg` according to `bit` and a challenge-pair
-validity predicate `valid : Msg → Msg → Bool`: when `bit = true` and
-`valid choice.1 choice.2 = true`, select `choice.2`; otherwise select `choice.1`. When
-`valid choice.1 choice.2 = false`, both experiments `bit = false` and `bit = true` encrypt
-`choice.1`, so an inadmissible challenge pair yields zero distinguishing advantage
-([BonehShoup2023], Attack Game 2.1, p. 34, and Attack Game 11.1, p. 433). -/
-def selectChallenge {Msg : Type} (valid : Msg → Msg → Bool) (bit : Bool) (choice : Msg × Msg) :
-    Msg :=
-  if bit && valid choice.1 choice.2 then choice.2 else choice.1
-
-/-- On challenge bit `false`, `selectChallenge` always selects `choice.1`. -/
-@[simp] theorem selectChallenge_false {Msg : Type} (valid : Msg → Msg → Bool)
-    (choice : Msg × Msg) :
-    selectChallenge valid false choice = choice.1 :=
-  rfl
-
-/-- On challenge bit `true` and a valid challenge pair, `selectChallenge` selects `choice.2`. -/
-@[simp] theorem selectChallenge_true_of_valid {Msg : Type} {valid : Msg → Msg → Bool}
-    {choice : Msg × Msg} (h : valid choice.1 choice.2 = true) :
-    selectChallenge valid true choice = choice.2 := by
-  simp [selectChallenge, h]
-
-/-- On an invalid challenge pair, `selectChallenge` selects `choice.1` for both `bit = false` and
-`bit = true`. -/
-@[simp] theorem selectChallenge_of_invalid {Msg : Type} {valid : Msg → Msg → Bool}
-    (bit : Bool) {choice : Msg × Msg} (h : valid choice.1 choice.2 = false) :
-    selectChallenge valid bit choice = choice.1 := by
-  simp [selectChallenge, h]
-
-/-- With the constant-`true` validity predicate, `selectChallenge` reduces to `if bit`. -/
-@[simp] theorem selectChallenge_const_true {Msg : Type} (bit : Bool) (choice : Msg × Msg) :
-    selectChallenge (fun _ _ => true) bit choice = if bit then choice.2 else choice.1 := by
-  simp [selectChallenge]
-
-/-- Selecting between `choice.1` and `selectChallenge valid true choice` according to `bit` agrees
-with `selectChallenge valid bit choice`. -/
-@[simp] theorem selectChallenge_clamp {Msg : Type} (valid : Msg → Msg → Bool) (bit : Bool)
-    (choice : Msg × Msg) :
-    (if bit then selectChallenge valid true choice else choice.1) =
-      selectChallenge valid bit choice := by
-  cases bit <;> simp [selectChallenge]
-
-/-- Equal-length challenge-pair validity predicate for bit-word encryption
-([BonehShoup2023], Attack Game 2.1, p. 34, and Attack Game 11.1, p. 433): the two chosen challenge
-words `m₀, m₁ : List Bool` must have the same length (`m₀.length == m₁.length`). -/
-def sameLength (m₀ m₁ : List Bool) : Bool :=
-  m₀.length == m₁.length
-
-/-- `sameLength m₀ m₁ = true` if and only if `m₀.length = m₁.length`. -/
-@[simp] theorem sameLength_eq_true_iff (m₀ m₁ : List Bool) :
-    sameLength m₀ m₁ = true ↔ m₀.length = m₁.length :=
-  beq_iff_eq
-
-/-- `sameLength m₀ m₁ = false` if and only if `m₀.length ≠ m₁.length`. -/
-@[simp] theorem sameLength_eq_false_iff (m₀ m₁ : List Bool) :
-    sameLength m₀ m₁ = false ↔ m₀.length ≠ m₁.length :=
-  beq_eq_false_iff_ne
-
-/-- Clamp a chosen-message adversary's challenge pair by `valid : Msg → Msg → Bool`, replacing
-`choice.1.2` with `selectChallenge valid true choice.1` so that an invalid pair `(m₀, m₁)` becomes
-`(m₀, m₀)`. -/
-def AdversaryOf.clamp {Msg : Type} (valid : Msg → Msg → Bool) (adversary : AdversaryOf Msg) :
-    AdversaryOf Msg where
-  choose n pk := do
-    let choice ← adversary.choose n pk
-    return ((choice.1.1, selectChallenge valid true choice.1), choice.2)
-  guess := adversary.guess
-
-/-- Sample the key pair and the chosen challenge encryption under challenge-pair validity predicate
-`valid : Msg → Msg → Bool` using the honest algorithms. When `valid choice.1.1 choice.1.2 = false`,
-both `bit = false` and `bit = true` encrypt `choice.1.1`. The secret key is never passed to the
-adversary. -/
-def gameWith {Msg : Type} (valid : Msg → Msg → Bool)
+/-- The single-challenge chosen-message experiment with challenge-pair admissibility predicate
+`valid` ([BonehShoup2023], Section 11.2, Attack Game 11.1, p. 436). Sample the key pair and pass
+the public key to `adversary.choose`. If `valid n pk m₀ m₁` holds for the chosen pair, encrypt the
+selected message with the honest algorithm and return the adversary's guess; otherwise return
+`false`, in both experiments. The secret key is never passed to the adversary. -/
+def gameOn {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
     (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) : ProbComp Bool := do
   let keys ← keyGen n
   let choice ← adversary.choose n keys.1
-  let ciphertext ← encrypt n keys.1 (selectChallenge valid bit choice.1)
-  adversary.guess n choice.2 ciphertext
+  if valid n keys.1 choice.1.1 choice.1.2 then
+    let ciphertext ← encrypt n keys.1 (if bit then choice.1.2 else choice.1.1)
+    adversary.guess n choice.2 ciphertext
+  else
+    return false
 
-/-- Sample the key pair and the chosen challenge encryption using the honest algorithms (where every
-challenge pair is admissible, `valid = fun _ _ => true`). The secret key is never passed to the
-adversary. -/
-def game {Msg : Type} (keyGen : ℕ → ProbComp (List Bool × List Bool))
+/-- The unrestricted chosen-message experiment: `gameOn` with every challenge pair admissible. -/
+abbrev game {Msg : Type} (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
-    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) : ProbComp Bool := do
-  let keys ← keyGen n
-  let choice ← adversary.choose n keys.1
-  let ciphertext ← encrypt n keys.1 (if bit then choice.1.2 else choice.1.1)
-  adversary.guess n choice.2 ciphertext
+    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) : ProbComp Bool :=
+  gameOn (fun _ _ _ _ => true) keyGen encrypt adversary bit n
 
-/-- With the constant-`true` validity predicate, `gameWith` reduces to `game`. -/
-@[simp] theorem gameWith_const_true {Msg : Type}
-    (keyGen : ℕ → ProbComp (List Bool × List Bool))
-    (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
-    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
-    gameWith (fun _ _ => true) keyGen encrypt adversary bit n =
-      game keyGen encrypt adversary bit n := by
-  simp only [gameWith, game, selectChallenge_const_true]
-
-/-- Single-challenge chosen-message experiment for bit-word messages (`List Bool`), enforcing the
-textbook equal-length requirement `m₀.length = m₁.length` ([BonehShoup2023], Attack Game 11.1,
-p. 433) via `sameLength`. -/
-abbrev wordGame (keyGen : ℕ → ProbComp (List Bool × List Bool))
-    (encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool))
-    (adversary : WordAdversary) (bit : Bool) (n : ℕ) : ProbComp Bool :=
-  gameWith sameLength keyGen encrypt adversary bit n
-
-/-- Running `game` on `adversary.clamp valid` has the exact same output distribution as running
-`gameWith valid` on `adversary`. -/
-@[simp] theorem eval_game_clamp {Msg : Type} (valid : Msg → Msg → Bool)
-    (keyGen : ℕ → ProbComp (List Bool × List Bool))
-    (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
-    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
-    ProbComp.eval (game keyGen encrypt (adversary.clamp valid) bit n) =
-      ProbComp.eval (gameWith valid keyGen encrypt adversary bit n) := by
-  simp only [game, gameWith, AdversaryOf.clamp, ProbComp.eval_bind, ProbComp.eval_pure,
-    PMF.bind_bind, PMF.pure_bind, selectChallenge_clamp]
-
-/-- Single-challenge IND-CPA for encryption over message encoding `encMsg` and challenge-pair
-validity predicate `valid : Msg → Msg → Bool` against every uniform strict PPT adversary. -/
-def INDCPAWith {Msg : Type} (encMsg : Msg ↪ List Bool) (valid : Msg → Msg → Bool)
+/-- Single-challenge IND-CPA for encryption over message encoding `encMsg` with challenge-pair
+admissibility predicate `valid`, against every uniform strict PPT adversary. The negligible bound
+may depend on the adversary, which is fixed before the parameter. -/
+def INDCPAOn {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool) (encMsg : Msg ↪ List Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
   Game.Indistinguishable
-    (fun adversary n => ProbComp.eval (gameWith valid keyGen encrypt adversary false n))
-    (fun adversary n => ProbComp.eval (gameWith valid keyGen encrypt adversary true n))
+    (fun adversary n => ProbComp.eval (gameOn valid keyGen encrypt adversary false n))
+    (fun adversary n => ProbComp.eval (gameOn valid keyGen encrypt adversary true n))
     (AdversaryOf.IsPPT encMsg)
 
-/-- Single-challenge IND-CPA for encryption over message encoding `encMsg` against every uniform
-strict PPT adversary (with unrestricted challenge pairs). The negligible bound may depend on the
-adversary, which is fixed before the parameter. -/
-def INDCPAOf {Msg : Type} (encMsg : Msg ↪ List Bool)
+/-- Single-challenge IND-CPA with every challenge pair admissible. For message types whose
+messages all have one length, such as `Bool`, this is the textbook notion; for `List Bool` it is
+stronger than the textbook notion, which `WordINDCPA` states. -/
+abbrev INDCPAOf {Msg : Type} (encMsg : Msg ↪ List Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)) : Prop :=
-  Game.Indistinguishable
-    (fun adversary n => ProbComp.eval (game keyGen encrypt adversary false n))
-    (fun adversary n => ProbComp.eval (game keyGen encrypt adversary true n))
-    (AdversaryOf.IsPPT encMsg)
+  INDCPAOn (fun _ _ _ _ => true) encMsg keyGen encrypt
 
 /-- Single-challenge IND-CPA for bit encryption against every uniform strict PPT adversary. -/
 abbrev INDCPA (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Bool → ProbComp (List Bool)) : Prop :=
   INDCPAOf encBool keyGen encrypt
 
-/-- Single-challenge IND-CPA for bit-word encryption against every uniform strict PPT adversary,
-enforcing the textbook equal-length challenge condition `m₀.length = m₁.length`
-([BonehShoup2023], Attack Game 11.1, p. 433) via `sameLength`. -/
+/-- Single-challenge IND-CPA for bit-word encryption under Attack Game 11.1's equal-length rule
+([BonehShoup2023], Section 11.2, p. 436): challenge pairs with `m₀.length ≠ m₁.length` are
+inadmissible. -/
 abbrev WordINDCPA (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → List Bool → ProbComp (List Bool)) : Prop :=
-  INDCPAWith encBits sameLength keyGen encrypt
+  INDCPAOn (fun _ _ m₀ m₁ => m₀.length == m₁.length) encBits keyGen encrypt
 
-/-- Only the public-key marginal of key generation is observed by `gameWith`. -/
-theorem eval_gameWith {Msg : Type} (valid : Msg → Msg → Bool)
+/-- Only the public-key marginal of key generation is observed by `gameOn`. -/
+theorem eval_gameOn {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool)
     (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
     (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
-    ProbComp.eval (gameWith valid keyGen encrypt adversary bit n) =
+    ProbComp.eval (gameOn valid keyGen encrypt adversary bit n) =
       (do
         let pk ← (ProbComp.eval (keyGen n)).map Prod.fst
         let choice ← ProbComp.eval (adversary.choose n pk)
-        let ciphertext ← ProbComp.eval (encrypt n pk (selectChallenge valid bit choice.1))
-        ProbComp.eval (adversary.guess n choice.2 ciphertext)) := by
-  simp only [gameWith, ProbComp.eval_bind, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
+        if valid n pk choice.1.1 choice.1.2 then
+          let ciphertext ← ProbComp.eval (encrypt n pk (if bit then choice.1.2 else choice.1.1))
+          ProbComp.eval (adversary.guess n choice.2 ciphertext)
+        else
+          pure false) := by
+  simp only [gameOn, ProbComp.eval_bind, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def,
+    apply_ite ProbComp.eval, ProbComp.eval_pure, PMF.monad_pure_eq_pure]
 
-/-- Only the public-key marginal of key generation is observed by the experiment. -/
+/-- Only the public-key marginal of key generation is observed by the unrestricted experiment. -/
 theorem eval_game {Msg : Type} (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
     (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
@@ -271,19 +180,20 @@ theorem eval_game {Msg : Type} (keyGen : ℕ → ProbComp (List Bool × List Boo
         let choice ← ProbComp.eval (adversary.choose n pk)
         let ciphertext ← ProbComp.eval (encrypt n pk (if bit then choice.1.2 else choice.1.1))
         ProbComp.eval (adversary.guess n choice.2 ciphertext)) := by
-  simp only [game, ProbComp.eval_bind, PMF.monad_bind_eq_bind, PMF.bind_map, Function.comp_def]
+  simp only [game, eval_gameOn, ↓reduceIte]
 
-/-- Equal public-key marginals and equal encryption laws preserve `INDCPAWith`. -/
-theorem INDCPAWith.congr {Msg : Type} {encMsg : Msg ↪ List Bool} {valid : Msg → Msg → Bool}
+/-- Equal public-key marginals and equal encryption laws preserve `INDCPAOn`. -/
+theorem INDCPAOn.congr {Msg : Type} {valid : ℕ → List Bool → Msg → Msg → Bool}
+    {encMsg : Msg ↪ List Bool}
     {keyGen keyGen' : ℕ → ProbComp (List Bool × List Bool)}
     {encrypt encrypt' : ℕ → List Bool → Msg → ProbComp (List Bool)}
-    (h : INDCPAWith encMsg valid keyGen encrypt)
+    (h : INDCPAOn valid encMsg keyGen encrypt)
     (hkeyGen : ∀ n, (ProbComp.eval (keyGen n)).map Prod.fst =
       (ProbComp.eval (keyGen' n)).map Prod.fst)
     (hencrypt : ∀ n pk msg, ProbComp.eval (encrypt n pk msg) =
-      ProbComp.eval (encrypt' n pk msg)) : INDCPAWith encMsg valid keyGen' encrypt' := by
+      ProbComp.eval (encrypt' n pk msg)) : INDCPAOn valid encMsg keyGen' encrypt' := by
   intro adversary hadversary
-  simpa only [eval_gameWith, hkeyGen, hencrypt] using h adversary hadversary
+  simpa only [eval_gameOn, hkeyGen, hencrypt] using h adversary hadversary
 
 /-- Equal public-key marginals and equal encryption laws preserve security. -/
 theorem INDCPAOf.congr {Msg : Type} {encMsg : Msg ↪ List Bool}
@@ -293,9 +203,8 @@ theorem INDCPAOf.congr {Msg : Type} {encMsg : Msg ↪ List Bool}
     (hkeyGen : ∀ n, (ProbComp.eval (keyGen n)).map Prod.fst =
       (ProbComp.eval (keyGen' n)).map Prod.fst)
     (hencrypt : ∀ n pk msg, ProbComp.eval (encrypt n pk msg) =
-      ProbComp.eval (encrypt' n pk msg)) : INDCPAOf encMsg keyGen' encrypt' := by
-  intro adversary hadversary
-  simpa only [eval_game, hkeyGen, hencrypt] using h adversary hadversary
+      ProbComp.eval (encrypt' n pk msg)) : INDCPAOf encMsg keyGen' encrypt' :=
+  INDCPAOn.congr h hkeyGen hencrypt
 
 /-- Equal public-key marginals and equal bit-encryption laws preserve security. -/
 theorem INDCPA.congr {keyGen keyGen' : ℕ → ProbComp (List Bool × List Bool)}
@@ -305,16 +214,35 @@ theorem INDCPA.congr {keyGen keyGen' : ℕ → ProbComp (List Bool × List Bool)
       (ProbComp.eval (keyGen' n)).map Prod.fst)
     (hencrypt : ∀ n pk bit, ProbComp.eval (encrypt n pk bit) =
       ProbComp.eval (encrypt' n pk bit)) : INDCPA keyGen' encrypt' :=
-  INDCPAOf.congr h hkeyGen hencrypt
+  INDCPAOn.congr h hkeyGen hencrypt
 
-/-- Equal public-key marginals and equal word-encryption laws preserve `WordINDCPA`. -/
-theorem WordINDCPA.congr {keyGen keyGen' : ℕ → ProbComp (List Bool × List Bool)}
-    {encrypt encrypt' : ℕ → List Bool → List Bool → ProbComp (List Bool)}
-    (h : WordINDCPA keyGen encrypt)
-    (hkeyGen : ∀ n, (ProbComp.eval (keyGen n)).map Prod.fst =
-      (ProbComp.eval (keyGen' n)).map Prod.fst)
-    (hencrypt : ∀ n pk msg, ProbComp.eval (encrypt n pk msg) =
-      ProbComp.eval (encrypt' n pk msg)) : WordINDCPA keyGen' encrypt' :=
-  INDCPAWith.congr h hkeyGen hencrypt
+/-! ### Playing a restricted game inside the unrestricted one -/
+
+/-- The adversary that plays `gameOn valid` inside the unrestricted `game`. Its `choose` runs
+`adversary.choose n pk` and puts the bit `valid n pk m₀ m₁` in front of the saved state; its
+`guess` returns `false` when that bit is `false` and otherwise runs `adversary.guess` on the rest of
+the state. The challenge pair itself is passed on unchanged. -/
+def AdversaryOf.restrict {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool)
+    (adversary : AdversaryOf Msg) : AdversaryOf Msg where
+  choose n pk := do
+    let choice ← adversary.choose n pk
+    return (choice.1, valid n pk choice.1.1 choice.1.2 :: choice.2)
+  guess n state ciphertext :=
+    if state.headD false then adversary.guess n state.tail ciphertext else pure false
+
+/-- Running the unrestricted `game` on `adversary.restrict valid` has the same output distribution
+as running `gameOn valid` on `adversary`. -/
+theorem eval_game_restrict {Msg : Type} (valid : ℕ → List Bool → Msg → Msg → Bool)
+    (keyGen : ℕ → ProbComp (List Bool × List Bool))
+    (encrypt : ℕ → List Bool → Msg → ProbComp (List Bool))
+    (adversary : AdversaryOf Msg) (bit : Bool) (n : ℕ) :
+    ProbComp.eval (game keyGen encrypt (adversary.restrict valid) bit n) =
+      ProbComp.eval (gameOn valid keyGen encrypt adversary bit n) := by
+  simp only [game, gameOn, AdversaryOf.restrict, ↓reduceIte, ProbComp.eval_bind,
+    ProbComp.eval_pure, PMF.bind_bind, PMF.pure_bind, apply_ite ProbComp.eval]
+  congr 1; funext keys
+  congr 1; funext choice
+  cases valid n keys.1 choice.1.1 choice.1.2 <;>
+    simp [PMF.bind_const]
 
 end Cslib.Crypto.Encryption

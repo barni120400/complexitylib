@@ -28,7 +28,11 @@ Exercises the KEM, DEM, and KEM–DEM hybrid encryption API in
 * quantitative advantage bounds (`advantage_hybridGame_le`, `advantage_hybridGame_le_two_mul`) and
   an instantiation of the security predicate / reduction `KEMINDCPA.hybrid_otpEncrypt_indcpa` on an
   undecryptable security-game test fixture `idealEncaps` (`kemINDCPA_idealEncaps`,
-  `indcpa_hybridEncrypt_idealEncaps_otpEncrypt`).
+  `indcpa_hybridEncrypt_idealEncaps_otpEncrypt`);
+* the word one-time pad and its `WordINDCPA` corollary
+  (`indcpa_hybridEncrypt_idealEncaps_otpWordEncrypt`), and a length-only scheme that satisfies
+  `WordINDCPA` (`wordINDCPA_lengthOnly`) but not the unrestricted `INDCPAOf encBits`
+  (`not_indcpaOf_lengthOnly`).
 -/
 
 @[expose] public section
@@ -380,29 +384,71 @@ theorem indcpa_hybridEncrypt_idealEncaps_otpWordEncrypt :
     WordINDCPA toyKeyGen (hybridEncrypt idealEncaps otpWordEncrypt) :=
   kemINDCPA_idealEncaps.hybrid_otpWordEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
 
-/-- A toy length-only encryption scheme that outputs `List.replicate m.length false` satisfies
-`WordINDCPA` (`INDCPAWith encBits sameLength`), because `selectChallenge sameLength` encrypts equal-
-length messages in both experiments and `choice.1` when the challenge messages have different
-lengths. -/
-theorem wordINDCPA_lengthOnly :
-    WordINDCPA toyKeyGen (fun _ _ m => pure (List.replicate m.length false)) := by
+/-! ### The equal-length rule has force -/
+
+/-- A toy length-only word encryption: the ciphertext of `m` is `List.replicate m.length false`,
+so it reveals the length of `m` and nothing else. -/
+def lengthOnlyEncrypt (_ : ℕ) (_ m : List Bool) : ProbComp (List Bool) :=
+  pure (List.replicate m.length false)
+
+/-- The length-only scheme satisfies `WordINDCPA`: an equal-length pair gives the same ciphertext
+in both experiments, and an unequal-length pair is inadmissible. -/
+theorem wordINDCPA_lengthOnly : WordINDCPA toyKeyGen lengthOnlyEncrypt := by
   intro adversary _ c
   refine tendsto_const_nhds.congr' ?_
   filter_upwards with n
   have heq :
-      ProbComp.eval (wordGame toyKeyGen (fun _ _ m => pure (List.replicate m.length false))
-        adversary false n) =
-      ProbComp.eval (wordGame toyKeyGen (fun _ _ m => pure (List.replicate m.length false))
-        adversary true n) := by
-    simp only [wordGame, gameWith, toyKeyGen, ProbComp.eval_bind, ProbComp.eval_pure,
-      PMF.pure_bind]
+      ProbComp.eval (gameOn (fun _ _ m₀ m₁ => m₀.length == m₁.length) toyKeyGen
+        lengthOnlyEncrypt adversary false n) =
+      ProbComp.eval (gameOn (fun _ _ m₀ m₁ => m₀.length == m₁.length) toyKeyGen
+        lengthOnlyEncrypt adversary true n) := by
+    simp only [gameOn, toyKeyGen, lengthOnlyEncrypt, ProbComp.eval_bind, ProbComp.eval_pure,
+      PMF.pure_bind, apply_ite ProbComp.eval]
     congr 1; funext keys
     congr 1; funext choice
-    by_cases hlen : choice.1.1.length = choice.1.2.length
-    · have hsame : sameLength choice.1.1 choice.1.2 = true := by simp [hlen]
-      simp [selectChallenge, hsame, hlen]
-    · have hdiff : sameLength choice.1.1 choice.1.2 = false := by simp [hlen]
-      simp [selectChallenge, hdiff]
+    by_cases hlen : choice.1.1.length = choice.1.2.length <;> simp [hlen]
   simp [heq]
+
+/-- A word adversary that submits the pair `([], [false])` of unequal lengths and guesses whether
+the ciphertext is `[false]`. -/
+def lengthAdversary : WordAdversary where
+  choose _ _ := pure (([], [false]), [])
+  guess _ _ ct := pure (decide (ct = [false]))
+
+/-- `lengthAdversary` is uniform strict PPT. -/
+theorem lengthAdversary_isPPT : lengthAdversary.IsPPT where
+  choose := ComputableTidilyInPolyTime.isPPTOn (ComputableTidilyInPolyTime.const _)
+  guess := by
+    have hct : ComputableTidilyInPolyTime (fun p : ℕ × List Bool × List Bool => p.2.2)
+        (encPair encUnary (encPair encBits encBits)) encBits := by fun_prop
+    exact (ComputableTidilyInPolyTime.decide_eq' (encB := encBits) hct
+      (ComputableTidilyInPolyTime.const [false])).isPPTOn
+
+/-- Without the equal-length rule the length-only scheme is insecure: `lengthAdversary` wins the
+unrestricted game with advantage `1`, so `lengthOnlyEncrypt` does not satisfy
+`INDCPAOf encBits`. Together with `wordINDCPA_lengthOnly`, this shows that `WordINDCPA` is strictly
+weaker than the unrestricted notion. -/
+theorem not_indcpaOf_lengthOnly : ¬ INDCPAOf encBits toyKeyGen lengthOnlyEncrypt := by
+  intro hsecure
+  have hneg := hsecure lengthAdversary lengthAdversary_isPPT
+  have hfalse (n : ℕ) :
+      ProbComp.eval (game toyKeyGen lengthOnlyEncrypt lengthAdversary false n) =
+        PMF.pure false := by
+    simp only [gameOn, toyKeyGen, lengthOnlyEncrypt, lengthAdversary, ↓reduceIte,
+      ProbComp.eval_bind, ProbComp.eval_pure, BitString.eval_sampleList, PMF.pure_bind,
+      PMF.bind_const]
+    rfl
+  have htrue (n : ℕ) :
+      ProbComp.eval (game toyKeyGen lengthOnlyEncrypt lengthAdversary true n) =
+        PMF.pure true := by
+    simp only [gameOn, toyKeyGen, lengthOnlyEncrypt, lengthAdversary, ↓reduceIte,
+      ProbComp.eval_bind, ProbComp.eval_pure, BitString.eval_sampleList, PMF.pure_bind,
+      PMF.bind_const]
+    rfl
+  simp only [hfalse, htrue] at hneg
+  have hone : Game.advantage (PMF.pure false) (PMF.pure true) = 1 := by
+    simp [Game.advantage, Game.succProbability]
+  rw [hone] at hneg
+  exact not_negligible_const one_ne_zero hneg
 
 end ComplexityTests.Crypto.HybridEncryption
