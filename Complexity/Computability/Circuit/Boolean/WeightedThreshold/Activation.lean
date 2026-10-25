@@ -58,12 +58,6 @@ open Finset
 
 variable {n g : ℕ}
 
-/-- Post-composition preserves a change bound. -/
-theorem _root_.Cslib.ChangesAtMost.map {α β γ : Type*} [Preorder α] {Ψ : α → β} {T : ℕ}
-    (h : ChangesAtMost Ψ T) (G : β → γ) :
-    ChangesAtMost (fun t => G (Ψ t)) T :=
-  fun z hz S hS => h z hz S fun i hi heq => hS i hi (by simp only [heq])
-
 /-- A real-weight linear-combination operation with an arbitrary scalar activation. -/
 structure ActivationOp where
   /-- The number of argument slots. -/
