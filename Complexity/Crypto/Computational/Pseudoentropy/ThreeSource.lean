@@ -103,7 +103,7 @@ theorem isPPTOn_extract {α : Type} {input : α ↪ List Bool}
   let samplesEncoding := encList (encPair (encPair encBits encBool) encBits)
   let thirdEncoding := encPair (encList (encPair encBits encBool)) (encPair encBits encBits)
   let middleEncoding := encPair (encList encBits) (encPair encBits encBits)
-  have hsamples := hsource.replicate hcount.tidy
+  have hsamples := hsource.replicate hcount
   have hparam := ComputableInPolyTime.fst input samplesEncoding
   have hsampleValue := ComputableInPolyTime.snd input samplesEncoding
   have hthird := isPPTOn_extractWordSeeds (hcount.comp hparam) (hseed.comp hparam)

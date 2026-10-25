@@ -220,9 +220,7 @@ theorem isPPTOn_testShift (htrial : IsPPTOn input encBool trial)
       (rateNumerator a) (rateDenominator a) (trial a)) := by
   unfold testShift
   apply htrial.testProbabilityLT
-  all_goals
-    apply ComputableInPolyTime.tidy
-    polytime
+  all_goals polytime
 
 /-- Efficient trials and unary parameters give a strict PPT majority decision. -/
 theorem isPPTOn_testMajority (htrial : IsPPTOn input encBool trial)
@@ -234,9 +232,7 @@ theorem isPPTOn_testMajority (htrial : IsPPTOn input encBool trial)
       (densityNumerator a) (densityDenominator a) (trial a)) := by
   unfold testMajority
   apply htrial.testProbabilityLT
-  all_goals
-    apply ComputableInPolyTime.tidy
-    polytime
+  all_goals polytime
 
 attribute [program_certificate] isPPTOn_testShift isPPTOn_testMajority
 

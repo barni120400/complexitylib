@@ -57,7 +57,7 @@ theorem IsPPTOn.selectBest {α : Type} {input : α ↪ List Bool}
   have hstep : IsPPTOn (encPair input stateEncoding) stateEncoding
       (fun pair => OracleComp.selectStep (trials pair.1) (test pair.1) pair.2) := by
     unfold OracleComp.selectStep
-    apply (htest'.countTrue htrials').map_with
+    apply (htest'.countTrue (.of_tidy htrials')).map_with
     dsimp only [OracleComp.selectUpdate, stateEncoding]
     apply ComputableInPolyTime.prod
     · exact ComputableInPolyTime.unary_succ.comp (by fun_prop)
@@ -125,6 +125,6 @@ theorem IsPPTOn.sampleBest {α β : Type} {input : α ↪ List Bool} {output : �
   have hselect := IsPPTOn.selectFrom (test := fun p : α × List β => test p.1) fallback
     (ComputableTidilyInPolyTime.snd input (encList output))
     (htrials.comp (ComputableTidilyInPolyTime.fst input (encList output))) htest'
-  exact (hsource.replicate hcount).bind_with hselect
+  exact (hsource.replicate (.of_tidy hcount)).bind_with hselect
 
 end Cslib.Probability

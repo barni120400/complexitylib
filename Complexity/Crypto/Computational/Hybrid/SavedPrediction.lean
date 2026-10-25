@@ -404,11 +404,11 @@ theorem isPPTOn_splice {Param : Type} {input : Param ↪ List Bool} {output : α
   have hwidth := hwidth.tidy
   have htrial := htrial.tidy
   unfold splice
-  apply (hreplacement.replicate hbefore).bind_with
+  apply (hreplacement.replicate (.of_tidy hbefore)).bind_with
   apply ((horiginal.preprocess
     (ComputableInPolyTime.fst input (encList (encPair output encBool)))).replicate
-      (hafter.comp (ComputableTidilyInPolyTime.fst input
-        (encList (encPair output encBool))))).bind_with
+      (.of_tidy (hafter.comp (ComputableTidilyInPolyTime.fst input
+        (encList (encPair output encBool)))))).bind_with
   apply isPPTOn_save c d <;> exact .of_tidy (by fun_prop)
 
 attribute [program_certificate] isPPTOn_splice

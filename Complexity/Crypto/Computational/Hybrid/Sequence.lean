@@ -170,9 +170,9 @@ theorem isPPTOn_sequenceHybrid {Param : Type} {input : Param ↪ List Bool} {sam
     (hsplit : ComputableInPolyTime split input encUnary) :
     IsPPTOn input (encList sample)
       (fun a => sequenceHybrid (replacement a) (original a) (count a) (split a)) := by
-  have hfront := hreplacement.replicate hsplit.tidy
+  have hfront := hreplacement.replicate hsplit
   have hremain := ComputableInPolyTime.unary_sub.comp (hcount.prod hsplit)
-  have hback := (horiginal.replicate hremain.tidy).preprocess
+  have hback := (horiginal.replicate hremain).preprocess
     (ComputableInPolyTime.fst input (encList sample))
   have houter := ComputableInPolyTime.fst (encPair input (encList sample)) (encList sample)
   have hlast := ComputableInPolyTime.snd (encPair input (encList sample)) (encList sample)
@@ -195,8 +195,8 @@ theorem isPPTOn_spliceTest {Param : Type} {input : Param ↪ List Bool} {sample 
     IsPPTOn input encBool
       (fun a => spliceTest (replacement a) (original a) (before a) (after a)
         (test a) (challenge a)) := by
-  have hfront := hreplacement.replicate hbefore.tidy
-  have hback := (horiginal.replicate hafter.tidy).preprocess
+  have hfront := hreplacement.replicate hbefore
+  have hback := (horiginal.replicate hafter).preprocess
     (ComputableInPolyTime.fst input (encList sample))
   have houter := ComputableInPolyTime.fst (encPair input (encList sample)) (encList sample)
   have hlast := ComputableInPolyTime.snd (encPair input (encList sample)) (encList sample)
