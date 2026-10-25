@@ -7,8 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Probabilistic.Parameter
 public import Complexity.Crypto.Computational.PseudorandomFunction
-public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Game.UntilBad
 public import Complexity.Languages.Probabilistic.UniformNat
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
@@ -66,8 +66,8 @@ Chapter 5 (Sections 5.3 and 5.10) and Chapter 9 (Sections 9.1 and 9.2.2–9.2.3)
    `AuthenticatedEncryption` cipher is `INDCCA`-secure.
 
 The generic **Encrypt-then-MAC** composition ([BonehShoup2023], Section 9.4.1, Theorem 9.2,
-printed pp. 367–368) is formalized in
-`Complexity/Crypto/Computational/Encryption/EncryptThenMAC.lean`.
+printed pp. 367–368) and its concrete non-vacuous PRF-based cipher instance ([BonehShoup2023],
+Section 5.4.1, Example 5.2 and Theorem 5.2, printed pp. 183–187) are planned for PR 3 of #1000.
 
 ## Specializations and losses relative to Boneh–Shoup Chapter 9
 
@@ -75,14 +75,16 @@ printed pp. 367–368) is formalized in
   messages (`msg.length = n` in `ciGame`, `m0.length = n ∧ m1.length = n` in `cpaGame` and
   `ccaGame`). Malformed encryption queries return `[]` without invoking `encrypt` or recording a
   challenge ciphertext.
-* **Challenge-ciphertext decryption queries in `ccaOracle`**: in Attack Game 9.2 (printed p. 362),
-  the text stipulates that "A is not allowed to query the decryption challenger with ci." In
+* **Challenge-ciphertext decryption queries in `ccaOracle`**: in Section 9.2.2 (printed p. 362),
+  the text stipulates that "The restriction we impose is that the adversary may not ask for the
+  decryptions of any of these ciphertexts." In
   `ccaOracle`, decryption queries on previously returned challenge ciphertexts
   (`queriedCiphertexts`) are instead answered with `[] = encOption encBits none` (rejection), which
   is equivalent for adversaries respecting the restriction and makes `ccaOracle` a total function on
   all queries.
 * **Omitted 1AE $\Rightarrow$ 1CCA half and query-count preservation in Theorem 9.1**: Theorem 9.1
-  in [BonehShoup2023] (printed p. 363) also states that "if E is 1AE-secure, then E is 1CCA-secure"
+  in [BonehShoup2023] (printed p. 363) also states that
+  "If E is 1AE-secure, then it is 1CCA-secure."
   (using Definition 9.6 on p. 363) and that "Moreover, Bcpa and Bci both make at most Qe encryption
   queries." This module formalizes the multi-query adaptive `AuthenticatedEncryption`
   (Definition 9.2) and `INDCCA` (Definition 9.5) notions and the `AE ⇒ CCA` implication; the
@@ -2089,7 +2091,7 @@ parameter `n`, the adaptive CCA distinguishing advantage is bounded by the CPA a
 `ccaToCIAdversary` for `bit = false` and `bit = true`.
 
 Relative to equation (9.3) in [BonehShoup2023]
-(`CCAadv[A, E] ≤ 2 Qd · CIadv[Bci, E] + CPAadv[Bcpa, E]`), `ccaToCIAdversary` samples a query index
+(`CCAadv[A, E] ≤ CPAadv[Bcpa, E] + 2 Qd · CIadv[Bci, E]`), `ccaToCIAdversary` samples a query index
 uniformly from `{0, ..., dyadicSize (Q n) - 1}` over the total query budget `Q n ≥ Qe + Qd`, giving
 coefficient `dyadicSize (Q n) ≤ 2 * Q n + 2` per bit. -/
 theorem advantage_ccaGame_le (E : SymmetricCipher) (ctBound Q : ℕ → ℕ)
