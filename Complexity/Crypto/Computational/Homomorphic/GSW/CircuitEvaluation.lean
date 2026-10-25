@@ -84,15 +84,18 @@ def constSerialized (n w : ℕ) (μ : Bool) : List Bool :=
   (List.range (n + 1)).flatMap fun i =>
     (List.range w).flatMap fun k =>
       (List.range (n + 1)).flatMap fun j =>
-        lowBits w ((if i = j then μ.toNat * 2 ^ k else 0) % 2 ^ w)
+        lowBits w (if μ ∧ i = j then 2 ^ k else 0)
 
 private theorem constEntry_eq (n w : ℕ) (μ : Bool)
     (i : Fin (n + 1)) (k : Fin w) (j : Fin (n + 1)) :
-    (if i.val = j.val then μ.toNat * 2 ^ k.val else 0) % 2 ^ w =
+    (if μ = true ∧ i.val = j.val then 2 ^ k.val else 0) =
       (((μ.toNat : ZMod (2 ^ w)) • gadgetMatrix n w) (i, k) j).val := by
-  rw [← ZMod.val_natCast, _root_.Matrix.smul_apply, gadgetMatrix_apply, smul_eq_mul]
+  have hval : ((2 : ZMod (2 ^ w)) ^ k.val).val = 2 ^ k.val := by
+    rw [show (2 : ZMod (2 ^ w)) ^ k.val = ((2 ^ k.val : ℕ) : ZMod (2 ^ w)) by simp,
+      ZMod.val_natCast, Nat.mod_eq_of_lt (Nat.pow_lt_pow_right (by decide) k.isLt)]
+  rw [_root_.Matrix.smul_apply, gadgetMatrix_apply, smul_eq_mul]
   by_cases h : i = j
-  · simp [h]
+  · cases μ <;> simp [h, hval]
   · have hv : i.val ≠ j.val := fun hij => h (Fin.ext hij)
     simp [h, hv]
 
@@ -209,13 +212,6 @@ def evaluateCircuit (n w : ℕ) (C : Σ k, Circuit signature k 1) (inputs : List
     evaluateLayers n w wires (layer :: layers) =
       evaluateLayers n w (evaluateLayer n w wires layer) layers := rfl
 
-private theorem forall₂_getD {R : Bool → List Bool → Prop} {bits : List Bool}
-    {wires : List (List Bool)} (h : List.Forall₂ R bits wires) {i : ℕ} (hi : i < bits.length) :
-    R (bits.getD i false) (wires.getD i []) := by
-  have hi' : i < wires.length := hi.trans_eq h.length_eq
-  simpa only [List.getD_eq_getElem _ _ hi, List.getD_eq_getElem _ _ hi',
-    List.get_eq_getElem] using h.get hi hi'
-
 variable {n w : ℕ} {secret : List Bool} {bound : ℕ}
 
 /-- One valid node multiplies the error bound by at most `N + 1`. -/
@@ -227,13 +223,13 @@ theorem boundedError_evaluateNode {bits : List Bool} {wires : List (List Bool)}
   cases node with
   | const μ => exact (boundedError_constSerialized n w secret μ).mono (Nat.zero_le _)
   | copy i =>
-    have hi := forall₂_getD h hnode
+    have hi := h.getD hnode false []
     have htake : (wires.getD i []).take (((n + 1) * w) ^ 2) = wires.getD i [] :=
       List.take_of_length_le hi.1.le
     simp only [evaluateNode, Layered.Node.eval, htake]
     exact hi.mono (Nat.le_mul_of_pos_left _ (Nat.succ_pos _))
   | nand i j =>
-    have h' := (forall₂_getD h hnode.1).nandSerialized (forall₂_getD h hnode.2)
+    have h' := (h.getD hnode.1 false []).nandSerialized (h.getD hnode.2 false [])
     simp only [evaluateNode, Layered.Node.eval]
     exact h'.mono (le_of_eq (by ring))
 
@@ -285,8 +281,8 @@ theorem boundedError_evaluateCircuit (C : Σ k, Circuit signature k 1) {bits : L
   rw [hindex] at hselect
   simp only [Layered.select, List.map_cons, List.map_nil, List.ofFn_succ, List.ofFn_zero,
     List.cons.injEq, and_true] at hselect
-  have hwire := forall₂_getD hlayers (i := index) (by
-    simpa only [Layered.length_eval, hbits] using hvalid)
+  have hwire := hlayers.getD (i := index) (by
+    simpa only [Layered.length_eval, hbits] using hvalid) false []
   rw [hselect] at hwire
   simpa only [evaluateCircuit, hindex, List.headD_cons] using hwire
 
