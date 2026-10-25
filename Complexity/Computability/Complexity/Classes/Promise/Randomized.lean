@@ -98,6 +98,7 @@ non-trivial soundness bound at `a` only when `1 < s₁ a + s₂`.
   Functions*, Section 4.2, Lemmas 15–16, pp. 22:20–22:23][IlangoLoffOliveira2020]
 * [S. Hirahara, *NP-Hardness of Learning Programs and Partial MCSP*, ECCC TR22-119, Section 8,
   Lemma 8.3 and Theorem 8.5][Hirahara2022]
+* [M. Sipser, *Introduction to the Theory of Computation*][Sipser2013]
 * [L. G. Valiant, V. V. Vazirani, *NP is as Easy as Detecting Unique
   Solutions*, pp. 86–87][ValiantVazirani1986]
 -/
@@ -205,16 +206,6 @@ theorem rpReducibleWithError_compl_iff {s : α → ℝ} :
   Iff.rfl
 
 open Classical in
-/-- The real probability that a function of a uniform bit string of length `n` lands in `S` is the
-fraction of `n`-bit strings mapping into `S`. -/
-private theorem toOuterMeasure_map_uniformList_toReal (f : List Bool → β) (n : ℕ) (S : Set β) :
-    (((BitString.uniformList n).map f).toOuterMeasure S).toReal =
-      ((Finset.univ.filter fun r : Fin n → Bool => f (List.ofFn r) ∈ S).card : ℝ) / 2 ^ n := by
-  rw [BitString.uniformList, PMF.map_comp, PMF.toOuterMeasure_map_apply,
-    PMF.toOuterMeasure_uniformOfFintype_toReal]
-  simp [Function.comp_def, Set.mem_preimage]
-
-open Classical in
 /-- **Seeded-function characterization of `RPReducible`** [Ilango, Section 2, p. 34:11][Ilango2020]:
 `X` is `RPReducible` to `Y` if and only if there are a polynomial `p` and a function
 `f : α × List Bool → β`, computable in polynomial time with respect to `encPair encA encBits` and
@@ -238,7 +229,7 @@ theorem rpReducible_iff_exists_seeded :
         c * ((encA a).length + 1) ^ d := by simp
     rw [hp]
     have hprob := hno a ha
-    rw [hlaw a _ le_rfl, toOuterMeasure_map_uniformList_toReal,
+    rw [hlaw a _ le_rfl, BitString.toOuterMeasure_map_uniformList_toReal,
       le_div_iff₀ (by positivity)] at hprob
     have h3 : (2 : ℝ) * 2 ^ (c * ((encA a).length + 1) ^ d) ≤
         3 * ((Finset.univ.filter fun r : Fin (c * ((encA a).length + 1) ^ d) → Bool =>
@@ -249,9 +240,8 @@ theorem rpReducible_iff_exists_seeded :
     let R (a : α) : ProbComp β :=
       (fun w => f (a, w)) <$> BitString.sampleList (p.eval (encA a).length)
     have hR : IsPPTOn encA encB R :=
-      (isPPTOn_sampleList.preprocess
-        ((ComputableInPolyTime.unary_eval p).comp
-          (ComputableInPolyTime.encoding_length encA))).map_with hf
+      IsPPTOn.of_seeded
+        ((ComputableInPolyTime.unary_eval p).comp (ComputableInPolyTime.encoding_length encA)) hf
     refine ⟨R, hR, fun a ha b hb => ?_, fun a ha => ?_⟩
     · simp only [R, ProbComp.eval_map, BitString.eval_sampleList,
         PMF.mem_support_map_iff, BitString.mem_support_uniformList_iff] at hb
@@ -260,7 +250,7 @@ theorem rpReducible_iff_exists_seeded :
       rwa [show (List.ofFn fun i : Fin (p.eval (encA a).length) => w[i.val]'(by omega)) = w from
         List.ext_getElem (by simp [hw]) fun i _ _ => by simp] at hr
     · simp only [R, ProbComp.eval_map, BitString.eval_sampleList]
-      rw [toOuterMeasure_map_uniformList_toReal, le_div_iff₀ (by positivity)]
+      rw [BitString.toOuterMeasure_map_uniformList_toReal, le_div_iff₀ (by positivity)]
       have h3 : (2 : ℝ) * 2 ^ p.eval (encA a).length ≤
           3 * ((Finset.univ.filter fun r : Fin (p.eval (encA a).length) → Bool =>
             f (a, List.ofFn r) ∈ Y.no).card : ℝ) := by
@@ -377,7 +367,10 @@ theorem RPReducibleWithError.of_computableInPolyTime {s : β → ℝ} {f : α �
     fun a ha c hc => hRyes (f a) (hyes ha) c hc, fun a ha => hRno (f a) (hno ha)⟩
 
 /-- Precomposing an `RPReducibleWithError` reduction at a uniform threshold with a deterministic
-polynomial-time reduction preserves its soundness threshold. -/
+polynomial-time reduction preserves its soundness threshold. Because `PolyTimeReducible`
+existentially quantifies over the reduction function `f`, the output threshold cannot refer to
+`f a`; for an instance-dependent threshold `fun a => s (f a)`, use
+`RPReducibleWithError.of_computableInPolyTime` with an explicit `f`. -/
 theorem PolyTimeReducible.trans_rpReducibleWithError {s : ℝ}
     (hXY : PolyTimeReducible encA encB X Y)
     (hYZ : RPReducibleWithError encB encC (fun _ => s) Y Z) :
@@ -452,10 +445,6 @@ private theorem isPPTOn_maj3 {M : β → ProbComp Bool} (hM : IsPPTOn encB encBo
   exact hM.bind_with (h2.bind_with (h3.map_with
     (f := fun p b₃ => (p.1.2 && p.2) || (p.1.2 && b₃) || (p.2 && b₃)) (by fun_prop)))
 
-private theorem probability_not (e : ProbComp Bool) :
-    Pr[Bool.not <$> e] = (ProbComp.eval e false).toReal := by
-  simp [ProbComp.eval_map, PMF.map_apply]
-
 private theorem probability_maj3 (M : β → ProbComp Bool) (b : β) :
     Pr[maj3 M b] = 3 * Pr[M b] ^ 2 - 2 * Pr[M b] ^ 3 := by
   change Pr[M b >>= fun b₁ => M b >>= fun b₂ =>
@@ -499,7 +488,7 @@ theorem RPReducible.mem_PromiseCoRP (hXY : RPReducible encA encB X Y)
       have h := PMF.toOuterMeasure_bind_ge_mul (ProbComp.eval (R a)) (fun y => ProbComp.eval (M y))
         Y.no {false} (by norm_num : (0 : ℝ) ≤ 1 / 2) (hnoR a ha)
         fun y _ hy => by
-          rw [PMF.toOuterMeasure_apply_singleton, ← probability_not]
+          rw [PMF.toOuterMeasure_apply_singleton, ← ProbComp.probability_map_not]
           exact hnoM y hy
       rw [← ProbComp.eval_bind, PMF.toOuterMeasure_apply_singleton] at h
       linarith
@@ -510,7 +499,7 @@ theorem RPReducible.mem_PromiseCoRP (hXY : RPReducible encA encB X Y)
       rw [probability_and2]
       nlinarith
     have hsum := PMF.toReal_true_add_toReal_false (ProbComp.eval (and2 T a))
-    rw [probability_not]
+    rw [ProbComp.probability_map_not]
     linarith
 
 /-- If `X` is `RPReducible` to `Y` and `Y ∈ PromiseP encB`, then `X ∈ PromiseCoRP encA`. -/
@@ -524,8 +513,10 @@ theorem RPReducible.mem_coRP_of_ofSet {A : Set α} (hAY : RPReducible encA encB 
     (hY : Y ∈ PromiseCoRP encB) : A ∈ coRP encA :=
   ofSet_mem_PromiseCoRP.mp (hAY.mem_PromiseCoRP hY)
 
-/-- **`PromiseBPP` is closed under `RPReducible`** (library lemma): if `X` reduces to `Y` by a
-randomized one-sided reduction and `Y ∈ PromiseBPP encB`, then `X ∈ PromiseBPP encA`. -/
+/-- **`PromiseBPP` is closed under `RPReducible`** (library lemma; probability amplification on
+promise problems follows [Goldreich, Definition 1.2][Goldreich2006] and
+[Sipser, Lemma 10.5][Sipser2013]): if `X` reduces to `Y` by a randomized one-sided reduction and
+`Y ∈ PromiseBPP encB`, then `X ∈ PromiseBPP encA`. -/
 theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
     (hY : Y ∈ PromiseBPP encB) : X ∈ PromiseBPP encA := by
   obtain ⟨R, hR, hyesR, hnoR⟩ := hXY
@@ -546,7 +537,7 @@ theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
     have h0 : Pr[M₀ y] ≤ 1 / 3 := by
       have hsum := PMF.toReal_true_add_toReal_false (ProbComp.eval (M₀ y))
       have h := hnoM₀ y hy
-      rw [probability_not] at h
+      rw [ProbComp.probability_map_not] at h
       linarith
     have h0_nn : 0 ≤ Pr[M₀ y] := ENNReal.toReal_nonneg
     have hm1 : Pr[maj3 M₀ y] ≤ 7 / 27 := by
@@ -587,7 +578,7 @@ theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
       rw [probability_and2]
       nlinarith
     have hsum := PMF.toReal_true_add_toReal_false (ProbComp.eval (and2 T a))
-    rw [probability_not]
+    rw [ProbComp.probability_map_not]
     linarith
 
 /-- If a decision problem `A` is `RPReducible` to `Y` and `Y ∈ PromiseBPP encB`, then

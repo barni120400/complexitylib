@@ -26,7 +26,7 @@ import Complexity.Probability.PMF.Uniform
 # Probabilistic classes of promise problems
 
 The probabilistic promise classes `PromiseBPP`, `PromiseRP` and `PromiseCoRP` follow Goldreich's
-semantic definitions [Goldreich, Definition 2.1 and Section 6.2][Goldreich2006], requiring bounded
+semantic definitions [Goldreich, Definition 1.2 and Section 6.2][Goldreich2006], requiring bounded
 or one-sided error only on instances in the promise. On decision problems embedded via
 `PromiseProblem.ofSet`, they agree with `BPP`, `RP` and `coRP` (`ofSet_mem_PromiseBPP`,
 `ofSet_mem_PromiseRP`, `ofSet_mem_PromiseCoRP`), and they contain the lifted classes
@@ -99,7 +99,7 @@ variable {α : Type} {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × Li
 /-- `V` solves the promise problem `Q` with bounded error, using random strings whose length is `p`
 evaluated at the length of the encoded instance: for every yes-instance at least two thirds of the
 random strings are accepted, and for every no-instance at least two thirds are rejected
-[Goldreich, Definition 2.1][Goldreich2006]. Nothing is required on instances outside the promise. -/
+[Goldreich, Definition 1.2][Goldreich2006]. Nothing is required on instances outside the promise. -/
 def SolvesWithBoundedError (enc : α ↪ List Bool) (p : Polynomial ℕ)
     (V : α × List Bool → Bool) (Q : PromiseProblem α) : Prop :=
   (∀ a ∈ Q.yes, 2 * 2 ^ p.eval (enc a).length ≤
@@ -167,7 +167,7 @@ variable {α : Type} {enc : α ↪ List Bool} {Q : PromiseProblem α} {A : Set �
 
 /-- The promise problems solved with bounded error by polynomial-time algorithms reading
 polynomially long random strings, with respect to the encoding `enc` of instances
-[Goldreich, Definition 2.1][Goldreich2006]. -/
+[Goldreich, Definition 1.2][Goldreich2006]. -/
 def PromiseBPP (enc : α ↪ List Bool) : Set (PromiseProblem α) :=
   {Q | ∃ (p : Polynomial ℕ) (V : α × List Bool → Bool),
     ComputableInPolyTime V (encPair enc encBits) encBool ∧
@@ -294,9 +294,8 @@ private theorem isPPTOn_sampleList_seeded {β : Type} {encB : β ↪ List Bool}
     (hf : ComputableInPolyTime f (encPair enc encBits) encB) :
     IsPPTOn enc encB (fun a => (fun w => f (a, w)) <$>
       BitString.sampleList (p.eval (enc a).length)) :=
-  (isPPTOn_sampleList.preprocess
-    ((ComputableInPolyTime.unary_eval p).comp
-      (ComputableInPolyTime.encoding_length enc))).map_with hf
+  IsPPTOn.of_seeded
+    ((ComputableInPolyTime.unary_eval p).comp (ComputableInPolyTime.encoding_length enc)) hf
 
 /-- **Probabilistic-program characterization of `PromiseBPP`**: a promise problem is in
 `PromiseBPP` exactly when a uniform strict PPT Boolean program accepts every yes-instance with

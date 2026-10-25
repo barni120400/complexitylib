@@ -151,13 +151,19 @@ theorem PolyTimeReducible.exists_polyTimeReducible (h : PolyTimeReducible encA e
   refine ⟨f ⁻¹' B, fun a ha => hyes (hfyes ha), Set.disjoint_left.2 fun a ha ha' =>
     Set.disjoint_left.1 hno ha (hfno ha'), f, hf, fun _ => Iff.rfl⟩
 
+section PromiseNP
+
+variable {α β : Type} {encA : α ↪ List Bool} {encB : β ↪ List Bool}
+  {X : PromiseProblem α} {Y : PromiseProblem β}
+
 /-- **`PromiseNP` is closed under polynomial-time reductions.** -/
-theorem PolyTimeReducible.mem_PromiseNP {α β : Type} {encA : α ↪ List Bool}
-    {encB : β ↪ List Bool} {X : PromiseProblem α} {Y : PromiseProblem β}
-    (h : PolyTimeReducible encA encB X Y) (hY : Y ∈ PromiseNP encB) : X ∈ PromiseNP encA := by
+theorem PolyTimeReducible.mem_PromiseNP (h : PolyTimeReducible encA encB X Y)
+    (hY : Y ∈ PromiseNP encB) : X ∈ PromiseNP encA := by
   obtain ⟨B, hB, hyes, hno⟩ := hY
   obtain ⟨A, hAyes, hAno, hAB⟩ := h.exists_polyTimeReducible hyes hno
   exact ⟨A, _root_.Cslib.Complexity.PolyTimeReducible.mem_NP hAB hB, hAyes, hAno⟩
+
+end PromiseNP
 
 /-! ### NP-hardness -/
 
