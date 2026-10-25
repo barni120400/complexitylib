@@ -217,9 +217,15 @@ private meta def polytimeKnownFacts : TacticM Unit := withMainContext do
   let mut added := false
   for h in ← getLCtx do
     unless h.isImplementationDetail do
-      let type := (← whnfR (← instantiateMVars h.type)).consumeMData
-      if type.isAppOf source && !type.hasExprMVar then
-        let proof ← mkAppM conversion #[h.toExpr]
+      let proof? ← forallTelescopeReducing (← instantiateMVars h.type) fun xs conclusion => do
+        -- Parameters may determine a complete supplied certificate family. Proof premises are
+        -- not evidence: do not turn conditional implications into a request for raw search.
+        if ← xs.anyM (fun x => return ← isProof x) then return none
+        let conclusion := (← whnfR conclusion).consumeMData
+        unless conclusion.isAppOf source && !conclusion.hasExprMVar do return none
+        let proof ← mkAppM conversion #[mkAppN h.toExpr xs]
+        return some (← mkLambdaFVars xs proof)
+      if let some proof := proof? then
         let type ← inferType proof
         let found ← (← getLCtx).anyM fun other => isDefEq other.type type
         unless found do
