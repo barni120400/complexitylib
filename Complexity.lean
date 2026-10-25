@@ -794,6 +794,7 @@ public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Compile
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 public import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 public import Complexity.Computability.Complexity.Problems.SATUNSAT
 public import Complexity.Computability.Complexity.Problems.STCON
@@ -1975,6 +1976,7 @@ public import Complexity.Logics.FirstOrder.Tuple
 public import Complexity.Logics.Propositional.CNF
 public import Complexity.Logics.Propositional.CNF.Coding
 public import Complexity.Logics.Propositional.CNF.Compact
+public import Complexity.Logics.Propositional.CNF.Compact.Relabel
 public import Complexity.Logics.Propositional.CNF.ExactlyOne
 public import Complexity.Logics.Propositional.CNF.Gadgets
 public import Complexity.Logics.Propositional.CNF.ImplicationChain
