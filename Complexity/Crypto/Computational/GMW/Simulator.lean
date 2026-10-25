@@ -927,7 +927,7 @@ private theorem isPPTOn_gmwRealWithPads {α Param : Type} {enc : α ↪ List Boo
   · apply IsPPTOn.replicate
     · apply ComputableInPolyTime.sampleList
       fun_prop
-    · exact ComputableInPolyTime.tidy (by fun_prop)
+    · fun_prop
   simp only [bind_pure_comp]
   apply IsPPTOn.map_with
   · apply isPPTOn_runTwoRound_prover hV hgPlain <;> fun_prop
@@ -978,7 +978,7 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
     · apply IsPPTOn.map ?_ hgPlain
       apply ComputableInPolyTime.sampleList
       fun_prop
-    · exact ComputableInPolyTime.tidy (by fun_prop)
+    · fun_prop
   have hone : IsPPTOn input encBits
       (fun p : ℕ × (α × (List Bool × List Bool)) =>
         gmwRealUniformPads generator (p.1 + 7) (length (p.1 + 7)) (f p.2.1)
@@ -989,7 +989,7 @@ theorem isPPTOn_gmwViewReduction {α : Type} {enc : α ↪ List Bool}
     · apply ComputableInPolyTime.sampleList
       have hlengthPlain := PRG.polyTime_length hgPlain hlen
       fun_prop
-    · exact ComputableInPolyTime.tidy (by fun_prop)
+    · fun_prop
   have houter : IsPPTOn (encPair input encBits) encBool
       (fun p : (ℕ × (α × (List Bool × List Bool))) × List Bool =>
         sequenceTest
