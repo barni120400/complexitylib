@@ -57,7 +57,7 @@ private theorem card_agree_mul_two {n : ℕ} {x y : BitString n} (hxy : x ≠ y)
   have hv : x + y ≠ 0 := fun h => hxy (by
     have := congrArg (· + y) h
     simpa [add_assoc] using this)
-  have hcount := two_mul_card_dotProduct_eq_true_add (x + y)
+  have hcount := BitString.two_mul_card_dotProduct_eq_true_add (x + y)
   simp only [hv, ↓reduceIte, add_zero, Fintype.card_fin] at hcount
   have hagree : #{r : BitString n | x ⬝ᵥ r = y ⬝ᵥ r} =
       #{r : BitString n | ¬(x + y) ⬝ᵥ r = true} := by
