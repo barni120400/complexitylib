@@ -21,9 +21,10 @@ value of sums and prefix sums of lists of integers bounded termwise.
 ## Main results
 
 * `Int.natAbs_pow_le`: `(z ^ q).natAbs ≤ H ^ M` when `z.natAbs ≤ H` and `q ≤ M`.
-* `List.natAbs_sum_le`: `l.sum.natAbs ≤ l.length * C` when every element of `l` is bounded by `C`.
-* `List.natAbs_take_sum_le`: every prefix sum of `l` is bounded by `l.length * C`.
-* `List.natAbs_take_sum_le_of_length`: prefix sums are bounded by `m * C` when `l.length ≤ m`.
+* `List.natAbs_sum_le_length_mul`: `l.sum.natAbs ≤ l.length * C` when every element of `l` is
+  bounded by `C`.
+* `List.natAbs_sum_take_le_length_mul`: every prefix sum of `l` is bounded by `l.length * C`.
+* `List.natAbs_sum_take_le_of_length_le`: prefix sums are bounded by `m * C` when `l.length ≤ m`.
 -/
 
 @[expose] public section
@@ -35,14 +36,14 @@ base. -/
 lemma natAbs_pow_le {z : ℤ} {H : ℕ} (hH : 1 ≤ H) (hz : z.natAbs ≤ H) {q M : ℕ} (hq : q ≤ M) :
     (z ^ q).natAbs ≤ H ^ M := by
   rw [Int.natAbs_pow]
-  exact Nat.le_trans (Nat.pow_le_pow_left hz q) (Nat.pow_le_pow_right hH hq)
+  exact (Nat.pow_le_pow_left hz q).trans (Nat.pow_le_pow_right hH hq)
 
 end Int
 
 namespace List
 
 /-- The magnitude of a sum of integers is at most the length times a termwise bound. -/
-lemma natAbs_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) :
+lemma natAbs_sum_le_length_mul {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) :
     l.sum.natAbs ≤ l.length * C := by
   induction l with
   | nil => simp
@@ -54,15 +55,15 @@ lemma natAbs_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) :
       _ = (l.length + 1) * C := by ring
 
 /-- Every prefix sum of a list is bounded by its length times a bound on its entries. -/
-lemma natAbs_take_sum_le {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) (m : ℕ) :
+lemma natAbs_sum_take_le_length_mul {l : List ℤ} {C : ℕ} (h : ∀ x ∈ l, x.natAbs ≤ C) (m : ℕ) :
     (l.take m).sum.natAbs ≤ l.length * C :=
-  Nat.le_trans (natAbs_sum_le fun x hx => h x (List.mem_of_mem_take hx))
+  (natAbs_sum_le_length_mul fun x hx => h x (List.mem_of_mem_take hx)).trans
     (Nat.mul_le_mul_right _ (List.length_take_le' _ _))
 
 /-- Every prefix sum and the sum of a list of terms bounded by `C` are bounded by
 `m * C`, where `m` bounds the length. -/
-lemma natAbs_take_sum_le_of_length {l : List ℤ} {C m : ℕ} (hl : l.length ≤ m)
+lemma natAbs_sum_take_le_of_length_le {l : List ℤ} {C m : ℕ} (hl : l.length ≤ m)
     (h : ∀ x ∈ l, x.natAbs ≤ C) (k : ℕ) : (l.take k).sum.natAbs ≤ m * C :=
-  Nat.le_trans (natAbs_take_sum_le h k) (Nat.mul_le_mul_right C hl)
+  (natAbs_sum_take_le_length_mul h k).trans (Nat.mul_le_mul_right C hl)
 
 end List

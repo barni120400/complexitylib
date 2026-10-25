@@ -9,9 +9,9 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Runtime.Lift.Defs
-public import Complexity.Foundations.Data.Int.Order
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
+import Complexity.Foundations.Data.Int.Order
 import Mathlib.Data.List.GetD
 
 /-!
@@ -132,7 +132,7 @@ private theorem natAbs_testTerm_le {q : ℕ} (hq : q ≤ M) (u v : ℕ) :
 private theorem natAbs_testTerms_take_sum_le (u v m : ℕ) :
     ((testTerms M (coeffRows (-a) M) (coeffRows a M) t u v).take m).sum.natAbs ≤
       M * ((2 * w) ^ (2 * M) * H ^ M) := by
-  refine List.natAbs_take_sum_le_of_length (by simp [testTerms]) (fun z hz => ?_) m
+  refine List.natAbs_sum_take_le_of_length_le (by simp [testTerms]) (fun z hz => ?_) m
   obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hz
   exact natAbs_testTerm_le hw ha hH ht (List.mem_range.mp hq).le u v
 
@@ -183,14 +183,14 @@ private theorem natAbs_liftTerm_le {α : ℕ} (hα : α < M) (u v i j κ : ℕ) 
 /-- Every prefix sum of an inner sum of a lift entry. -/
 private theorem natAbs_liftTerms_take_sum_le {α : ℕ} (hα : α < M) (u v i j m : ℕ) :
     ((liftTerms M Dg T p r u v i j α).take m).sum.natAbs ≤ M * (A * H ^ (2 * M)) := by
-  refine List.natAbs_take_sum_le_of_length (by simp [liftTerms]) (fun z hz => ?_) m
+  refine List.natAbs_sum_take_le_of_length_le (by simp [liftTerms]) (fun z hz => ?_) m
   obtain ⟨κ, -, rfl⟩ := List.mem_map.mp hz
   exact natAbs_liftTerm_le hT hH hp hr hα u v i j κ
 
 /-- Every prefix sum of the outer sum of a lift entry. -/
 private theorem natAbs_liftSums_take_sum_le (u v i j m : ℕ) :
     ((liftSums M Dg T p r u v i j).take m).sum.natAbs ≤ M * (M * (A * H ^ (2 * M))) := by
-  refine List.natAbs_take_sum_le_of_length (by simp [liftSums]) (fun z hz => ?_) m
+  refine List.natAbs_sum_take_le_of_length_le (by simp [liftSums]) (fun z hz => ?_) m
   obtain ⟨α, hα, rfl⟩ := List.mem_map.mp hz
   have h := natAbs_liftTerms_take_sum_le (Dg := Dg) hT hH hp hr (List.mem_range.mp hα) u v i j M
   rwa [List.take_of_length_le (by simp [liftTerms])] at h

@@ -10,10 +10,10 @@ module
 public import Complexity.Init
 public import Complexity.Computability.Circuit.Rational.Determinant
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Int.Binary
-public import Complexity.Foundations.Data.Int.Order
 public import Mathlib.Data.Nat.Size
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Iteration
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Foundations.Data.Int.Order
 import Mathlib.Data.List.GetD
 
 /-!
@@ -349,7 +349,7 @@ private lemma half_le_bound (A : List (List ℤ)) (b e : ℕ) :
 
 private lemma traceTerms_take_le (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e) (i m : ℕ) :
     ((traceTerms A F i).take m).sum.natAbs ≤ A.length * (2 ^ e * 2 ^ b) := by
-  refine (List.natAbs_take_sum_le (C := 2 ^ e) ?_ m).trans ?_
+  refine (List.natAbs_sum_take_le_length_mul (C := 2 ^ e) ?_ m).trans ?_
   · intro x hx
     obtain ⟨k, -, rfl⟩ := List.mem_map.mp hx
     exact (hF k k).le
@@ -358,7 +358,7 @@ private lemma traceTerms_take_le (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e)
 private lemma productTerms_take_le (hA : ∀ i j, (rowEntry A i j).natAbs < 2 ^ b)
     (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e) (i j m : ℕ) :
     ((productTerms A F i j).take m).sum.natAbs ≤ A.length * (2 ^ e * 2 ^ b) := by
-  refine (List.natAbs_take_sum_le (C := 2 ^ e * 2 ^ b) ?_ m).trans
+  refine (List.natAbs_sum_take_le_length_mul (C := 2 ^ e * 2 ^ b) ?_ m).trans
     (Nat.mul_le_mul_right _ (length_productTerms_le A F i j))
   intro x hx
   obtain ⟨k, -, rfl⟩ := List.mem_map.mp hx
@@ -381,7 +381,7 @@ theorem natAbs_productTerms_take_sum_lt (hA : ∀ i j, (rowEntry A i j).natAbs <
 private lemma trace_mul_le (hA : ∀ i j, (rowEntry A i j).natAbs < 2 ^ b)
     (hF : ∀ i j, (rowEntry F i j).natAbs < 2 ^ e) (i j : ℕ) :
     ((traceTerms A F i).sum * rowEntry A i j).natAbs ≤ A.length * (2 ^ e * 2 ^ b) := by
-  have h := List.natAbs_take_sum_le (l := traceTerms A F i) (C := 2 ^ e)
+  have h := List.natAbs_sum_take_le_length_mul (l := traceTerms A F i) (C := 2 ^ e)
     (fun x hx => by
       obtain ⟨k, -, rfl⟩ := List.mem_map.mp hx
       exact (hF k k).le) (traceTerms A F i).length
