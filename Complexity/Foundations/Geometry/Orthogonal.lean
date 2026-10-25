@@ -31,6 +31,10 @@ points. A singleton route has singleton support; an empty route has empty suppor
 
 * `Cslib.Orthogonal.mem_horizontal`, `Cslib.Orthogonal.mem_vertical`: real segment membership
   characterized by coordinate intervals.
+
+## References
+
+The finite-route definitions and proofs are original.
 -/
 
 @[expose] public section
@@ -77,8 +81,25 @@ instance (a b : Point) : Decidable (AxisAligned a b) := inferInstanceAs (Decidab
 /-- Every consecutive segment is proper and axis aligned. -/
 def IsOrthogonal (r : Route) : Prop := ∀ e ∈ r.consecutivePairs, AxisAligned e.1 e.2
 
+/-- Removing the initial listed point preserves proper orthogonality. -/
+theorem IsOrthogonal.of_cons {a : Point} {r : Route} (h : IsOrthogonal (a :: r)) :
+    IsOrthogonal r := by
+  cases r with
+  | nil => simp [IsOrthogonal, List.consecutivePairs]
+  | cons b r =>
+    intro e he
+    exact h e (List.mem_cons_of_mem (a, b) he)
+
 /-- Manhattan length of one segment. -/
 def length (a b : Point) : ℕ := (b.1 - a.1).natAbs + (b.2 - a.2).natAbs
+
+/-- A pair of lattice points one Manhattan unit apart forms a proper axis-aligned segment. -/
+theorem axisAligned_of_length_eq_one {a b : Point} (h : length a b = 1) : AxisAligned a b := by
+  rcases a with ⟨ax, ay⟩
+  rcases b with ⟨bx, by'⟩
+  simp only [length] at h
+  simp only [AxisAligned, ne_eq, Prod.mk.injEq]
+  omega
 
 /-- Total Manhattan length of the consecutive segments. -/
 def wireLength (r : Route) : ℕ := (r.consecutivePairs.map fun e => length e.1 e.2).sum
