@@ -288,15 +288,6 @@ theorem PromiseRP_subset_PromiseNP : PromiseRP enc ⊆ PromiseNP enc := by
   rintro Q ⟨p, V, hV, h⟩
   exact mem_PromiseNP_iff.2 ⟨p, V, hV, h.exists_certificate⟩
 
-/-- Converting a polynomial-time seeded function into a uniform strict PPT program. -/
-private theorem isPPTOn_sampleList_seeded {β : Type} {encB : β ↪ List Bool}
-    {p : Polynomial ℕ} {f : α × List Bool → β}
-    (hf : ComputableInPolyTime f (encPair enc encBits) encB) :
-    IsPPTOn enc encB (fun a => (fun w => f (a, w)) <$>
-      BitString.sampleList (p.eval (enc a).length)) :=
-  IsPPTOn.of_seeded
-    ((ComputableInPolyTime.unary_eval p).comp (ComputableInPolyTime.encoding_length enc)) hf
-
 /-- **Probabilistic-program characterization of `PromiseBPP`**: a promise problem is in
 `PromiseBPP` exactly when a uniform strict PPT Boolean program accepts every yes-instance with
 probability at least `2 / 3` and rejects every no-instance with probability at least `2 / 3`. -/
@@ -308,7 +299,9 @@ theorem mem_PromiseBPP_iff_exists_isPPTOn : Q ∈ PromiseBPP enc ↔
   constructor
   · rintro ⟨p, V, hV, hyes, hno⟩
     refine ⟨fun a => (fun w => V (a, w)) <$> BitString.sampleList (p.eval (enc a).length),
-      isPPTOn_sampleList_seeded hV, fun a ha => ?_, fun a ha => ?_⟩
+      IsPPTOn.of_seeded ((ComputableInPolyTime.unary_eval p).comp
+        (ComputableInPolyTime.encoding_length enc)) hV,
+      fun a ha => ?_, fun a ha => ?_⟩
     · simp only [ProbComp.eval_map, BitString.eval_sampleList]
       rw [uniformList_acceptCount_toReal, le_div_iff₀ (by positivity)]
       have h : (2 : ℝ) * 2 ^ p.eval (enc a).length ≤
@@ -364,7 +357,9 @@ theorem mem_PromiseRP_iff_exists_isPPTOn : Q ∈ PromiseRP enc ↔
   constructor
   · rintro ⟨p, V, hV, hyes, hno⟩
     refine ⟨fun a => (fun w => V (a, w)) <$> BitString.sampleList (p.eval (enc a).length),
-      isPPTOn_sampleList_seeded hV, fun a ha => ?_, fun a ha hmem => ?_⟩
+      IsPPTOn.of_seeded ((ComputableInPolyTime.unary_eval p).comp
+        (ComputableInPolyTime.encoding_length enc)) hV,
+      fun a ha => ?_, fun a ha hmem => ?_⟩
     · simp only [ProbComp.eval_map, BitString.eval_sampleList]
       rw [uniformList_acceptCount_toReal, le_div_iff₀ (by positivity)]
       have h : (2 : ℝ) ^ p.eval (enc a).length ≤

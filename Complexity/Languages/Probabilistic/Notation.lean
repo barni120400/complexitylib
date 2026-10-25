@@ -47,8 +47,6 @@ namespace `Cslib`. It then also prints both forms back as `Pr[e]`.
   `Cslib.ProbComp.probability_map_decide_mem`: set events.
 * `Cslib.Probability.PMF.probability_map_beq`, `Cslib.ProbComp.probability_map_beq`: single
   outcomes.
-* `Cslib.Probability.PMF.probability_map_not`, `Cslib.ProbComp.probability_map_not`: negating a
-  Boolean experiment.
 -/
 
 public section
@@ -125,11 +123,6 @@ theorem probability_map_beq [BEq α] [LawfulBEq α] (μ : _root_.PMF α) (a : α
   ext x
   simp
 
-/-- Negating a Boolean distribution's output gives the probability of `false`. -/
-theorem probability_map_not (μ : _root_.PMF Bool) :
-    Pr[Bool.not <$> μ] = (μ false).toReal := by
-  simp [_root_.PMF.monad_map_eq_map, _root_.PMF.map_apply]
-
 end PMF
 
 end Cslib.Probability
@@ -161,11 +154,5 @@ theorem probability_map_decide_mem (program : ProbComp α) (s : Set α) [Decidab
 theorem probability_map_beq [BEq α] [LawfulBEq α] (program : ProbComp α) (a : α) :
     Pr[(· == a) <$> program] = (eval program a).toReal := by
   rw [eval_map, ← _root_.PMF.monad_map_eq_map, PMF.probability_map_beq]
-
-/-- Negating a Boolean program's output gives the probability that the original program returns
-`false`. -/
-theorem probability_map_not (program : ProbComp Bool) :
-    Pr[Bool.not <$> program] = (eval program false).toReal := by
-  rw [eval_map, ← _root_.PMF.monad_map_eq_map, PMF.probability_map_not]
 
 end Cslib.ProbComp

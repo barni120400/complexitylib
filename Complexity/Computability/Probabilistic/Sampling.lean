@@ -7,8 +7,9 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import Complexity.Computability.Probabilistic.PPT.Capture
+public import Complexity.Computability.Probabilistic.PPT.Composition
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Sampling
+import Complexity.Computability.Probabilistic.PPT.Capture
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!

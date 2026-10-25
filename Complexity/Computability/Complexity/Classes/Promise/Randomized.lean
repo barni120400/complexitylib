@@ -488,7 +488,8 @@ theorem RPReducible.mem_PromiseCoRP (hXY : RPReducible encA encB X Y)
       have h := PMF.toOuterMeasure_bind_ge_mul (ProbComp.eval (R a)) (fun y => ProbComp.eval (M y))
         Y.no {false} (by norm_num : (0 : ℝ) ≤ 1 / 2) (hnoR a ha)
         fun y _ hy => by
-          rw [PMF.toOuterMeasure_apply_singleton, ← ProbComp.probability_map_not]
+          rw [PMF.toOuterMeasure_apply_singleton, PMF.toReal_false_eq_one_sub,
+            ← ProbComp.probability_not]
           exact hnoM y hy
       rw [← ProbComp.eval_bind, PMF.toOuterMeasure_apply_singleton] at h
       linarith
@@ -498,8 +499,7 @@ theorem RPReducible.mem_PromiseCoRP (hXY : RPReducible encA encB X Y)
     have hand2 : Pr[and2 T a] ≤ 4 / 9 := by
       rw [probability_and2]
       nlinarith
-    have hsum := PMF.toReal_true_add_toReal_false (ProbComp.eval (and2 T a))
-    rw [ProbComp.probability_map_not]
+    rw [ProbComp.probability_not]
     linarith
 
 /-- If `X` is `RPReducible` to `Y` and `Y ∈ PromiseP encB`, then `X ∈ PromiseCoRP encA`. -/
@@ -513,8 +513,8 @@ theorem RPReducible.mem_coRP_of_ofSet {A : Set α} (hAY : RPReducible encA encB 
     (hY : Y ∈ PromiseCoRP encB) : A ∈ coRP encA :=
   ofSet_mem_PromiseCoRP.mp (hAY.mem_PromiseCoRP hY)
 
-/-- **`PromiseBPP` is closed under `RPReducible`** (library lemma; probability amplification on
-promise problems follows [Goldreich, Definition 1.2][Goldreich2006] and
+/-- **`PromiseBPP` is closed under `RPReducible`** (library lemma; on the promise classes of
+[Goldreich, Definition 1.2][Goldreich2006], amplifying as in
 [Sipser, Lemma 10.5][Sipser2013]): if `X` reduces to `Y` by a randomized one-sided reduction and
 `Y ∈ PromiseBPP encB`, then `X ∈ PromiseBPP encA`. -/
 theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
@@ -535,9 +535,8 @@ theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
     nlinarith [sq_nonneg (Pr[maj3 M₀ y] - 20 / 27), sq_nonneg (1 - Pr[maj3 M₀ y])]
   have hMno (y : β) (hy : y ∈ Y.no) : Pr[M y] ≤ 2 / 11 := by
     have h0 : Pr[M₀ y] ≤ 1 / 3 := by
-      have hsum := PMF.toReal_true_add_toReal_false (ProbComp.eval (M₀ y))
       have h := hnoM₀ y hy
-      rw [ProbComp.probability_map_not] at h
+      rw [ProbComp.probability_not] at h
       linarith
     have h0_nn : 0 ≤ Pr[M₀ y] := ENNReal.toReal_nonneg
     have hm1 : Pr[maj3 M₀ y] ≤ 7 / 27 := by
@@ -577,8 +576,7 @@ theorem RPReducible.mem_PromiseBPP (hXY : RPReducible encA encB X Y)
     have hand2 : Pr[and2 T a] ≤ 289 / 1089 := by
       rw [probability_and2]
       nlinarith
-    have hsum := PMF.toReal_true_add_toReal_false (ProbComp.eval (and2 T a))
-    rw [ProbComp.probability_map_not]
+    rw [ProbComp.probability_not]
     linarith
 
 /-- If a decision problem `A` is `RPReducible` to `Y` and `Y ∈ PromiseBPP encB`, then
