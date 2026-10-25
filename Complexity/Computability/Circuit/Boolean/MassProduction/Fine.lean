@@ -19,7 +19,6 @@ import Complexity.Foundations.Combinatorics.LineCode.HighRate
 import Complexity.Foundations.Combinatorics.LineCode.HighRate.Packing
 import Complexity.Foundations.Combinatorics.LineCode.Menu
 import Complexity.Foundations.Data.BitString.Basic
-import Complexity.Foundations.Data.Nat.Power
 import Complexity.Foundations.FieldTheory.Finite.Subfield
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith
@@ -227,7 +226,7 @@ theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Schedul
         _ = A₁ * 2 ^ (D + b) * (D + ℓ * b + 2) ^ E₁ := by rw [hs1, ← hDb]; ring
         _ ≤ A₁ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) :=
           Nat.mul_le_mul (Nat.mul_le_mul_left _ (Nat.le_add_left _ _))
-            (Nat.pow_le_pow_add (by omega) hB1)
+            (pow_le_pow (by omega) hB1 (Nat.le_add_right _ _))
     have hpipe_le : A₂ * (2 ^ p + 2 ^ D * 2 ^ b + copies * N) *
         (p + w + ℓ * b + Nat.log 2 (2 ^ D + copies) + 2) ^ E₂ ≤
         4 * A₂ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := by
@@ -237,7 +236,7 @@ theorem exists_complexity_le_of_bounds {A₁ E₁ A₂ E₂ : ℕ} (hS : Schedul
             (p + w + ℓ * b + Nat.log 2 (2 ^ D + copies) + 2) ^ E₂
           ≤ A₂ * (4 * (2 ^ p + 2 ^ (D + b))) * B ^ (E₁ + E₂) :=
             Nat.mul_le_mul (Nat.mul_le_mul_left _ hmid)
-              ((Nat.pow_le_pow_add (E' := E₁) (by omega) hB1).trans_eq (by rw [add_comm]))
+              (pow_le_pow (by omega) hB1 (Nat.le_add_left _ _))
         _ = 4 * A₂ * (2 ^ p + 2 ^ (D + b)) * B ^ (E₁ + E₂) := by ring
     calc sched.size + A₂ * (2 ^ p + 2 ^ D * 2 ^ b + copies * N) *
           (p + w + ℓ * b + Nat.log 2 (2 ^ D + copies) + 2) ^ E₂

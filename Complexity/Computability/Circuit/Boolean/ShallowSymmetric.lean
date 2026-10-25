@@ -13,6 +13,7 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Bounds
 import Complexity.Computability.Circuit.Boolean.ShallowSymmetric.Moduli
+import Complexity.Foundations.Data.Nat.Power
 import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 
 /-!

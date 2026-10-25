@@ -16,7 +16,7 @@ import Mathlib.Tactic.Ring
 
 Elementary inequalities on powers and products of natural numbers, in particular powers of two
 with scaled exponents: products and sums of quantities bounded by `2 ^ (a * k)` and `2 ^ (b * k)`,
-powers with added exponents, and bounds by exponentials.
+and bounds by exponentials.
 
 ## Main results
 
@@ -24,7 +24,6 @@ powers with added exponents, and bounds by exponentials.
 * `Nat.add_le_two_pow_add_add_one_mul`:
   `1 ≤ k → x ≤ 2 ^ (a * k) → y ≤ 2 ^ (b * k) → x + y ≤ 2 ^ ((a + b + 1) * k)`.
 * `Nat.le_two_pow_mul`: `1 ≤ k → c ≤ 2 ^ (c * k)`.
-* `Nat.pow_le_pow_add`: `x ≤ B → 1 ≤ B → x ^ E ≤ B ^ (E + E')`.
 * `Nat.mul_add_one_pow_le`: `(R + 1) * d ≤ M → R * (M + 1) ^ d ≤ (R + 1) * M ^ d`.
 -/
 
@@ -55,11 +54,6 @@ theorem add_le_two_pow_add_add_one_mul {k a b x y : ℕ} (hk : 1 ≤ k) (hx : x 
 theorem le_two_pow_mul (c k : ℕ) (hk : 1 ≤ k) : c ≤ 2 ^ (c * k) :=
   Nat.lt_two_pow_self.le.trans
     (Nat.pow_le_pow_right (by omega) (by nlinarith))
-
-/-- Power inequality with added exponent. -/
-theorem pow_le_pow_add {B E E' : ℕ} {x : ℕ} (hx : x ≤ B) (hB : 1 ≤ B) :
-    x ^ E ≤ B ^ (E + E') :=
-  (Nat.pow_le_pow_left hx E).trans (Nat.pow_le_pow_right hB (Nat.le_add_right E E'))
 
 /-- `(1 + 1 / M) ^ d ≤ 1 + 1 / R` when `(R + 1) d ≤ M`, without denominators. -/
 theorem mul_add_one_pow_le {R M d : ℕ} (h : (R + 1) * d ≤ M) :

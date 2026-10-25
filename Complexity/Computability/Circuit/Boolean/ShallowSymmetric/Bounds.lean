@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Init
-public import Complexity.Foundations.Data.Nat.Power
+import Complexity.Foundations.Data.Nat.Power
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import Mathlib.Data.Fintype.Basic
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
@@ -36,7 +36,7 @@ length and the integer root scale.
 
 namespace Cslib.Circuits.Boolean.ShallowSymmetric
 
-open Finset Nat
+open Finset
 
 /-- A bound for the entire finite construction, with only its three summary
 parameters: input count, sum of moduli, and sum of squared moduli. -/
@@ -47,17 +47,17 @@ theorem construction_size_bound {k n U V B N A D E : ℕ} (hk : 1 ≤ k)
       2 ^ ((2 * A + 2 * N + D + E + 8) * k) := by
   have h1 : 1 ≤ 2 ^ (0 * k) := by simp
   have h2 : 2 ≤ 2 ^ (1 * k) := by simpa using Nat.le_self_pow (by omega) 2
-  have hn1 := add_le_two_pow_add_add_one_mul hk hn h1
-  have hB2 := add_le_two_pow_add_add_one_mul hk hb h2
+  have hn1 := Nat.add_le_two_pow_add_add_one_mul hk hn h1
+  have hB2 := Nat.add_le_two_pow_add_add_one_mul hk hb h2
   have hU : 3 ^ U ≤ 2 ^ ((2 * A) * k) := by
     calc
       3 ^ U ≤ (2 ^ 2) ^ U := Nat.pow_le_pow_left (by norm_num) _
       _ = 2 ^ (2 * U) := (pow_mul ..).symm
       _ ≤ _ := Nat.pow_le_pow_right (by omega) (by nlinarith)
-  have h := add_le_two_pow_add_add_one_mul hk h1
-    (mul_le_two_pow_add_mul hn1 (add_le_two_pow_add_add_one_mul hk h1
-      (mul_le_two_pow_add_mul (mul_le_two_pow_add_mul hU hn1) (add_le_two_pow_add_add_one_mul hk h2
-        (mul_le_two_pow_add_mul hv hB2)))))
+  have h := Nat.add_le_two_pow_add_add_one_mul hk h1
+    (Nat.mul_le_two_pow_add_mul hn1 (Nat.add_le_two_pow_add_add_one_mul hk h1
+      (Nat.mul_le_two_pow_add_mul (Nat.mul_le_two_pow_add_mul hU hn1)
+        (Nat.add_le_two_pow_add_add_one_mul hk h2 (Nat.mul_le_two_pow_add_mul hv hB2)))))
   convert h using 1
   congr 1
   ring
@@ -66,11 +66,11 @@ theorem construction_size_bound {k n U V B N A D E : ℕ} (hk : 1 ≤ k)
 theorem sum_sq_moduli_bound {r C k : ℕ} (hk : 1 ≤ k)
     (m : Fin r → ℕ) (hm : ∀ i, m i ≤ C * k) :
     ∑ i, (m i) ^ 2 ≤ 2 ^ ((r + 2 * C + 2) * k) := by
-  have hC := le_two_pow_mul C k hk
+  have hC := Nat.le_two_pow_mul C k hk
   have hk' : k ≤ 2 ^ (1 * k) := by simpa using (Nat.lt_two_pow_self (n := k)).le
-  have hCk := mul_le_two_pow_add_mul hC hk'
-  have hsq := mul_le_two_pow_add_mul hCk hCk
-  have h := mul_le_two_pow_add_mul (le_two_pow_mul r k hk) hsq
+  have hCk := Nat.mul_le_two_pow_add_mul hC hk'
+  have hsq := Nat.mul_le_two_pow_add_mul hCk hCk
+  have h := Nat.mul_le_two_pow_add_mul (Nat.le_two_pow_mul r k hk) hsq
   calc
     ∑ i, (m i) ^ 2 ≤ ∑ _i : Fin r, (C * k) ^ 2 :=
       sum_le_sum fun i _ => Nat.pow_le_pow_left (hm i) 2
