@@ -211,7 +211,7 @@ private theorem masked_activation_step (p : Program activationSignature n g)
       fun z t => Function.update z gate ((p.lines gate).op.activate
         (t + ∑ j, activationGateWeight p gate j * (z j).toNat)), ?_, ?_⟩
     · intro z
-      exact ChangesAtMost.map ((hT gate hgate).comp_monotone (monotone_id.add_const _))
+      exact ((hT gate hgate).comp_monotone (monotone_id.add_const _)).comp
         (Function.update z gate)
     · exact masked_activation_succ p gate
   · simp only [hgate, ite_false, BlockKind.Step]

@@ -44,6 +44,7 @@ family are constant. The key may have ties, and the size bound uses natural-numb
   with at most `T |Q| / G` exceptional functions.
 * `Cslib.ChangesAtMost.length_le_succ_of_isChain`: an alternating sequence along an ordered list has
   bounded length.
+
 ## References
 
 * [S. Schlesinger, *Algebraic circuit formalizations in Complexitylib*, Threshold/Internal/Changes]
@@ -70,12 +71,6 @@ theorem ChangesAtMost.mono [Preorder α] {f : α → β} {T T' : ℕ}
 theorem ChangesAtMost.comp [Preorder α] {f : α → β} {T : ℕ}
     (h : ChangesAtMost f T) (g : β → γ) : ChangesAtMost (g ∘ f) T :=
   fun z hz S hS => h z hz S fun i hi heq => hS i hi (congrArg g heq)
-
-/-- Post-composition in function-application syntax preserves a change bound. -/
-theorem ChangesAtMost.map [Preorder α] {f : α → β} {T : ℕ}
-    (h : ChangesAtMost f T) (g : β → γ) :
-    ChangesAtMost (fun t => g (f t)) T :=
-  h.comp g
 
 /-- Monotone precomposition preserves a change bound. -/
 theorem ChangesAtMost.comp_monotone [Preorder α] [Preorder γ] {f : α → β} {T : ℕ}
@@ -396,22 +391,6 @@ theorem ChangesAtMost.exists_sorted_group {ι κ : Type*} (P : Finset ι) (Q : F
 
 /-! ### Alternating sequences along ordered lists -/
 
-/-- Elements of a chain under `≤` are nondecreasing in their indices. -/
-theorem _root_.List.IsChain.getElem_le {α : Type*} [Preorder α] {ts : List α}
-    (hmono : ts.IsChain (· ≤ ·)) {i j : ℕ} (hi : i < ts.length) (hj : j < ts.length)
-    (hij : i ≤ j) :
-    ts[i] ≤ ts[j] := by
-  induction j with
-  | zero =>
-    have : i = 0 := by omega
-    subst this
-    exact le_rfl
-  | succ j ih =>
-    rcases Nat.eq_or_lt_of_le hij with rfl | hlt
-    · exact le_rfl
-    · have hj' : j < ts.length := by omega
-      exact (ih hj' (by omega)).trans (List.isChain_iff_getElem.mp hmono j hj)
-
 /-- Any ordered list along which `f` alternates between consecutive elements has length at
 most `T + 1` whenever `ChangesAtMost f T`. -/
 theorem ChangesAtMost.length_le_succ_of_isChain {α β : Type*} [Preorder α] {f : α → β} {T : ℕ}
@@ -422,7 +401,7 @@ theorem ChangesAtMost.length_le_succ_of_isChain {α β : Type*} [Preorder α] {f
   · omega
   · let z : ℕ → α := fun i => ts[min i (ts.length - 1)]'(by omega)
     have hz : Monotone z := fun i j hij =>
-      hmono.getElem_le (by omega) (by omega) (min_le_min_right _ hij)
+      hmono.sortedLE.getElem_le_getElem_of_le (min_le_min_right _ hij)
     have hchg : ∀ i ∈ Finset.range (ts.length - 1), f (z i) ≠ f (z (i + 1)) := by
       intro i hi
       have hi' : i + 1 < ts.length := by
