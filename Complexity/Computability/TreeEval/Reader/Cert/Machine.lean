@@ -24,7 +24,8 @@ simulating it has a plain resource certificate.
 
 ## Main results
 
-* `Cslib.TreeEval.Reader.tidy_machine`: the simulating step machine has a resource certificate.
+* `Cslib.TreeEval.Reader.machine_resourceCertificate`: the simulating step machine has a resource
+  certificate.
 
 ## References
 
@@ -125,7 +126,8 @@ private theorem step_inSpace :
 
 /-- **The simulating step machine has a resource certificate**, within the space of its states
 together with the position of its head. -/
-theorem tidy_machine : ∃ T, machine.toStepMachine.ResourceCertificate (encPair encState encNat)
+theorem machine_resourceCertificate :
+    ∃ T, machine.toStepMachine.ResourceCertificate (encPair encState encNat)
     (ReadMachine.stateT encState T stateBudget) (ReadMachine.stateS encState stateBudget) := by
   obtain ⟨T₁, c₁, ⟨k₁, Q₁, hf₁, tm₁, hm₁⟩, hl₁⟩ := halt_inSpace
   obtain ⟨T₂, c₂, ⟨k₂, Q₂, hf₂, tm₂, hm₂⟩, hl₂⟩ := addr_inSpace
@@ -138,7 +140,8 @@ theorem tidy_machine : ∃ T, machine.toStepMachine.ResourceCertificate (encPair
       (encPair encState encBool) (encPair encState encBits) T₃ (fun p => stateBudget p.1) :=
     ⟨c₃, ⟨k₃, Q₃, hf₃, tm₃, fun p => (hm₃ p).computesInTimeAndSpace⟩, hl₃⟩
   let T : State → ℕ := fun s => T₁ s + T₂ s + T₃ (s, false) + T₃ (s, true)
-  exact ⟨T, ReadMachine.tidy_toStepMachine (h₁.mono_le (fun s => by simp only [T]; omega)
+  exact ⟨T, ReadMachine.toStepMachine_resourceCertificate
+    (h₁.mono_le (fun s => by simp only [T]; omega)
     fun _ => le_rfl) (h₂.mono_le (fun s => by simp only [T]; omega) fun _ => le_rfl)
     (h₃.mono_le (fun p => by rcases p with ⟨s, _ | _⟩ <;> simp only [T] <;> omega)
       fun _ => le_rfl)⟩

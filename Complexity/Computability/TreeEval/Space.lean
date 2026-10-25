@@ -19,9 +19,9 @@ is the length of the encoded instance. On nontrivial instances (`1 ≤ ℓ` and 
 and `2 ^ H` are at most `n`, so `ℓ, H < |n|` and `|ℓ| ≤ ||n||` (writing `|m|` for the binary length
 of `m`), which yields the headline input-size space bound `O(|n| · ||n||) = O(log n · log log n)`.
 
-The step machine simulating the read machine `Cslib.TreeEval.Reader.machine` is tidy, its run on an
-instance halts with the value of the tree, and its states along the run, which follow the states
-of the read machine together with the position of the head, stay within the space bound.
+The step machine simulating the read machine `Cslib.TreeEval.Reader.machine` has a resource
+certificate. Its run on an instance halts with the value of the tree. The states along the run
+follow those of the read machine together with the head position and stay within the space bound.
 
 ## Main definitions
 
@@ -67,7 +67,7 @@ length `ℓ` and height `H` is computable from its encoding in space
 theorem computableInSpace_eval : ∃ t, ComputableInBigO
     (fun I : Instance => List.ofFn I.tree.eval) encInstance encBits t
     fun I => spaceBound I.ell I.height + (encNat ((encInstance I).length + 1)).length := by
-  obtain ⟨T, hT⟩ := tidy_machine
+  obtain ⟨T, hT⟩ := machine_resourceCertificate
   have hc (I : Instance) :
       machine.toStepMachine.Computes (encInstance I) (List.ofFn I.tree.eval) := by
     obtain ⟨n, s, hrun, hhalt⟩ := exists_run_eq I.tree

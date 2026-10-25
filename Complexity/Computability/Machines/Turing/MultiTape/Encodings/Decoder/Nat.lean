@@ -17,8 +17,8 @@ import Mathlib.Data.Nat.Size
 /-! # Total binary-number decoding
 
 Binary digits are read least significant first. Trailing false symbols are ignored, including on
-malformed words, and empty input returns zero. The existing runtime definitions and inversion
-laws are moved unchanged from Decoder; the certificate uses direct plain machines.
+malformed words, and empty input returns zero. The decoder satisfies the encoding round-trip law
+and has a certificate from direct plain machines.
 -/
 
 @[expose] public section

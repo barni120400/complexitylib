@@ -53,7 +53,7 @@ theorem stoppedResource : stopped.toStepMachine.ResourceCertificate
     (encPair unitWord encNat)
     (ReadMachine.stateT unitWord (fun _ => 0) (fun _ => 0))
     (ReadMachine.stateS unitWord (fun _ => 0)) := by
-  refine stopped.tidy_toStepMachine ?_ ?_ ?_
+  refine stopped.toStepMachine_resourceCertificate ?_ ?_ ?_
   · exact ComputableInO.constZero true
   · exact ComputableInO.constZero none
   · have h : ComputableInO (fun _ : Unit × Bool => ((), ([] : List Bool)))
@@ -68,9 +68,9 @@ theorem stoppedResource : stopped.toStepMachine.ResourceCertificate
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.GenericRAM.NativeCertificate.iterate
 
-/-- info: 'Turing.ReadMachine.tidy_toStepMachine' depends on axioms:
+/-- info: 'Turing.ReadMachine.toStepMachine_resourceCertificate' depends on axioms:
 [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Turing.ReadMachine.tidy_toStepMachine
+#print axioms Turing.ReadMachine.toStepMachine_resourceCertificate
 
 end ComplexityTests.Internal.CountedConsumers

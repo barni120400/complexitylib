@@ -305,7 +305,7 @@ private theorem step_inSpace
         (budget_prod hs (hw []))))).of_enc_eq fun p => ?_
   simp only [step, decide_eq_true_eq]
 
-private theorem tidy_machine
+private theorem machine_resourceCertificate
     (hN : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.numChunks p.1.2.1) encStepIn
       encNat fun p => wBudget p.1)
     (hC : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.chunk p.1.2.1 p.1.2.2)
@@ -325,7 +325,7 @@ private theorem tidy_machine
       (encPair encNat3 encBool) (encPair encNat3 encBits) T₃ (fun p => wBudget p.1) :=
     ⟨c₃, ⟨k₃, Q₃, hf₃, tm₃, fun p => (hm₃ p).computesInTimeAndSpace⟩, hl₃⟩
   let T : ℕ × ℕ × ℕ → ℕ := fun s => T₁ s + T₂ s + T₃ (s, false) + T₃ (s, true)
-  exact ⟨T, ReadMachine.tidy_toStepMachine
+  exact ⟨T, ReadMachine.toStepMachine_resourceCertificate
     (h₁.mono_le (fun s => by simp only [T]; omega) fun _ => le_rfl)
     (h₂.mono_le (fun s => by simp only [T]; omega) fun _ => le_rfl)
     (h₃.mono_le (fun p => by rcases p with ⟨s, _ | _⟩ <;> simp only [T] <;> omega)
@@ -369,7 +369,7 @@ theorem computableInLogSpace {β : Type} {encOut : β ↪ List Bool} {g : List B
   have hT : ComputableTidilyInSpace (fun p : (ℕ × ℕ × ℕ) × Bool => S.trailer p.1.2.1) encStepIn
       encBits fun p => wBudget p.1 := by simpa only [computableInSpace_iff_computableTidilyInSpace]
     using hT
-  obtain ⟨T, hT'⟩ := tidy_machine hN hC hT
+  obtain ⟨T, hT'⟩ := machine_resourceCertificate hN hC hT
   have hc (w : List Bool) : S.machine.toStepMachine.Computes (encFramed encBits w)
       (encOut (g w)) := by
     have hrun := S.run_machine w

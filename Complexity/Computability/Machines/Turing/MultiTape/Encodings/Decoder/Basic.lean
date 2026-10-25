@@ -18,8 +18,13 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Degree
 # Total decoders with plain degree certificates
 
 A decoder is total on every word, inverts its encoding, and carries independent cost and encoded
-output degrees. These definitions and the independent constructors are moved from Decoder;
-compound encodings are reexported by that original module.
+output degrees. The basic constructors preserve totality and the round-trip law.
+
+## Main definitions
+
+* `Turing.MultiTapeTM.Decoder`: total decoding with independent cost and output degrees.
+* `Turing.MultiTapeTM.Decoder.computableInPolyTime`: the ordinary polynomial-time certificate.
+* `Turing.MultiTapeTM.Decoder.bits`, `.unary`, `.bool`, `.option`, `.pair`, `.map`: basic decoders.
 -/
 
 @[expose] public section

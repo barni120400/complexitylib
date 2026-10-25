@@ -238,9 +238,10 @@ lemma step_space_le (cI D SI Sm L K P P₂ sR : ℕ) (hcI : cI ≤ D) (hD : 100 
 
 /-! ### The theorem -/
 
-/-- **Step machines of tidily computable functions are tidily computable.** Let the step machine
+/-- **Compile step machines with plain resource-certified components.** Let the step machine
 `⟨init x, halt, step⟩` halt on the input `encIn x` after `rounds x` steps with the output
-`encOut (g x)`. If `init`, `halt` and `step` are tidily computable, then so is `g`, in time
+`encOut (g x)`. If `init`, `halt` and `step` have plain resource certificates, then `g` has a tidy
+implementation, in time
 `O(TI x + (rounds x + 1) * (tMax x + lMax x + 1) + n)` and space `O(SI x + sMax x + lMax x + 1)`,
 where `tMax`, `sMax` bound the time and space of `halt` and `step` along the run and `lMax` the
 size of the states. The input head is never rewound between steps. -/

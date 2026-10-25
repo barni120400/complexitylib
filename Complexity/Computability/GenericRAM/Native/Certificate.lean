@@ -16,9 +16,11 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Resour
 /-!
 # Plain native certificates with independent resource bounds
 
-A certificate keeps one finite realizing machine, arbitrary input-dependent time/workspace bounds,
-and the existing encoded-output charge. Exact constructors charge output using its actual clock,
-so their workspace allowance is exactly `s + t`. Runtime model programs are defined separately.
+A certificate records arbitrary input-dependent time/workspace bounds and a proposition asserting
+that a finite machine realizes its function within them, including the encoded-output charge. The
+machine is existential in that proposition, not stored as data. Exact constructors charge output
+using its actual clock, so their workspace allowance is exactly `s + t`. Runtime model programs are
+defined separately.
 
 ## Main definitions
 

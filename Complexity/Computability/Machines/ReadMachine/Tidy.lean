@@ -26,8 +26,8 @@ in binary, and the time by a factor of the position, to compare it with the addr
 
 * `Turing.ReadMachine.pairFalse_inSpace`, `Turing.ReadMachine.comp_pairFalse_inSpace`: evaluating
   a function of a state and a bit at the bit `false` within the space budget of the step.
-* `Turing.ReadMachine.tidy_toStepMachine`: the simulating step machine has a plain resource
-  certificate. The historical declaration name and earlier space-only helpers remain staged.
+* `Turing.ReadMachine.toStepMachine_resourceCertificate`: the simulating step machine has a plain
+  resource certificate.
 -/
 
 @[expose] public section
@@ -221,7 +221,7 @@ theorem inLen_le (p : (σ × ℕ) × Option Bool) :
 
 /-- **The simulating step machine has a resource certificate**, if the halting test, address and
 step have plain resource certificates with the given state bounds. -/
-theorem tidy_toStepMachine (hhalt : ComputableInO m.halt encS encBool T S)
+theorem toStepMachine_resourceCertificate (hhalt : ComputableInO m.halt encS encBool T S)
     (haddr : ComputableInO m.addr encS (encOption encNat) T S)
     (hstep : ComputableInO (fun p : σ × Bool => m.step p.1 p.2) (encPair encS encBool)
       (encPair encS encBits) (fun p => T p.1) fun p => S p.1) :

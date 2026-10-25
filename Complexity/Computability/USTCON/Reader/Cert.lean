@@ -22,8 +22,8 @@ work space linear in the length of the encoded state (and the bit read): every s
 number of operations on the numbers and the heads of the lists of the state — comparisons,
 successors and predecessors, products for the address, divisions by the number of labels, and
 functions of the finitely many controls, labels and frames. So the step machine simulating the read
-machine is tidy within space linear in its states and the position of its head
-(`Cslib.USTCON.Reader.tidy_machine`).
+machine has a resource certificate within space linear in its states and the position of its head
+(`Cslib.USTCON.Reader.machine_resourceCertificate`).
 
 ## Main definitions
 
@@ -34,7 +34,8 @@ machine is tidy within space linear in its states and the position of its head
 
 * `Cslib.USTCON.Reader.halt_inSpace`, `Cslib.USTCON.Reader.addr_inSpace`,
   `Cslib.USTCON.Reader.step_inSpace`: the components of the machine within linear space.
-* `Cslib.USTCON.Reader.tidy_machine`: the simulating step machine is tidy.
+* `Cslib.USTCON.Reader.machine_resourceCertificate`: the simulating step machine has a resource
+  certificate.
 -/
 
 @[expose] public section
@@ -497,7 +498,8 @@ theorem step_inSpace :
 
 /-- The step machine simulating the read machine has a resource certificate within the space
 of its states together with the position of its head. -/
-theorem tidy_machine : ∃ T, machine.toStepMachine.ResourceCertificate (encPair encState encNat)
+theorem machine_resourceCertificate :
+    ∃ T, machine.toStepMachine.ResourceCertificate (encPair encState encNat)
     (ReadMachine.stateT encState T stateBudget) (ReadMachine.stateS encState stateBudget) := by
   obtain ⟨T₁, c₁, ⟨k₁, Q₁, hf₁, tm₁, hm₁⟩, hl₁⟩ := halt_inSpace
   obtain ⟨T₂, c₂, ⟨k₂, Q₂, hf₂, tm₂, hm₂⟩, hl₂⟩ := addr_inSpace
@@ -519,7 +521,8 @@ theorem tidy_machine : ∃ T, machine.toStepMachine.ResourceCertificate (encPair
       (hm₃ p).2.2.mono (by nlinarith)⟩⟩,
       fun p => (hl₃ p).trans (by nlinarith)⟩
   let T : State → ℕ := fun s => T₁ s + T₂ s + T₃ (s, false) + T₃ (s, true)
-  exact ⟨T, ReadMachine.tidy_toStepMachine (h₁.mono_le (fun s => by simp only [T]; omega)
+  exact ⟨T, ReadMachine.toStepMachine_resourceCertificate
+    (h₁.mono_le (fun s => by simp only [T]; omega)
     fun _ => le_rfl) (h₂.mono_le (fun s => by simp only [T]; omega) fun _ => le_rfl)
     (h₃.mono_le (fun p => by rcases p with ⟨s, _ | _⟩ <;> simp only [T] <;> omega)
       fun _ => le_rfl)⟩
