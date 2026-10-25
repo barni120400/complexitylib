@@ -92,7 +92,7 @@ equivalent to `SAT ∈ PPolyOn encCNF` (`Cslib.Complexity.NP_subset_PPolyOn_iff_
 
 namespace Cslib.Complexity
 
-open Cslib.Logic.PL Circuits Circuits.Boolean Turing.MultiTapeTM ComputableTidilyInPolyTime
+open Cslib.Logic.PL Circuits Circuits.Boolean Turing.MultiTapeTM ComputableInPolyTime
 
 variable {α : Type} {enc : α ↪ List Bool}
 
@@ -118,26 +118,24 @@ private theorem verifier_append {f : α × List Bool → CNF ℕ} {S W P : Polyn
         (encCNF ψ)) (f (a, u))) := by
   rw [verifier, ← hw₁, List.drop_left, List.take_left]
 
-private theorem computableTidilyInPolyTime_verifier {f : α × List Bool → CNF ℕ}
-    (hf : ComputableTidilyInPolyTime f (encPair enc encBits) encCNF) (S W P : Polynomial ℕ) :
-    ComputableTidilyInPolyTime (verifier enc f S W P) (encPair enc encBits) encBool := by
-  have hn : ComputableTidilyInPolyTime (fun x : α × List Bool => (enc x.1).length)
+private theorem computableInPolyTime_verifier {f : α × List Bool → CNF ℕ}
+    (hf : ComputableInPolyTime f (encPair enc encBits) encCNF) (S W P : Polynomial ℕ) :
+    ComputableInPolyTime (verifier enc f S W P) (encPair enc encBits) encBool := by
+  have hn : ComputableInPolyTime (fun x : α × List Bool => (enc x.1).length)
       (encPair enc encBits) encUnary :=
     (encoding_length enc).comp (fst _ _)
-  have hφ : ComputableTidilyInPolyTime (fun x : α × List Bool =>
+  have hφ : ComputableInPolyTime (fun x : α × List Bool =>
       f (x.1, x.2.drop (P.eval (enc x.1).length))) (encPair enc encBits) encCNF :=
     hf.comp ((fst _ _).prod (bitsDropWithInput (snd _ _) ((unary_eval P).comp hn)))
-  have hD : ComputableTidilyInPolyTime (fun p : (α × List Bool) × CNF ℕ =>
+  have hD : ComputableInPolyTime (fun p : (α × List Bool) × CNF ℕ =>
       evalAdvice (S.eval (enc p.1.1).length) (W.eval (enc p.1.1).length)
         (p.1.2.take (P.eval (enc p.1.1).length)) (encCNF p.2))
       (encPair (encPair enc encBits) encCNF) encBool := by
     have hn' := hn.comp (fst (encPair enc encBits) encCNF)
-    exact (computableInPolyTime_evalAdvice (.of_tidy ((unary_eval S).comp hn'))
-      (.of_tidy ((unary_eval W).comp hn'))
-        (.of_tidy (bitsTakeWithInput (fst _ _).snd' ((unary_eval P).comp hn')))
-      (.of_tidy ((encode encCNF).comp (snd _ _)))).tidy
-  exact SAT.computableInPolyTime_verifier.tidy.comp
-    (hφ.prod (SAT.computableInPolyTime_search (.of_tidy hD) (.of_tidy hφ)).tidy)
+    exact computableInPolyTime_evalAdvice_eval S W hn'
+      (bitsTakeWithInput ((snd _ _).comp (fst _ _)) ((unary_eval P).comp hn'))
+      ((of_tidy (ComputableTidilyInPolyTime.encode encCNF)).comp (snd _ _))
+  exact SAT.computableInPolyTime_verifier.comp (hφ.prod (SAT.computableInPolyTime_search hD hφ))
 
 end KarpLipton
 
@@ -166,7 +164,7 @@ theorem PiP_two_subset_SigmaP_two_of_SAT (hSAT : SAT ∈ PPolyOn encCNF)
   have hN (n : ℕ) : N.eval n = SAT.queryBound (F.eval n) := by
     simp [N, SAT.queryBound, Polynomial.eval_add, Polynomial.eval_mul]
   refine ⟨[P, p], KarpLipton.verifier enc f S W P, rfl,
-    .of_tidy (KarpLipton.computableTidilyInPolyTime_verifier hf.tidy S W P), fun a => ?_⟩
+    KarpLipton.computableInPolyTime_verifier hf S W P, fun a => ?_⟩
   set n := (enc a).length
   -- membership in `A` through `SAT`
   have hA' : a ∈ A ↔ ∀ u : List Bool, u.length = p.eval n → f (a, u) ∈ SAT := by
@@ -230,7 +228,7 @@ theorem PolyTimeReducible.mem_PPolyOn {β : Type} {encB : β ↪ List Bool} {A :
     A ∈ PPolyOn enc := by
   obtain ⟨f, hf, hiff⟩ := hAB
   obtain ⟨L_B, hL_B, hLB⟩ := hB
-  obtain ⟨c', d', hf'⟩ := hf.tidy.polyBounded_length.exists_le
+  obtain ⟨c', d', hf'⟩ := hf.polyBounded_length.exists_le
   let N : Polynomial ℕ := Polynomial.C c' * (Polynomial.X + 1) ^ d'
   obtain ⟨S, W, _, α_adv, -, hα, h_eval⟩ := PPoly.exists_evalAdvice hL_B N
   have hN (a : α) : (encB (f a)).length ≤ N.eval (enc a).length := by
@@ -238,14 +236,10 @@ theorem PolyTimeReducible.mem_PPolyOn {β : Type} {encB : β ↪ List Bool} {A :
     simp [N]
   let g : List Bool × α → Bool := fun x =>
     evalAdvice (S.eval (enc x.2).length) (W.eval (enc x.2).length) x.1 (encB (f x.2))
-  have hg : ComputableTidilyInPolyTime g (encPair encBits enc) encBool := by
-    have hn : ComputableTidilyInPolyTime (fun x : List Bool × α => (enc x.2).length)
-        (encPair encBits enc) encUnary :=
-      (encoding_length enc).comp (snd _ _)
-    exact (computableInPolyTime_evalAdvice (.of_tidy ((unary_eval S).comp hn))
-      (.of_tidy ((unary_eval W).comp hn)) (.of_tidy (fst _ _))
-        (.of_tidy ((encode encB).comp (hf.tidy.comp (snd _ _))))).tidy
-  obtain ⟨M, hM, hgM⟩ := PPoly.exists_of_polyTime (.of_tidy hg)
+  have hg : ComputableInPolyTime g (encPair encBits enc) encBool :=
+    computableInPolyTime_evalAdvice_eval S W ((encoding_length enc).comp (snd _ _)) (fst _ _)
+      ((of_tidy (ComputableTidilyInPolyTime.encode encB)).comp (hf.comp (snd _ _)))
+  obtain ⟨M, hM, hgM⟩ := PPoly.exists_of_polyTime hg
   let L : Language Bool := {x : List Bool | frame (α_adv x.length) ++ x ∈ M}
   refine ⟨L, PPoly.of_advice hM α_adv hα (fun _ => Iff.rfl), fun a => ?_⟩
   change a ∈ A ↔ frame (α_adv (enc a).length) ++ enc a ∈ M
@@ -272,23 +266,24 @@ theorem mem_PPoly_of_exists_frame_append
   let V : List Bool × List Bool → Bool := fun z =>
     evalAdvice (S.eval (dropFrame z.1).length) (W.eval (dropFrame z.1).length) (unframe z.1)
       (frame (dropFrame z.1) ++ z.2.take (p.eval (dropFrame z.1).length))
-  have hV : ComputableTidilyInPolyTime V (encPair encBits encBits) encBool := by
-    have hx : ComputableTidilyInPolyTime (fun z : List Bool × List Bool => dropFrame z.1)
-        (encPair encBits encBits) encBits := dropFrame.comp (fst _ _)
-    have hu : ComputableTidilyInPolyTime (fun z : List Bool × List Bool => unframe z.1)
-        (encPair encBits encBits) encBits := unframe.comp (fst _ _)
-    have hn : ComputableTidilyInPolyTime (fun z : List Bool × List Bool => (dropFrame z.1).length)
+  have hV : ComputableInPolyTime V (encPair encBits encBits) encBool := by
+    have hx : ComputableInPolyTime (fun z : List Bool × List Bool => dropFrame z.1)
+        (encPair encBits encBits) encBits :=
+      (of_tidy ComputableTidilyInPolyTime.dropFrame).comp (fst _ _)
+    have hu : ComputableInPolyTime (fun z : List Bool × List Bool => unframe z.1)
+        (encPair encBits encBits) encBits :=
+      (of_tidy ComputableTidilyInPolyTime.unframe).comp (fst _ _)
+    have hn : ComputableInPolyTime (fun z : List Bool × List Bool => (dropFrame z.1).length)
         (encPair encBits encBits) encUnary := length_bits.comp hx
-    have hw : ComputableTidilyInPolyTime
+    have hw : ComputableInPolyTime
         (fun z : List Bool × List Bool => z.2.take (p.eval (dropFrame z.1).length))
         (encPair encBits encBits) encBits :=
       bitsTakeWithInput (snd _ _) ((unary_eval p).comp hn)
-    exact (computableInPolyTime_evalAdvice (.of_tidy ((unary_eval S).comp hn))
-      (.of_tidy ((unary_eval W).comp hn)) (.of_tidy hu)
-        (.of_tidy (bitsAppend ((bitsFrame encBits).comp hx) hw))).tidy
+    exact computableInPolyTime_evalAdvice_eval S W hn hu
+      (bitsAppend ((bitsFrame encBits).comp hx) hw)
   let D : Language Bool := {z : List Bool | ∃ w : List Bool, w.length = p.eval z.length ∧
     V (z, w) = true}
-  have hD : D ∈ PPoly := mem_PPolyOn_encBits_iff.1 (hNP ⟨p, V, .of_tidy hV, fun _ => Iff.rfl⟩)
+  have hD : D ∈ PPoly := mem_PPolyOn_encBits_iff.1 (hNP ⟨p, V, hV, fun _ => Iff.rfl⟩)
   refine PPoly.of_advice hD α_adv hα fun x => ?_
   change (∃ w : List Bool, w.length = p.eval x.length ∧ frame x ++ w ∈ M) ↔
     (∃ w : List Bool, w.length = p.eval (frame (α_adv x.length) ++ x).length ∧

@@ -46,8 +46,9 @@ string listing their certificates (`familyAdvice`, `evalAdvice`) in polynomial t
   of polynomial size.
 * `Cslib.Circuits.Boolean.PPoly.exists_evalAdvice`: advice strings of polynomial length deciding a
   language in `P/poly` up to any polynomial input-length bound.
-* `Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice`: circuit evaluation from advice is
-  polynomial-time.
+* `Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice`,
+  `Cslib.Circuits.Boolean.computableInPolyTime_evalAdvice_eval`: circuit evaluation from advice is
+  polynomial-time, also with the polynomial bounds of `PPoly.exists_evalAdvice`.
 * `Cslib.Circuits.Boolean.PAdvice_subset_PPoly`: `P/advice ⊆ P/poly`.
 * `Cslib.Circuits.Boolean.PPoly_subset_PAdvice`: `P/poly ⊆ P/advice`.
 * `Cslib.Circuits.Boolean.PPoly_eq_PAdvice`: `P/poly = P/advice`.
@@ -165,6 +166,16 @@ theorem computableInPolyTime_evalAdvice {γ : Type} {encIn : γ ↪ List Bool}
     (hw.bitsDropWithInput (unary_mul.comp (hm.prod hwidth)))
   exact computableInPolyTime_evalOutput hx hc.fst' hc.snd'
 
+/-- Evaluation from advice is polynomial-time with `S.eval n` gates in blocks of `W.eval n` bits,
+for polynomials `S` and `W` of a length `n` in unary, the bounds of `PPoly.exists_evalAdvice`. -/
+theorem computableInPolyTime_evalAdvice_eval {γ : Type} {encIn : γ ↪ List Bool}
+    (S W : Polynomial ℕ) {n : γ → ℕ} {w x : γ → List Bool}
+    (hn : ComputableInPolyTime n encIn encUnary) (hw : ComputableInPolyTime w encIn encBits)
+    (hx : ComputableInPolyTime x encIn encBits) :
+    ComputableInPolyTime (fun a => evalAdvice (S.eval (n a)) (W.eval (n a)) (w a) (x a)) encIn
+      encBool :=
+  computableInPolyTime_evalAdvice ((unary_eval S).comp hn) ((unary_eval W).comp hn) hw hx
+
 /-- **Polynomial time with polynomial advice** [Arora and Barak, Section 6.3][AroraBarak09]:
 the languages `L` with advice `α` of polynomial length and a problem `A` of pairs, decidable in
 polynomial time for the encoding `frame u ++ x` of `(u, x)`, such that `x ∈ L` exactly when
@@ -230,18 +241,8 @@ theorem PPoly_subset_PAdvice : PPoly ⊆ PAdvice := by
       ?_, fun _ => Iff.rfl⟩
     have hx : ComputableInPolyTime Prod.snd (encPair encBits encBits) encBits :=
       ComputableInPolyTime.snd _ _
-    have hlen : ComputableInPolyTime (fun p : List Bool × List Bool => p.2.length)
-        (encPair encBits encBits) encUnary :=
-      length_bits.comp hx
-    have hs : ComputableInPolyTime (fun p : List Bool × List Bool => S.eval p.2.length)
-        (encPair encBits encBits) encUnary :=
-      (unary_eval S).comp hlen
-    have hwidth : ComputableInPolyTime (fun p : List Bool × List Bool => W.eval p.2.length)
-        (encPair encBits encBits) encUnary :=
-      (unary_eval W).comp hlen
-    have hw : ComputableInPolyTime Prod.fst (encPair encBits encBits) encBits :=
-      ComputableInPolyTime.fst _ _
-    exact computableInPolyTime_evalAdvice hs hwidth hw hx
+    exact computableInPolyTime_evalAdvice_eval S W (length_bits.comp hx)
+      (ComputableInPolyTime.fst _ _) hx
   · exact (h_eval x.length x (by simp)).symm
 
 /-- **P/poly = P/advice** [Arora and Barak, Theorem 6.18][AroraBarak09]: the circuit class P/poly
