@@ -10,6 +10,7 @@ import Complexity.Computability.Complexity.Classes.LogSpace
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
 import Complexity.Computability.Machines.Turing.MultiTape.Universal.PolyTime
 import Complexity.Foundations.Data.BitString.Parity
+import Complexity.Foundations.Data.Nat.Asymptotics
 import Complexity.Foundations.Data.Nat.Log
 import Complexity.Foundations.Data.Nat.PolynomialBound.Log
 import Mathlib.Tactic.FinCases
@@ -131,5 +132,34 @@ example (c : ℕ) : PolynomiallyBounded fun n => c * (Nat.log2 n + 1) :=
 example (c : ℕ) : PolyBounded (fun w : List Bool => w.length)
     fun w => c * (Nat.log2 w.length + 1) :=
   polyBounded_log _ c
+
+/-- Adding one increases `⌊log_b n⌋` by at most one, and equality holds at `n = b ^ k - 1`. -/
+example : Nat.log 2 (7 + 1) ≤ Nat.log 2 7 + 1 ∧ Nat.log 2 (7 + 1) = Nat.log 2 7 + 1 :=
+  ⟨Nat.log_succ_le 2 7, by decide⟩
+
+/-- `Nat.log_succ_le` also holds for degenerate bases `b ≤ 1` and at `n = 0`. -/
+example : Nat.log 0 (5 + 1) ≤ Nat.log 0 5 + 1 ∧ Nat.log 2 (0 + 1) ≤ Nat.log 2 0 + 1 :=
+  ⟨Nat.log_succ_le 0 5, Nat.log_succ_le 2 0⟩
+
+example : Filter.Tendsto (Nat.log 2) Filter.atTop Filter.atTop :=
+  Nat.tendsto_log_atTop Nat.one_lt_two
+
+example (k : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, k ≤ Nat.log 2 n :=
+  Nat.eventually_le_log k Nat.one_lt_two
+
+example (a c d : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, a + c * Nat.log 2 (n + d) ≤ n :=
+  Nat.eventually_add_mul_log_add_le a c d Nat.one_lt_two
+
+example (c a : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, c * Nat.log 2 n + a ≤ n :=
+  Nat.eventually_mul_log_add_le c a Nat.one_lt_two
+
+example (c k : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, c * (n + 1) ^ k ≤ 2 ^ n :=
+  Nat.eventually_mul_succ_pow_le_pow c k Nat.one_lt_two
+
+example (c k : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, c * (n + 1) ^ k ≤ 2 ^ (n / 4) :=
+  Nat.eventually_mul_succ_pow_le_pow_div c k 4 Nat.one_lt_two (by decide)
+
+example (c k : ℕ) : ∀ᶠ n : ℕ in Filter.atTop, c * n ^ k ≤ 2 ^ (n / 4) :=
+  Nat.eventually_mul_pow_le_pow_div c k 4 Nat.one_lt_two (by decide)
 
 end ComplexityTests.Consolidation
