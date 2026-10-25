@@ -23,7 +23,8 @@ Exercises the KEM, DEM, and KEM–DEM hybrid encryption API in
 * exact decryption correctness of `hybridEncrypt` / `hybridDecrypt` instantiated with a concrete
   KEM and the one-time pad DEM (`otpEncrypt` / `otpDecrypt`);
 * quantitative advantage bounds (`advantage_hybridGame_le`, `advantage_hybridGame_le_two_mul`) and
-  the KEM-to-PKE specialization (`KEMINDCPA.hybrid_otpEncrypt_indcpa`).
+  an end-to-end instantiation of `KEMINDCPA.hybrid_otpEncrypt_indcpa` on `idealEncaps`
+  (`kemINDCPA_idealEncaps`, `indcpa_hybridEncrypt_idealEncaps_otpEncrypt`).
 -/
 
 @[expose] public section
@@ -91,6 +92,12 @@ example : IsPPTOn encUnary encBool
 example : IsPPTOn encUnary encBool
     (kemIdealGame toyKeyGen leakingEncaps eqKemDistinguisher) :=
   isPPTOn_kemIdealGame toyKeyGen_ppt leakingEncaps_ppt eqKemDistinguisher_ppt
+    (ComputableInPolyTime.of_tidy (by fun_prop))
+
+example (adversary : Adversary) (hadversary : adversary.IsPPT) (bit : Bool) :
+    IsPPTOn encUnary encBool (demGame otpEncrypt adversary bit) :=
+  isPPTOn_demGame isPPTOn_otpEncrypt hadversary
+    (ComputableInPolyTime.of_tidy (by fun_prop))
     (ComputableInPolyTime.of_tidy (by fun_prop))
 
 example : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
@@ -167,14 +174,77 @@ theorem not_kemINDCPA_leaking : ¬ KEMINDCPA toyKeyGen leakingEncaps := by
   rw [hone] at hneg
   exact not_negligible_const one_ne_zero hneg
 
-/-- Specialization of the KEM-to-PKE corollary `KEMINDCPA.hybrid_otpEncrypt_indcpa`. -/
-example {keyGen : ℕ → ProbComp (List Bool × List Bool)}
-    {encaps : ℕ → List Bool → ProbComp (List Bool × List Bool)}
-    (hkem : KEMINDCPA keyGen encaps)
-    (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
-    (hencaps : IsPPTOn (encPair encUnary encBits) (encPair encBits encBits)
-      (fun p => encaps p.1 p.2)) :
-    INDCPA keyGen (hybridEncrypt encaps otpEncrypt) :=
-  hkem.hybrid_otpEncrypt_indcpa hkeyGen hencaps
+/-- For `1 ≤ n`, specializing `advantage_hybridGame_le_two_mul` to `otpEncrypt` eliminates the
+DEM advantage term via `advantage_demGame_otpEncrypt_eq_zero`. -/
+example (keyGen : ℕ → ProbComp (List Bool × List Bool))
+    (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool))
+    (adversary : Adversary) {n : ℕ} (hn : 1 ≤ n) :
+    Game.advantage
+      (ProbComp.eval (game keyGen (hybridEncrypt encaps otpEncrypt) adversary false n))
+      (ProbComp.eval (game keyGen (hybridEncrypt encaps otpEncrypt) adversary true n)) ≤
+      2 * Game.advantage
+        (ProbComp.eval
+          (kemRealGame keyGen encaps (hybridToKEMHiddenBitDistinguisher otpEncrypt adversary) n))
+        (ProbComp.eval
+          (kemIdealGame keyGen encaps
+            (hybridToKEMHiddenBitDistinguisher otpEncrypt adversary) n)) := by
+  have h := advantage_hybridGame_le_two_mul keyGen encaps otpEncrypt adversary n
+  rwa [advantage_demGame_otpEncrypt_eq_zero hn, add_zero] at h
+
+/-- For `1 ≤ n`, specializing `advantage_hybridGame_le` to `otpEncrypt` eliminates the DEM
+advantage term via `advantage_demGame_otpEncrypt_eq_zero`. -/
+example (keyGen : ℕ → ProbComp (List Bool × List Bool))
+    (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool))
+    (adversary : Adversary) {n : ℕ} (hn : 1 ≤ n) :
+    Game.advantage
+      (ProbComp.eval (game keyGen (hybridEncrypt encaps otpEncrypt) adversary false n))
+      (ProbComp.eval (game keyGen (hybridEncrypt encaps otpEncrypt) adversary true n)) ≤
+      Game.advantage
+        (ProbComp.eval
+          (kemRealGame keyGen encaps (hybridToKEMDistinguisher otpEncrypt adversary false) n))
+        (ProbComp.eval
+          (kemIdealGame keyGen encaps (hybridToKEMDistinguisher otpEncrypt adversary false) n)) +
+      Game.advantage
+        (ProbComp.eval
+          (kemRealGame keyGen encaps (hybridToKEMDistinguisher otpEncrypt adversary true) n))
+        (ProbComp.eval
+          (kemIdealGame keyGen encaps (hybridToKEMDistinguisher otpEncrypt adversary true) n)) := by
+  have h := advantage_hybridGame_le keyGen encaps otpEncrypt adversary n
+  rwa [advantage_demGame_otpEncrypt_eq_zero hn, add_zero] at h
+
+/-- An ideal encapsulation sampler that draws a fresh uniform `n`-bit key and emits an empty
+ciphertext, making `kemRealGame` and `kemIdealGame` distributionally identical. -/
+noncomputable def idealEncaps (n : ℕ) (_ : List Bool) : ProbComp (List Bool × List Bool) := do
+  let k ← BitString.sampleList n
+  return (k, [])
+
+theorem idealEncaps_ppt :
+    IsPPTOn (encPair encUnary encBits) (encPair encBits encBits)
+      (fun p => idealEncaps p.1 p.2) := by
+  have hk : IsPPTOn (encPair encUnary encBits) encBits
+      (fun p : ℕ × List Bool => BitString.sampleList p.1) :=
+    ComputableTidilyInPolyTime.sampleList (by fun_prop)
+  have hret : ComputableTidilyInPolyTime
+      (fun p : (ℕ × List Bool) × List Bool => (p.2, ([] : List Bool)))
+      (encPair (encPair encUnary encBits) encBits) (encPair encBits encBits) :=
+    (ComputableTidilyInPolyTime.snd _ _).prod (ComputableTidilyInPolyTime.const [])
+  unfold idealEncaps
+  exact hk.bind_with hret.isPPTOn
+
+theorem eval_kemRealGame_idealEncaps_eq_ideal (D : Distinguisher) (n : ℕ) :
+    ProbComp.eval (kemRealGame toyKeyGen idealEncaps D n) =
+      ProbComp.eval (kemIdealGame toyKeyGen idealEncaps D n) := by
+  simp only [kemRealGame, kemIdealGame, idealEncaps, ProbComp.eval_bind, ProbComp.eval_pure,
+    BitString.eval_sampleList, PMF.bind_bind, PMF.pure_bind, PMF.bind_const]
+
+theorem kemINDCPA_idealEncaps : KEMINDCPA toyKeyGen idealEncaps := by
+  intro D _
+  simpa only [eval_kemRealGame_idealEncaps_eq_ideal, Game.advantage_self] using negligible_zero
+
+/-- End-to-end instantiation of `KEMINDCPA.hybrid_otpEncrypt_indcpa` on `idealEncaps` and
+`otpEncrypt`. -/
+theorem indcpa_hybridEncrypt_idealEncaps_otpEncrypt :
+    INDCPA toyKeyGen (hybridEncrypt idealEncaps otpEncrypt) :=
+  kemINDCPA_idealEncaps.hybrid_otpEncrypt_indcpa toyKeyGen_ppt idealEncaps_ppt
 
 end ComplexityTests.Crypto.HybridEncryption

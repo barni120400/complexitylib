@@ -18,23 +18,40 @@ import Complexity.Tactic.PPT
 # KEM–DEM hybrid public-key encryption
 
 A Key Encapsulation Mechanism (KEM) samples a public/secret key pair `(pk, sk) ← keyGen n` and
-encapsulates a symmetric key `(k, ctKem) ← encaps n pk` ([BonehShoup2023], Section 11.3.1,
-Definition 11.3). Its IND-CPA security (`KEMINDCPA`, Attack Game 11.4 and Definition 11.4) asks
-that replacing the encapsulated key `k` with an independent uniform `n`-bit key
-`BitString.sampleList n` is computationally indistinguishable to every uniform strict PPT
-distinguisher receiving `(pk, (k, ctKem))`.
+encapsulates a symmetric key `(k, ctKem) ← encaps n pk` ([BonehShoup2023], Exercise 11.9). Its
+chosen-plaintext / semantic security (`KEMINDCPA`, Exercise 11.9) asks that replacing the
+encapsulated key `k` with an independent uniform `n`-bit key `BitString.sampleList n` is
+computationally indistinguishable to every uniform strict PPT distinguisher receiving
+`(pk, (k, ctKem))`.
 
 A Data Encapsulation Mechanism (DEM) for bit messages encrypts a single challenge bit under a
-fresh uniform `n`-bit key (`demGame`, Attack Game 2.1 / 11.3; `DEMOneTimeINDCPA`).
+fresh uniform `n`-bit key (`demGame`, [BonehShoup2023], Section 2.2, Attack Game 2.1 and
+Definition 2.2; `DEMOneTimeINDCPA`).
 
 Combining `encaps` with `encryptSym` produces the hybrid public-key encryption scheme
-`hybridEncrypt encaps encryptSym` (`hybridDecrypt decaps decryptSym`, Definition 11.5). By
-Boneh and Shoup's Theorem 11.2, if the KEM is IND-CPA secure and the DEM is one-time IND-CPA
+`hybridEncrypt encaps encryptSym` (`hybridDecrypt decaps decryptSym`, Exercise 11.9(a)). By
+Boneh and Shoup's Exercise 11.9(b), if the KEM is IND-CPA secure and the DEM is one-time IND-CPA
 secure, then `hybridEncrypt encaps encryptSym` is IND-CPA secure (`KEMINDCPA.hybrid_indcpa`).
-We formalize both the two-distinguisher triangle bound (`advantage_hybridGame_le`) and the
-single hidden-bit KEM distinguisher bound (`advantage_hybridGame_le_two_mul`), together with a
-non-vacuous one-time pad DEM instantiation (`otpEncrypt`, `otpDecrypt`,
-`demOneTimeINDCPA_otpEncrypt`, `KEMINDCPA.hybrid_otpEncrypt_indcpa`).
+We formalize both the single hidden-bit KEM distinguisher bound of Exercise 11.9(b)
+(`advantage_hybridGame_le_two_mul`) and its two-distinguisher triangle-inequality variant
+(`advantage_hybridGame_le`), together with a non-vacuous one-time pad DEM instantiation
+(`otpEncrypt`, `otpDecrypt`, `demOneTimeINDCPA_otpEncrypt`, `KEMINDCPA.hybrid_otpEncrypt_indcpa`).
+
+Relative to [Boneh and Shoup, Exercise 11.9][BonehShoup2023], this development is specialized as
+follows:
+* Plaintext messages are single bits (`Bool`), matching `Encryption.game` and `Encryption.INDCPA`
+  in `Complexity/Crypto/Computational/Encryption/Basic.lean`.
+* Both the KEM key space and the one-time DEM key distribution at security parameter `n` are fixed
+  to uniform `n`-bit strings (`BitString.sampleList n`); a KEM whose encapsulated keys do not have
+  length `n` therefore fails `KEMINDCPA` directly.
+* Decapsulation `decaps` and hybrid decryption `hybridDecrypt` are total deterministic functions
+  without a separate `reject` symbol; `hybridDecrypt_hybridEncrypt` states exact recovery on
+  supported ciphertexts when `decaps` and `decryptSym` are correct on supported outputs.
+* In `kemRealGame` and `kemIdealGame`, the KEM distinguisher receives the public key `pk`
+  explicitly alongside `(k, ctKem)` (encoded as `(pk, (k, ctKem))`). Although the prose of
+  Exercise 11.9 writes that the challenger sends `(k_b, c_kem)`, the public key `pk` is public in a
+  public-key KEM experiment and is required by the reduction distinguisher to run
+  `adversary.choose n pk`.
 
 ## Main definitions
 
@@ -60,11 +77,12 @@ non-vacuous one-time pad DEM instantiation (`otpEncrypt`, `otpDecrypt`,
   `Cslib.Crypto.Encryption.isPPTOn_hybridEncrypt`,
   `Cslib.Crypto.Encryption.computableInPolyTime_hybridDecrypt`: polynomial-time certificates.
 * `Cslib.Crypto.Encryption.hybridDecrypt_encPair`,
-  `Cslib.Crypto.Encryption.hybridDecrypt_hybridEncrypt`: exact decryption correctness.
-* `Cslib.Crypto.Encryption.advantage_hybridGame_le`,
-  `Cslib.Crypto.Encryption.advantage_hybridGame_le_two_mul`: quantitative Boneh–Shoup
-  Theorem 11.2 reductions.
-* `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_indcpa`: asymptotic Boneh–Shoup Theorem 11.2.
+  `Cslib.Crypto.Encryption.hybridDecrypt_hybridEncrypt`: exact decryption correctness
+  (Exercise 11.9(a)).
+* `Cslib.Crypto.Encryption.advantage_hybridGame_le_two_mul`,
+  `Cslib.Crypto.Encryption.advantage_hybridGame_le`: quantitative Boneh–Shoup Exercise 11.9(b)
+  reduction and its two-distinguisher variant.
+* `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_indcpa`: asymptotic Boneh–Shoup Exercise 11.9(b).
 * `Cslib.Crypto.Encryption.demOneTimeINDCPA_otpEncrypt`,
   `Cslib.Crypto.Encryption.KEMINDCPA.hybrid_otpEncrypt_indcpa`: unconditional one-time pad DEM
   security and the KEM-to-PKE corollary.
@@ -72,8 +90,8 @@ non-vacuous one-time pad DEM instantiation (`otpEncrypt`, `otpDecrypt`,
 ## References
 
 * [D. Boneh, V. Shoup, *A Graduate Course in Applied Cryptography*,
-  Version 0.6][BonehShoup2023], Section 2.2 (Attack Game 2.1) and Section 11.3
-  (Definitions 11.3–11.5, Attack Games 11.3–11.4, Theorem 11.2).
+  Version 0.6][BonehShoup2023], Section 2.2 (Attack Game 2.1, Definition 2.2) and
+  Exercise 11.9.
 -/
 
 @[expose] public section
@@ -140,7 +158,7 @@ private theorem computableInPolyTime_dropFrame {α : Type} {input : α ↪ List 
 
 /-! ### Key Encapsulation Mechanisms -/
 
-/-- The real KEM IND-CPA experiment ([BonehShoup2023], Section 11.3.1, Attack Game 11.4, `b = 0`):
+/-- The real KEM IND-CPA experiment ([BonehShoup2023], Exercise 11.9, Experiment `0`):
 sample `(pk, sk) ← keyGen n` and `(k, ctKem) ← encaps n pk`, and pass the encoded triple
 `(pk, (k, ctKem))` to `distinguisher n`. -/
 def kemRealGame (keyGen : ℕ → ProbComp (List Bool × List Bool))
@@ -150,7 +168,7 @@ def kemRealGame (keyGen : ℕ → ProbComp (List Bool × List Bool))
   let encapsulated ← encaps n keys.1
   distinguisher n (encPair encBits (encPair encBits encBits) (keys.1, encapsulated))
 
-/-- The ideal KEM IND-CPA experiment ([BonehShoup2023], Section 11.3.1, Attack Game 11.4, `b = 1`):
+/-- The ideal KEM IND-CPA experiment ([BonehShoup2023], Exercise 11.9, Experiment `1`):
 sample `(pk, sk) ← keyGen n`, `(k, ctKem) ← encaps n pk`, and an independent uniform `n`-bit key
 `kIdeal ← BitString.sampleList n`, and pass `(pk, (kIdeal, ctKem))` to `distinguisher n`. -/
 noncomputable def kemIdealGame (keyGen : ℕ → ProbComp (List Bool × List Bool))
@@ -194,9 +212,9 @@ theorem isPPTOn_kemIdealGame {keyGen : ℕ → ProbComp (List Bool × List Bool)
   unfold kemIdealGame
   ppt
 
-/-- IND-CPA security for a Key Encapsulation Mechanism ([BonehShoup2023], Section 11.3.1,
-Definition 11.4 / Attack Game 11.4): every uniform strict PPT distinguisher has negligible
-advantage between `kemRealGame` and `kemIdealGame`. -/
+/-- IND-CPA / semantic security for a Key Encapsulation Mechanism ([BonehShoup2023],
+Exercise 11.9): every uniform strict PPT distinguisher has negligible advantage between
+`kemRealGame` and `kemIdealGame`. -/
 def KEMINDCPA (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool)) : Prop :=
   Game.Indistinguishable
@@ -207,10 +225,9 @@ def KEMINDCPA (keyGen : ℕ → ProbComp (List Bool × List Bool))
 /-! ### One-Time Symmetric Bit Encryption (DEM) -/
 
 /-- The one-time symmetric chosen-plaintext experiment for bit encryption ([BonehShoup2023],
-Section 2.2, Attack Game 2.1 / Section 11.3.1, Attack Game 11.3): sample a uniform `n`-bit key
-`k ← BitString.sampleList n`, invoke `adversary.choose n []` (no public key), encrypt the selected
-challenge bit under `encryptSym n k`, and pass the saved state and challenge ciphertext to
-`adversary.guess n`. -/
+Section 2.2, Attack Game 2.1): sample a uniform `n`-bit key `k ← BitString.sampleList n`, invoke
+`adversary.choose n []` (no public key), encrypt the selected challenge bit under
+`encryptSym n k`, and pass the saved state and challenge ciphertext to `adversary.guess n`. -/
 noncomputable def demGame (encryptSym : ℕ → List Bool → Bool → ProbComp (List Bool))
     (adversary : Adversary) (bit : Bool) (n : ℕ) : ProbComp Bool := do
   let k ← BitString.sampleList n
@@ -236,9 +253,9 @@ theorem isPPTOn_demGame {encryptSym : ℕ → List Bool → Bool → ProbComp (L
   unfold demGame
   ppt
 
-/-- One-time symmetric IND-CPA security for bit encryption ([BonehShoup2023], Section 2.2 /
-Section 11.3.1, Attack Game 11.3): every uniform strict PPT `Encryption.Adversary` has negligible
-distinguishing advantage between `demGame encryptSym adversary false` and
+/-- One-time symmetric IND-CPA / semantic security for bit encryption ([BonehShoup2023],
+Section 2.2, Attack Game 2.1 and Definition 2.2): every uniform strict PPT `Encryption.Adversary`
+has negligible distinguishing advantage between `demGame encryptSym adversary false` and
 `demGame encryptSym adversary true`. -/
 def DEMOneTimeINDCPA (encryptSym : ℕ → List Bool → Bool → ProbComp (List Bool)) : Prop :=
   Game.Indistinguishable
@@ -248,9 +265,9 @@ def DEMOneTimeINDCPA (encryptSym : ℕ → List Bool → Bool → ProbComp (List
 
 /-! ### Hybrid Encryption Construction and Correctness -/
 
-/-- KEM–DEM hybrid encryption ([BonehShoup2023], Section 11.3.1, Definition 11.5): encapsulate a
-symmetric key `(k, ctKem) ← encaps n pk`, encrypt the plaintext bit under `k` via
-`ctDem ← encryptSym n k bit`, and encode `(ctKem, ctDem)` using `encPair encBits encBits`. -/
+/-- KEM–DEM hybrid encryption ([BonehShoup2023], Exercise 11.9): encapsulate a symmetric key
+`(k, ctKem) ← encaps n pk`, encrypt the plaintext bit under `k` via `ctDem ← encryptSym n k bit`,
+and encode `(ctKem, ctDem)` using `encPair encBits encBits`. -/
 def hybridEncrypt (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool))
     (encryptSym : ℕ → List Bool → Bool → ProbComp (List Bool))
     (n : ℕ) (pk : List Bool) (bit : Bool) : ProbComp (List Bool) := do
@@ -258,7 +275,7 @@ def hybridEncrypt (encaps : ℕ → List Bool → ProbComp (List Bool × List Bo
   let ctDem ← encryptSym n encapsulated.1 bit
   return encPair encBits encBits (encapsulated.2, ctDem)
 
-/-- Deterministic KEM–DEM hybrid decryption ([BonehShoup2023], Section 11.3.1, Definition 11.5):
+/-- Deterministic KEM–DEM hybrid decryption ([BonehShoup2023], Exercise 11.9):
 decode the hybrid ciphertext `ct` into `ctKem = unframe ct` and `ctDem = dropFrame ct`,
 decapsulate `k = decaps n sk ctKem`, and return `decryptSym n k ctDem`. -/
 def hybridDecrypt (decaps : ℕ → List Bool → List Bool → List Bool)
@@ -330,12 +347,13 @@ theorem hybridDecrypt_hybridEncrypt
   rw [hybridDecrypt_encPair, hkem k ctKem hkc]
   exact hdem k ctDem ⟨ctKem, hkc⟩ hdemSupp
 
-/-! ### Boneh–Shoup Theorem 11.2 Reductions and Asymptotic Security -/
+/-! ### Boneh–Shoup Exercise 11.9(b) Reductions and Asymptotic Security -/
 
-/-- The intermediate hybrid game $G_1$ ([BonehShoup2023], Section 11.3.2, proof of Theorem 11.2):
-identical to `Encryption.game keyGen (hybridEncrypt encaps encryptSym)` except that the symmetric
-key passed to `encryptSym` is an independent uniform `n`-bit key `kIdeal ← BitString.sampleList n`
-rather than `encapsulated.1`. -/
+/-- The intermediate hybrid game $G_1$ for the standard hybrid argument of
+[BonehShoup2023], Exercise 11.9(b): identical to
+`Encryption.game keyGen (hybridEncrypt encaps encryptSym)` except that the symmetric key passed to
+`encryptSym` is an independent uniform `n`-bit key `kIdeal ← BitString.sampleList n` rather than
+`encapsulated.1`. -/
 noncomputable def hybridIdealGame (keyGen : ℕ → ProbComp (List Bool × List Bool))
     (encaps : ℕ → List Bool → ProbComp (List Bool × List Bool))
     (encryptSym : ℕ → List Bool → Bool → ProbComp (List Bool))
@@ -348,9 +366,10 @@ noncomputable def hybridIdealGame (keyGen : ℕ → ProbComp (List Bool × List 
   adversary.guess n choice.2 (encPair encBits encBits (encapsulated.2, ctDem))
 
 /-- Direct per-bit KEM distinguisher $D_{\mathrm{kem}, b}$ constructed from an
-`Encryption.Adversary` and DEM encryption `encryptSym` ([BonehShoup2023], proof of Theorem 11.2):
-given an encoded KEM challenge `(pk, (k, ctKem))`, run `adversary.choose n pk`, encrypt the
-`bit`-selected message under `k`, and run `adversary.guess` on `(ctKem, ctDem)`. -/
+`Encryption.Adversary` and DEM encryption `encryptSym` (for the two-distinguisher variant of
+[BonehShoup2023], Exercise 11.9(b)): given an encoded KEM challenge `(pk, (k, ctKem))`, run
+`adversary.choose n pk`, encrypt the `bit`-selected message under `k`, and run `adversary.guess` on
+`(ctKem, ctDem)`. -/
 def hybridToKEMDistinguisher
     (encryptSym : ℕ → List Bool → Bool → ProbComp (List Bool))
     (adversary : Adversary) (bit : Bool) : Distinguisher := fun n challenge => do
@@ -362,8 +381,8 @@ def hybridToKEMDistinguisher
   let ctDem ← encryptSym n k (if bit then choice.1.2 else choice.1.1)
   adversary.guess n choice.2 (encPair encBits encBits (ctKem, ctDem))
 
-/-- Single hidden-bit KEM distinguisher $D_{\mathrm{kem}}$ ([BonehShoup2023], Section 11.3.2,
-proof of Theorem 11.2): given an encoded KEM challenge `(pk, (k, ctKem))`, run
+/-- Single hidden-bit KEM distinguisher $\mathcal{B}_{\mathrm{kem}}$ for
+[BonehShoup2023], Exercise 11.9(b): given an encoded KEM challenge `(pk, (k, ctKem))`, run
 `adversary.choose n pk`, sample a fair challenge bit `bit ← ProbComp.uniform Bool`, encrypt the
 selected message under `k`, run `adversary.guess`, and return `guess ^^ bit`. -/
 noncomputable def hybridToKEMHiddenBitDistinguisher
@@ -379,8 +398,8 @@ noncomputable def hybridToKEMHiddenBitDistinguisher
   let guess ← adversary.guess n choice.2 (encPair encBits encBits (ctKem, ctDem))
   return guess ^^ bit
 
-/-- Two-stage DEM adversary $B_{\mathrm{dem}}$ constructed from `keyGen`, `encaps`, and a hybrid
-`Encryption.Adversary` ([BonehShoup2023], Section 11.3.2, proof of Theorem 11.2): stage 1 samples
+/-- Two-stage DEM adversary $\mathcal{B}_{\mathrm{s}}$ constructed from `keyGen`, `encaps`, and a
+hybrid `Encryption.Adversary` for [BonehShoup2023], Exercise 11.9(b): stage 1 samples
 `(pk, sk) ← keyGen n` and `(k, ctKem) ← encaps n pk`, runs `adversary.choose n pk`, and saves
 `encPair encBits encBits (ctKem, choice.2)`; stage 2 combines `ctKem` with the DEM challenge
 ciphertext `ctDem` and runs `adversary.guess`. -/
@@ -654,9 +673,9 @@ theorem probability_kemIdealGame_hybridToKEMHiddenBitDistinguisher
   norm_num [PMF.toReal_false_eq_one_sub]
   ring
 
-/-- **Quantitative KEM–DEM reduction via two per-bit KEM distinguishers** ([BonehShoup2023],
-Section 11.3.2, Theorem 11.2): the hybrid IND-CPA advantage is bounded by the sum of the KEM
-advantages of `hybridToKEMDistinguisher encryptSym adversary false` and
+/-- **Quantitative KEM–DEM reduction via two per-bit KEM distinguishers** (two-distinguisher
+variant of [BonehShoup2023], Exercise 11.9(b)): the hybrid IND-CPA advantage is bounded by the sum
+of the KEM advantages of `hybridToKEMDistinguisher encryptSym adversary false` and
 `hybridToKEMDistinguisher encryptSym adversary true`, plus the DEM advantage of
 `hybridToDEMAdversary keyGen encaps adversary`. -/
 theorem advantage_hybridGame_le
@@ -697,7 +716,7 @@ theorem advantage_hybridGame_le
   exact (h1.trans (add_le_add le_rfl h2)).trans_eq (by ac_rfl)
 
 /-- **Quantitative KEM–DEM reduction via a single hidden-bit KEM distinguisher** ([BonehShoup2023],
-Section 11.3.2, Theorem 11.2): the hybrid IND-CPA advantage is at most twice the KEM advantage of
+Exercise 11.9(b)): the hybrid IND-CPA advantage is at most twice the KEM advantage of
 `hybridToKEMHiddenBitDistinguisher encryptSym adversary`, plus the DEM advantage of
 `hybridToDEMAdversary keyGen encaps adversary`. -/
 theorem advantage_hybridGame_le_two_mul
@@ -738,10 +757,10 @@ theorem advantage_hybridGame_le_two_mul
       _ = _ := by congr 1; ring
   simpa only [hscale, sub_zero] using h
 
-/-- **Boneh–Shoup Theorem 11.2 (IND-CPA security of KEM–DEM hybrid encryption)**
-([BonehShoup2023], Section 11.3.2, Theorem 11.2): if `(keyGen, encaps)` is an IND-CPA secure KEM
-and `encryptSym` is a one-time IND-CPA secure DEM (with uniform strict PPT honest algorithms),
-then `hybridEncrypt encaps encryptSym` is IND-CPA secure. -/
+/-- **IND-CPA security of KEM–DEM hybrid encryption** ([BonehShoup2023], Exercise 11.9(b)):
+if `(keyGen, encaps)` is an IND-CPA secure KEM and `encryptSym` is a one-time IND-CPA secure DEM
+(with uniform strict PPT honest algorithms), then `hybridEncrypt encaps encryptSym` is IND-CPA
+secure. -/
 theorem KEMINDCPA.hybrid_indcpa
     {keyGen : ℕ → ProbComp (List Bool × List Bool)}
     {encaps : ℕ → List Bool → ProbComp (List Bool × List Bool)}

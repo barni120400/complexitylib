@@ -125,7 +125,7 @@ families and full-input native runtime.
   Cramer–Shoup CCA security ([#1000]), and Pedersen commitments.
 - **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
   Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
-  starting point (Boneh–Shoup Section 11.3).
+  starting point (Boneh–Shoup Exercise 11.9).
 - **Lattices** ([#645]): Fiat–Shamir with aborts and signatures from SIS (Lyubashevsky 2009,
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
