@@ -495,13 +495,29 @@ theorem step_inSpace :
     rw [stateBudget, stepBudget_bool]
   simpa only [computableInSpace_iff_computableTidilyInSpace] using this
 
-/-- **The step machine simulating the read machine is tidy**, within the space of its states
-together with the position of its head. -/
-theorem tidy_machine : ∃ T, machine.toStepMachine.Tidy (encPair encState encNat)
+/-- The step machine simulating the read machine has a resource certificate within the space
+of its states together with the position of its head. -/
+theorem tidy_machine : ∃ T, machine.toStepMachine.ResourceCertificate (encPair encState encNat)
     (ReadMachine.stateT encState T stateBudget) (ReadMachine.stateS encState stateBudget) := by
-  obtain ⟨T₁, h₁⟩ := halt_inSpace.tidy
-  obtain ⟨T₂, h₂⟩ := addr_inSpace.tidy
-  obtain ⟨T₃, h₃⟩ := step_inSpace.tidy
+  obtain ⟨T₁, c₁, ⟨k₁, Q₁, hf₁, tm₁, hm₁⟩, hl₁⟩ := halt_inSpace
+  obtain ⟨T₂, c₂, ⟨k₂, Q₂, hf₂, tm₂, hm₂⟩, hl₂⟩ := addr_inSpace
+  obtain ⟨T₃, c₃, ⟨k₃, Q₃, hf₃, tm₃, hm₃⟩, hl₃⟩ := step_inSpace
+  have h₁ : ComputableInO machine.halt encState encBool T₁ stateBudget :=
+    ⟨c₁ + 1, ⟨k₁, Q₁, hf₁, tm₁, fun s => ⟨(hm₁ s).1,
+      (hm₁ s).2.1.mono (by nlinarith),
+      (hm₁ s).2.2.mono (by nlinarith)⟩⟩,
+      fun s => (hl₁ s).trans (by nlinarith)⟩
+  have h₂ : ComputableInO machine.addr encState (encOption encNat) T₂ stateBudget :=
+    ⟨c₂ + 1, ⟨k₂, Q₂, hf₂, tm₂, fun s => ⟨(hm₂ s).1,
+      (hm₂ s).2.1.mono (by nlinarith),
+      (hm₂ s).2.2.mono (by nlinarith)⟩⟩,
+      fun s => (hl₂ s).trans (by nlinarith)⟩
+  have h₃ : ComputableInO (fun p : State × Bool => machine.step p.1 p.2)
+      (encPair encState encBool) (encPair encState encBits) T₃ (fun p => stateBudget p.1) :=
+    ⟨c₃ + 1, ⟨k₃, Q₃, hf₃, tm₃, fun p => ⟨(hm₃ p).1,
+      (hm₃ p).2.1.mono (by nlinarith),
+      (hm₃ p).2.2.mono (by nlinarith)⟩⟩,
+      fun p => (hl₃ p).trans (by nlinarith)⟩
   let T : State → ℕ := fun s => T₁ s + T₂ s + T₃ (s, false) + T₃ (s, true)
   exact ⟨T, ReadMachine.tidy_toStepMachine (h₁.mono_le (fun s => by simp only [T]; omega)
     fun _ => le_rfl) (h₂.mono_le (fun s => by simp only [T]; omega) fun _ => le_rfl)
