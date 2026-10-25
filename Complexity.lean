@@ -847,6 +847,7 @@ public import Complexity.Computability.GenericRAM.Simulation.Run
 public import Complexity.Computability.GenericRAM.Simulation.Turing
 public import Complexity.Computability.GenericRAM.SparseMemory.Basic
 public import Complexity.Computability.GenericRAM.SparseMemory.Turing
+public import Complexity.Computability.Geometry.OrthogonalSubdivision
 public import Complexity.Computability.Interactive.Basic
 public import Complexity.Computability.Interactive.Bundle
 public import Complexity.Computability.Interactive.GKR.Layered

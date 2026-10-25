@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Foundations.Geometry.Orthogonal
+import Complexity.Foundations.Data.List.Counting
 import Mathlib.Tactic
 
 /-!
@@ -18,6 +19,7 @@ import Mathlib.Tactic
 * `Cslib.Orthogonal.walk`: a finite sequence of repeated integer vector steps.
 * `Cslib.Orthogonal.segmentWalk`, `Cslib.Orthogonal.subdivide`: unit subdivision of a segment
   or an entire polygonal route, listing a shared endpoint only once.
+* `Cslib.Orthogonal.subdivideWithin`: finite enumeration capped by a per-segment step budget.
 
 ## Main results
 
@@ -28,6 +30,9 @@ import Mathlib.Tactic
 * `Cslib.Orthogonal.subdivide_unit`: every subdivided segment has Manhattan length one.
 * `Cslib.Orthogonal.support_subdivide`: equality of the complete continuous real supports.
 * `Cslib.Orthogonal.wireLength_subdivide`: exact wire-length preservation.
+* `Cslib.Orthogonal.subdivideWithin_eq_of_wireLength_le`: recover full subdivision from a
+  sufficient total-wire budget.
+* `Cslib.Orthogonal.subdivideWithin_length_le`: explicit bounded output size.
 -/
 
 @[expose] public section
@@ -356,5 +361,98 @@ theorem axisAligned_of_length_eq_one {a b : Point} (h : length a b = 1) : AxisAl
 /-- Unit subdivision is itself a proper orthogonal route. -/
 theorem subdivide_orthogonal {r : Route} (hr : IsOrthogonal r) : IsOrthogonal (subdivide r) :=
   fun _ he => axisAligned_of_length_eq_one (subdivide_unit hr he)
+
+/-- The recursive walk is also an explicit range enumeration. -/
+theorem walk_eq_map_range (a d : Point) (k : ℕ) :
+    walk a d k = (List.range (k + 1)).map fun i => a + i • d := by
+  induction k generalizing a with
+  | zero => simp [walk]
+  | succ k ih =>
+    rw [walk, List.range_succ_eq_map, List.map_cons, List.map_map, ih]
+    simp only [zero_smul, add_zero]
+    congr 1
+    apply List.map_congr_left
+    intro i hi
+    simp only [Function.comp_apply, succ_nsmul]
+    abel
+
+/-- Omitting the final endpoint gives exactly the strict prefix of the range enumeration. -/
+theorem walk_dropLast_eq_map_range (a d : Point) (k : ℕ) :
+    (walk a d k).dropLast = (List.range k).map fun i => a + i • d := by
+  rw [walk_eq_map_range, List.range_succ, List.map_append]
+  simp
+
+private theorem join_eq_dropLast_append {q r : Route} {p : Point}
+    (hq : q.getLast? = some p) (hr : r.head? = some p) :
+    q ++ r.tail = q.dropLast ++ r := by
+  obtain ⟨initial, rfl⟩ := List.getLast?_eq_some_iff.1 hq
+  cases r with
+  | nil => simp at hr
+  | cons a r =>
+    simp only [List.head?_cons, Option.some.injEq] at hr
+    subst a
+    simp
+
+/-- A flat enumeration of the unit subdivision: emit each segment without its last point, then
+emit the route's final endpoint. This form supports bounded polynomial-time implementations. -/
+theorem subdivide_eq_flatMap {r : Route} (hr : IsOrthogonal r) :
+    subdivide r =
+      (r.consecutivePairs.flatMap fun e => (segmentWalk e.1 e.2).dropLast) ++
+        r.getLast?.toList := by
+  induction r with
+  | nil => simp [subdivide, List.consecutivePairs]
+  | cons a r ih =>
+    cases r with
+    | nil => simp [subdivide, List.consecutivePairs]
+    | cons b r =>
+      have hab := (hr (a, b) (by simp [List.consecutivePairs])).1
+      have htail : IsOrthogonal (b :: r) := by
+        intro e he
+        exact hr e (by simpa only [List.consecutivePairs, List.tail_cons,
+          List.zip_cons_cons, List.mem_cons] using Or.inr he)
+      rw [subdivide, join_eq_dropLast_append (segmentWalk_last hab) (subdivide_head (b :: r)),
+        ih htail]
+      simp only [List.consecutivePairs, List.tail_cons, List.zip_cons_cons, List.flatMap_cons,
+        List.getLast?_cons_cons, List.append_assoc]
+
+/-- Enumerate at most `budget` strict unit-prefix points per listed segment, then the last
+endpoint. The result agrees with `subdivide` when every segment fits in the budget. -/
+def subdivideWithin (budget : ℕ) (r : Route) : Route :=
+  (r.consecutivePairs.flatMap fun e =>
+    (List.range (min (length e.1 e.2) budget)).map fun i => e.1 + i • direction e.1 e.2) ++
+      r.getLast?.toList
+
+/-- A sufficient per-segment budget recovers the complete geometric subdivision. -/
+theorem subdivideWithin_eq_subdivide {r : Route} (hr : IsOrthogonal r) {budget : ℕ}
+    (hbudget : ∀ e ∈ r.consecutivePairs, length e.1 e.2 ≤ budget) :
+    subdivideWithin budget r = subdivide r := by
+  rw [subdivide_eq_flatMap hr]
+  unfold subdivideWithin
+  congr 1
+  apply List.flatMap_congr
+  intro e he
+  rw [min_eq_left (hbudget e he), segmentWalk, walk_dropLast_eq_map_range]
+
+/-- Bounded enumeration emits at most `budget` points per segment, plus the last endpoint. -/
+theorem subdivideWithin_length_le (budget : ℕ) (r : Route) :
+    (subdivideWithin budget r).length ≤ budget * r.consecutivePairs.length + 1 := by
+  have hb := List.length_flatMap_le (l := r.consecutivePairs) (k := budget)
+    (f := fun e => (List.range (min (length e.1 e.2) budget)).map
+      fun i => e.1 + i • direction e.1 e.2)
+    (fun _ _ => by simpa only [List.length_map, List.length_range] using min_le_right _ _)
+  have hlast : r.getLast?.toList.length ≤ 1 := by cases r.getLast? <;> simp
+  unfold subdivideWithin
+  rw [List.length_append, Nat.mul_comm]
+  omega
+
+/-- Each listed segment's length is bounded by the route's total wire length. -/
+theorem length_le_wireLength {r : Route} {e : Point × Point} (he : e ∈ r.consecutivePairs) :
+    length e.1 e.2 ≤ wireLength r :=
+  List.le_sum_of_mem (List.mem_map.2 ⟨e, he, rfl⟩)
+
+/-- A bound for the whole route's wire length is a sufficient subdivision budget. -/
+theorem subdivideWithin_eq_of_wireLength_le {r : Route} (hr : IsOrthogonal r) {budget : ℕ}
+    (hbudget : wireLength r ≤ budget) : subdivideWithin budget r = subdivide r :=
+  subdivideWithin_eq_subdivide hr (fun _ he => (length_le_wireLength he).trans hbudget)
 
 end Cslib.Orthogonal
