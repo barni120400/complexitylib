@@ -1793,6 +1793,7 @@ public import Complexity.Foundations.Data.Polynomial.SignQueries
 public import Complexity.Foundations.Data.Seq.Computation
 public import Complexity.Foundations.Data.Set.Card
 public import Complexity.Foundations.Data.StackTape
+public import Complexity.Foundations.FieldTheory.Finite.Basic
 public import Complexity.Foundations.FieldTheory.Finite.BinaryField
 public import Complexity.Foundations.FieldTheory.Finite.LinearizedPolynomial
 public import Complexity.Foundations.FieldTheory.Finite.ReducedMonomial
