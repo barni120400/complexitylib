@@ -27,71 +27,82 @@ import Mathlib.Data.Nat.Choose.Sum
 
 This module formalizes the De Morgan formula hardness magnification lemma of Oliveira and Santhanam
 [OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14] connecting `Cslib.SuccinctMCSP` and
-`Cslib.PartialMCSP` (`MCSP*`) to approximate MCSP (`Cslib.ApproxMCSP`, corresponding to
-`(1, 1 - γ)-MCSP[s]` in [OliveiraSanthanam2018, Section A, Definition 41, p. 34]) and
-`Cslib.GapMCSP`.
+`Cslib.PartialMCSP` to approximate MCSP (`Cslib.ApproxMCSP`, corresponding to `(1, 1 - δ)-MCSP[s]`
+in [OliveiraSanthanam2018, Appendix A, Definition 41, p. 34]) and `Cslib.GapMCSP`.
 
 ## Source Statement (ECCC TR18-139)
 
 Verbatim from [OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14]:
 
-> **Lemma 16** (Efficient local map from `(1, 1 - γ)-MCSP[s]` to `MCSP*[s]`). For any circuit size
-> parameter `s` and error parameter `γ` with `2^{-n} ≤ γ ≤ 1/2`, if `MCSP*[s] ∈ Formula[ℓ]`, where
-> `s(n) ≥ n` and `ℓ : ℕ → ℕ` is a non-decreasing function, then `(1, 1 - γ)-MCSP[s]` can be solved
-> by size-`O(2^n) ⋅ ℓ(2^n + (n + 1) ⋅ log 2^n)` formulas.
+> **Lemma 16** (Magnification Lemma for Formulas). Let s : ℕ → ℕ and δ : ℕ → [0, 1/2) be
+> constructive functions, where s(n) ≥ n. Consider the promise problem
+> Π[s, δ] = (1, 1 − δ)-MCSP[s], where for every N = 2ⁿ,
+> Π^yes_N = {y ∈ {0,1}^N | ∃ circuit of size ≤ s(n) that computes fn(y)},
+> Π^no_N = {y ∈ {0,1}^N | ∄ circuit of size ≤ s(n) that (1 − δ(n))-approximates fn(y)}.
+> Then, for every function ℓ : ℕ → ℕ, if Π[s, δ] cannot be computed by formulas of size
+> N · ℓ(n), then there is a sequence {f_{m(n)}}_{n≥1} of m(n)-bit functions in NP that
+> cannot be computed by formulas of size ≤ ℓ(n), where
+> m(n) = Θ((n · s(n) · log s(n))/δ(n)).
+
+Here [OliveiraSanthanam2018, Appendix A, Definition 41, p. 34] defines `(α, β)-MCSP[s]` for
+`α, β ∈ (1/2, 1]` using "`γ`-approximates" to mean `Pr_x[ψ(x) = f(x)] ≥ γ`, so `(1, 1 - δ)-MCSP[s]`
+is the `α = 1`, `β = 1 - δ` specialization.
 
 ## Comparison Between ECCC TR18-139 Lemma 16 and This Module
 
-1. **Input / Promise Problem**: ECCC Lemma 16 takes the approximate MCSP promise problem
-   `(1, 1 - γ)-MCSP[s]` defined in [OliveiraSanthanam2018, Section A, Definition 41, p. 34]. Here we
-   formalize the approximate MCSP promise problem `Cslib.ApproxMCSP` (`ApproxMCSP.noSet`) with
-   `γ = 1 / k n` (`1 ≤ k n`), allowing distinct yes/no circuit-size thresholds `s₁ n ≤ s₂ n`.
-2. **Target Sparse Language (`MCSP*[s]` vs. `SuccinctMCSP` and `PartialMCSP`)**: ECCC Lemma 16
-   reduces to `MCSP*[s]`, which in Section 2.1 (p. 9) can be represented succinctly as a list of
-   input-output pairs of length `O(m log(2^n))` when at most `m` entries are defined. Here we
-   formalize both the succinct sample-list encoding `Cslib.SuccinctMCSP.enc '' Cslib.SuccinctMCSP`
-   at exact slice lengths
-   `SuccinctMCSP.ofFunctionEncLength n m (s₂ n) = 4 * n + 3 + m * (8 * n + 10) + s₂ n` for
-   `m ≤ k n * (M + 2)` and the partial truth-table bridge
+1. **Circuit-Size Thresholds (`s` vs. `s₁ ≤ s₂`)**: ECCC Lemma 16 uses a single circuit-size
+   threshold `s(n)` for both `Π^yes_N` and `Π^no_N`. Here we allow distinct yes/no thresholds
+   `s₁ n ≤ s₂ n` (`s₁ = s₂ = s` recovers the source setting).
+2. **Error Parameter (`δ(n) ∈ [0, 1/2)` vs. `1 / k n` with `1 ≤ k n`)**: ECCC Lemma 16 takes a
+   real-valued function `δ : ℕ → [0, 1/2)`. In the end-to-end theorems we parameterize the error
+   by an integer function `k : ℕ → ℕ` with `1 ≤ k n` corresponding to `δ(n) = 1 / k n` (and also
+   provide the real-parameter Stage 2 amplification `exists_seed_tuple_of_one_sided_error_real` and
+   `exists_formula_separating_gapMCSP_of_succinctMCSP_real` using `⌈1 / δ⌉₊`).
+3. **Strict vs. Non-Strict No-Instances**: In ECCC Definition 41 (Appendix A, p. 34), "`(1 - δ(n))`-
+   approximates" means agreement on at least `(1 - δ(n)) ⋅ 2^n` inputs, so `Π^no_N` requires every
+   circuit of size `≤ s(n)` to agree with `fn(y)` on strictly fewer than `(1 - δ(n)) ⋅ 2^n` inputs.
+   Here `ApproxMCSP.noSet s₂ k` requires `k n * card(Agree) ≤ (k n - 1) * 2 ^ n` (non-strict `≤`),
+   which contains the strict no-set, making the separation and contrapositive magnification
+   theorems at least as strong.
+4. **Target Representation (`Succinct-Π[s, t]` vs. `Finset` Samples in `SuccinctMCSP`)**: The proof
+   of ECCC Lemma 16 (p. 14) reduces `Π[s, δ]` to `Succinct-Π[s, t]`, an explicit Succinct-MCSP
+   encoding of `t(n) = 3 s(n) log s(n) / δ(n)` input-output samples (with possible repetition).
+   Here `SuccinctMCSP.Instance.ofFunction` deduplicates a `Finset (BitString n)` sample `S` into a
+   canonical sorted list of `m = S.card` samples of exact encoded length
+   `SuccinctMCSP.ofFunctionEncLength n m (s₂ n) = 4 * n + 3 + m * (8 * n + 10) + s₂ n`. Because
+   deduplicating `q = k n * (M + 2)` independent samples `ω : Fin q → BitString n` into
+   `Finset.univ.image ω` can have any cardinality `m ≤ k n * (M + 2)`, our end-to-end theorems
+   quantify over `m ≤ k n * (M + 2)`. We also provide
+   `exists_formula_separating_gapMCSP_of_partialMCSP` bridging to
    `Cslib.PartialMCSP.Instance.restrictTable`.
-3. **Stage 1 (Random Sampling over Small Circuits)**: The proof of ECCC Lemma 16 (p. 14) draws
-   `t = O(s log s / γ)` random inputs in `{0, 1}^n` and applies a union bound over the at most
-   `s^{O(s)}` circuits of size at most `s` so that every `(1 - γ)`-far truth table fails consistency
-   on the sample with probability greater than `1 / 2`. Here
-   `card_le_two_mul_filter_notMem_succinctMCSP` proves this union bound for `q = k * (M + 2)`
-   uniform samples whenever `(computableFunctions n s).card ≤ 2 ^ M`, and
-   `card_computableFunctions_le_two_pow` discharges
-   `(computableFunctions n s).card ≤ 2 ^ computableFunctionsLogBound n s`
-   (`computableFunctionsLogBound n s = (s + 1) * (2 * Nat.clog 2 (n + s + 1) + 3)`) from
-   `Cslib.Circuits.Boolean.card_computableFunctions_mul_factorial_le`.
-4. **Stage 2 (Adleman Derandomization and Leaf-Size Substitution)**: The proof of ECCC Lemma 16
-   (p. 14) derandomizes the one-sided error `1 / 2` map over at most `2^{2^n}` no-instances via
-   `O(2^n)` independent copies and substitutes constant/`x_i` projections into the target formula.
-   Here Stage 2 is proved both for general `1 / k` one-sided sample families via
-   `Cslib.exists_cover_of_scaled_card_lt` (`exists_seed_tuple_of_one_sided_error`,
-   `exists_formula_separating_gapMCSP_of_succinctMCSP`,
-   `exists_formula_separating_gapMCSP_of_partialMCSP`, giving `k * (2 ^ n + 1)` copies) and, via
-   `Cslib.exists_forall_exists_apply_mem` at error `1 / 2`, for the end-to-end approximate-MCSP
-   magnification (`exists_formula_separating_approxMCSP_of_succinctMCSP`, giving `2 ^ n + 1` copies
-   and leaf size at most `(2 ^ n + 1) * L`).
-5. **Deterministic Multi-Query Building Block**: The deterministic query-list lemmas
-   (`exists_formula_all_ofFunction_SuccinctMCSP`, `exists_formula_separating_gapMCSP_of_queryList`,
-   `exists_mem_lt_formulaSize_succinctMCSP_of_queryList`) capture the deterministic conjunction of
-   substituted slice formulas; they serve as the structural building block used by Stage 2 rather
-   than standalone theorems from [OliveiraSanthanam2018].
-6. **Relationship to ECCC Theorem 1(1) / Theorem 17 (pp. 3, 14–15)**: ECCC Theorem 1(1) and
-   Theorem 17 combine Lemma 16 with shrinkage / random restrictions to obtain worst-case `MCSP`
-   magnification. This module formalizes Lemma 16 (approximate `MCSP` to `SuccinctMCSP` /
-   `PartialMCSP` formula magnification) and the Stage 2 derandomization from an assumed one-sided
-   sample family, without claiming the shrinkage reduction from worst-case `MCSP` to approximate
-   `MCSP`.
+5. **Circuit Model and Counting Bound (`s^{O(s)}` vs. `computableFunctionsLogBound`)**: ECCC Lemma
+   16 counts fan-in-two Boolean circuits of size at most `s(n)`. Here small functions are
+   `computableFunctions n (s₂ n)` (defined via `Cslib.Circuits.complexity interpretation`), and
+   `card_computableFunctions_le_two_pow` bounds `(computableFunctions n s).card ≤ 2 ^ M` with
+   `M = computableFunctionsLogBound n s = (s + 1) * (2 * Nat.clog 2 (n + s + 1) + 3)` from
+   `Cslib.Circuits.Boolean.card_computableFunctions_mul_factorial_le`. Combining Stage 1
+   (`card_le_two_mul_filter_notMem_succinctMCSP`, proving the union bound at error `1 / 2` over
+   `q = k * (M + 2)` samples) with Stage 2 (`Cslib.exists_forall_exists_apply_mem`, giving
+   `2 ^ n + 1` copies) and the deterministic multi-query conjunction
+   (`exists_formula_all_ofFunction_SuccinctMCSP`) yields the `(2 ^ n + 1) * L` leaf-size bound
+   matching `N ⋅ ℓ(n)`.
+6. **Conclusion (`NP` Family vs. `SuccinctMCSP` Slice Bounds, and Remaining Endpoints)**: Instead of
+   packaging a uniform sequence `{f_{m(n)}}_{n≥1}` in `NP`, the theorems in this module bound the
+   De Morgan formula size `formulaSize` of the `ofFunctionEncLength n m (s₂ n)`-bit slices of
+   `SuccinctMCSP.enc '' SuccinctMCSP` (`SuccinctMCSP ∈ NP` is proved separately in
+   `SuccinctMCSP.mem_NP`). With `M = computableFunctionsLogBound n (s₂ n)`, every queried slice
+   length satisfies `ofFunctionEncLength n m (s₂ n) = O(k n ⋅ n ⋅ s₂ n ⋅ log(n + s₂ n))`, matching
+   the source's `m(n) = Θ((n ⋅ s(n) ⋅ log s(n)) / δ(n))` for `δ(n) = 1 / k n`. In ECCC TR18-139,
+   Theorem 1 (p. 5) and Theorem 17 (pp. 14–15, whose proof is "Immediate from Lemma 16") package
+   Lemma 16 into `NP ⊄ Formula[poly(m)]`; zero-error average-case formula magnification is studied
+   separately in Theorem 5 / Theorem 27.
 
 ## Main definitions
 
 * `Cslib.Circuits.Boolean.evalWord`, `Cslib.Circuits.Boolean.succinctWord`: word-level formula
   projections for `SuccinctMCSP.enc`.
 * `Cslib.ApproxMCSP.noSet`, `Cslib.ApproxMCSP`: the approximate `(1, 1 - 1 / k)-MCSP` promise
-  problem [OliveiraSanthanam2018, Section A, Definition 41, p. 34].
+  problem [OliveiraSanthanam2018, Appendix A, Definition 41, p. 34].
 * `Cslib.Circuits.Boolean.computableFunctionsLogBound`: explicit `s log(n + s)` exponent bound
   `(s + 1) * (2 * Nat.clog 2 (n + s + 1) + 3)` for `(computableFunctions n s).card`.
 
@@ -664,8 +675,8 @@ theorem exists_lt_formulaSize_succinctMCSP_of_gapMCSP {Ω : Type*} [Fintype Ω] 
   exact (hged F hyes hno').not_ge hFleaf
 
 open Classical in
-/-- **Stage 2 derandomization of an assumed one-sided sample projection phrased via `PartialMCSP`
-(`MCSP*`)** ([OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14]).
+/-- **Stage 2 derandomization of an assumed one-sided sample projection phrased via `PartialMCSP`**
+([OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14]).
 If `s₁ n ≤ s`, `S : Ω → Finset (BitString n)` rejects every `T : BitString (2 ^ n)` with
 `List.ofFn T ∈ GapMCSP.noSet s₂` in the sense that
 `PartialMCSP.Instance.restrictTable T (S ω) s ∉ PartialMCSP` on at least a `1 / k`-fraction of
@@ -700,7 +711,7 @@ namespace ApproxMCSP
 open MCSP Circuits.Boolean
 
 /-- The no-instances of approximate `(1, 1 - 1 / k)-MCSP[s]`
-[OliveiraSanthanam2018, Section A, Definition 41, p. 34]: the truth tables of `n`-input Boolean
+[OliveiraSanthanam2018, Appendix A, Definition 41, p. 34]: the truth tables of `n`-input Boolean
 functions `f` such that every function `g` of circuit complexity at most `s n` agrees with `f` on at
 most a `(1 - 1 / k n)`-fraction of inputs
 (`k n * (Finset.univ.filter fun x => g x = f x).card ≤ (k n - 1) * 2 ^ n`). -/
@@ -769,7 +780,7 @@ theorem disjoint_yesSet_noSet {s₁ s₂ k : ℕ → ℕ} (hs : ∀ n, s₁ n �
 end ApproxMCSP
 
 /-- **`ApproxMCSP[s₁, s₂, k]`** (`(1, 1 - 1 / k)-MCSP`
-[OliveiraSanthanam2018, Section A, Definition 41, p. 34]): the approximate MCSP promise problem
+[OliveiraSanthanam2018, Appendix A, Definition 41, p. 34]): the approximate MCSP promise problem
 whose yes-instances are truth tables of `n`-input Boolean functions with circuit complexity at most
 `s₁ n` and whose no-instances are truth tables of functions that disagree with every function of
 circuit complexity at most `s₂ n` on at least a `1 / k n`-fraction of inputs, when `s₁ n ≤ s₂ n`
@@ -1003,7 +1014,12 @@ theorem exists_lt_formulaSize_succinctMCSP_of_approxMCSP
 
 /-- **Instantiated Oliveira–Santhanam formula construction for `ApproxMCSP`
 [OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14]**, with `M` instantiated to
-`computableFunctionsLogBound n (s₂ n)` via `card_computableFunctions_le_two_pow`. -/
+`computableFunctionsLogBound n (s₂ n)` via `card_computableFunctions_le_two_pow`. Every queried
+slice has encoded length
+`SuccinctMCSP.ofFunctionEncLength n m (s₂ n) = 4 * n + 3 + m * (8 * n + 10) + s₂ n` with
+`m ≤ k n * (computableFunctionsLogBound n (s₂ n) + 2)`, i.e. `O(k n ⋅ n ⋅ s₂ n ⋅ log(n + s₂ n))`
+bits, matching the slice length `m(n) = Θ((n ⋅ s(n) ⋅ log s(n)) / δ(n))` of Lemma 16 for
+`δ(n) = 1 / k n`. -/
 theorem exists_formula_separating_approxMCSP_of_succinctMCSP_inst
     {s₁ s₂ k : ℕ → ℕ} {n L : ℕ} (hs : ∀ m, s₁ m ≤ s₂ m) (hk : ∀ m, 1 ≤ k m)
     (hL : ∀ m ≤ k n * (computableFunctionsLogBound n (s₂ n) + 2),
@@ -1020,7 +1036,11 @@ theorem exists_formula_separating_approxMCSP_of_succinctMCSP_inst
 
 /-- **Instantiated contrapositive formula hardness magnification for `ApproxMCSP`
 [OliveiraSanthanam2018, Section 3.1, Lemma 16, p. 14]**, with `M` instantiated to
-`computableFunctionsLogBound n (s₂ n)` via `card_computableFunctions_le_two_pow`. -/
+`computableFunctionsLogBound n (s₂ n)` via `card_computableFunctions_le_two_pow`. The resulting hard
+slice of `SuccinctMCSP.enc '' SuccinctMCSP` has encoded length
+`SuccinctMCSP.ofFunctionEncLength n m (s₂ n) = 4 * n + 3 + m * (8 * n + 10) + s₂ n` with
+`m ≤ k n * (computableFunctionsLogBound n (s₂ n) + 2)`, i.e. `O(k n ⋅ n ⋅ s₂ n ⋅ log(n + s₂ n))`
+bits, matching `m(n) = Θ((n ⋅ s(n) ⋅ log s(n)) / δ(n))` in Lemma 16 for `δ(n) = 1 / k n`. -/
 theorem exists_lt_formulaSize_succinctMCSP_of_approxMCSP_inst
     {s₁ s₂ k : ℕ → ℕ} {n L : ℕ} (hs : ∀ m, s₁ m ≤ s₂ m) (hk : ∀ m, 1 ≤ k m)
     (hged : ∀ F : Formula signature (2 ^ n),
