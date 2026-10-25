@@ -6,6 +6,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: candidate
 
+public import Cslib.Init
 public import Mathlib.Data.List.Basic
 
 /-! # Word comparison by a left fold

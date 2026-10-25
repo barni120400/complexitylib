@@ -221,20 +221,6 @@ universe u
 variable {α β γ : Type*} {encIn : α ↪ List Bool} {encMid : β ↪ List Bool}
   {encOut : γ ↪ List Bool}
 
-@[fun_prop]
-theorem comp' {f : β → γ} {g : α → β} (hf : ComputableInPolyTime f encMid encOut)
-    (hg : ComputableInPolyTime g encIn encMid) :
-    ComputableInPolyTime (fun a => f (g a)) encIn encOut :=
-  hf.comp hg
-
-/-- Compose in execution order. This lets `fun_prop` infer the intermediate encoding from the
-inner function when it cannot be inferred from the outer function. -/
-@[fun_prop]
-theorem trans {f : α → β} {g : β → γ} (hf : ComputableInPolyTime f encIn encMid)
-    (hg : ComputableInPolyTime g encMid encOut) :
-    ComputableInPolyTime (fun x => g (f x)) encIn encOut :=
-  hg.comp hf
-
 -- Preserve existing legacy-client registration while the direct core remains usable alone.
 attribute [fun_prop] fst' snd'
 

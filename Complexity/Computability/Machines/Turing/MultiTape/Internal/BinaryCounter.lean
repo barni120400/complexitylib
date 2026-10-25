@@ -6,6 +6,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: candidate
 
+public import Cslib.Init
 public import Mathlib.Data.Nat.Basic
 public import Mathlib.Logic.Function.Iterate
 public import Mathlib.Order.SuccPred.Nat

@@ -60,13 +60,12 @@ Priorities live in this list and in the tiers of [#897].
   polynomial-length messages. Authentication trees from one-time signatures and
   collision-resistant hashing are an intermediate development step; for the theorem itself,
   universal one-way hash functions replace the collision-resistance assumption.
-- **Gentry's bootstrapping, instantiated** ([#486]). A concrete LWE-based scheme satisfying the
-  correctness, security, bootstrappability and native-efficiency hypotheses of the generic
-  theorem: full native evaluation of the augmented GSW decryption circuit, bootstrappability
-  with compatible parameters, and the joint circular-security assumption needed for the
-  fixed-key endpoint. Further targets: a uniform generator for the leveled scheme's wrapper
-  decryption circuits (uniform compactness), reuse of evaluated ciphertexts as fresh inputs
-  (multi-hop evaluation), and Gentry's exact concrete-security loss.
+- **Gentry's bootstrapping, instantiated** ([#486]). GSW at its logarithmic-depth parameter
+  family instantiates the generic theorem: leveled FHE under decision LWE with quasi-polynomial
+  modulus for exactly that family, and FHE under the additional one-key circular-security
+  assumption. Open: the checked formal abstract of these endpoints, a uniform generator for the
+  leveled scheme's wrapper decryption circuits (uniform compactness), reuse of evaluated
+  ciphertexts as fresh inputs (multi-hop evaluation), and Gentry's exact concrete-security loss.
 - **Completeness of oblivious transfer.** In the ideal OT-hybrid model, every polynomial-time
   multiparty functionality admits a protocol secure against static malicious corruptions, with
   real/ideal simulation and abort, under the standard communication assumptions.
@@ -122,7 +121,7 @@ families and full-input native runtime.
   statistical-distance term from sampling `ZMod q`.
 - **Diffie–Hellman and ElGamal:** group-element messages, efficient key generation and
   encryption, the efficient DDH random self-reduction (Boneh–Shoup Ex. 10.10), hashed ElGamal,
-  Cramer–Shoup CCA security ([#1000]), and Pedersen commitments.
+  and Cramer–Shoup CCA security ([#1000]).
 - **Chosen-ciphertext security** ([#1000]): authenticated encryption by encrypt-then-MAC and
   Cramer–Shoup from DDH, with KEM–DEM hybrid encryption ([#881]) as the chosen-plaintext
   starting point (Boneh–Shoup Exercise 11.9).
@@ -130,10 +129,9 @@ families and full-input native runtime.
   2012); strict-PPT samplers for integer boxes; identification security under SIS; efficiency
   certificates for the simulator and extractor; full interactive-view simulation; SIS for
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
-- **Symmetric:** `IsOraclePPT` admissibility of the PRF-pad reduction, uniform word-level
-  forger and hash families, the asymptotic `PseudorandomFunction` corollary and fresh-nonce
-  multi-query Carter–Wegman security ([#736]); the 4-round strong Feistel bound ([#748]); the
-  Naor–Reingold PRF from DDH.
+- **Symmetric:** Carter–Wegman word-level `IsOraclePPT` PRF reduction wrappers, `MACScheme`
+  packaging for randomized Carter–Wegman, and a computational nonce-MAC interface ([#736]); the
+  4-round strong Feistel bound ([#748]); the Naor–Reingold PRF from DDH.
 - **General:** reusable adaptive reductions, public-key encryption, universal-instance zero
   knowledge, hard-core predicates and hardness amplification, and connections to learning and
   average-case hardness.
@@ -339,10 +337,15 @@ each statement against the numbered result. Organize modules by subject, not cha
   PAC/agnostic/SQ learning, learning lower bounds, compression and refutation.
 - **Property and distribution testing:** access models, one/two-sided and tolerant testing,
   query and sample bounds, canonical testers and lower bounds.
-- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the converse direction of
-  Liu–Pass (`K^t` mildly hard on average implies one-way functions); prefix-free complexity,
+- **Kolmogorov complexity and metacomplexity** ([#798], [#884]): the near-linear threshold regime
+  of Liu–Pass Theorem 3.1 (c), hardness for every polynomial `t(n) ≥ (1 + ε)n` rather than above a
+  polynomial threshold, which needs a rate-1 efficient conditional EP-PRG running in `n + O(n^c)`
+  multi-tape steps for a constant `c < 1`; prefix-free complexity,
   resource-bounded MCSP variants and connections to learning, cryptography and lower bounds; the
-  circuitized anti-checker with an efficient generator, hardness magnification, MINCKT and
+  circuitized anti-checker with an efficient generator, hardness magnification (packaging
+  `MCSP/FormulaMagnification.lean` Lemma 16 into Oliveira–Santhanam Theorem 1 / Theorem 17
+  `NP ⊄ Formula[poly]` separations and Theorem 5 / Theorem 27 zero-error average-case formula
+  magnification), MINCKT and
   hardness results for MINKT, as independently scoped developments; the reverse
   multi-tape-to-single-tape simulation and machine-backed Nisan–Wigderson decoding.
 - **Quantum computation** ([#896]): BQP ⊆ PP; reusable

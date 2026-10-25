@@ -102,4 +102,3 @@ theorem optionElimWithInput {γ : Type} {encC : γ ↪ List Bool}
     cases value a <;> rfl
 
 end Turing.MultiTapeTM.ComputableTidilyInPolyTime
-

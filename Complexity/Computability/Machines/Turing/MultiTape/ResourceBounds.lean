@@ -63,6 +63,10 @@ devices. Each plain notion agrees with its tidy counterpart with the same bounds
 ## Main definitions
 
 * `Turing.MultiTapeTM.ComputableInO`: computability within time and space bounds up to constants.
+* `Turing.MultiTapeTM.ComputableInLinearTimeAndSpace`: linear time and work space in encoded
+  input length, with a single realizing machine.
+* `Turing.MultiTapeTM.ComputableInBigO`: independent uncharged time/workspace bounds up to
+  constants; unlike `ComputableInO`, the workspace bound does not charge encoded output.
 * `Turing.MultiTapeTM.ComputableInSpace`: computability within a space bound up to constants.
 * `Turing.MultiTapeTM.ComputableInPolySpace`: computability within polynomial space.
 * `Turing.MultiTapeTM.ComputableInDegree`: independent time/workspace and output degrees.

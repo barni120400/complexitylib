@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListBinaryLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
