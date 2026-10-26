@@ -7,7 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.TidyZeroSpace
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelZeroSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.OnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.Tidy.Defs
 import Mathlib.Tactic.FinCases
