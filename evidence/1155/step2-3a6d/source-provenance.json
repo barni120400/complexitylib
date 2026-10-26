@@ -1,0 +1,109 @@
+[
+  {
+    "case": "AddTrivial",
+    "current_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+    "original_current_path": "Complexity/Computability/PCP/Encoded/AddTrivial.lean",
+    "recovered_before_commit": "e35a5b36b052c8f6003e1f92dec5d8baf15e87d7",
+    "method": "whole current module diagnostic copy; only replaced explicit proof block with historical original automatic body; all surrounding theorem context/imports/source retained",
+    "default_maxHeartbeats": 200000,
+    "imports": [
+      "public import Complexity.Computability.PCP.Encoded.Basic",
+      "public import Mathlib.Logic.Equiv.Fin.Basic",
+      "import Complexity.Tactic.PolyTime"
+    ],
+    "historical_imports_equal_current": true,
+    "module_budget_setters": [],
+    "historical_imports": [
+      "public import Complexity.Computability.PCP.Encoded.Basic",
+      "public import Mathlib.Logic.Equiv.Fin.Basic",
+      "import Complexity.Tactic.PolyTime"
+    ],
+    "historical_imports_removed": [],
+    "actual_main_imports_added_since_historical": []
+  },
+  {
+    "case": "LiuPass",
+    "current_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+    "original_current_path": "Complexity/Crypto/Computational/OneWay/LiuPass.lean",
+    "recovered_before_commit": "19743e829276e24ba6286b1e07d68d5dd2262f39",
+    "method": "whole current module diagnostic copy; only replaced explicit proof block with historical original automatic body; all surrounding theorem context/imports/source retained",
+    "default_maxHeartbeats": 200000,
+    "imports": [
+      "public import Complexity.Crypto.Computational.OneWay.CondEPPRG",
+      "public import Complexity.Crypto.Computational.OneWay.LiuPassConverse",
+      "public import Complexity.Computability.Complexity.AverageCase",
+      "public import Complexity.Computability.Kolmogorov.AverageCase",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log",
+      "import Complexity.Foundations.Data.Nat.Asymptotics",
+      "import Complexity.Foundations.Data.Nat.Log",
+      "import Complexity.Tactic.PPT",
+      "import Complexity.Tactic.PolyTime"
+    ],
+    "historical_imports_equal_current": false,
+    "module_budget_setters": [],
+    "historical_imports": [
+      "public import Complexity.Crypto.Computational.OneWay.CondEPPRG",
+      "public import Complexity.Crypto.Computational.OneWay.LiuPassConverse",
+      "public import Complexity.Computability.Complexity.AverageCase",
+      "public import Complexity.Computability.Kolmogorov.AverageCase",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log",
+      "import Complexity.Tactic.PPT",
+      "import Complexity.Tactic.PolyTime"
+    ],
+    "historical_imports_removed": [],
+    "actual_main_imports_added_since_historical": [
+      "import Complexity.Foundations.Data.Nat.Asymptotics",
+      "import Complexity.Foundations.Data.Nat.Log"
+    ]
+  },
+  {
+    "case": "Hardness1063",
+    "current_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+    "original_current_path": "Complexity/Computability/MCSP/HardnessConsequences.lean",
+    "recovered_before_commit": "ba2a95aad0f39883ede12a5c3c2e27e8246c0e3b",
+    "method": "whole current module diagnostic copy; only replaced explicit proof block with historical original automatic body; all surrounding theorem context/imports/source retained",
+    "default_maxHeartbeats": 200000,
+    "imports": [
+      "public import Complexity.Computability.Complexity.Classes.Inclusions",
+      "public import Complexity.Computability.Complexity.Classes.PH.KarpLipton",
+      "public import Complexity.Computability.Complexity.Classes.ZPP",
+      "public import Complexity.Computability.MCSP.NP",
+      "import Complexity.Computability.Circuit.Boolean.Advice",
+      "import Complexity.Computability.Circuit.Boolean.PolynomialTime",
+      "import Complexity.Computability.Complexity.Classes.Hierarchy.Nondeterministic",
+      "import Complexity.Computability.Complexity.Classes.Padding",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log",
+      "import Complexity.Foundations.Data.Nat.PolynomialBound.Closure"
+    ],
+    "historical_imports_equal_current": true,
+    "module_budget_setters": [],
+    "historical_imports": [
+      "public import Complexity.Computability.Complexity.Classes.Inclusions",
+      "public import Complexity.Computability.Complexity.Classes.PH.KarpLipton",
+      "public import Complexity.Computability.Complexity.Classes.ZPP",
+      "public import Complexity.Computability.MCSP.NP",
+      "import Complexity.Computability.Circuit.Boolean.Advice",
+      "import Complexity.Computability.Circuit.Boolean.PolynomialTime",
+      "import Complexity.Computability.Complexity.Classes.Hierarchy.Nondeterministic",
+      "import Complexity.Computability.Complexity.Classes.Padding",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary",
+      "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log",
+      "import Complexity.Foundations.Data.Nat.PolynomialBound.Closure"
+    ],
+    "historical_imports_removed": [],
+    "actual_main_imports_added_since_historical": []
+  }
+]

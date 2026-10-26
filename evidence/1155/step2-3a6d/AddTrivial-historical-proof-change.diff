@@ -1,0 +1,32 @@
+commit e35a5b36b052c8f6003e1f92dec5d8baf15e87d7
+Author: Samuel Giuseppe Schlesinger <sgschlesinger@gmail.com>
+Date:   Sun Oct 25 11:13:51 2026 -0400
+
+    refactor(pcp): compose the trivial-edge construction certificate
+
+diff --git a/Complexity/Computability/PCP/Encoded/AddTrivial.lean b/Complexity/Computability/PCP/Encoded/AddTrivial.lean
+index 6807dc2d..50274601 100644
+--- a/Complexity/Computability/PCP/Encoded/AddTrivial.lean
++++ b/Complexity/Computability/PCP/Encoded/AddTrivial.lean
+@@ -61,8 +61,20 @@ theorem isPolyTime_addTrivial (enc : C ↪ List Bool) (truth : C) :
+     ComputableInPolyTime (fun p : Graph C × List (ℕ × ℕ) =>
+       p.1.addTrivial truth p.2)
+       (encPair (encoding enc) (encList (encPair encUnary encUnary))) (encoding enc) := by
++  have hgraph : ComputableInPolyTime (fun p : Graph C × List (ℕ × ℕ) => p.1)
++      (encPair (encoding enc) (encList (encPair encUnary encUnary))) (encoding enc) :=
++    ComputableInPolyTime.fst _ _
++  have hextra : ComputableInPolyTime (fun p : Graph C × List (ℕ × ℕ) => p.2)
++      (encPair (encoding enc) (encList (encPair encUnary encUnary)))
++      (encList (encPair encUnary encUnary)) := ComputableInPolyTime.snd _ _
++  have hedge : ComputableInPolyTime (fun p : ℕ × ℕ => Edge.mk p.1 p.2 truth)
++      (encPair encUnary encUnary) (Edge.encoding enc) :=
++    Edge.isPolyTime_mk (ComputableInPolyTime.fst _ _) (ComputableInPolyTime.snd _ _)
++      (ComputableInPolyTime.const truth)
+   unfold addTrivial
+-  polytime
++  exact isPolyTime_mk (isPolyTime_vertices hgraph)
++    (ComputableInPolyTime.listAppend' (isPolyTime_edges hgraph)
++      ((ComputableInPolyTime.map hedge).comp hextra))
+ 
+ /-- Constructing all self-loops, including enumerating their endpoints, is polynomial-time. -/
+ @[fun_prop]

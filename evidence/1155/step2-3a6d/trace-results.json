@@ -1,0 +1,18 @@
+[
+  {
+    "case": "LiuPass",
+    "mode": "trace",
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/LiuPass-trace.lean"
+    ],
+    "returncode": 1,
+    "process_wall_seconds": 14.146206448029261,
+    "maxHeartbeats": "unchanged default200000 per original command",
+    "scope": "whole current module with only historical automatic proof restored",
+    "per_call_heartbeats": null
+  }
+]

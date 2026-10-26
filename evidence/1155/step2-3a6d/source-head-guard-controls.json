@@ -1,0 +1,23 @@
+[
+  {
+    "script": "evidence/1155/pilot-3a6d/run.py",
+    "expected_refusal": true,
+    "returncode": 1,
+    "stderr": "Refusing measurement: expected source 3a6d770645c1217689da774f519cd785c253d8a2, got b484932e76cd9d531981763eb6a0f7ce6026fe37\n",
+    "lean_started": false
+  },
+  {
+    "script": "evidence/1155/pilot-3a6d/fallback/run.py",
+    "expected_refusal": true,
+    "returncode": 1,
+    "stderr": "Refusing measurement: expected source 3a6d770645c1217689da774f519cd785c253d8a2, got b484932e76cd9d531981763eb6a0f7ce6026fe37\n",
+    "lean_started": false
+  },
+  {
+    "script": "evidence/1155/step2-3a6d/run.py",
+    "expected_refusal": true,
+    "returncode": 1,
+    "stderr": "Refusing measurement: expected source 3a6d770645c1217689da774f519cd785c253d8a2, got b484932e76cd9d531981763eb6a0f7ce6026fe37\n",
+    "lean_started": false
+  }
+]

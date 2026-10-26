@@ -1,0 +1,50 @@
+[
+  {
+    "case": "AddTrivial",
+    "mode": "baseline",
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/AddTrivial-original.lean"
+    ],
+    "returncode": 0,
+    "process_wall_seconds": 1.7284999359981157,
+    "maxHeartbeats": "unchanged default200000 per original command",
+    "scope": "whole current module with only historical automatic proof restored",
+    "per_call_heartbeats": null
+  },
+  {
+    "case": "LiuPass",
+    "mode": "baseline",
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/LiuPass-original.lean"
+    ],
+    "returncode": 1,
+    "process_wall_seconds": 14.94862404797459,
+    "maxHeartbeats": "unchanged default200000 per original command",
+    "scope": "whole current module with only historical automatic proof restored",
+    "per_call_heartbeats": null
+  },
+  {
+    "case": "Hardness1063",
+    "mode": "baseline",
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/Hardness1063-original.lean"
+    ],
+    "returncode": 0,
+    "process_wall_seconds": 5.278952099964954,
+    "maxHeartbeats": "unchanged default200000 per original command",
+    "scope": "whole current module with only historical automatic proof restored",
+    "per_call_heartbeats": null
+  }
+]

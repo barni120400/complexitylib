@@ -1,0 +1,4 @@
+case,returncode,process_wall_seconds,maxHeartbeats,per_call_heartbeats,interpretation,wall_granularity
+AddTrivial,0,1.7284999359981157,unchanged default200000 per original command,,original automatic positive passes,"whole module process, not target tactic duration"
+LiuPass,1,14.94862404797459,unchanged default200000 per original command,,real original automatic positive gap; not a negative test,"whole module process, not target tactic duration"
+Hardness1063,0,5.278952099964954,unchanged default200000 per original command,,original automatic positive passes,"whole module process, not target tactic duration"

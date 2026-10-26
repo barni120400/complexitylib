@@ -2,6 +2,10 @@
 """Small sequential Lean CLI pilot; no package/source mutation or budget overrides."""
 import argparse, json, pathlib, subprocess, time
 p=argparse.ArgumentParser();p.add_argument('checkout');p.add_argument('mode',choices=['baseline','wall']);a=p.parse_args()
+
+expected_head='3a6d770645c1217689da774f519cd785c253d8a2'
+actual_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=pathlib.Path(a.checkout).resolve(),text=True).strip()
+if actual_head!=expected_head:raise SystemExit(f'Refusing measurement: expected source {expected_head}, got {actual_head}')
 evidence=pathlib.Path(__file__).resolve().parent
 root=pathlib.Path(a.checkout).resolve(); dest=root/'pilot1155';dest.mkdir(exist_ok=True)
 results=[]

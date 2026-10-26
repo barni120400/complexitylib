@@ -2,6 +2,10 @@
 """One existing tactic-form counter and separate attempted-rule trace per positive."""
 import argparse,json,pathlib,subprocess,time
 p=argparse.ArgumentParser();p.add_argument('checkout');a=p.parse_args()
+
+expected_head='3a6d770645c1217689da774f519cd785c253d8a2'
+actual_head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=pathlib.Path(a.checkout).resolve(),text=True).strip()
+if actual_head!=expected_head:raise SystemExit(f'Refusing measurement: expected source {expected_head}, got {actual_head}')
 out=pathlib.Path(__file__).resolve().parent;old=out.parent;root=pathlib.Path(a.checkout).resolve();dest=root/'pilot1155';results=[]
 g=(old/'guide-baseline.lean').read_text();header=g.split('#doc (Manual)',1)[0]
 goal=g.split('```lean\n',1)[1].split('\n```',1)[0]

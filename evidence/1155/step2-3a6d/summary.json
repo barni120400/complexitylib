@@ -1,0 +1,63 @@
+{
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "results": [
+    {
+      "case": "AddTrivial",
+      "mode": "baseline",
+      "command": [
+        "lake",
+        "env",
+        "lean",
+        "-DwarningAsError=true",
+        "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/AddTrivial-original.lean"
+      ],
+      "returncode": 0,
+      "process_wall_seconds": 1.7284999359981157,
+      "maxHeartbeats": "unchanged default200000 per original command",
+      "scope": "whole current module with only historical automatic proof restored",
+      "per_call_heartbeats": null,
+      "interpretation": "original automatic positive passes",
+      "wall_granularity": "whole module process, not target tactic duration"
+    },
+    {
+      "case": "LiuPass",
+      "mode": "baseline",
+      "command": [
+        "lake",
+        "env",
+        "lean",
+        "-DwarningAsError=true",
+        "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/LiuPass-original.lean"
+      ],
+      "returncode": 1,
+      "process_wall_seconds": 14.94862404797459,
+      "maxHeartbeats": "unchanged default200000 per original command",
+      "scope": "whole current module with only historical automatic proof restored",
+      "per_call_heartbeats": null,
+      "interpretation": "real original automatic positive gap; not a negative test",
+      "wall_granularity": "whole module process, not target tactic duration"
+    },
+    {
+      "case": "Hardness1063",
+      "mode": "baseline",
+      "command": [
+        "lake",
+        "env",
+        "lean",
+        "-DwarningAsError=true",
+        "/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/step2/Hardness1063-original.lean"
+      ],
+      "returncode": 0,
+      "process_wall_seconds": 5.278952099964954,
+      "maxHeartbeats": "unchanged default200000 per original command",
+      "scope": "whole current module with only historical automatic proof restored",
+      "per_call_heartbeats": null,
+      "interpretation": "original automatic positive passes",
+      "wall_granularity": "whole module process, not target tactic duration"
+    }
+  ],
+  "nested_boolean_status": "exact historical multi-depth source not recovered in prior preparation; no substitute generated; existing depth-one normal-test coverage reused",
+  "Extraction_Cloud_1168": "existing original source/CI positives reused, no duplicate execution in step2",
+  "production_changes": false,
+  "all_jobs_terminal": true
+}
