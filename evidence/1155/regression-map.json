@@ -1,0 +1,225 @@
+{
+  "mapping_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+  "census_pin_unchanged": "67c6ea4d7d59bf8089f7b305394649b0cf033c1c",
+  "method": "Read-only source/workflow/API inspection; no builds/elaboration/new measurements.",
+  "goals": [
+    {
+      "case": "AddTrivial",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "Complexity/Computability/PCP/Encoded/AddTrivial.lean",
+      "line": 60,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/Complexity/Computability/PCP/Encoded/AddTrivial.lean#L60",
+      "imports": [
+        "public import Complexity.Computability.PCP.Encoded.Basic",
+        "public import Mathlib.Logic.Equiv.Fin.Basic",
+        "import Complexity.Tactic.PolyTime"
+      ],
+      "original_automation": "unfold addTrivial; polytime",
+      "current_proof": "Explicit hgraph/hextra/hedge composition followed by unfold and exact constructor/listAppend/map certificates.",
+      "budget": "No file-level maxHeartbeats setter found. Lean4 v4.36.0-rc1 defaults200000 under current CI flags; keep original tactic defaults (bare fun_prop maxSteps100000, polytime backend256), do not substitute diagnostic minimum-step bounds.",
+      "existing_ci_coverage": "Library source is built by normal CI; PCPEncoded imports it and tests addLoops, but no current original unfolded addTrivial automation guard was found.",
+      "minimal_gap": "Add ONE normal-import generic exact original unfolded positive, no named isPolyTime_addTrivial bypass. Keep production explicit proof.",
+      "negative_control": "Original closed program has no premise to clear. Separate captured graph/extra opaque-provider companion may require both certificates, then remove each; do not fake a negative on the fully certified closed goal.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": []
+    },
+    {
+      "case": "Extraction50",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "ComplexityTests/PseudoentropyExtraction.lean",
+      "line": 41,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/ComplexityTests/PseudoentropyExtraction.lean#L41",
+      "imports": [
+        "import Complexity.Crypto.Computational.Pseudoentropy.WordExtraction",
+        "import Complexity.Crypto.Computational.Pseudoentropy.WordSeedExtraction",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+        "import Complexity.Tactic.PPT"
+      ],
+      "original_automation": "by ppt on exact seed-bind/hash/map program",
+      "current_proof": "The original explicit-seed-bind example remains by ppt.",
+      "budget": "Explicit set_option maxHeartbeats12000 in the example (line42); declaration elaboration shares it, not just ppt.",
+      "existing_ci_coverage": "Already in ComplexityTests.+; original12k positive remains, plus later prepare callback fail_if_success(clear hprepare; ppt) then ppt at default budget.",
+      "minimal_gap": "Reuse the existing whole source example/module. Do not add a duplicate rewritten/tactic-hinted positive. Record its existing literal location in the future suite.",
+      "negative_control": "Keep existing supplied prepare/clear-hprepare control and original malformed/zero-width assertions; retain shared-command behavior, not separate raised budgets.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": [
+        50
+      ]
+    },
+    {
+      "case": "LiuPass threshold",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "Complexity/Crypto/Computational/OneWay/LiuPass.lean",
+      "line": 210,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/Complexity/Crypto/Computational/OneWay/LiuPass.lean#L210",
+      "imports": [
+        "public import Complexity.Crypto.Computational.OneWay.CondEPPRG",
+        "public import Complexity.Crypto.Computational.OneWay.LiuPassConverse",
+        "public import Complexity.Computability.Complexity.AverageCase",
+        "public import Complexity.Computability.Kolmogorov.AverageCase",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log",
+        "import Complexity.Foundations.Data.Nat.Asymptotics",
+        "import Complexity.Foundations.Data.Nat.Log",
+        "import Complexity.Tactic.PPT",
+        "import Complexity.Tactic.PolyTime"
+      ],
+      "original_automation": "unfold thresholdValue; fun_prop",
+      "current_proof": "Private certificate now explicitly composes hlog,hsub,hid,hc,hm,hleft; hlog retains transitional raw-backed view.",
+      "budget": "No file-level maxHeartbeats setter found. Lean4 v4.36.0-rc1 defaults200000 under current CI flags; keep original tactic defaults (bare fun_prop maxSteps100000, polytime backend256), do not substitute diagnostic minimum-step bounds.",
+      "existing_ci_coverage": "Library/LiuPass source + LiuPass tests compile, but threshold automatic block was replaced; tests do not recreate it.",
+      "minimal_gap": "One exact generic γ,d,c threshold expression at original200k/fun_prop, preserving all let-bound nesting. Private name is not normal-import accessible: use exact expression or a same-module guard, never importprivate/new public alias. Current success is UNMEASURED; do not disguise a failing positive as a negative.",
+      "negative_control": "Separate opaque unary callback at one leaf with supplied-certificate positive and missing-certificate negative; validate later. It supplements, not replaces, the closed original arithmetic goal.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": []
+    },
+    {
+      "case": "1063 nested arithmetic",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "Complexity/Computability/MCSP/HardnessConsequences.lean",
+      "line": 469,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/Complexity/Computability/MCSP/HardnessConsequences.lean#L469",
+      "imports": [
+        "public import Complexity.Computability.Complexity.Classes.Inclusions",
+        "public import Complexity.Computability.Complexity.Classes.PH.KarpLipton",
+        "public import Complexity.Computability.Complexity.Classes.ZPP",
+        "public import Complexity.Computability.MCSP.NP",
+        "import Complexity.Computability.Circuit.Boolean.Advice",
+        "import Complexity.Computability.Circuit.Boolean.PolynomialTime",
+        "import Complexity.Computability.Complexity.Classes.Hierarchy.Nondeterministic",
+        "import Complexity.Computability.Complexity.Classes.Padding",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Log",
+        "import Complexity.Foundations.Data.Nat.PolynomialBound.Closure"
+      ],
+      "original_automation": "unfold g certLength s_bound m_bound f; fun_prop (historical hs_bound/hg blocks)",
+      "current_proof": "Explicit hadd/hmul/hm_bound/hs_bound/hg composition. Local f n=n^(k+1)+1; m_bound=c_R+(f n+2)*d_R; s_bound=c_M*(2*n+1+m_bound n+1)^d_M+2; g=certLength(m_bound n)(s_bound n)+n.",
+      "budget": "No file-level maxHeartbeats setter found. Lean4 v4.36.0-rc1 defaults200000 under current CI flags; keep original tactic defaults (bare fun_prop maxSteps100000, polytime backend256), do not substitute diagnostic minimum-step bounds.",
+      "existing_ci_coverage": "Library theorem and HardnessConsequences tests are covered; tests check hardness/nonvacuity/semantic consequences, not old full unary automatic nest.",
+      "minimal_gap": "One exact original hs_bound/hg arithmetic fixture with its constants/let definitions/full original imports and200k. No hardness model/theorem changes. Current automated success unmeasured; retrieve original before/after proof hunk when implementing.",
+      "negative_control": "If generic f/hf companion used, remove hf for a meaningful missing-certificate negative; retain actual concrete f positive and full nested expression. Avoid assuming bare g is computable just because it has a name.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": []
+    },
+    {
+      "case": "1148 guide filter",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "guide/ComplexityGuide/NPCompleteness.lean",
+      "line": 125,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/guide/ComplexityGuide/NPCompleteness.lean#L125",
+      "imports": [
+        "import VersoManual",
+        "import Complexity.Computability.Complexity.CookLevin.Completeness",
+        "import Complexity.Computability.Complexity.Problems.CircuitSAT",
+        "import Complexity.Computability.Complexity.Problems.Clique",
+        "import Complexity.Computability.Complexity.Problems.Coloring",
+        "import Complexity.Computability.Complexity.Problems.ExactThreeSAT",
+        "import Complexity.Computability.Complexity.Problems.Hamiltonian.Directed",
+        "import Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected",
+        "import Complexity.Computability.Complexity.Problems.IntegerProgramming",
+        "import Complexity.Computability.Complexity.Problems.Knapsack",
+        "import Complexity.Computability.Complexity.Problems.Partition",
+        "import Complexity.Computability.Complexity.Problems.PlanarThreeSATThree",
+        "import Complexity.Computability.Complexity.Problems.SubsetSum",
+        "import Complexity.Computability.Complexity.Problems.TSP",
+        "import Complexity.Computability.Complexity.Problems.ThreeSAT",
+        "import Complexity.Computability.Complexity.Problems.ThreeSATThree",
+        "import Complexity.Computability.Complexity.Problems.VertexCover",
+        "import Complexity.Tactic.PolyTime",
+        "import Complexity.Computability.Complexity.CookLevin.Completeness",
+        "import Complexity.Computability.Complexity.Problems.Clique",
+        "import Complexity.Tactic.PolyTime"
+      ],
+      "original_automation": "by polytime",
+      "current_proof": "Exact guide source unchanged at current main; unmerged1168 supplies missing binary LE route/public low-provider import.",
+      "budget": "No guide-file override; original default200000.1168 pins explicit200000 in exact-goal fixture.",
+      "existing_ci_coverage": "Guide is not in normal root ComplexityTests.+. Guide workflow runs for guide/config path changes; nightly docs builds it.1168 adds module test GuideFilterPolyTime (not in this main pin).",
+      "minimal_gap": "Consume/reuse frozen1168 fixture after landing, no duplicate diagnosis or rewritten guide proof; keep full Verso-guide checks as separate import-context coverage.",
+      "negative_control": "1168 includes generic binary operands and each missing-operand negative, unary≤/binary< controls, module context; actual original guide provides non-module/broad-import control.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": [
+        127
+      ]
+    },
+    {
+      "case": "Nested Boolean conditionals",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "ComplexityTests/PolyTimePlain.lean",
+      "line": 132,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/ComplexityTests/PolyTimePlain.lean#L132",
+      "imports": [
+        "import Complexity.Computability.Complexity.Classes.P",
+        "import Complexity.Computability.Complexity.Reduction",
+        "import Complexity.Computability.Complexity.Problems.SAT.PolyTime",
+        "import Complexity.Tactic.PolyTime",
+        "import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant",
+        "import Cslib.Computability.Machines.Turing.MultiTape.Combinators.Id"
+      ],
+      "original_automation": "Reviewer depth2/4/8/12 nested Boolean guard probes under minimal core and Tactic.PPT imports",
+      "current_proof": "Current file has depth-one generic if f a then !g a else g a by fun_prop, plus older raw-view construction control.",
+      "budget": "No file-level maxHeartbeats setter found. Lean4 v4.36.0-rc1 defaults200000 under current CI flags; keep original tactic defaults (bare fun_prop maxSteps100000, polytime backend256), do not substitute diagnostic minimum-step bounds.",
+      "existing_ci_coverage": "Depth-one in normal tests; exact multi-depth reviewer benchmark source was NOT found in committed current tests. Published record6403982121 gives measurements/template, not full downloadable probe source.",
+      "minimal_gap": "Recover exact reviewer probe first, then a small fixed-depth positive/negative pair in BOTH minimal-core and full-PPT import contexts; no blanket generated benchmark framework. Cannot claim exact original multi-depth source has been mapped.",
+      "negative_control": "Missing deepest generic branch certificate, not changed goal or blanket maxTransitionDepth0; keep ordinary legitimate transitions. Proposed controls not executed here.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": [
+        136
+      ]
+    },
+    {
+      "case": "Cloud halfEdges",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "line": 70,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/Complexity/Computability/PCP/Encoded/Cloud.lean#L70",
+      "imports": [
+        "public import Complexity.Computability.PCP.Encoded.Basic",
+        "public import Complexity.Computability.PCP.DegreeReduction",
+        "public import Mathlib.Data.List.NodupEquivFin",
+        "import Complexity.Tactic.PolyTime",
+        "import Mathlib.Data.List.GetD",
+        "import Mathlib.Data.List.ProdSigma"
+      ],
+      "original_automation": "unfold halfEdges List.product; polytime",
+      "current_proof": "Original generic automatic source proof remains.",
+      "budget": "No file-level maxHeartbeats setter found. Lean4 v4.36.0-rc1 defaults200000 under current CI flags; keep original tactic defaults (bare fun_prop maxSteps100000, polytime backend256), do not substitute diagnostic minimum-step bounds.",
+      "existing_ci_coverage": "Normal library CI compiles original automation; PCPEncoded/CloudRotation tests exercise consumers, including named-certificate routes.",
+      "minimal_gap": "Reuse existing source positive rather than duplicate it for correctness. Future measurement must select generic source proof, not a client that closes by its already-registered endpoint certificate. No explicit per-call timing/performance metric exists.",
+      "negative_control": "halfEdges: remove hgraph. Endpoint: independently remove hgraph/hhalfEdge, preserving arbitrary Input/input encoding/fallback. Additional normal-import controls must unfold endpoint to prevent named-only shortcut and keep original positive.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": [
+        75
+      ]
+    },
+    {
+      "case": "Cloud endpoint",
+      "source_pin": "b5c60db66dd9567b0976a36f269b6a69c6c00f8b",
+      "path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "line": 79,
+      "url": "https://github.com/cslib-community/complexitylib/blob/b5c60db66dd9567b0976a36f269b6a69c6c00f8b/Complexity/Computability/PCP/Encoded/Cloud.lean#L79",
+      "imports": [
+        "public import Complexity.Computability.PCP.Encoded.Basic",
+        "public import Complexity.Computability.PCP.DegreeReduction",
+        "public import Mathlib.Data.List.NodupEquivFin",
+        "import Complexity.Tactic.PolyTime",
+        "import Mathlib.Data.List.GetD",
+        "import Mathlib.Data.List.ProdSigma"
+      ],
+      "original_automation": "unfold endpoint; polytime",
+      "current_proof": "Original generic automatic source proof remains.",
+      "budget": "No file-level maxHeartbeats setter found. Lean4 v4.36.0-rc1 defaults200000 under current CI flags; keep original tactic defaults (bare fun_prop maxSteps100000, polytime backend256), do not substitute diagnostic minimum-step bounds.",
+      "existing_ci_coverage": "Normal library CI compiles original automation; PCPEncoded/CloudRotation tests exercise consumers, including named-certificate routes.",
+      "minimal_gap": "Reuse existing source positive rather than duplicate it for correctness. Future measurement must select generic source proof, not a client that closes by its already-registered endpoint certificate. No explicit per-call timing/performance metric exists.",
+      "negative_control": "halfEdges: remove hgraph. Endpoint: independently remove hgraph/hhalfEdge, preserving arbitrary Input/input encoding/fallback. Additional normal-import controls must unfold endpoint to prevent named-only shortcut and keep original positive.",
+      "dynamic_measurement_this_task": null,
+      "current_auto_call_lines": [
+        86
+      ]
+    }
+  ]
+}
