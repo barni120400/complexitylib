@@ -64,6 +64,30 @@
       "synthetic": true,
       "rejected": true,
       "reason": "no executed run"
+    },
+    {
+      "name": "both_threads_absent_old_hole",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "missing/invalid thread ID"
+    },
+    {
+      "name": "both_threads_null_old_hole",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "missing/invalid thread ID"
+    },
+    {
+      "name": "boolean_thread_is_not_integer_id",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "missing/invalid thread ID"
+    },
+    {
+      "name": "event_id_cross_call_reuse_old_hole",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "event ID reused across different calls"
     }
   ],
   "actual_Cloud_result": "NOT_RUN; explicit builder handoff required"

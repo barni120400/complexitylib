@@ -40,6 +40,19 @@ rejects('missing_baseline_command',commands=cmd[1:])
 bad=copy.deepcopy(cmd);bad[-1]=copy.deepcopy(cmd[0]);rejects('duplicate_mode',commands=bad)
 bad=copy.deepcopy(ev);bad[0]['sidecar_sha256']='0'*64;rejects('sidecar_mismatch',events=bad)
 rejects('prep_is_not_execution',sidecar=mb)
+# Exact two reviewed holes: absent None==None threads and cross-call ID reuse.
+bad=copy.deepcopy(ev)
+for row in bad: row.pop('thread_id',None)
+rejects('both_threads_absent_old_hole',events=bad)
+bad=copy.deepcopy(ev)
+for row in bad: row['thread_id']=None
+rejects('both_threads_null_old_hole',events=bad)
+bad=copy.deepcopy(ev)
+for row in bad: row['thread_id']=True
+rejects('boolean_thread_is_not_integer_id',events=bad)
+bad=copy.deepcopy(ev)
+for row in bad[2:4]: row['event_id']=bad[0]['event_id']
+rejects('event_id_cross_call_reuse_old_hole',events=bad)
 report=dict(state='SOURCE_PREPARATION_ONLY',actual_Cloud_elaborations=0,bootstrap_or_cache_operations=0,
             source_mapping_verified=True,synthetic_complete_contract_smoke_passed=True,
             synthetic_rejections=checks,actual_Cloud_result='NOT_RUN; explicit builder handoff required')

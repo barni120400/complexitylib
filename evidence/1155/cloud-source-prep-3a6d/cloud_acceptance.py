@@ -30,10 +30,18 @@ def require_complete_cloud(config, mapping_bytes, sidecar_bytes, commands, event
     tokens = {x['call_token'] for x in config['expected_calls']}
     need(len(tokens) == 3 and len(events) == 6, 'partial/censored/repeated events')
     grouped = {}
+    event_owners = {}
     for event in events:
         token, phase = event.get('call_token'), event.get('phase')
         need(token in tokens and phase in ('begin', 'end'), 'unknown event')
         need(event.get('run_id') == run and event.get('sidecar_sha256') == digest, 'event provenance')
+        event_id = event.get('event_id')
+        need(isinstance(event_id, str) and bool(event_id), 'event ID')
+        need(event_id not in event_owners or event_owners[event_id] == token,
+             'event ID reused across different calls')
+        event_owners[event_id] = token
+        thread = event.get('thread_id')
+        need(type(thread) is int and 0 <= thread < 2**64, 'missing/invalid thread ID')
         pair = grouped.setdefault(token, {})
         need(phase not in pair, 'duplicate/repeated attempt')
         pair[phase] = event

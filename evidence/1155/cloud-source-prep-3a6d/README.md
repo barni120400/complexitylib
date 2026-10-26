@@ -30,7 +30,7 @@ Stable main-module and public names do **not** promise identical generated priva
 
 `acceptance-config.json` and `cloud_acceptance.py` are a small **Cloud-only** future contract, not a collector or extension of the old3-call checker. Future runtime provenance must bind this mapping digest, pin, unchanged implementation, exact calls, run ID, variant source hashes and main-module name. ALL3 whole-file command modes must return0. Wrapped data must have exactly one matching begin/end for EACH original call, returned/zero goals, original200000 and nonnegative counters. Partial/censored/unobserved/duplicate/repeated/unmatched/provenance-invalid data or a failed later whole-file proof cannot pass merely because some wrappers returned.
 
-Preparation itself is `prepared_not_executed` and is explicitly rejected as execution evidence. `preflight.py` verifies source hashes/spans and runs ONE in-memory **SYNTHETIC** complete-contract smoke check plus10 rejection checks. These mock counters are not measured data; only control outcomes are saved. No actual Cloud runtime-sidecar/command results/event telemetry were created. Old b83/9f strict/partial checkers and all real accepted/rejected data remain untouched.
+Preparation itself is `prepared_not_executed` and is explicitly rejected as execution evidence. `preflight.py` verifies source hashes/spans and runs ONE in-memory **SYNTHETIC** complete-contract smoke check plus14 rejection checks. These mock counters are not measured data; only control outcomes are saved. No actual Cloud runtime-sidecar/command results/event telemetry were created. Old b83/9f strict/partial checkers and all real accepted/rejected data remain untouched.
 
 ## Reproduce preparation ONLY
 
@@ -42,3 +42,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 evidence/1155/cloud-source-prep-3a6d/preflight
 Both use git/file/Python data APIs only, no Lean, package or cache command. Source construction is deliberately specific to the three manually inspected Cloud lines, with cardinality/reversibility guards; it is not an automatic framework. `preflight-results.json` says actual_Cloud_result=NOT_RUN. Do not execute variants from this task or mistake synthetic acceptance for original source acceptance.
 
 All jobs terminal. Full1155 survey, LiuPass gap and caller expansion remain OPEN. Stop for source/mapping/config review and explicit sole-builder handoff before any elaboration.
+
+## Reviewed guard delta before execution
+
+The checker now requires a present integer UInt64-range thread ID on EVERY begin/end record (not None==None) and one global per-run owner for each event ID. The same ID is allowed only for its own begin/end pair. Four added SYNTHETIC checks reject absent/null/bool threads and cross-call ID reuse; the complete synthetic pair contract still passes. These are consistency checks, not forged-sidecar authentication. Real prior raw artifacts are unchanged.
