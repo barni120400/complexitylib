@@ -51,4 +51,23 @@ example :
       (Nat.bits 13, Nat.bits 12) := by
   decide
 
+/-- The plain product certificate composes with the entire captured input. -/
+example {α : Type} {input : α ↪ List Bool} {initial : α → ℕ}
+    {steps : α → List (ℕ × Bool)}
+    (hi : Turing.MultiTapeTM.ComputableInPolyTime initial input Turing.MultiTapeTM.encNat)
+    (hs : Turing.MultiTapeTM.ComputableInPolyTime steps input
+      (Turing.MultiTapeTM.encList
+        (Turing.MultiTapeTM.encPair Turing.MultiTapeTM.encNat Turing.MultiTapeTM.encBool))) :
+    Turing.MultiTapeTM.ComputableInPolyTime
+      (fun a => PrimeOrderGroupFamily.naorReingoldProdNat (initial a) (steps a)) input
+      Turing.MultiTapeTM.encNat := by
+  fail_if_success (clear hi; fun_prop)
+  fail_if_success (clear hs; fun_prop)
+  fun_prop
+
+example : PrimeOrderGroupFamily.naorReingoldProdNat 3 [(2, true), (5, false), (7, true)] = 42 :=
+  rfl
+
+example : PrimeOrderGroupFamily.naorReingoldProdNat 0 [] = 0 := rfl
+
 end ComplexityTests.Crypto.NaorReingold
