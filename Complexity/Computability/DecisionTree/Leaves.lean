@@ -393,6 +393,7 @@ theorem exists_orderedComparisonTree_iff (q e L a : ℕ) :
           have hcap : L ≤ BitString.ballSize q (e + 1) + BitString.ballSize q e := by
             simpa only [BitString.ballSize_succ_succ] using hL
           have hpos := BitString.ballSize_pos q (e + 1)
+          have hrightCapacityPos := BitString.ballSize_pos q e
           let leftLeaves := min (BitString.ballSize q (e + 1)) (L - 1)
           have hleftPos : 0 < leftLeaves := by
             dsimp only [leftLeaves]
