@@ -27,7 +27,6 @@ open Cslib NatAdd NatSucc
 namespace ComputableInPolyTime
 
 /-- Addition of binary naturals, using the carry and remaining-word folds. -/
-@[fun_prop]
 theorem binary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
     (encPair encNat encNat) encNat := by
   let encS := encPair encBool (encPair encBits encBits)
