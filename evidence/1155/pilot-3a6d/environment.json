@@ -1,0 +1,20 @@
+{
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "toolchain": "leanprover/lean4:v4.36.0-rc1",
+  "packages": {
+    "cslib": "6ff325e870ed89f86be10515f0e7297fa5a32845",
+    "mathlib": "625d8914199bc567cca9b91f90e8e5afafa5ae51",
+    "plausible": "c2d7840c65673533e15b499f25beecdc6227f7d8",
+    "LeanSearchClient": "9d39f9bb0c30aa2f6200808805ff16e6ce950890",
+    "importGraph": "b3cc36c295aa5e3e3c0197b09a6556298e710447",
+    "proofwidgets": "17137fad38a2cc782ff00b323a13c3a991d085ab",
+    "aesop": "cbdde3aa2665915fb286c48bcd4cdf885c629511",
+    "Qq": "6d26f8bb4b2bb78f929ad160feac508866821316",
+    "batteries": "4453b52d2468f4c346a8711d728c0742e7483c9b",
+    "Cli": "34d2efffcb6dc8d5f3537cf6a7f88bfaa999ec49"
+  },
+  "source_worktree_status": "?? pilot1155/\n",
+  "bootstrap": "scripts/worktree.sh seed invoked once; internally accepted cache/ensure bootstrap",
+  "build_scope": "two initially missing exact guide imports plus Tactic.PolyTime, then all 18 Complexity imports of the exact guide chapter; no full Complexity/library/tests target",
+  "all_jobs_terminal": true
+}

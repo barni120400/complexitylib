@@ -1,0 +1,17 @@
+✔ [4012/4168] Unpacked Complexity.Computability.Circuit.Boolean.Encoding
+✔ [4014/4168] Unpacked Complexity.Computability.Circuit.Boolean.EvaluationTime
+✔ [4074/4168] Unpacked Complexity.Computability.Complexity.Problems.IndependentSet
+✔ [4076/4168] Unpacked Complexity.Computability.Complexity.Problems.Clique
+✔ [4100/4168] Unpacked Complexity.Computability.Complexity.Problems.Coloring
+✔ [4102/4168] Unpacked Complexity.Computability.Complexity.Problems.ExactThreeSAT
+✔ [4124/4168] Unpacked Complexity.Computability.Complexity.Problems.Hamiltonian
+✔ [4126/4168] Unpacked Complexity.Computability.Complexity.Problems.SubsetSum.Mask
+✔ [4130/4168] Unpacked Complexity.Computability.Complexity.Problems.SubsetSum.Digits
+✔ [4151/4338] Unpacked Complexity.Computability.Complexity.Problems.CircuitSAT
+✔ [4153/4338] Unpacked Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond.Defs
+✔ [4155/4338] Unpacked Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond.Soundness
+✔ [4157/4338] Unpacked Complexity.Computability.Complexity.Problems.Hamiltonian.Diamond
+✔ [4159/4338] Unpacked Complexity.Computability.Complexity.Problems.Hamiltonian.Directed
+✔ [4333/4338] Unpacked Complexity.Computability.Complexity.Problems.VertexCover
+✔ [4335/4338] Unpacked Complexity.Computability.Complexity.Problems.Hamiltonian.Undirected
+Build completed successfully (4338 jobs).

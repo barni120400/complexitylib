@@ -1,0 +1,1 @@
+/home/samuel/Code/complexitylib-codex/automation-pilot-1155/pilot1155/guide-baseline.lean:6:0: error: import Complexity.Computability.Complexity.Problems.IndependentSet failed, environment already contains 'Cslib.Complexity.SAT.encOccurrence' from Complexity.Computability.Complexity.Problems.SAT.PolyTime

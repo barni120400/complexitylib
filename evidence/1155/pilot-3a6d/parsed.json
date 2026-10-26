@@ -1,0 +1,50 @@
+[
+  {
+    "case": "guide",
+    "baseline_exit": 0,
+    "baseline_process_wall_seconds": 3.0836375019862317,
+    "wall_diagnostic_exit": 0,
+    "wall_diagnostic_process_wall_seconds": 3.1578031689859927,
+    "single_run_process_wall_difference_seconds": 0.07416566699976102,
+    "maxHeartbeats": 200000,
+    "async_override": false,
+    "export_threads": 8,
+    "export_function_entries": 414,
+    "entries_with_any_source_coordinate": 0,
+    "polytime_frame_tags": [],
+    "export_markers": 0,
+    "authored_call_wall_ms": null,
+    "authored_call_raw_heartbeats": null,
+    "authored_call_user_heartbeats": null,
+    "final_proof_rules": null,
+    "heartbeat_run": "not run: authored-span mapping unsuitable",
+    "rule_trace_run": "not run: authored-span mapping unsuitable",
+    "node_failure_or_censor_status": "not recoverable from this export",
+    "measurement_status": "process wall only; no attributable authored-call metric"
+  },
+  {
+    "case": "operands",
+    "baseline_exit": 0,
+    "baseline_process_wall_seconds": 1.9334796670009382,
+    "wall_diagnostic_exit": 0,
+    "wall_diagnostic_process_wall_seconds": 2.1270525259897113,
+    "single_run_process_wall_difference_seconds": 0.19357285898877308,
+    "maxHeartbeats": 200000,
+    "async_override": false,
+    "export_threads": 4,
+    "export_function_entries": 247,
+    "entries_with_any_source_coordinate": 0,
+    "polytime_frame_tags": [
+      "Elab.step: Cslib.Tactic.PolyTime.tacticPolytime"
+    ],
+    "export_markers": 0,
+    "authored_call_wall_ms": null,
+    "authored_call_raw_heartbeats": null,
+    "authored_call_user_heartbeats": null,
+    "final_proof_rules": null,
+    "heartbeat_run": "not run: authored-span mapping unsuitable",
+    "rule_trace_run": "not run: authored-span mapping unsuitable",
+    "node_failure_or_censor_status": "not recoverable from this export",
+    "measurement_status": "process wall only; no attributable authored-call metric"
+  }
+]

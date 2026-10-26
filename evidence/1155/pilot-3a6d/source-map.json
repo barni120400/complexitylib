@@ -1,0 +1,11 @@
+{
+  "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "guide_source": "guide/ComplexityGuide/NPCompleteness.lean",
+  "guide_exact_goal_start_line": 125,
+  "guide_wrapper": "same full header/imports/options, reduced Verso doc containing only goal and original hidden open; earlier chapter examples intentionally not elaborated",
+  "operand_source": "ComplexityTests/GuideFilterPolyTime.lean",
+  "operand_source_start_line": 46,
+  "limit": 200000,
+  "guide_limit": "unchanged default; no setter added",
+  "operand_limits": "original explicit setters retained"
+}
