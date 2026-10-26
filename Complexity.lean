@@ -156,6 +156,7 @@ public import Complexity.Computability.Circuit.Boolean.FirstOrder
 public import Complexity.Computability.Circuit.Boolean.FirstOrder.Parity
 public import Complexity.Computability.Circuit.Boolean.Formula
 public import Complexity.Computability.Circuit.Boolean.Formula.Andreev
+public import Complexity.Computability.Circuit.Boolean.Formula.Poly
 public import Complexity.Computability.Circuit.Boolean.Formula.Restriction
 public import Complexity.Computability.Circuit.Boolean.Formula.Subbotovskaya
 public import Complexity.Computability.Circuit.Boolean.GateElimination
