@@ -1,0 +1,43 @@
+[
+  {
+    "check": "ratchet",
+    "command": [
+      "python3",
+      "scripts/check_tidy_surface.py"
+    ],
+    "returncode": 0,
+    "seconds": 11.538295206031762
+  },
+  {
+    "check": "changed-files",
+    "command": [
+      "python3",
+      "scripts/check_changed_files.py",
+      "--base",
+      "3a6d770645c1217689da774f519cd785c253d8a2"
+    ],
+    "returncode": 0,
+    "seconds": 0.059056408994365484
+  },
+  {
+    "check": "hygiene",
+    "command": [
+      "python3",
+      "scripts/check_hygiene.py"
+    ],
+    "returncode": 0,
+    "seconds": 8.648479568015318
+  },
+  {
+    "check": "diff",
+    "command": [
+      "git",
+      "diff",
+      "--check",
+      "3a6d770645c1217689da774f519cd785c253d8a2",
+      "HEAD"
+    ],
+    "returncode": 0,
+    "seconds": 0.003921666997484863
+  }
+]

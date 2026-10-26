@@ -1,0 +1,6 @@
+ok    build --wfail --iofail
+ok    mk_all --check
+ok    test --wfail --iofail
+ok    lint
+ok    lint-style
+ok    checkInitImports

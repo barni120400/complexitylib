@@ -76,5 +76,18 @@
   "step2-3a6d/source-provenance.json": "d27ae714d021c1d27ff12b947a46decc2884ea98d316472c778c6d305893a757",
   "step2-3a6d/summary.csv": "34e63800840c36b3cf2c5484c7e9ee98ee889adcbe7fb07ab66687fca9cecb84",
   "step2-3a6d/summary.json": "bafcee988e067ce74bce5eb8b807751fd3c35556b6fd4a6c7892884a37f1e237",
-  "step2-3a6d/trace-results.json": "7c9a4b740eb527d6ca7cfda9d98faf45f2d77252593be0244ddc51d028f3b42f"
+  "step2-3a6d/trace-results.json": "7c9a4b740eb527d6ca7cfda9d98faf45f2d77252593be0244ddc51d028f3b42f",
+  "test-milestone-784105bf/AutomationAddTrivial.lean": "0fe553f0ebe800d9135089c7851cffbc8c4661a193e8bd95756b68b42d7b0f3b",
+  "test-milestone-784105bf/AutomationArithmetic1063.lean": "e2147c2612c3a25253758892e5e5ca063ce0277563727697976bb5a3beaed79a",
+  "test-milestone-784105bf/AutomationBooleanMinimal.lean": "5a8994f806bd76629a5de8c89cde341eb44b398a0b0d5fa0e19e56e7b43698f6",
+  "test-milestone-784105bf/AutomationBooleanPPT.lean": "71179fa587f151714f44a76f35aaa5918a218b8b02f6fb43d6673cb21caf74f2",
+  "test-milestone-784105bf/README.md": "3e7e97bb3bc751a80d884cfb34a044234e20a678dab28f22edce658db7f2fc20",
+  "test-milestone-784105bf/changed-files.log": "0cdbaa44b11783203d590a77568eb171d84d4d97ce749195b943386cc8fb0cf9",
+  "test-milestone-784105bf/diff.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "test-milestone-784105bf/extra-checks.json": "9de99940393987637b581b2dbb246cfc640023b187543f73f41eb95350de03cc",
+  "test-milestone-784105bf/focused.log": "77f3226352379a6ab3a694a9aeee2edebf5af95f29cbc66fdc5dd97d56a1956d",
+  "test-milestone-784105bf/hygiene.log": "8e1cf89c86ca9e39a6857ac4daa0846f98bc892d44246529611d31bc4e287e84",
+  "test-milestone-784105bf/ratchet.log": "3c6710eaaa87b95c95b768666ea3208dca92b735f168429d681f53ecaf85c760",
+  "test-milestone-784105bf/six-gates.log": "6de41d33532d0ca3509ea39017578e06fd6fd9548cb3a94dbf5ab1a0554bfd6b",
+  "test-milestone-784105bf/validation.json": "55f612c288bd110c92379debc532347e410d878a06aba6369793abd6edb901fe"
 }

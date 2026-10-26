@@ -1,0 +1,13 @@
+{
+  "test_head": "784105bfdc7bf88ef875bb7c901f5117a53b4d27",
+  "base": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "pr": "https://github.com/cslib-community/complexitylib/pull/1171",
+  "source_changes": "4 test-only files,188lines; no production/aggregate/baseline change",
+  "focused_execution": "All4 new fixture modules compiled warning-strict,7014jobs; full gates may reuse current artifacts",
+  "local_six_gates": "all PASS",
+  "native_freshness_ratchet": "PASS,896statements/132modules matches existing baseline; no update/no-build bypass",
+  "changed_file_base": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "hosted_status_at_handoff": "ci-checks IN_PROGRESS; not finalgreen/merge/approval",
+  "remaining": "LiuPass original threshold failure at200k OPEN; full1155 survey/metrics/CI representative coverage incomplete",
+  "all_local_jobs_terminal": true
+}
