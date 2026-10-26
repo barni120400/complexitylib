@@ -1,0 +1,56 @@
+39: Run a tactic, optionally restoring the original state, and report just the number of heartbeats.
+40: -/
+41: def runTacForHeartbeats (tac : TSyntax `Lean.Parser.Tactic.tacticSeq) (revert : Bool := true) :
+42:     TacticM Nat := do
+43:   let start ← IO.getNumHeartbeats
+44:   let s ← saveState
+45:   withOptions (fun opts => opts.set ``Elab.async false) do
+46:     evalTactic tac
+47:   if revert then restoreState s
+48:   return (← IO.getNumHeartbeats) - start
+49:
+
+73: /-- `#count_heartbeats tac` counts the heartbeats used by the tactic sequence `tac`
+74: and prints an info line with the number of heartbeats.
+75:
+76: * `#count_heartbeats! n in tac`, where `n` is an optional natural number literal, runs `tac`
+77:   `n` times on the same goal while counting the heartbeats, and prints an info line with range and
+78:   standard deviation. `n` can be left out, and defaults to 10.
+79:
+80: Example:
+81:
+82: ```
+83: example : 1 + 1 = 2 := by
+84:   -- The next line will print an info message of this format; the exact number may vary.
+85:   -- info: 4646
+86:   #count_heartbeats simp
+87:
+88: example : 1 + 1 = 2 := by
+89:   -- The next line will print an info message of this format; the exact numbers may vary.
+90:   -- info: Min: 4 Max: 4 StdDev: 2%
+91:   #count_heartbeats! 37 in simp
+92: ```
+93: -/
+94: elab "#count_heartbeats " tac:tacticSeq : tactic => do
+95:   logInfo s!"{← runTacForHeartbeats tac (revert := false)}"
+96:
+
+140: elab "#count_heartbeats " approx:(&"approximately ")? "in" ppLine cmd:command : command => do
+141:   let start ← IO.getNumHeartbeats
+142:   try
+143:     elabCommand (← `(command| set_option Elab.async false in set_option maxHeartbeats 0 in $cmd))
+144:   finally
+145:     let finish ← IO.getNumHeartbeats
+146:     let elapsed := (finish - start) / 1000
+147:     let roundElapsed := roundDownIf elapsed approx.isSome
+148:     let max := (← Command.liftCoreM getMaxHeartbeats) / 1000
+149:     if elapsed < max then
+150:       logInfo
+151:         m!"Used {roundElapsed} heartbeats, which is less than the current maximum of {max}."
+152:     else
+153:       let mut max' := max
+154:       while max' < elapsed do
+155:         max' := 2 * max'
+156:       logInfo
+157:         m!"Used {roundElapsed} heartbeats, which is greater than the current maximum of {max}."
+158:       let m : TSyntax `num := quote max'

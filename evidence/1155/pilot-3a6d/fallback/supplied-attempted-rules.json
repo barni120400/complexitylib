@@ -1,0 +1,86 @@
+[
+  {
+    "trace_line": 101,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.decide_not",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.decide_not",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 106,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.decide_and",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.decide_and",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 111,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_le",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.unary_le",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 116,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_lt",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.unary_lt",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 121,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_le'",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.unary_le'",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 124,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: hl : ComputableInPolyTime left input encNat",
+    "theorem": "hl : ComputableInPolyTime left input encNat",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 132,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_lt'",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.unary_lt'",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 137,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.decide_eq'",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.decide_eq'",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 142,
+    "text": "[Meta.Tactic.fun_prop] \u274c\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.binary_lt",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.binary_lt",
+    "locally_successful_trace_marker": false,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 147,
+    "text": "[Meta.Tactic.fun_prop] \u2705\ufe0f applying: Turing.MultiTapeTM.ComputableInPolyTime.binary_le'",
+    "theorem": "Turing.MultiTapeTM.ComputableInPolyTime.binary_le'",
+    "locally_successful_trace_marker": true,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 150,
+    "text": "[Meta.Tactic.fun_prop] \u2705\ufe0f applying: hl : ComputableInPolyTime left input encNat",
+    "theorem": "hl : ComputableInPolyTime left input encNat",
+    "locally_successful_trace_marker": true,
+    "final_proof_contribution": null
+  },
+  {
+    "trace_line": 153,
+    "text": "[Meta.Tactic.fun_prop] \u2705\ufe0f applying: hr : ComputableInPolyTime right input encNat",
+    "theorem": "hr : ComputableInPolyTime right input encNat",
+    "locally_successful_trace_marker": true,
+    "final_proof_contribution": null
+  }
+]

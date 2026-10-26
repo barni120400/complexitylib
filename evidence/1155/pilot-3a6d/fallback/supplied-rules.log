@@ -1,0 +1,164 @@
+[aesop] ✅️ ✅️ (G0) [100.0000%] ⋯ ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] Initial goal:
+        α : Type
+        input : α ↪ List Bool
+        left right : α → ℕ
+        hl : ComputableInPolyTime left input encNat
+        hr : ComputableInPolyTime right input encNat
+        ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] ❌️ ✅️ Normalisation
+  [aesop] Goal after normalisation:
+        α : Type
+        input : α ↪ List Bool
+        left right : α → ℕ
+        hl : ComputableInPolyTime left input encNat
+        hr : ComputableInPolyTime right input encNat
+        ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] ✅️ ✅️ Safe rules
+    [aesop] ✅️ ✅️ safe|tactic|global|Aesop.BuiltinRule.preprocess
+[aesop] ✅️ 🆕 ❓️ R0 [100.0000%] safe|tactic|global|Aesop.BuiltinRule.preprocess
+  [aesop] ✅️ Metadata
+    [aesop] ID: 0
+    [aesop] Rule: [0/safe] safe|tactic|global|Aesop.BuiltinRule.preprocess
+    [aesop] Success probability: 100.0000%
+    [aesop] Parent goal: 0
+    [aesop] Child goals: [1]
+    [aesop] State: unknown
+    [aesop] Irrelevant: false
+    [aesop] Introduced metavariables: []
+    [aesop] Assigned   metavariables: []
+[aesop] ✅️ 🆕 ❓️ G1 [100.0000%] ⋯ ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] α : Type
+      input : α ↪ List Bool
+      left right : α → ℕ
+      hl : ComputableInPolyTime left input encNat
+      hr : ComputableInPolyTime right input encNat
+      ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] ✅️ Metadata
+    [aesop] ID: 1
+    [aesop] ✅️ Pre-normalisation goal (_uniq.73):
+      [aesop] α : Type
+          input : α ↪ List Bool
+          left right : α → ℕ
+          hl : ComputableInPolyTime left input encNat
+          hr : ComputableInPolyTime right input encNat
+          ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+    [aesop] Post-normalisation goal: <goal not normalised>
+    [aesop] Metavariables: []
+    [aesop] Parent rapp:  some (0)
+    [aesop] Child rapps:  []
+    [aesop] Origin: subgoal
+    [aesop] Depth: 1
+    [aesop] State: ❓️ unknown
+    [aesop] Forward rule matches: 0
+    [aesop] Irrelevant: no
+    [aesop] Forced unprovable: no
+    [aesop] Added in iteration: 1
+    [aesop] Last expanded in iteration: never
+    [aesop] ✅️ Forward state
+      [aesop] 
+    [aesop] Unsafe rule queue: <not selected>
+    [aesop] Failed rules: <none>
+[aesop] ✅️ 🏁 (G1) [100.0000%] ⋯ ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] Initial goal:
+        α : Type
+        input : α ↪ List Bool
+        left right : α → ℕ
+        hl : ComputableInPolyTime left input encNat
+        hr : ComputableInPolyTime right input encNat
+        ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] ❌️ ✅️ Normalisation
+    [aesop] ❌️ ❌️ norm|tactic|global|Aesop.BuiltinRules.intros
+      [aesop] nothing to introduce
+    [aesop] ❌️ ❌️ <norm unfold>
+      [aesop] nothing to unfold
+    [aesop] ❌️ ❌️ <norm simp>
+      [aesop] norm simp left the goal unchanged
+  [aesop] Goal after normalisation:
+        α : Type
+        input : α ↪ List Bool
+        left right : α → ℕ
+        hl : ComputableInPolyTime left input encNat
+        hr : ComputableInPolyTime right input encNat
+        ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+  [aesop] ✅️ 🏁 Safe rules
+    [aesop] ✅️ ❌️ safe|tactic|global|Aesop.BuiltinRules.assumption
+      [aesop] Tactic `Aesop.BuiltinRules.assumption` failed: no matching assumption found
+          
+          α : Type
+          input : α ↪ List Bool
+          left right : α → ℕ
+          hl : ComputableInPolyTime left input encNat
+          hr : ComputableInPolyTime right input encNat
+          ⊢ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+    [aesop] ✅️ ❌️ safe|tactic|global|_private.Complexity.Tactic.PolyTime.0.Cslib.Tactic.PolyTime.polytimeKnownFacts
+      [aesop] no new known certificate
+    [aesop] ✅️ ❌️ safe|tactic|global|_private.Complexity.Tactic.PolyTime.0.Cslib.Tactic.PolyTime.polytimeConstructFast
+      [aesop] expected a constructor
+    [aesop] ✅️ 🏁 safe|tactic|global|_private.Complexity.Tactic.PolyTime.0.Cslib.Tactic.PolyTime.polytimeFunPropFast
+      [Meta.Tactic.fun_prop] ✅️ ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] candidate theorems for Decidable.decide #[Turing.MultiTapeTM.ComputableInPolyTime.decide_not, Turing.MultiTapeTM.ComputableInPolyTime.decide_and, Turing.MultiTapeTM.ComputableInPolyTime.unary_le, Turing.MultiTapeTM.ComputableInPolyTime.unary_lt, Turing.MultiTapeTM.ComputableInPolyTime.unary_le', Turing.MultiTapeTM.ComputableInPolyTime.unary_lt', Turing.MultiTapeTM.ComputableInPolyTime.decide_eq', Turing.MultiTapeTM.ComputableInPolyTime.binary_lt, Turing.MultiTapeTM.ComputableInPolyTime.binary_le', Turing.MultiTapeTM.ComputableInPolyTime.decide_mem]
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.decide_not
+          [Meta.Tactic.fun_prop] failed to unify @ComputableInPolyTime.decide_not
+              ComputableInPolyTime (fun x => decide ¬?p x) ?encIn encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.decide_and
+          [Meta.Tactic.fun_prop] failed to unify @ComputableInPolyTime.decide_and
+              ComputableInPolyTime (fun a => decide (?left a ∧ ?right a)) ?encA encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_le
+          [Meta.Tactic.fun_prop] failed to unify ComputableInPolyTime.unary_le
+              ComputableInPolyTime (fun p => decide (p.1 ≤ p.2)) (encPair encUnary encUnary) encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_lt
+          [Meta.Tactic.fun_prop] failed to unify ComputableInPolyTime.unary_lt
+              ComputableInPolyTime (fun p => decide (p.1 < p.2)) (encPair encUnary encUnary) encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_le'
+          [Meta.Tactic.fun_prop] ❌️ ComputableInPolyTime left input encUnary
+            [Meta.Tactic.fun_prop] candidate local theorems for left #[hl : ComputableInPolyTime left input encNat]
+            [Meta.Tactic.fun_prop] ❌️ applying: hl : ComputableInPolyTime left input encNat
+              [Meta.Tactic.fun_prop] failed to unify hl
+                  ComputableInPolyTime left input encNat
+                  with
+                  ComputableInPolyTime (fun a => left a) input encUnary
+            [Meta.Tactic.fun_prop] candidate transition theorems: []
+          [Meta.Tactic.fun_prop] @ComputableInPolyTime.unary_le', failed to discharge hypotheses
+                ComputableInPolyTime left input encUnary
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.unary_lt'
+          [Meta.Tactic.fun_prop] failed to unify @ComputableInPolyTime.unary_lt'
+              ComputableInPolyTime (fun a => decide (?left a < ?right a)) ?input encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.decide_eq'
+          [Meta.Tactic.fun_prop] failed to unify @ComputableInPolyTime.decide_eq'
+              ComputableInPolyTime (fun x => decide (?left x = ?right x)) ?encA encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ❌️ applying: Turing.MultiTapeTM.ComputableInPolyTime.binary_lt
+          [Meta.Tactic.fun_prop] failed to unify ComputableInPolyTime.binary_lt
+              ComputableInPolyTime (fun p => decide (p.1 < p.2)) (encPair encNat encNat) encBool
+              with
+              ComputableInPolyTime (fun a => decide (left a ≤ right a)) input encBool
+        [Meta.Tactic.fun_prop] ✅️ applying: Turing.MultiTapeTM.ComputableInPolyTime.binary_le'
+          [Meta.Tactic.fun_prop] ✅️ ComputableInPolyTime left input encNat
+            [Meta.Tactic.fun_prop] candidate local theorems for left #[hl : ComputableInPolyTime left input encNat]
+            [Meta.Tactic.fun_prop] ✅️ applying: hl : ComputableInPolyTime left input encNat
+          [Meta.Tactic.fun_prop] ✅️ ComputableInPolyTime right input encNat
+            [Meta.Tactic.fun_prop] candidate local theorems for right #[hr : ComputableInPolyTime right input encNat]
+            [Meta.Tactic.fun_prop] ✅️ applying: hr : ComputableInPolyTime right input encNat
+[aesop] ✅️ 🆕 🏁 R1 [100.0000%] safe|tactic|global|_private.Complexity.Tactic.PolyTime.0.Cslib.Tactic.PolyTime.polytimeFunPropFast
+  [aesop] ✅️ Metadata
+    [aesop] ID: 1
+    [aesop] Rule: [-20/safe] safe|tactic|global|_private.Complexity.Tactic.PolyTime.0.Cslib.Tactic.PolyTime.polytimeFunPropFast
+    [aesop] Success probability: 100.0000%
+    [aesop] Parent goal: 1
+    [aesop] Child goals: []
+    [aesop] State: proven
+    [aesop] Irrelevant: true
+    [aesop] Introduced metavariables: []
+    [aesop] Assigned   metavariables: []

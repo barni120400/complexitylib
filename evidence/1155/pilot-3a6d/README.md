@@ -23,3 +23,7 @@ python3 evidence/1155/pilot-3a6d/parse.py
 ```
 
 Runner writes diagnostic source under pilot1155 in source checkout and artifacts beside itself; preserve outputs before reruns. Parser validates missingness/process observations only. environment.json, pinned-tool-excerpts.txt and raw logs/exports retain provenance. All jobs terminal at this checkpoint. A separately authorized tactic-form heartbeat fallback will be recorded separately, not silently substituted for this export.
+
+## Later bounded fallback
+
+After this limitation was frozen, the coordinator authorized the existing Mathlib **tactic-form** counter and separate one-goal rule traces. Their qualified successful-call HB results are in [fallback/README.md](fallback/README.md); they do not make the JSON exporter source-aware or fill unknown failure/wall/final-proof metrics.
