@@ -85,10 +85,17 @@ example : (inputGates paddedReadout).card = 2 := by
 
 example (x : Fin 2 → Bool) : paddedReadout.eval interpretation x 6 = (x 0 || x 1) := by
   change (ScalarStage.append _ _ _ _ _ _).eval interpretation x (Fin.last 6) = _
-  rw [ScalarStage.eval_append_last]
+  rw [ScalarStage.eval_append_readout]
   cases h0 : x 0 <;> cases h1 : x 1 <;>
-    norm_num [Fin.sum_univ_two, funext_iff, Fin.forall_fin_two,
+    norm_num [funext_iff, Fin.forall_fin_two, Fin.exists_fin_two,
       child_root_eval, root_eval, child_eval, h0, h1]
+
+-- An empty accepting bank rejects, including for a zero-dimensional input.
+example : (ScalarStage.append (Program.empty : Program signature 0 0)
+    (Fin.elim0 : Fin 0 → Fin 0) (Fin.elim0 : Fin 0 → Fin 0 → Bool)
+      (fun _ => 0) (fun _ => 0) 1).eval interpretation (fun _ => false) (Fin.last 0) = false := by
+  rw [ScalarStage.eval_append_readout]
+  simp
 
 -- Repeated reads with contradictory requested bits must give a false indicator.
 example (x : Fin 2 → Bool) (z : Fin 1 → Bool) :
