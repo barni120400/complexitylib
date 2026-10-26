@@ -47,18 +47,19 @@ example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
 example : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
     (encPair encNat encNat) encBool := by fun_prop
 
--- Multiplication keeps the existing global captured rule and both independently supplied inputs.
+-- The low direct import uses the named captured theorem; facade automation is checked separately.
 example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hl : ComputableInPolyTime left input encNat)
     (hr : ComputableInPolyTime right input encNat) :
     ComputableInPolyTime (fun a => left a * right a) input encNat := by
   fail_if_success (clear hr; fun_prop)
   fail_if_success (clear hl; fun_prop)
-  fun_prop
+  exact ComputableInPolyTime.binary_mul' hl hr
 
 example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
-    (encPair encNat encNat) encNat := by
-  fun_prop
+    (encPair encNat encNat) encNat :=
+  ComputableInPolyTime.binary_mul' (ComputableInPolyTime.fst encNat encNat)
+    (ComputableInPolyTime.snd encNat encNat)
 
 -- The moved public word algorithm retains its defining data, not just an extensional theorem.
 example (s : ℕ × ℕ) (a : Bool) :

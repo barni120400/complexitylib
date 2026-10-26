@@ -179,7 +179,6 @@ private theorem binaryMulPair :
   simp only [Function.comp_apply, NatMul.foldl_mulStep, zero_add]
 
 /-- Multiply computed binary values, fixing their intermediate encodings for proof search. -/
-@[fun_prop]
 theorem binary_mul' {α : Type}
     {input : α ↪ List Bool}
     {left : α → ℕ}

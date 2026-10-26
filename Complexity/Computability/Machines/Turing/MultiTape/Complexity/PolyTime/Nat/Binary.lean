@@ -610,6 +610,9 @@ end Turing.MultiTapeTM.ComputableInPolyTime
 
 namespace Turing.MultiTapeTM.ComputableInPolyTime
 
+-- Preserve the original facade's registration scope for captured binary multiplication.
+attribute [fun_prop] binary_mul'
+
 /-- `2 ^ k` in binary, from `k` in unary, by doubling. -/
 @[fun_prop]
 theorem binary_two_pow :
