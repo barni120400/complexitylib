@@ -1037,6 +1037,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Verdic
 public import Complexity.Computability.Machines.Turing.MultiTape.Counting.Verifier
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Bool
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Capabilities
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.DPi
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
@@ -1069,6 +1071,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Sum
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Unary
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.WordEquality
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Words
 public import Complexity.Computability.Machines.Turing.MultiTape.Feature
 public import Complexity.Computability.Machines.Turing.MultiTape.FiniteConfiguration
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting
@@ -1085,6 +1088,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Binary
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryCounter
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinarySizeFacts
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.CodecWordMachines
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.ConditionalMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DecoderPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DecoderWordMachines
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeClosure
@@ -1094,6 +1099,14 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeUnaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.FrameMachines
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelAppend
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelComp
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelFacts
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelIte
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelNormalForm
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelTransducer
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelZeroSpace
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearCodecPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPairPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.NormalForm
