@@ -1,0 +1,242 @@
+{
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "mapping_sha256": "c13e251523c0e88672950f1dcc9936ded2f691d062fd3cb2f7a2200da2d5826f",
+  "implementation_sha256": "90b3179209d69590434a542dd538e2175c81338ceb9ca6518ab55975c8f6f26f",
+  "required_modes": [
+    "baseline",
+    "import-only",
+    "wrapped"
+  ],
+  "package_options": {
+    "autoImplicit": false,
+    "weak.linter.mathlibStandardSet": true,
+    "weak.linter.flexible": true,
+    "weak.linter.pythonStyle": false,
+    "weak.linter.checkInitImports": false,
+    "weak.linter.allScriptsDocumented": false,
+    "weak.linter.unicodeLinter": false
+  },
+  "user_limit": 200000,
+  "files": [
+    {
+      "case": "parameters",
+      "path": "Complexity/Computability/Complexity/CookLevin/Parameters.lean",
+      "module_name": "Complexity.Computability.Complexity.CookLevin.Parameters",
+      "source_sha256": "26b242e2b9b04f3922fdea12c078e5cc568a6a9eff1dfe97ec9ee110f9c8d342",
+      "calls": [
+        {
+          "case": "computableInPolyTime_parameters",
+          "call_id": "26b242e2b9b04f3922fdea12c078e5cc568a6a9eff1dfe97ec9ee110f9c8d342:Complexity/Computability/Complexity/CookLevin/Parameters.lean:2023-2031:fun_prop",
+          "call_token": "c36edb70f6e7b114b",
+          "tactic": "fun_prop",
+          "expected_kind": "Mathlib.Meta.FunProp.funPropTacStx",
+          "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+          "original_path": "Complexity/Computability/Complexity/CookLevin/Parameters.lean",
+          "original_sha256": "26b242e2b9b04f3922fdea12c078e5cc568a6a9eff1dfe97ec9ee110f9c8d342",
+          "original_byte_start": 2023,
+          "original_byte_end": 2031,
+          "original_line": 54,
+          "original_text": "fun_prop",
+          "expected": "returned"
+        }
+      ],
+      "original_imports": [
+        "public import Complexity.Computability.Complexity.CookLevin.Reduction",
+        "public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+        "import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString"
+      ],
+      "variant_sha256": {
+        "baseline": "26b242e2b9b04f3922fdea12c078e5cc568a6a9eff1dfe97ec9ee110f9c8d342",
+        "import-only": "e825d1214ac650811109c1620f5cbcaa03c4733af63ef721dc126538266e49e7",
+        "wrapped": "54617a1ffbd880c6beb94633048694ee73d36c42115ea2ba8121ef6b7956b9b6"
+      },
+      "explicit_private_declarations": 0,
+      "original_option_directives": [],
+      "source_lines": 56
+    },
+    {
+      "case": "hardcore",
+      "path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+      "module_name": "Complexity.Crypto.Computational.GoldreichLevin.HardCore",
+      "source_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+      "calls": [
+        {
+          "case": "polyTime_paddedFunction",
+          "call_id": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942:Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean:2594-2602:polytime",
+          "call_token": "c404e391d404e1bea",
+          "tactic": "polytime",
+          "expected_kind": "Cslib.Tactic.PolyTime.tacticPolytime",
+          "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+          "original_path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+          "original_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+          "original_byte_start": 2594,
+          "original_byte_end": 2602,
+          "original_line": 67,
+          "original_text": "polytime",
+          "expected": "returned"
+        },
+        {
+          "case": "polyTime_paddedPredicate",
+          "call_id": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942:Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean:2819-2827:polytime",
+          "call_token": "c1171b3eb836e971b",
+          "tactic": "polytime",
+          "expected_kind": "Cslib.Tactic.PolyTime.tacticPolytime",
+          "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+          "original_path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+          "original_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+          "original_byte_start": 2819,
+          "original_byte_end": 2827,
+          "original_line": 74,
+          "original_text": "polytime",
+          "expected": "returned"
+        },
+        {
+          "case": "isPPT_paddedPredictor",
+          "call_id": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942:Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean:5816-5819:ppt",
+          "call_token": "c8388401961e46454",
+          "tactic": "ppt",
+          "expected_kind": "Cslib.Tactic.PPT.tacticPpt",
+          "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+          "original_path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+          "original_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+          "original_byte_start": 5816,
+          "original_byte_end": 5819,
+          "original_line": 138,
+          "original_text": "ppt",
+          "expected": "returned"
+        }
+      ],
+      "original_imports": [
+        "public import Complexity.Crypto.Computational.GoldreichLevin.WordReduction",
+        "public import Complexity.Crypto.Computational.HardCore",
+        "import Complexity.Probability.PMF.Bind",
+        "import Complexity.Crypto.Negligible.Basic",
+        "import Complexity.Tactic.PPT"
+      ],
+      "variant_sha256": {
+        "baseline": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+        "import-only": "428d32e6b30d0bbac7ace8699bbbba97f65a820831d12f6ed15cd450442268c1",
+        "wrapped": "604209d530176f7a3121405e3f56c9bcd1aa39319de06a443f3079e932ea7daf"
+      },
+      "explicit_private_declarations": 0,
+      "original_option_directives": [],
+      "source_lines": 197
+    },
+    {
+      "case": "matrix",
+      "path": "Complexity/Crypto/Computational/Pseudoentropy/MatrixExtraction.lean",
+      "module_name": "Complexity.Crypto.Computational.Pseudoentropy.MatrixExtraction",
+      "source_sha256": "d7a7f10591ebc67a4e07e7606e78177b7fa0b0eedb0cf19df0af6208e3a62b5a",
+      "calls": [
+        {
+          "case": "isPPTOn_extractMatrixLabels",
+          "call_id": "d7a7f10591ebc67a4e07e7606e78177b7fa0b0eedb0cf19df0af6208e3a62b5a:Complexity/Crypto/Computational/Pseudoentropy/MatrixExtraction.lean:4614-4617:ppt",
+          "call_token": "ced783161d0885fa5",
+          "tactic": "ppt",
+          "expected_kind": "Cslib.Tactic.PPT.tacticPpt",
+          "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+          "original_path": "Complexity/Crypto/Computational/Pseudoentropy/MatrixExtraction.lean",
+          "original_sha256": "d7a7f10591ebc67a4e07e7606e78177b7fa0b0eedb0cf19df0af6208e3a62b5a",
+          "original_byte_start": 4614,
+          "original_byte_end": 4617,
+          "original_line": 96,
+          "original_text": "ppt",
+          "expected": "returned"
+        }
+      ],
+      "original_imports": [
+        "public import Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction",
+        "public import Complexity.Languages.Probabilistic.LinearHash",
+        "import Complexity.Computability.Probabilistic.LinearHash",
+        "import Complexity.Tactic.PPT"
+      ],
+      "variant_sha256": {
+        "baseline": "d7a7f10591ebc67a4e07e7606e78177b7fa0b0eedb0cf19df0af6208e3a62b5a",
+        "import-only": "e34977035d1c8a3cabebeaa8ec9f6e67c4f4745a48ef920abeaa03404fd389d8",
+        "wrapped": "36a26499b0a0d00b7f1fc35b446e750fb2325fb4996567a8676091538be4e99a"
+      },
+      "explicit_private_declarations": 0,
+      "original_option_directives": [],
+      "source_lines": 165
+    }
+  ],
+  "expected_calls": [
+    {
+      "case": "computableInPolyTime_parameters",
+      "call_id": "26b242e2b9b04f3922fdea12c078e5cc568a6a9eff1dfe97ec9ee110f9c8d342:Complexity/Computability/Complexity/CookLevin/Parameters.lean:2023-2031:fun_prop",
+      "call_token": "c36edb70f6e7b114b",
+      "tactic": "fun_prop",
+      "expected_kind": "Mathlib.Meta.FunProp.funPropTacStx",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/Complexity/CookLevin/Parameters.lean",
+      "original_sha256": "26b242e2b9b04f3922fdea12c078e5cc568a6a9eff1dfe97ec9ee110f9c8d342",
+      "original_byte_start": 2023,
+      "original_byte_end": 2031,
+      "original_line": 54,
+      "original_text": "fun_prop",
+      "expected": "returned"
+    },
+    {
+      "case": "polyTime_paddedFunction",
+      "call_id": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942:Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean:2594-2602:polytime",
+      "call_token": "c404e391d404e1bea",
+      "tactic": "polytime",
+      "expected_kind": "Cslib.Tactic.PolyTime.tacticPolytime",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+      "original_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+      "original_byte_start": 2594,
+      "original_byte_end": 2602,
+      "original_line": 67,
+      "original_text": "polytime",
+      "expected": "returned"
+    },
+    {
+      "case": "polyTime_paddedPredicate",
+      "call_id": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942:Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean:2819-2827:polytime",
+      "call_token": "c1171b3eb836e971b",
+      "tactic": "polytime",
+      "expected_kind": "Cslib.Tactic.PolyTime.tacticPolytime",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+      "original_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+      "original_byte_start": 2819,
+      "original_byte_end": 2827,
+      "original_line": 74,
+      "original_text": "polytime",
+      "expected": "returned"
+    },
+    {
+      "case": "isPPT_paddedPredictor",
+      "call_id": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942:Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean:5816-5819:ppt",
+      "call_token": "c8388401961e46454",
+      "tactic": "ppt",
+      "expected_kind": "Cslib.Tactic.PPT.tacticPpt",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Crypto/Computational/GoldreichLevin/HardCore.lean",
+      "original_sha256": "baad11b78ac6c6bce3af488e787475f84233750d4a308189d63c989579b64942",
+      "original_byte_start": 5816,
+      "original_byte_end": 5819,
+      "original_line": 138,
+      "original_text": "ppt",
+      "expected": "returned"
+    },
+    {
+      "case": "isPPTOn_extractMatrixLabels",
+      "call_id": "d7a7f10591ebc67a4e07e7606e78177b7fa0b0eedb0cf19df0af6208e3a62b5a:Complexity/Crypto/Computational/Pseudoentropy/MatrixExtraction.lean:4614-4617:ppt",
+      "call_token": "ced783161d0885fa5",
+      "tactic": "ppt",
+      "expected_kind": "Cslib.Tactic.PPT.tacticPpt",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Crypto/Computational/Pseudoentropy/MatrixExtraction.lean",
+      "original_sha256": "d7a7f10591ebc67a4e07e7606e78177b7fa0b0eedb0cf19df0af6208e3a62b5a",
+      "original_byte_start": 4614,
+      "original_byte_end": 4617,
+      "original_line": 96,
+      "original_text": "ppt",
+      "expected": "returned"
+    }
+  ],
+  "state": "prepared_not_executed"
+}

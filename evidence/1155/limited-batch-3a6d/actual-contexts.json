@@ -1,0 +1,428 @@
+{
+  "parameters": {
+    "baseline": {
+      "module": "Complexity.Computability.Complexity.CookLevin.Parameters",
+      "directImports": [
+        [
+          "Complexity.Computability.Complexity.CookLevin.Reduction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Complexity.CookLevin.computableInPolyTime_parameters"
+      ],
+      "private_ilean_sha256": "accec50b0f29e07584031b5419b820a8d70d86df51e8fb09b130779b6cbb9e16",
+      "compiled_output_published": false
+    },
+    "import-only": {
+      "module": "Complexity.Computability.Complexity.CookLevin.Parameters",
+      "directImports": [
+        [
+          "Complexity.Computability.Complexity.CookLevin.Reduction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+          true,
+          false,
+          false
+        ],
+        [
+          "Diag1155.Wrapper",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Complexity.CookLevin.computableInPolyTime_parameters"
+      ],
+      "private_ilean_sha256": "13fcabb2e025b5672c5d41920a382b89a2185b40ee961089989973b33a5555dd",
+      "compiled_output_published": false
+    },
+    "wrapped": {
+      "module": "Complexity.Computability.Complexity.CookLevin.Parameters",
+      "directImports": [
+        [
+          "Complexity.Computability.Complexity.CookLevin.Reduction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.Primitives",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.BitString",
+          true,
+          false,
+          false
+        ],
+        [
+          "Diag1155.Wrapper",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Complexity.CookLevin.computableInPolyTime_parameters"
+      ],
+      "private_ilean_sha256": "0330b8c2796a5e1d544d5a55b8ea8c2e949745a5a465852ef1e06c8e7bbf5519",
+      "compiled_output_published": false
+    }
+  },
+  "hardcore": {
+    "baseline": {
+      "module": "Complexity.Crypto.Computational.GoldreichLevin.HardCore",
+      "directImports": [
+        [
+          "Complexity.Crypto.Computational.GoldreichLevin.WordReduction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Crypto.Computational.HardCore",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Probability.PMF.Bind",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Crypto.Negligible.Basic",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Tactic.PPT",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Crypto.GoldreichLevin.eval_paddedPrediction",
+        "Cslib.Crypto.GoldreichLevin.generator",
+        "Cslib.Crypto.GoldreichLevin.isPPT_paddedPredictor",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_chunks",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_length",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_uniform",
+        "Cslib.Crypto.GoldreichLevin.paddedPredicate",
+        "Cslib.Crypto.GoldreichLevin.paddedPredicate_chunks",
+        "Cslib.Crypto.GoldreichLevin.paddedPredictor",
+        "Cslib.Crypto.GoldreichLevin.padded_hardCore",
+        "Cslib.Crypto.GoldreichLevin.polyTime_paddedFunction",
+        "Cslib.Crypto.GoldreichLevin.polyTime_paddedPredicate",
+        "Cslib.Crypto.OneWayPermutation.pseudorandomGenerator"
+      ],
+      "private_ilean_sha256": "26f01912b4ef44bd2be325b2ef38b81931fe8cd123b5c4d4f686b381bb596cb0",
+      "compiled_output_published": false
+    },
+    "import-only": {
+      "module": "Complexity.Crypto.Computational.GoldreichLevin.HardCore",
+      "directImports": [
+        [
+          "Complexity.Crypto.Computational.GoldreichLevin.WordReduction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Crypto.Computational.HardCore",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Probability.PMF.Bind",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Crypto.Negligible.Basic",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Tactic.PPT",
+          true,
+          false,
+          false
+        ],
+        [
+          "Diag1155.Wrapper",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Crypto.GoldreichLevin.eval_paddedPrediction",
+        "Cslib.Crypto.GoldreichLevin.generator",
+        "Cslib.Crypto.GoldreichLevin.isPPT_paddedPredictor",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_chunks",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_length",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_uniform",
+        "Cslib.Crypto.GoldreichLevin.paddedPredicate",
+        "Cslib.Crypto.GoldreichLevin.paddedPredicate_chunks",
+        "Cslib.Crypto.GoldreichLevin.paddedPredictor",
+        "Cslib.Crypto.GoldreichLevin.padded_hardCore",
+        "Cslib.Crypto.GoldreichLevin.polyTime_paddedFunction",
+        "Cslib.Crypto.GoldreichLevin.polyTime_paddedPredicate",
+        "Cslib.Crypto.OneWayPermutation.pseudorandomGenerator"
+      ],
+      "private_ilean_sha256": "a0639a83de18efc94fddc821bfd574561808599c18d9103465db2644b85740d5",
+      "compiled_output_published": false
+    },
+    "wrapped": {
+      "module": "Complexity.Crypto.Computational.GoldreichLevin.HardCore",
+      "directImports": [
+        [
+          "Complexity.Crypto.Computational.GoldreichLevin.WordReduction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Crypto.Computational.HardCore",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Probability.PMF.Bind",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Crypto.Negligible.Basic",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Tactic.PPT",
+          true,
+          false,
+          false
+        ],
+        [
+          "Diag1155.Wrapper",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Crypto.GoldreichLevin.eval_paddedPrediction",
+        "Cslib.Crypto.GoldreichLevin.generator",
+        "Cslib.Crypto.GoldreichLevin.isPPT_paddedPredictor",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_chunks",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_length",
+        "Cslib.Crypto.GoldreichLevin.paddedFunction_uniform",
+        "Cslib.Crypto.GoldreichLevin.paddedPredicate",
+        "Cslib.Crypto.GoldreichLevin.paddedPredicate_chunks",
+        "Cslib.Crypto.GoldreichLevin.paddedPredictor",
+        "Cslib.Crypto.GoldreichLevin.padded_hardCore",
+        "Cslib.Crypto.GoldreichLevin.polyTime_paddedFunction",
+        "Cslib.Crypto.GoldreichLevin.polyTime_paddedPredicate",
+        "Cslib.Crypto.OneWayPermutation.pseudorandomGenerator"
+      ],
+      "private_ilean_sha256": "9ab57c4f9fda0c4e006a2e7d98cbcfef4930e30664683c54392aae5e9bddc6ac",
+      "compiled_output_published": false
+    }
+  },
+  "matrix": {
+    "baseline": {
+      "module": "Complexity.Crypto.Computational.Pseudoentropy.MatrixExtraction",
+      "directImports": [
+        [
+          "Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Languages.Probabilistic.LinearHash",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Probabilistic.LinearHash",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Tactic.PPT",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabels",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_append",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_bind",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabels",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabelsIdeal",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabels_result",
+        "Cslib.Crypto.Pseudoentropy.isPPTOn_extractMatrixLabels"
+      ],
+      "private_ilean_sha256": "20b78e2e449c100ef4f593773d885b6a3ad3a0450596753232058142bf612071",
+      "compiled_output_published": false
+    },
+    "import-only": {
+      "module": "Complexity.Crypto.Computational.Pseudoentropy.MatrixExtraction",
+      "directImports": [
+        [
+          "Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Languages.Probabilistic.LinearHash",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Probabilistic.LinearHash",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Tactic.PPT",
+          true,
+          false,
+          false
+        ],
+        [
+          "Diag1155.Wrapper",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabels",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_append",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_bind",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabels",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabelsIdeal",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabels_result",
+        "Cslib.Crypto.Pseudoentropy.isPPTOn_extractMatrixLabels"
+      ],
+      "private_ilean_sha256": "b0b15fbc4550016172d8a909209824e5a70850693f8d84b8376153f3dcda5971",
+      "compiled_output_published": false
+    },
+    "wrapped": {
+      "module": "Complexity.Crypto.Computational.Pseudoentropy.MatrixExtraction",
+      "directImports": [
+        [
+          "Complexity.Crypto.Computational.Pseudoentropy.RepeatedExtraction",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Languages.Probabilistic.LinearHash",
+          false,
+          false,
+          false
+        ],
+        [
+          "Complexity.Computability.Probabilistic.LinearHash",
+          true,
+          false,
+          false
+        ],
+        [
+          "Complexity.Tactic.PPT",
+          true,
+          false,
+          false
+        ],
+        [
+          "Diag1155.Wrapper",
+          true,
+          false,
+          false
+        ]
+      ],
+      "source_declaration_names": [
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabels",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_append",
+        "Cslib.Crypto.Pseudoentropy.eval_extractMatrixLabelsIdeal_bind",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabels",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabelsIdeal",
+        "Cslib.Crypto.Pseudoentropy.extractMatrixLabels_result",
+        "Cslib.Crypto.Pseudoentropy.isPPTOn_extractMatrixLabels"
+      ],
+      "private_ilean_sha256": "2ee554fc3fe7167c13c2fe09f6ab4a88d966a0c8ba13e431934d5ec1e4cd9a4c",
+      "compiled_output_published": false
+    }
+  }
+}
