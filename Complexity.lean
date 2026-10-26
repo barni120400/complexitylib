@@ -809,9 +809,13 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverL
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.OrdinaryRing
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCompile
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCorrectness
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCounting
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayout
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayoutChecks
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayoutData
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedSemantics
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PathAssignments
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PathBounds
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PathData
