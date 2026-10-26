@@ -16,7 +16,6 @@ private theorem empty_readers (n : ℕ) :
     (inputGates (Program.empty : Program signature n 0)).card = 0 := by
   have h : inputGates (Program.empty : Program signature n 0) = ∅ := by
     ext j
-    exact j.elim0
   rw [h, Finset.card_empty]
 
 private def scalarRoot : Program signature 2 2 :=
@@ -28,7 +27,7 @@ private theorem scalarRoot_eval (x : Fin 2 → Bool) :
   change scalarRoot.eval interpretation x (Fin.last 1) = _
   rw [scalarRoot, ScalarStage.eval_append_last]
   cases h0 : x 0 <;> cases h1 : x 1 <;>
-    norm_num [Fin.sum_univ_two, funext_iff, h0, h1]
+    norm_num [funext_iff, h0, h1]
 
 private theorem scalarRoot_readers : (inputGates scalarRoot).card = 1 := by
   rw [scalarRoot, ScalarStage.card_inputGates_append, empty_readers]
@@ -41,11 +40,11 @@ private def scalarChild : Program signature 2 4 :=
 
 private theorem scalarChild_eval (x : Fin 2 → Bool) :
     scalarChild.eval interpretation x 3 = (x 0 ^^ x 1) := by
-  change scalarChild.eval interpretation x (Fin.last 3) = _
-  rw [scalarChild, ScalarStage.eval_append_last]
-  simp only [scalarRoot_eval]
+  refine (ScalarStage.eval_append_last scalarRoot (fun _ : Fin 1 => (1 : Fin 2))
+    (fun (_ : Fin 1) (_ : Fin 1) => false) (fun _ : Fin 2 => (1 : ℝ))
+    (fun _ : Fin 1 => (1 : ℝ)) 3 x).trans ?_
   cases h0 : x 0 <;> cases h1 : x 1 <;>
-    norm_num [Fin.sum_univ_two, funext_iff, h0, h1]
+    norm_num [Fin.sum_univ_two, funext_iff, scalarRoot_eval, h0, h1]
 
 private theorem scalarChild_root_eval (x : Fin 2 → Bool) :
     scalarChild.eval interpretation x 1 = scalarRoot.eval interpretation x 1 := by
@@ -137,10 +136,11 @@ example : (inputGates paddingStage).card = 1 := by
 example : (inputGates (ScalarStage.append (Program.empty : Program signature 2 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
       (fun _ => 0) (fun _ => -1) 3)).card = 0 := by
-  simpa [empty_readers] using
-    ScalarStage.card_inputGates_append (Program.empty : Program signature 2 0)
-      (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
-      (fun _ : Fin 2 => (0 : ℝ)) (fun _ : Fin 1 => (-1 : ℝ)) 3
+  refine (ScalarStage.card_inputGates_append (Program.empty : Program signature 2 0)
+    (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
+    (fun _ : Fin 2 => (0 : ℝ)) (fun _ : Fin 1 => (-1 : ℝ)) 3).trans ?_
+  rw [empty_readers]
+  simp
 
 private noncomputable def fractionalWeight (i : Fin 2) : ℝ :=
   if i = 0 then -1 else 1 / 2
@@ -154,8 +154,8 @@ example : (ScalarStage.append (Program.empty : Program signature 2 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
     fractionalWeight (fun _ : Fin 1 => (1 / 2 : ℝ)) 3
     (fun i : Fin 2 => decide (i = 1)) (0 : Fin 1)
-    (fun _ _ _ => Subsingleton.elim _ _) (by funext j; exact j.elim0)]
-  norm_num [fractionalWeight, Fin.sum_univ_two]
+    (fun _ _ _ => Subsingleton.elim _ _) (Subsingleton.elim _ _)] <;>
+    norm_num [fractionalWeight, Fin.sum_univ_two]
 
 -- Without distinct patterns, two matching flags blend their adjustments: score 1 passes
 -- although either individual threshold is 2. The selector theorem requires injectivity.
@@ -163,5 +163,5 @@ example : (ScalarStage.append (Program.empty : Program signature 1 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 2) (_ : Fin 0) => false)
       (fun _ => 1) (fun _ => 2) 3).eval interpretation
         (fun _ => true) (Fin.last 2) = true := by
-  rw [ScalarStage.eval_append_last]
-  norm_num [Fin.sum_univ_two, funext_iff]
+  rw [ScalarStage.eval_append_last] <;>
+    norm_num [Fin.sum_univ_two, funext_iff]
