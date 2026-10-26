@@ -99,7 +99,7 @@ theorem AdversaryOf.IsPPT.restrict {Msg : Type} {encMsg : Msg ↪ List Bool}
     AdversaryOf.IsPPT encMsg (adversary.restrict valid) where
   choose := by
     have hchoose := hadversary.choose
-      unfold Probability.IsPPT AdversaryOf.restrict
+    unfold Probability.IsPPT AdversaryOf.restrict
     ppt
   guess := by
     have hguess := hadversary.guess
