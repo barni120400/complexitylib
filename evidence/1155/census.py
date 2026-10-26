@@ -62,7 +62,7 @@ def classify(code,pos):
 def signals(text):return [k for k,p in SIGNALS.items() if re.search(p,text,re.S if k=='explicit_certificate_term' else 0)]
 def write_csv(path,rows,fields):
     with path.open('w',newline='') as f:
-        w=csv.DictWriter(f,fieldnames=fields,extrasaction='ignore');w.writeheader()
+        w=csv.DictWriter(f,fieldnames=fields,extrasaction='ignore',lineterminator='\n');w.writeheader()
         for r in rows:w.writerow({k:(json.dumps(v,ensure_ascii=False) if isinstance(v,(dict,list)) else v) for k,v in r.items()})
 def main():
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--revision',required=True);ap.add_argument('--output',type=pathlib.Path,required=True);args=ap.parse_args()
