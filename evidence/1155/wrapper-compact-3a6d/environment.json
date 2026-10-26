@@ -1,0 +1,19 @@
+{
+  "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "branch": "diagnostic/forwarding-wrapper-1155-codex",
+  "source_worktree_status": "?? Diag1155/\n?? pilot1155/\n",
+  "source_change_from_rejected": "metadata only: compact token in source, run/sidecar digest in telemetry; same single child evaluation/error propagation",
+  "compiler_command": [
+    "lake",
+    "env",
+    "lean",
+    "-DwarningAsError=true",
+    "-o",
+    ".lake/build/lib/lean/Diag1155/Wrapper.olean",
+    "Diag1155/Wrapper.lean"
+  ],
+  "bootstrap": "same isolated checkout as rejected39fc; no rebootstrap during checks",
+  "standard_registries": "no source mutation of FunProp/Aesop/program entries; unique diagnostic syntax only",
+  "all_jobs_terminal": true,
+  "no_compiled_outputs_published": true
+}

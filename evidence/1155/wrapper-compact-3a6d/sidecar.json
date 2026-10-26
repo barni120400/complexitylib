@@ -1,0 +1,49 @@
+{
+  "run_id": "compact-3a6d-989b5f11-fc0b-4ae4-860c-1e62c1583ef0",
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "implementation_sha256": "90b3179209d69590434a542dd538e2175c81338ceb9ca6518ab55975c8f6f26f",
+  "calls": [
+    {
+      "case": "guide",
+      "call_id": "e67ed48a4e5f7b9a6a30c4b71f56cac5559abc4b2dd3b2082955e394b95823e3:guide/ComplexityGuide/NPCompleteness.lean:4977-4985:polytime",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "guide/ComplexityGuide/NPCompleteness.lean",
+      "original_sha256": "e67ed48a4e5f7b9a6a30c4b71f56cac5559abc4b2dd3b2082955e394b95823e3",
+      "original_byte_start": 4977,
+      "original_byte_end": 4985,
+      "original_line": 127,
+      "original_text": "polytime",
+      "selection": "manual authored occurrence; not quoted/generated",
+      "expected": "returned",
+      "call_token": "c8fb166d0e3491174"
+    },
+    {
+      "case": "supplied",
+      "call_id": "6db6798ddaf6d7dcaeff46dec118058ec71176b2739f1d8c8823f07ebde7cb91:ComplexityTests/GuideFilterPolyTime.lean:2277-2285:polytime",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "ComplexityTests/GuideFilterPolyTime.lean",
+      "original_sha256": "6db6798ddaf6d7dcaeff46dec118058ec71176b2739f1d8c8823f07ebde7cb91",
+      "original_byte_start": 2277,
+      "original_byte_end": 2285,
+      "original_line": 52,
+      "original_text": "polytime",
+      "selection": "manual authored occurrence; not quoted/generated",
+      "expected": "returned",
+      "call_token": "c5c94c54ea0c74b4a"
+    },
+    {
+      "case": "missing",
+      "call_id": "6db6798ddaf6d7dcaeff46dec118058ec71176b2739f1d8c8823f07ebde7cb91:ComplexityTests/GuideFilterPolyTime.lean:2727-2735:polytime",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "ComplexityTests/GuideFilterPolyTime.lean",
+      "original_sha256": "6db6798ddaf6d7dcaeff46dec118058ec71176b2739f1d8c8823f07ebde7cb91",
+      "original_byte_start": 2727,
+      "original_byte_end": 2735,
+      "original_line": 61,
+      "original_text": "polytime",
+      "selection": "manual authored occurrence; not quoted/generated",
+      "expected": "exception",
+      "call_token": "cb7163cb627cf406f"
+    }
+  ]
+}
