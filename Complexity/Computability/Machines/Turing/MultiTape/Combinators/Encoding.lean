@@ -7,7 +7,7 @@ Authors: Christian Reitwiessner
 module
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Words
 public import Cslib.Computability.Machines.Turing.MultiTape.Combinators.AlmostConstant
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Append
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Ite
@@ -175,69 +175,5 @@ public theorem ComputableTidilyInLinearTimeAndSpace.pair {α β₁ β₂ : Type 
   exact Internal.NormalForm.linear
     (ComputableInLinearTimeAndSpace.pair ⟨c₁, h₁.computableInTimeAndSpace⟩
       ⟨c₂, h₂.computableInTimeAndSpace⟩)
-
-open Encodings Internal.FrameMachines
-
-namespace ComputableTidilyInLinearTimeAndSpace
-
-variable {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {f : α → β}
-
-/-- Framing an encoded value. -/
-public theorem of_frame (h : ∀ a, encOut (f a) = frame (encIn a)) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
-  frameT.computableTidilyInLinearTimeAndSpace fun a => by rw [h, frameT_run]
-
-/-- Reading the word framed at the start of an encoded value. -/
-public theorem of_unframe (h : ∀ a, encOut (f a) = unframe (encIn a)) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
-  (readFrameT true).computableTidilyInLinearTimeAndSpace fun a =>
-    (h a).trans (readFrameT_run_true _).symm
-
-/-- Dropping the frame at the start of an encoded value. -/
-public theorem of_dropFrame (h : ∀ a, encOut (f a) = dropFrame (encIn a)) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
-  (readFrameT false).computableTidilyInLinearTimeAndSpace fun a =>
-    (h a).trans (readFrameT_run_false _).symm
-
-/-- Prepending `true` to an encoded value. -/
-public theorem of_cons_true (h : ∀ a, encOut (f a) = true :: encIn a) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
-  (headT none).computableTidilyInLinearTimeAndSpace fun a => by
-    rw [h]
-    cases encIn a <;> simp [headT_run_true]
-
-/-- Dropping the first symbol of an encoded value. -/
-public theorem of_tail (h : ∀ a, encOut (f a) = (encIn a).tail) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
-  (headT (some false)).computableTidilyInLinearTimeAndSpace fun a => by
-    rw [h]
-    cases encIn a <;> simp [headT_run_true]
-
-/-- Keeping just the first symbol of an encoded value. -/
-public theorem of_take_one (h : ∀ a, encOut (f a) = (encIn a).take 1) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut :=
-  (headT (some true)).computableTidilyInLinearTimeAndSpace fun a => by
-    rw [h]
-    cases encIn a <;> simp [headT_run_true]
-
-/-- Testing an encoded value for emptiness. -/
-public theorem of_isEmpty {f : α → Bool} (h : ∀ a, f a = (encIn a).isEmpty) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encBool :=
-  isEmptyT.computableTidilyInLinearTimeAndSpace fun a => by
-    rw [h]
-    cases encIn a <;> simp [isEmptyT_run_true]
-
-/-- A function with a fixed value `d` on the input encoded by the empty word, and tidily computable
-in linear time and space on the other inputs. -/
-public theorem of_isEmpty_ite (d : β) (hd : ∀ a, encIn a = [] → f a = d)
-    (h : ComputableTidilyInLinearTimeAndSpace (f ∘ Subtype.val)
-      ((Function.Embedding.subtype fun a => (encIn a).isEmpty = false).trans encIn) encOut) :
-    ComputableTidilyInLinearTimeAndSpace f encIn encOut := by
-  convert ite (c := fun a => (encIn a).isEmpty) (of_isEmpty fun _ => rfl) ((const d).restrict _) h
-    using 1
-  funext a
-  split_ifs with ha <;> simp_all
-
-end ComputableTidilyInLinearTimeAndSpace
 
 end Turing.MultiTapeTM

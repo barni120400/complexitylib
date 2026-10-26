@@ -70,7 +70,8 @@ public theorem ComputableTidilyInTimeAndSpace.ite {γ β : Type*} {encIn : γ �
   obtain ⟨l, hl⟩ : ∃ l, ∀ b, (encC b).length ≤ l :=
     ⟨(encC true).length + (encC false).length, fun b => by cases b <;> omega⟩
   have htest := (eqWordT (encC true)).computableTidilyInTimeAndSpace (f := id) (encIn := encC)
-    (encOut := encTest) fun b => by rw [eqWordT_run_q₀]; cases b <;> simp
+    (encOut := encTest) fun b => by
+      rw [eqWordT_run_q₀]; cases b <;> simp [encTest_true, encTest_false]
   -- vendored: crei's `comp` is `comp_linear` here, as cslib #1111 restates `comp`
   obtain ⟨ct, hct⟩ := ComputableTidilyInTimeAndSpace.comp_linear htest hc
   have hb (x : γ) : 4 * (encC (c x)).length + 8 + ct * ((encC (c x)).length + 1) ≤
@@ -88,11 +89,12 @@ public theorem ComputableTidilyInTimeAndSpace.ite {γ β : Type*} {encIn : γ �
   have h := (htmc x).ite (tm₁ := tm₁) (tm₂ := tm₂) (y := encOut (if c x then f x else g x))
     (t₁ := tf x) (s₁ := sf x) (t₂ := tg x) (s₂ := sg x)
     (fun hw => by
-      have hcx : c x = true := by cases hcx : c x <;> simp_all
+      have hcx : c x = true := by cases hcx : c x <;> simp_all [encTest_true, encTest_false]
       simpa [hcx] using htm₁ ⟨x, hcx⟩)
     (fun hw => by
-      have hcx : c x = false := by cases hcx : c x <;> simp_all
+      have hcx : c x = false := by cases hcx : c x <;> simp_all [encTest_true, encTest_false]
       simpa [hcx] using htm₂ ⟨x, hcx⟩)
-  refine TransformsTapes.mono h ?_ ?_ <;> cases hcx : c x <;> simp [hcx] <;> omega
+  refine TransformsTapes.mono h ?_ ?_ <;> cases hcx : c x <;>
+    simp [hcx, encTest_true, encTest_false] <;> omega
 
 end Turing.MultiTapeTM

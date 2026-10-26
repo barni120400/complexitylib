@@ -5,6 +5,7 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
+
 -- upstream: vendored crei:crei/tidy-universal @7f7c0696 (unsubmitted)
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.StreamFold
