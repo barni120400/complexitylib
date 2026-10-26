@@ -535,7 +535,7 @@ theorem eval_append_readout (p : Program signature n g) (reads : Fin d → Fin g
     have hle : ((decide ((fun j => p.eval interpretation x (reads j)) = patterns a)).toNat : ℝ) ≤
         ∑ b : Fin m,
           ((decide ((fun j => p.eval interpretation x (reads j)) = patterns b)).toNat : ℝ) := by
-      apply single_le_sum
+      refine single_le_sum ?_ (mem_univ a)
       intro b _
       exact Nat.cast_nonneg _
     simpa [ha] using hle
