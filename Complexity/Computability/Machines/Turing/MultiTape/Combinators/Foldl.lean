@@ -87,16 +87,17 @@ lemma BigO.pair {α α₁ α₂ : Type u} {encIn : α ↪ List Bool} {t s : α �
     BigO (fun a => (f₁ a, f₂ a)) encIn enc t (fun a => s a + (enc (f₁ a, f₂ a)).length) := by
   obtain ⟨c₁, h₁⟩ := h₁
   obtain ⟨c₂, h₂⟩ := h₂
-  obtain ⟨c, hc⟩ := hP.pair_mono h₁ h₂
+  obtain ⟨c, hc⟩ := hP.pair_mono h₁.computableInTimeAndSpace h₂.computableInTimeAndSpace
+  apply Internal.NormalForm.bigO
   refine ⟨c * (c₁ + c₂ + 1), hc.mono (fun a => ?_) (fun a => ?_)⟩ <;>
   · ring_nf
     omega
 
 /-- A function tidily computable in linear time and space. -/
 lemma BigO.of_linear {f : α → β} {encOut : β ↪ List Bool}
-    (h : ComputableTidilyInLinearTimeAndSpace f encIn encOut) :
+    (h : ComputableInLinearTimeAndSpace f encIn encOut) :
     BigO f encIn encOut (fun a => (encIn a).length) (fun a => (encIn a).length) :=
-  h
+  Internal.NormalForm.linear h
 
 end BigO
 
@@ -179,7 +180,8 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
   -- the operations on the state, all in linear time and space
   have hlist := hSE.fst.comp (hOE.getD ([], b₀))
   have htail := BigO.of_linear (hLE.tail.comp hlist)
-  obtain ⟨c₁, h₁⟩ := hLE.isEmpty.comp hlist
+  obtain ⟨c₁, h₁⟩ := show ComputableTidilyInLinearTimeAndSpace _ _ _ from
+    Internal.NormalForm.linear (hLE.isEmpty.comp hlist)
   -- the argument of `step`, the next state, and the next state wrapped in `some`
   have harg := BigO.pair hBA (.of_linear (hSE.snd.comp (hOE.getD ([], b₀))))
     (.of_linear ((hLE.headD a₀).comp hlist))
@@ -187,8 +189,8 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
   have hstepArg := ((BigO.of_computable hstep).comp harg hc).mono (2 * c + 2)
     (t' := fun o => (encO o).length + ts (arg a₀ b₀ o))
     (s' := fun o => (encO o).length + ss (arg a₀ b₀ o))
-    (fun o => by simp only [Function.comp_apply, arg]; ring_nf; omega)
-    (fun o => by have := hc o; simp only [Function.comp_apply, arg] at *; ring_nf at *; omega)
+    (fun o => by simp only [arg]; ring_nf; omega)
+    (fun o => by have := hc o; simp only [arg] at *; ring_nf at *; omega)
   have hnext := BigO.pair hSE (htail.mono 1 (fun o => by omega) (fun o => by omega)) hstepArg
   have hsome := ((BigO.of_linear hOE.some).comp hnext
     (m := fun o => (encS (next step a₀ b₀ o)).length)
@@ -203,7 +205,7 @@ lemma bigO_foldStep (hLE : ListEncoding encA encL) (hBA : PairEncoding encB encA
   obtain ⟨k, hk⟩ := ComputableTidilyInTimeAndSpace.ite h₁ (h₂.restrict _) (h₃.restrict _)
   refine ⟨c₁ + c₂ + c₃ + k, hk.mono (fun o => ?_) (fun o => ?_)⟩ <;>
   · cases h : (o.getD ([], b₀)).1.isEmpty <;>
-      simp only [Function.comp_apply, roundCost, h, Bool.false_eq_true, ↓reduceIte] <;>
+      simp only [roundCost, h, Bool.false_eq_true, ↓reduceIte] <;>
       ring_nf <;> omega
 
 end Round
@@ -283,7 +285,8 @@ public theorem ComputableTidilyInTimeAndSpace.foldl {γ α β : Type u} {encIn :
     ring_nf at this ⊢
     omega
   -- the initial state
-  have hstart := (BigO.of_linear hOE.some).comp (hSE.pair hlist hinit) (m := lMax)
+  have hstart := (BigO.of_linear hOE.some).comp
+    (BigO.pair hSE (BigO.of_computable hlist) (BigO.of_computable hinit)) (m := lMax)
     (fun x => by simpa using hlMax x 0 (Nat.zero_le _))
   obtain ⟨cs, hcs⟩ := (BigO.of_linear hOE.some).length_le
   have hrun := (BigO.of_computable hloop).comp hstart (m := fun x => cs * (lMax x + 1))
@@ -297,7 +300,7 @@ public theorem ComputableTidilyInTimeAndSpace.foldl {γ α β : Type u} {encIn :
     (m := fun x => cs * (lMax x + 1)) (fun x => by
       simp only [Function.comp_apply, hfinal]
       exact (hcs _).trans (Nat.mul_le_mul_left cs (by simpa using hlMax x _ le_rfl)))
-  have heq : (Prod.snd ∘ fun o => o.getD ([], init x₀)) ∘
+  have heq : (fun o => (o.getD ([], init x₀)).2) ∘
       ((fun o => g^[rounds o] o) ∘
         (some ∘ fun x => (list x, init x))) = fun x => (list x).foldl step (init x) := by
     funext x
