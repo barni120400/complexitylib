@@ -1,0 +1,12 @@
+{
+  "reference_head": "8b21545ab79051382fe0e5be0aa7c65ab780a763",
+  "all_prior_real_raw_files_byte_identical": true,
+  "only_authorized_checker_synthetic_guard_files_changed": [
+    "cloud-source-prep-3a6d/README.md",
+    "cloud-source-prep-3a6d/cloud_acceptance.py",
+    "cloud-source-prep-3a6d/preflight-results.json",
+    "cloud-source-prep-3a6d/preflight.py"
+  ],
+  "no_compiled_outputs_published": true,
+  "all_jobs_terminal": true
+}

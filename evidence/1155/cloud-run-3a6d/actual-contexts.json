@@ -1,0 +1,200 @@
+{
+  "baseline": {
+    "module": "Complexity.Computability.PCP.Encoded.Cloud",
+    "directImports": [
+      [
+        "Complexity.Computability.PCP.Encoded.Basic",
+        false,
+        false,
+        false
+      ],
+      [
+        "Complexity.Computability.PCP.DegreeReduction",
+        false,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.NodupEquivFin",
+        false,
+        false,
+        false
+      ],
+      [
+        "Complexity.Tactic.PolyTime",
+        true,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.GetD",
+        true,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.ProdSigma",
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_declaration_names": [
+      "Cslib.PCP.Encoded.Graph.cloud",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv_apply",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv_symm_apply",
+      "Cslib.PCP.Encoded.Graph.endpoint",
+      "Cslib.PCP.Encoded.Graph.endpoint_eq",
+      "Cslib.PCP.Encoded.Graph.halfEdges",
+      "Cslib.PCP.Encoded.Graph.halfEdgesEnumeration",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_cloud",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_endpoint",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_halfEdges",
+      "Cslib.PCP.Encoded.Graph.length_cloud_le",
+      "Cslib.PCP.Encoded.Graph.length_halfEdges",
+      "Cslib.PCP.Encoded.Graph.mem_cloud_iff",
+      "Cslib.PCP.Encoded.Graph.mem_halfEdges_iff",
+      "Cslib.PCP.Encoded.Graph.nodup_cloud",
+      "Cslib.PCP.Encoded.Graph.nodup_halfEdges"
+    ],
+    "private_ilean_sha256": "03594323bff61048e297393fb0036336cf980a404af14b8ee81784e86a11344b",
+    "compiled_output_published": false
+  },
+  "import-only": {
+    "module": "Complexity.Computability.PCP.Encoded.Cloud",
+    "directImports": [
+      [
+        "Complexity.Computability.PCP.Encoded.Basic",
+        false,
+        false,
+        false
+      ],
+      [
+        "Complexity.Computability.PCP.DegreeReduction",
+        false,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.NodupEquivFin",
+        false,
+        false,
+        false
+      ],
+      [
+        "Complexity.Tactic.PolyTime",
+        true,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.GetD",
+        true,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.ProdSigma",
+        true,
+        false,
+        false
+      ],
+      [
+        "Diag1155.Wrapper",
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_declaration_names": [
+      "Cslib.PCP.Encoded.Graph.cloud",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv_apply",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv_symm_apply",
+      "Cslib.PCP.Encoded.Graph.endpoint",
+      "Cslib.PCP.Encoded.Graph.endpoint_eq",
+      "Cslib.PCP.Encoded.Graph.halfEdges",
+      "Cslib.PCP.Encoded.Graph.halfEdgesEnumeration",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_cloud",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_endpoint",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_halfEdges",
+      "Cslib.PCP.Encoded.Graph.length_cloud_le",
+      "Cslib.PCP.Encoded.Graph.length_halfEdges",
+      "Cslib.PCP.Encoded.Graph.mem_cloud_iff",
+      "Cslib.PCP.Encoded.Graph.mem_halfEdges_iff",
+      "Cslib.PCP.Encoded.Graph.nodup_cloud",
+      "Cslib.PCP.Encoded.Graph.nodup_halfEdges"
+    ],
+    "private_ilean_sha256": "63ed0a233a05bdc7ef4cfd27e94d3f1457fd1c5bd6604d59cee028395834f775",
+    "compiled_output_published": false
+  },
+  "wrapped": {
+    "module": "Complexity.Computability.PCP.Encoded.Cloud",
+    "directImports": [
+      [
+        "Complexity.Computability.PCP.Encoded.Basic",
+        false,
+        false,
+        false
+      ],
+      [
+        "Complexity.Computability.PCP.DegreeReduction",
+        false,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.NodupEquivFin",
+        false,
+        false,
+        false
+      ],
+      [
+        "Complexity.Tactic.PolyTime",
+        true,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.GetD",
+        true,
+        false,
+        false
+      ],
+      [
+        "Mathlib.Data.List.ProdSigma",
+        true,
+        false,
+        false
+      ],
+      [
+        "Diag1155.Wrapper",
+        true,
+        false,
+        false
+      ]
+    ],
+    "source_declaration_names": [
+      "Cslib.PCP.Encoded.Graph.cloud",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv_apply",
+      "Cslib.PCP.Encoded.Graph.cloudEquiv_symm_apply",
+      "Cslib.PCP.Encoded.Graph.endpoint",
+      "Cslib.PCP.Encoded.Graph.endpoint_eq",
+      "Cslib.PCP.Encoded.Graph.halfEdges",
+      "Cslib.PCP.Encoded.Graph.halfEdgesEnumeration",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_cloud",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_endpoint",
+      "Cslib.PCP.Encoded.Graph.isPolyTime_halfEdges",
+      "Cslib.PCP.Encoded.Graph.length_cloud_le",
+      "Cslib.PCP.Encoded.Graph.length_halfEdges",
+      "Cslib.PCP.Encoded.Graph.mem_cloud_iff",
+      "Cslib.PCP.Encoded.Graph.mem_halfEdges_iff",
+      "Cslib.PCP.Encoded.Graph.nodup_cloud",
+      "Cslib.PCP.Encoded.Graph.nodup_halfEdges"
+    ],
+    "private_ilean_sha256": "a5432214902df00ade7b8faf01b8f01c619e54b2e7ba1ab1597d5b807ae1bead",
+    "compiled_output_published": false
+  }
+}

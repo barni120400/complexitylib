@@ -1,0 +1,16 @@
+{
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "guard_checkpoint": "d4e496c3",
+  "guard_checker_sha256": "9dbb1f00f5614cf30b4d1797cfc27a7f4e65d38e5eaba36b59fbadd48ef9e372",
+  "synthetic_preflight_rejection_count": 14,
+  "wrapper_source_unchanged": true,
+  "bootstrap": "no new bootstrap; reused previously accepted private3a6checkout and its isolated outputs",
+  "freshness_build": "only six Cloud direct import targets;5336jobs",
+  "copied_setup_importArts_used": false,
+  "package_options": "exact options read from originallakefile config and crosschecked against existing setup.options; no foreign setup paths used",
+  "ilean": "generated only in private .lake/diag1155/cloud; module/imports/declarationnames extracted; raw compiler output NOT published",
+  "tracked_source_unchanged": true,
+  "unselected_tactics": "whole-file execution can run them, but their individual costs are unmeasured",
+  "all_jobs_terminal": true,
+  "remaining": "postrun independent methodreview; no further source expansion authorized"
+}

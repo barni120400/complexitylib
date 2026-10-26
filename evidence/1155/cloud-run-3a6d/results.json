@@ -1,0 +1,83 @@
+[
+  {
+    "mode": "baseline",
+    "returncode": 0,
+    "process_wall_seconds": 2.6880646490026265,
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "-DautoImplicit=false",
+      "-Dweak.linter.mathlibStandardSet=true",
+      "-Dweak.linter.flexible=true",
+      "-Dweak.linter.pythonStyle=false",
+      "-Dweak.linter.checkInitImports=false",
+      "-Dweak.linter.allScriptsDocumented=false",
+      "-Dweak.linter.unicodeLinter=false",
+      "--root=/home/samuel/Code/complexitylib-codex/automation-census-1155/evidence/1155/cloud-source-prep-3a6d/baseline",
+      "-i",
+      "/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/.lake/diag1155/cloud/baseline.ilean",
+      "/home/samuel/Code/complexitylib-codex/automation-census-1155/evidence/1155/cloud-source-prep-3a6d/baseline/Complexity/Computability/PCP/Encoded/Cloud.lean"
+    ],
+    "run_id": "cloud-3a6d-6593df40-9a0b-4475-bce2-8906290dd604",
+    "sidecar_sha256": "f4ee25abfc0a06963b2d82ca86dfba98f4ab10618db8fba02af58e924449cfaa",
+    "source_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+    "module_name": "Complexity.Computability.PCP.Encoded.Cloud",
+    "actual_ilean_context_verified": true
+  },
+  {
+    "mode": "import-only",
+    "returncode": 0,
+    "process_wall_seconds": 2.235632164985873,
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "-DautoImplicit=false",
+      "-Dweak.linter.mathlibStandardSet=true",
+      "-Dweak.linter.flexible=true",
+      "-Dweak.linter.pythonStyle=false",
+      "-Dweak.linter.checkInitImports=false",
+      "-Dweak.linter.allScriptsDocumented=false",
+      "-Dweak.linter.unicodeLinter=false",
+      "--root=/home/samuel/Code/complexitylib-codex/automation-census-1155/evidence/1155/cloud-source-prep-3a6d/import-only",
+      "-i",
+      "/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/.lake/diag1155/cloud/import-only.ilean",
+      "/home/samuel/Code/complexitylib-codex/automation-census-1155/evidence/1155/cloud-source-prep-3a6d/import-only/Complexity/Computability/PCP/Encoded/Cloud.lean"
+    ],
+    "run_id": "cloud-3a6d-6593df40-9a0b-4475-bce2-8906290dd604",
+    "sidecar_sha256": "f4ee25abfc0a06963b2d82ca86dfba98f4ab10618db8fba02af58e924449cfaa",
+    "source_sha256": "c99bfb45bff55b8465db962649b3fb68446dd207b2fb74d86357672a3a92eefe",
+    "module_name": "Complexity.Computability.PCP.Encoded.Cloud",
+    "actual_ilean_context_verified": true
+  },
+  {
+    "mode": "wrapped",
+    "returncode": 0,
+    "process_wall_seconds": 2.2339672899688594,
+    "command": [
+      "lake",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "-DautoImplicit=false",
+      "-Dweak.linter.mathlibStandardSet=true",
+      "-Dweak.linter.flexible=true",
+      "-Dweak.linter.pythonStyle=false",
+      "-Dweak.linter.checkInitImports=false",
+      "-Dweak.linter.allScriptsDocumented=false",
+      "-Dweak.linter.unicodeLinter=false",
+      "--root=/home/samuel/Code/complexitylib-codex/automation-census-1155/evidence/1155/cloud-source-prep-3a6d/wrapped",
+      "-i",
+      "/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/.lake/diag1155/cloud/wrapped.ilean",
+      "/home/samuel/Code/complexitylib-codex/automation-census-1155/evidence/1155/cloud-source-prep-3a6d/wrapped/Complexity/Computability/PCP/Encoded/Cloud.lean"
+    ],
+    "run_id": "cloud-3a6d-6593df40-9a0b-4475-bce2-8906290dd604",
+    "sidecar_sha256": "f4ee25abfc0a06963b2d82ca86dfba98f4ab10618db8fba02af58e924449cfaa",
+    "source_sha256": "30befe48f15041f6e95e9a32b854a9d68281757f4cb91e809e3c993f3dc6b031",
+    "module_name": "Complexity.Computability.PCP.Encoded.Cloud",
+    "actual_ilean_context_verified": true
+  }
+]

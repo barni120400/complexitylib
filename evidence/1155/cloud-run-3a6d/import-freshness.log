@@ -1,0 +1,11 @@
+✔ [2300/2378] Unpacked Complexity.Computability.PCP.ConstraintGraph
+✔ [3776/3922] Unpacked Complexity.Foundations.Data.List.Equiv
+✔ [3920/4586] Unpacked Complexity.Computability.PCP.Encoded.Basic
+✔ [5323/5336] Unpacked Complexity.Foundations.Combinatorics.Expander.Basic
+✔ [5325/5336] Unpacked Complexity.Foundations.Data.Finset.Expect
+✔ [5327/5336] Unpacked Complexity.Foundations.Combinatorics.Expander.Loops
+✔ [5329/5336] Unpacked Complexity.Foundations.Combinatorics.Expander.Mixing
+✔ [5331/5336] Unpacked Complexity.Foundations.Data.Finset.Quantile
+✔ [5333/5336] Unpacked Complexity.Computability.PCP.RegularConstraintGraph
+✔ [5335/5336] Unpacked Complexity.Computability.PCP.DegreeReduction
+Build completed successfully (5336 jobs).
