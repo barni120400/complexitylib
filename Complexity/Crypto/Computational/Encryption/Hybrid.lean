@@ -214,7 +214,7 @@ theorem isPPTOn_kemIdealGame {keyGen : ℕ → ProbComp (List Bool × List Bool)
       (fun p : (α × List Bool × List Bool) × List Bool × List Bool =>
         BitString.sampleList (n p.1.1)) := by
     dsimp only [E2, E1]
-    exact ComputableTidilyInPolyTime.sampleList (by fun_prop)
+    exact ComputableInPolyTime.sampleList (by fun_prop)
   have h3 : ComputableTidilyInPolyTime
       (fun p : ((α × List Bool × List Bool) × List Bool × List Bool) × List Bool =>
         encPair encBits (encPair encBits encBits) (p.1.1.2.1, (p.2, p.1.2.2)))
@@ -300,11 +300,8 @@ theorem isPPTOn_demGameOn {Msg : Type} {encMsg : Msg ↪ List Bool}
     IsPPTOn input encBool (fun a => demGameOn valid encryptSym adversary (bit a) (n a)) := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
-  have hvalid' := hvalid.tidy
-  have hn' := hn.tidy
-  have hbit' := hbit.tidy
   have hsample : IsPPTOn input encBits (fun a => BitString.sampleList (n a)) :=
-    ComputableTidilyInPolyTime.sampleList hn'
+    ComputableInPolyTime.sampleList hn
   unfold demGameOn
   ppt
 
@@ -1058,7 +1055,8 @@ theorem isPPTOn_otpEncrypt :
     IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
       (fun p => otpEncrypt p.1 p.2.1 p.2.2) := by
   unfold otpEncrypt
-  ppt
+  apply ComputableInPolyTime.isPPTOn
+  fun_prop
 
 /-- One-time pad decryption is computable in polynomial time. -/
 @[fun_prop]

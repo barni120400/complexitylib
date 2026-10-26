@@ -23,8 +23,12 @@ import ComplexityAbstracts.GSWSecurityAbstract
 import ComplexityAbstracts.GSWSecurityBridge
 import ComplexityAbstracts.ImmermanSzelepcsenyiAbstract
 import ComplexityAbstracts.ImmermanSzelepcsenyiBridge
+import ComplexityAbstracts.MagnificationAbstract
+import ComplexityAbstracts.MagnificationBridge
 import ComplexityAbstracts.PCPAbstract
 import ComplexityAbstracts.PCPBridge
+import ComplexityAbstracts.PartialMCSPAbstract
+import ComplexityAbstracts.PartialMCSPBridge
 import ComplexityAbstracts.Randomized
 import ComplexityAbstracts.ResolutionAbstract
 import ComplexityAbstracts.ResolutionBridge
