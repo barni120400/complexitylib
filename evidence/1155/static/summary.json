@@ -1,0 +1,148 @@
+{
+  "revision": "67c6ea4d7d59bf8089f7b305394649b0cf033c1c",
+  "method": "lexical static candidates; comments/strings masked; no Lean parsing/elaboration/build/cache access",
+  "source_roots": [
+    "Complexity",
+    "ComplexityTests",
+    "abstracts",
+    "guide"
+  ],
+  "lean_files_scanned": {
+    "Complexity": 2216,
+    "ComplexityTests": 615,
+    "abstracts": 51,
+    "guide": 5
+  },
+  "total_lean_files": 2887,
+  "all_code_tokens": 5827,
+  "call_candidates": 4012,
+  "ordinary_call_candidates": 4003,
+  "quoted_tactic_candidates": 9,
+  "excluded_code_tokens": 1815,
+  "non_lean_text_tokens": 0,
+  "by_area_tactic_classification": [
+    {
+      "area": "Complexity",
+      "tactic": "fun_prop",
+      "classification": "attribute_registration",
+      "count": 1686
+    },
+    {
+      "area": "Complexity",
+      "tactic": "fun_prop",
+      "classification": "quoted_identifier_reference",
+      "count": 1
+    },
+    {
+      "area": "Complexity",
+      "tactic": "fun_prop",
+      "classification": "quoted_tactic_candidate",
+      "count": 1
+    },
+    {
+      "area": "Complexity",
+      "tactic": "fun_prop",
+      "classification": "tactic_call_candidate",
+      "count": 2161
+    },
+    {
+      "area": "Complexity",
+      "tactic": "polytime",
+      "classification": "tactic_call_candidate",
+      "count": 215
+    },
+    {
+      "area": "Complexity",
+      "tactic": "ppt",
+      "classification": "tactic_call_candidate",
+      "count": 89
+    },
+    {
+      "area": "ComplexityTests",
+      "tactic": "fun_prop",
+      "classification": "attribute_registration",
+      "count": 125
+    },
+    {
+      "area": "ComplexityTests",
+      "tactic": "fun_prop",
+      "classification": "quoted_tactic_candidate",
+      "count": 2
+    },
+    {
+      "area": "ComplexityTests",
+      "tactic": "fun_prop",
+      "classification": "tactic_call_candidate",
+      "count": 945
+    },
+    {
+      "area": "ComplexityTests",
+      "tactic": "polytime",
+      "classification": "quoted_tactic_candidate",
+      "count": 6
+    },
+    {
+      "area": "ComplexityTests",
+      "tactic": "polytime",
+      "classification": "tactic_call_candidate",
+      "count": 344
+    },
+    {
+      "area": "ComplexityTests",
+      "tactic": "ppt",
+      "classification": "tactic_call_candidate",
+      "count": 231
+    },
+    {
+      "area": "abstracts",
+      "tactic": "fun_prop",
+      "classification": "tactic_call_candidate",
+      "count": 6
+    },
+    {
+      "area": "abstracts",
+      "tactic": "ppt",
+      "classification": "tactic_call_candidate",
+      "count": 2
+    },
+    {
+      "area": "guide",
+      "tactic": "fun_prop",
+      "classification": "quoted_identifier_reference",
+      "count": 1
+    },
+    {
+      "area": "guide",
+      "tactic": "fun_prop",
+      "classification": "tactic_call_candidate",
+      "count": 6
+    },
+    {
+      "area": "guide",
+      "tactic": "polytime",
+      "classification": "quoted_identifier_reference",
+      "count": 2
+    },
+    {
+      "area": "guide",
+      "tactic": "polytime",
+      "classification": "tactic_call_candidate",
+      "count": 4
+    }
+  ],
+  "call_candidate_signal_counts": {
+    "explicit_composition": 1210,
+    "explicit_certificate_term": 1260,
+    "unfolding": 1815,
+    "fallback_syntax": 99,
+    "search_controls": 24,
+    "negative_control": 345
+  },
+  "measured_by_this_census": 0,
+  "limitations": [
+    "Not an AST-verified invocation count; quotations/antiquotations and name references require spot checks.",
+    "Option setters are prior textual directives, NOT established effective budgets; section/local/in scopes are not resolved.",
+    "Manual composition/fallback signals record lexical presence, not motivation or successful paths.",
+    "No per-call dynamic time/heartbeat/rule trace, success/failure or syntax-directed coverage measurement. Published historical evidence is separate."
+  ]
+}

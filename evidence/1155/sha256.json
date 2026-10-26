@@ -1,0 +1,11 @@
+{
+  "README.md": "5dd9c8168b4ca15bd364e5e450cfa7d375fa8ce6c74cd924dd79509e19d812c3",
+  "census.py": "1517035c47d77239dabcae115011414328fd7550266b97f00bc2476bdb5766d8",
+  "published-evidence.json": "77738a64763693773b158f139c4cf034310bfba99acde10c2723adab0b8d5d91",
+  "published-source-index.csv": "6dd219a1d5628ef527260fab47ab50a2017cd10822d1b18a607da5f564f5afff",
+  "static/callsites.csv": "ccc1c8c0847e53868c5569c99e5f4bbdfcfcebb9c081e828f2a3d735e2bcd64f",
+  "static/callsites.json": "5d52d3930466e8f09b364a1110c5e4220f702142f2515b2079df6351ced61cfb",
+  "static/excluded-code-tokens.csv": "77e6bc96c77862aede225d7f456fb7aadbd5073e67db9c370257f0498d3bd8b4",
+  "static/non-lean-text-tokens.csv": "77dd582c1ec39b556dea3412bbcde357ccf8e39dcbdae220aa8ff6352431b77e",
+  "static/summary.json": "18409111bade1ef1f753bfe99a7431f0229c5ac401c7060a3e7fbb7c0ceb6fcf"
+}
