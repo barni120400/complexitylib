@@ -117,7 +117,3 @@ run_cmd do
 /-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_lt
-
-/-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_mul'' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_mul'
