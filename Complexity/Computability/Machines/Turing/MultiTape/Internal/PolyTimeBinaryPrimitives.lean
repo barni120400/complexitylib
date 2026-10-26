@@ -26,7 +26,10 @@ open Cslib NatAdd NatSucc
 
 namespace ComputableInPolyTime
 
-/-- Addition of binary naturals, using the carry and remaining-word folds. -/
+/-- Addition of binary naturals, using the carry and remaining-word folds.
+Compose this certificate with the producers' `.prod` certificate. Global automatic addition
+remains separate from this named rule, since an unconstrained intermediate encoding can select
+a binary branch where a surrounding computation needs a unary size. -/
 theorem binary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
     (encPair encNat encNat) encNat := by
   let encS := encPair encBool (encPair encBits encBits)

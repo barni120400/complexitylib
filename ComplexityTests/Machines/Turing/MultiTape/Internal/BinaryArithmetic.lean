@@ -13,12 +13,29 @@ import Lean.Elab.Command
 
 open Turing.MultiTapeTM
 
+-- Production clients use the ordinary named certificate and direct composition.
+example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hl : ComputableInPolyTime left input encNat)
+    (hr : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a + right a) input encNat :=
+  ComputableInPolyTime.binary_add.comp (hl.prod hr)
+
+-- These backend fixtures opt in locally; they are not default-global automation claims.
+section LocalAdditionAutomation
+attribute [local fun_prop] ComputableInPolyTime.binary_add
+
 example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hl : ComputableInPolyTime left input encNat)
     (hr : ComputableInPolyTime right input encNat) :
     ComputableInPolyTime (fun a => left a + right a) input encNat := by
   fail_if_success (clear hr; fun_prop)
+  fail_if_success (clear hl; fun_prop)
   fun_prop
+
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
+    (encPair encNat encNat) encNat := by fun_prop
+
+end LocalAdditionAutomation
 
 example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
     (hl : ComputableInPolyTime left input encNat)
@@ -27,8 +44,6 @@ example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
   fail_if_success (clear hl; fun_prop)
   exact ComputableInPolyTime.binary_lt.comp (hl.prod hr)
 
-example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
-    (encPair encNat encNat) encNat := by fun_prop
 example : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
     (encPair encNat encNat) encBool := by fun_prop
 
