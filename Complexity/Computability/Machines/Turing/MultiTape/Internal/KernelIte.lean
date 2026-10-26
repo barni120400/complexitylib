@@ -114,12 +114,12 @@ public theorem ComputesTidilyInTimeAndSpace.ite {tmc : MultiTapeTM k₀ Symbol S
 @[expose] public def encTest : Bool ↪ List Bool :=
   ⟨fun b => if b then [true] else [], fun a b h => by cases a <;> cases b <;> simp_all⟩
 
-@[simp] public lemma encTest_true : encTest true = [true] := rfl
-@[simp] public lemma encTest_false : encTest false = [] := rfl
+public lemma encTest_true : encTest true = [true] := rfl
+public lemma encTest_false : encTest false = [] := rfl
 
 /-- Emits `[true]` on the word `w` and nothing on every other word. Its state is the rest of `w`
 still to be read, or `none` once the input differs from `w`. -/
-@[expose, simps step final]
+@[expose, simps -isSimp step final]
 public def eqWordT (w : List Bool) : Transducer Bool (Option {v // v ∈ w.tails}) where
   q₀ := some ⟨w, (List.mem_tails _ _).mpr (List.suffix_refl w)⟩
   step q a := match q with
@@ -131,19 +131,18 @@ public def eqWordT (w : List Bool) : Transducer Bool (Option {v // v ∈ w.tails
   length_step_le q a := by rcases q with _ | ⟨_ | _, _⟩ <;> simp
   length_final_le q := by split_ifs <;> simp
 
-@[simp]
 lemma eqWordT_run_none (w u : List Bool) : (eqWordT w).run none u = [] := by
-  induction u <;> simp [*]
+  induction u <;> simp [eqWordT_step, eqWordT_final, *]
 
 lemma eqWordT_run (w : List Bool) (u : List Bool) (v : {v // v ∈ w.tails}) :
     (eqWordT w).run (some v) u = if u = v.1 then [true] else [] := by
   obtain ⟨v, hv⟩ := v
   induction u generalizing v with
-  | nil => cases v <;> simp
+  | nil => cases v <;> simp [eqWordT_final]
   | cons a u ih =>
     rcases v with _ | ⟨b, v⟩
-    · simp
-    · by_cases hab : a = b <;> simp [hab, ih]
+    · simp [eqWordT_step, eqWordT_run_none]
+    · by_cases hab : a = b <;> simp [eqWordT_step, eqWordT_run_none, hab, ih]
 
 public lemma eqWordT_run_q₀ (w u : List Bool) :
     (eqWordT w).run (eqWordT w).q₀ u = if u = w then [true] else [] :=

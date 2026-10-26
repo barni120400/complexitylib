@@ -26,7 +26,7 @@ open Internal.FrameMachines
 /-- Emits a word determined by its input's first symbol, if any, and by `drop`: `[true]` followed by
 the input (`drop = none`), the input without its first symbol (`drop = some false`), or just the
 first symbol (`drop = some true`). -/
-@[simps q₀ step final]
+@[simps -isSimp q₀ step final]
 def headT (drop : Option Bool) : Transducer Bool Bool where
   q₀ := false
   step
@@ -40,10 +40,10 @@ def headT (drop : Option Bool) : Transducer Bool Bool where
 
 lemma headT_run_true (drop : Option Bool) (v : List Bool) :
     (headT drop).run true v = if drop = some true then [] else v := by
-  induction v <;> rcases drop with _ | _ | _ <;> simp_all
+  induction v <;> rcases drop with _ | _ | _ <;> simp_all [headT_step, headT_final]
 
 /-- Emits `[true]` on the empty word and `[false]` on every other word. -/
-@[simps q₀ step final]
+@[simps -isSimp q₀ step final]
 def isEmptyT : Transducer Bool Bool where
   q₀ := false
   step q _ := (true, if q then [] else [false])
@@ -52,7 +52,7 @@ def isEmptyT : Transducer Bool Bool where
   length_final_le q := by cases q <;> simp
 
 lemma isEmptyT_run_true (v : List Bool) : isEmptyT.run true v = [] := by
-  induction v <;> simp [*]
+  induction v <;> simp [isEmptyT_step, isEmptyT_final, *]
 
 end Encodings
 

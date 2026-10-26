@@ -39,7 +39,7 @@ theorem conditional {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ 
       (encC (c a)) (encTest (c a)) (4 * (encC (c a)).length + 8) 0 := by
     convert τ.computesTidily (encC (c a)) using 1
     simp only [τ, eqWordT_run_q₀, encC.injective.eq_iff]
-    cases c a <;> simp
+    cases c a <;> simp [encTest_true, encTest_false]
   let l := (encC true).length + (encC false).length
   have hl (a : α) : (encC (c a)).length ≤ l := by cases c a <;> dsimp [l] <;> omega
   let K := 8 * l + 6 * max kc 0 + 40
@@ -54,11 +54,11 @@ theorem conditional {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ 
     (y := encOut (if c a then f a else g a))
     (t₁ := tf a) (s₁ := sf a) (t₂ := tg a) (s₂ := sg a)
     (fun hw => by
-      have ha : c a = true := by cases ha : c a <;> simp_all
+      have ha : c a = true := by cases ha : c a <;> simp_all [encTest_true, encTest_false]
       simpa [ha] using hf ⟨a, ha⟩)
     (fun hw => by
-      have ha : c a = false := by cases ha : c a <;> simp_all
+      have ha : c a = false := by cases ha : c a <;> simp_all [encTest_true, encTest_false]
       simpa [ha] using hg ⟨a, ha⟩)
-  refine h.mono ?_ ?_ <;> cases ha : c a <;> simp_all <;> omega
+  refine h.mono ?_ ?_ <;> cases ha : c a <;> simp_all [encTest_true, encTest_false] <;> omega
 
 end Turing.MultiTapeTM.Internal

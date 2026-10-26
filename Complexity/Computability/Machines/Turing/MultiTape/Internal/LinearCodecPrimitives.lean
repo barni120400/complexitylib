@@ -36,25 +36,29 @@ theorem restrict {f : α → β} (h : ComputableInLinearTimeAndSpace f encIn enc
 theorem of_cons_true {f : α → β} (h : ∀ a, encMid (f a) = true :: encIn a) :
     ComputableInLinearTimeAndSpace f encIn encMid :=
   of_transducer (Encodings.headT none) fun a => by
-    rw [h]; cases encIn a <;> simp [Encodings.headT_run_true]
+    rw [h]; cases encIn a <;> simp [Encodings.headT_run_true, Encodings.headT_q₀,
+      Encodings.headT_step, Encodings.headT_final]
 
 /-- Drop the input word's first symbol using the existing head machine. -/
 theorem of_tail {f : α → β} (h : ∀ a, encMid (f a) = (encIn a).tail) :
     ComputableInLinearTimeAndSpace f encIn encMid :=
   of_transducer (Encodings.headT (some false)) fun a => by
-    rw [h]; cases encIn a <;> simp [Encodings.headT_run_true]
+    rw [h]; cases encIn a <;> simp [Encodings.headT_run_true, Encodings.headT_q₀,
+      Encodings.headT_step, Encodings.headT_final]
 
 /-- Keep the input word's first symbol using the existing head machine. -/
 theorem of_take_one {f : α → β} (h : ∀ a, encMid (f a) = (encIn a).take 1) :
     ComputableInLinearTimeAndSpace f encIn encMid :=
   of_transducer (Encodings.headT (some true)) fun a => by
-    rw [h]; cases encIn a <;> simp [Encodings.headT_run_true]
+    rw [h]; cases encIn a <;> simp [Encodings.headT_run_true, Encodings.headT_q₀,
+      Encodings.headT_step, Encodings.headT_final]
 
 /-- Test the encoded input for emptiness using the existing finite transducer. -/
 theorem of_isEmpty {f : α → Bool} (h : ∀ a, f a = (encIn a).isEmpty) :
     ComputableInLinearTimeAndSpace f encIn encBool :=
   of_transducer Encodings.isEmptyT fun a => by
-    rw [h]; cases encIn a <;> simp [Encodings.isEmptyT_run_true]
+    rw [h]; cases encIn a <;> simp [Encodings.isEmptyT_run_true, Encodings.isEmptyT_q₀,
+      Encodings.isEmptyT_step, Encodings.isEmptyT_final]
 
 /-- Concatenate two encoded outputs within a common linear bound. -/
 theorem append {δ : Type*} {enc₂ : δ ↪ List Bool} {f₁ : α → β} {f₂ : α → δ} {g : α → γ}
@@ -92,10 +96,10 @@ theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
     (t₁ := c₁ * ((encIn a).length + 1)) (s₁ := c₁ * ((encIn a).length + 1))
     (t₂ := c₂ * ((encIn a).length + 1)) (s₂ := c₂ * ((encIn a).length + 1))
     (fun hw => by
-      have hca : c a = true := by cases hca : c a <;> simp_all
+      have hca : c a = true := by cases hca : c a <;> simp_all [encTest_true, encTest_false]
       simpa [hca] using h₁ ⟨a, hca⟩)
     (fun hw => by
-      have hca : c a = false := by cases hca : c a <;> simp_all
+      have hca : c a = false := by cases hca : c a <;> simp_all [encTest_true, encTest_false]
       simpa [hca] using h₂ ⟨a, hca⟩)
   refine (h.mono ?_ ?_).computesInTimeAndSpace <;>
     cases hca : c a <;> simp_all only [encTest_true, encTest_false, List.length_cons,
