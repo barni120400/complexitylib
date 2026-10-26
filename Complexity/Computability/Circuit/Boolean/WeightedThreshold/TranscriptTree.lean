@@ -429,8 +429,9 @@ theorem queryLine_eval (w : Fin n → ℝ) (flags : Fin m → Fin g) (adjust : F
     (queryLine w flags adjust baseline).eval interpretation x z =
       decide (baseline ≤ (∑ i, w i * (x i).toNat) +
         ∑ j, adjust j * (z (flags j)).toNat) := by
-  change decide (baseline ≤ ∑ a : Fin (n + m), Fin.addCases w adjust a *
-    (Wire.elim x z (Fin.addCases Wire.input (fun j => .gate (flags j)) a)).toNat) = _
+  change decide (baseline ≤ ∑ a : Fin (n + m), (Fin.addCases w adjust a : ℝ) *
+    ((Wire.elim x z (Fin.addCases (Wire.input : Fin n → Wire n g)
+      (fun j : Fin m => Wire.gate (flags j)) a)).toNat : ℝ)) = _
   rw [Fin.sum_univ_add]
   simp
 
@@ -439,8 +440,9 @@ theorem queryLine_inputWeight (w : Fin n → ℝ) (flags : Fin m → Fin g)
     (adjust : Fin m → ℝ) (baseline : ℝ) (i : Fin n) :
     lineWeight (queryLine w flags adjust baseline) (.input i) = w i := by
   change (∑ a : Fin (n + m) with
-    Fin.addCases Wire.input (fun j => .gate (flags j)) a = .input i,
-      Fin.addCases w adjust a) = w i
+    (Fin.addCases (Wire.input : Fin n → Wire n g)
+      (fun j : Fin m => Wire.gate (flags j)) a : Wire n g) = Wire.input i,
+      (Fin.addCases w adjust a : ℝ)) = w i
   rw [sum_filter, Fin.sum_univ_add]
   simp
 
