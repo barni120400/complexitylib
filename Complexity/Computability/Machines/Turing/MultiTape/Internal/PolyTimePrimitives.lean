@@ -48,6 +48,15 @@ private theorem of_computesTidily {f : α → β} {k : ℕ} {State : Type} [Fini
   ⟨T, T, hT, hT, k, State, inferInstance, tm,
     fun a => ((h a).mono (ht a) (hs a)).computesInTimeAndSpace⟩
 
+/-- Package a plain machine whose resources share a polynomial bound. -/
+private theorem of_computesPlain {f : α → β} {k : ℕ} {State : Type} [Finite State]
+    {tm : MultiTapeTM k Bool State} {t s : α → ℕ} {T : ℕ → ℕ} (hT : PolynomiallyBounded T)
+    (h : ∀ a, tm.ComputesInTimeAndSpace (encIn a) (encMid (f a)) (t a) (s a))
+    (ht : ∀ a, t a ≤ T (encIn a).length) (hs : ∀ a, s a ≤ T (encIn a).length) :
+    ComputableInPolyTime f encIn encMid :=
+  ⟨T, T, hT, hT, k, State, inferInstance, tm,
+    fun a => ⟨(h a).1, (h a).2.1.mono (ht a), (h a).2.2.mono (hs a)⟩⟩
+
 /-- Frame a raw word with the existing streaming encoder. -/
 @[fun_prop]
 theorem frame : ComputableInPolyTime Turing.MultiTapeTM.frame encBits encBits := by
@@ -120,9 +129,10 @@ theorem pair {α β₁ β₂ : Type u} {encIn : α ↪ List Bool} {enc₁ : β�
     (s₁ := fun a => c₁ * ((encIn a).length + 1) ^ d₁)
     (t₂ := fun a => c₂ * ((encIn a).length + 1) ^ d₂)
     (s₂ := fun a => c₂ * ((encIn a).length + 1) ^ d₂)
-    ⟨k₁, S₁, inferInstance, tm₁, h₁⟩ ⟨k₂, S₂, inferInstance, tm₂, h₂⟩
+    ⟨k₁, S₁, inferInstance, tm₁, fun a => (h₁ a).computesInTimeAndSpace⟩
+    ⟨k₂, S₂, inferInstance, tm₂, fun a => (h₂ a).computesInTimeAndSpace⟩
   -- the encoded pair, kept in the space bound, is no longer than the time bound
-  refine of_computesTidily (T := fun n =>
+  refine of_computesPlain (T := fun n =>
       c * (c₁ * (n + 1) ^ d₁ + c₂ * (n + 1) ^ d₂ + 1) +
       c * (c₁ * (n + 1) ^ d₁ + c₂ * (n + 1) ^ d₂ +
         c * (c₁ * (n + 1) ^ d₁ + c₂ * (n + 1) ^ d₂ + 1) + 1))
@@ -214,7 +224,7 @@ theorem _root_.Turing.MultiTapeTM.PairEncoding.computableInPolyTime_fst
     {enc : β₁ × β₂ ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc] :
     ComputableInPolyTime (fun p : β₁ × β₂ => p.1) enc enc₁ :=
   let ⟨c, _, _, _, _, htm⟩ := h.fst
-  of_computesTidily (T := fun n => c * (n + 1)) (by fun_prop) htm (fun _ => le_rfl)
+  of_computesPlain (T := fun n => c * (n + 1)) (by fun_prop) htm (fun _ => le_rfl)
     (fun _ => le_rfl)
 
 /-- The second projection of an encoding of pairs, from its linear-time machine. -/
@@ -223,7 +233,7 @@ theorem _root_.Turing.MultiTapeTM.PairEncoding.computableInPolyTime_snd
     {enc : β₁ × β₂ ↪ List Bool} [h : PairEncoding enc₁ enc₂ enc] :
     ComputableInPolyTime (fun p : β₁ × β₂ => p.2) enc enc₂ :=
   let ⟨c, _, _, _, _, htm⟩ := h.snd
-  of_computesTidily (T := fun n => c * (n + 1)) (by fun_prop) htm (fun _ => le_rfl)
+  of_computesPlain (T := fun n => c * (n + 1)) (by fun_prop) htm (fun _ => le_rfl)
     (fun _ => le_rfl)
 
 

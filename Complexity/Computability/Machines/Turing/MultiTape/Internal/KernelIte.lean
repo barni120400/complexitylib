@@ -19,8 +19,6 @@ Machine declarations are moved from their original module without changing progr
 formulas. Higher computability-calculus theorems remain in the original facade.
 -/
 
-@[expose] public section
-
 namespace Turing.MultiTapeTM
 
 variable {k₀ k₁ k₂ : ℕ} {Symbol S₀ S₁ S₂ : Type*}
@@ -113,16 +111,16 @@ public theorem ComputesTidilyInTimeAndSpace.ite {tmc : MultiTapeTM k₀ Symbol S
   · split_ifs <;> omega
 
 /-- The test word of a condition: empty exactly for `false`. -/
-def encTest : Bool ↪ List Bool :=
+@[expose] public def encTest : Bool ↪ List Bool :=
   ⟨fun b => if b then [true] else [], fun a b h => by cases a <;> cases b <;> simp_all⟩
 
-@[simp] lemma encTest_true : encTest true = [true] := rfl
-@[simp] lemma encTest_false : encTest false = [] := rfl
+@[simp] public lemma encTest_true : encTest true = [true] := rfl
+@[simp] public lemma encTest_false : encTest false = [] := rfl
 
 /-- Emits `[true]` on the word `w` and nothing on every other word. Its state is the rest of `w`
 still to be read, or `none` once the input differs from `w`. -/
-@[simps step final]
-def eqWordT (w : List Bool) : Transducer Bool (Option {v // v ∈ w.tails}) where
+@[expose, simps step final]
+public def eqWordT (w : List Bool) : Transducer Bool (Option {v // v ∈ w.tails}) where
   q₀ := some ⟨w, (List.mem_tails _ _).mpr (List.suffix_refl w)⟩
   step q a := match q with
     | some ⟨b :: v, h⟩ =>
@@ -147,7 +145,7 @@ lemma eqWordT_run (w : List Bool) (u : List Bool) (v : {v // v ∈ w.tails}) :
     · simp
     · by_cases hab : a = b <;> simp [hab, ih]
 
-lemma eqWordT_run_q₀ (w u : List Bool) :
+public lemma eqWordT_run_q₀ (w u : List Bool) :
     (eqWordT w).run (eqWordT w).q₀ u = if u = w then [true] else [] :=
   eqWordT_run w u _
 
