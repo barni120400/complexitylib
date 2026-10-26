@@ -28,14 +28,16 @@ The same tree gives a separable comparison tree for every split of the input coo
 relabeling its queries. This preserves its exact structural depth and leaf count. All threshold
 comparisons retain the convention that equality returns `true`.
 
-This construction is semantic and noncomputable; no efficient compiler is asserted.
+The circuit-to-tree construction is semantic and noncomputable; no efficient compiler is asserted.
 
 In the other direction, `ScalarStage.append` emits a native adaptive scalar stage: one input-free
 indicator per supplied history pattern followed by one scalar query. A unique matching pattern
 selects its threshold; no match selects a baseline that can pad a terminated path with `false`.
 Earlier gate values and input coefficients are preserved. The helpers add no input-reading gates,
-and the query adds exactly one when its direct input vector is nonzero. These are stage-local
-results, not yet a whole-tree compiler or its global size/activity bound.
+and the query adds exactly one when its direct input vector is nonzero. With zero direct vector,
+zero selected thresholds and baseline one, the same stage recognizes whether any supplied pattern
+matches. These are stage-local results, not yet a whole-tree compiler or its global size/activity
+bound.
 
 ## Main definitions
 
@@ -64,6 +66,8 @@ results, not yet a whole-tree compiler or its global size/activity bound.
   computed simultaneously.
 * `Cslib.Circuits.Boolean.WeightedThreshold.ScalarStage.prefixLine_eval`, `.eval_append_last`,
   `.eval_append_of_match`, `.eval_append_of_no_match`: indicator, selection and padding semantics.
+* `Cslib.Circuits.Boolean.WeightedThreshold.ScalarStage.eval_append_readout`: the same constructor
+  realizes the OR of its supplied pattern indicators without reading original inputs.
 * `Cslib.Circuits.Boolean.WeightedThreshold.ScalarStage.eval_append_castSucc`,
   `.inputWeight_append_castSucc`, `.inputWeight_append_flag`, `.inputWeight_append_last`,
   `.card_inputGates_append`: preservation and exact direct-input cost of an emitted stage.
@@ -508,6 +512,31 @@ theorem eval_append_of_no_match (p : Program signature n g) (reads : Fin d → F
       false := by
   rw [eval_append_last]
   simp [hmiss, not_le.mpr hscore]
+
+open scoped Classical in
+/-- With zero direct vector and selected thresholds, baseline one computes the OR of the
+pattern indicators. This input-free readout uses the same stage constructor and permits
+repeated patterns as well as an empty accepting bank. -/
+theorem eval_append_readout (p : Program signature n g) (reads : Fin d → Fin g)
+    (patterns : Fin m → Fin d → Bool) (x : Fin n → Bool) :
+    (append p reads patterns (fun _ => 0) (fun _ => 0) 1).eval interpretation x
+        (Fin.last (g + m)) =
+      decide (∃ a, (fun j => p.eval interpretation x (reads j)) = patterns a) := by
+  classical
+  rw [eval_append_last, Bool.eq_iff_iff, decide_eq_true_iff, decide_eq_true_iff]
+  simp only [zero_mul, sum_const_zero, zero_add, sub_zero, one_mul]
+  constructor
+  · intro hs
+    by_contra hn
+    have hmiss (a : Fin m) : (fun j => p.eval interpretation x (reads j)) ≠ patterns a :=
+      fun ha => hn ⟨a, ha⟩
+    simp [hmiss] at hs
+  · rintro ⟨a, ha⟩
+    have hle : ((decide ((fun j => p.eval interpretation x (reads j)) = patterns a)).toNat : ℝ) ≤
+        ∑ b : Fin m,
+          ((decide ((fun j => p.eval interpretation x (reads j)) = patterns b)).toNat : ℝ) :=
+      single_le_sum (fun _ _ => Nat.cast_nonneg _) (mem_univ a)
+    simpa [ha] using hle
 
 /-- The scalar stage preserves all prior direct input coefficients. -/
 theorem inputWeight_append_castSucc (p : Program signature n g) (reads : Fin d → Fin g)
