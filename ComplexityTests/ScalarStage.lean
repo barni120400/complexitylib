@@ -14,9 +14,9 @@ open Cslib Cslib.Circuits Cslib.Circuits.Boolean.WeightedThreshold
 
 private theorem empty_readers (n : ℕ) :
     (inputGates (Program.empty : Program signature n 0)).card = 0 := by
-  have h : inputGates (Program.empty : Program signature n 0) = ∅ := by
-    ext j
-  rw [h, Finset.card_empty]
+  have h : inputGates (Program.empty : Program signature n 0) = ∅ :=
+    Finset.ext (fun j => Fin.elim0 j)
+  exact congrArg Finset.card h
 
 private def scalarRoot : Program signature 2 2 :=
   ScalarStage.append Program.empty (Fin.elim0 : Fin 0 → Fin 0)
@@ -86,8 +86,7 @@ private def acceptingReadout : Program signature 2 7 :=
     (fun a j : Fin 2 => decide (a ≠ j)) (fun _ => 0) (fun _ => 0) 1
 
 example : (inputGates acceptingReadout).card = 2 := by
-  rw [acceptingReadout, ScalarStage.card_inputGates_append, scalarChild_readers]
-  simp
+  rw [acceptingReadout, ScalarStage.card_inputGates_append, scalarChild_readers, if_pos rfl]
 
 example (x : Fin 2 → Bool) :
     acceptingReadout.eval interpretation x 6 = (x 0 || x 1) := by
@@ -109,7 +108,7 @@ example (x : Fin 2 → Bool) (z : Fin 1 → Bool) :
     (ScalarStage.prefixLine (fun _ : Fin 2 => (0 : Fin 1))
       (fun j : Fin 2 => decide (j = 0))).eval interpretation x z = false := by
   rw [ScalarStage.prefixLine_eval]
-  cases hz : z 0 <;> simp [funext_iff, Fin.forall_fin_two, hz]
+  cases z 0 <;> simp [funext_iff, Fin.forall_fin_two]
 
 -- Empty prefixes produce the true flag even in dimension zero.
 example : (ScalarStage.prefixLine (n := 0) (g := 0)
@@ -139,8 +138,7 @@ example : (inputGates (ScalarStage.append (Program.empty : Program signature 2 0
   refine (ScalarStage.card_inputGates_append (Program.empty : Program signature 2 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
     (fun _ : Fin 2 => (0 : ℝ)) (fun _ : Fin 1 => (-1 : ℝ)) 3).trans ?_
-  rw [empty_readers]
-  simp
+  rw [empty_readers, if_pos rfl]
 
 private noncomputable def fractionalWeight (i : Fin 2) : ℝ :=
   if i = 0 then -1 else 1 / 2
@@ -154,7 +152,7 @@ example : (ScalarStage.append (Program.empty : Program signature 2 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
     fractionalWeight (fun _ : Fin 1 => (1 / 2 : ℝ)) 3
     (fun i : Fin 2 => decide (i = 1)) (0 : Fin 1)
-    (fun _ _ _ => Subsingleton.elim _ _) (Subsingleton.elim _ _)] <;>
+    (fun _ _ _ => Subsingleton.elim _ _) (Subsingleton.elim _ _)];
     norm_num [fractionalWeight, Fin.sum_univ_two]
 
 -- Without distinct patterns, two matching flags blend their adjustments: score 1 passes
@@ -163,5 +161,4 @@ example : (ScalarStage.append (Program.empty : Program signature 1 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 2) (_ : Fin 0) => false)
       (fun _ => 1) (fun _ => 2) 3).eval interpretation
         (fun _ => true) (Fin.last 2) = true := by
-  rw [ScalarStage.eval_append_last] <;>
-    norm_num [Fin.sum_univ_two, funext_iff]
+  rw [ScalarStage.eval_append_last]; norm_num [Fin.sum_univ_two, funext_iff]
