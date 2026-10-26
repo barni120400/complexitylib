@@ -344,6 +344,8 @@ public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Menus
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.PendingBias
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.Potential
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.ScalarActivity
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.SupportBound
+public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.SupportBoundAsymptotics
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold.TranscriptTree
 public import Complexity.Computability.Circuit.Boolean.Word
 public import Complexity.Computability.Circuit.Boolean.XorLemma
@@ -409,6 +411,7 @@ public import Complexity.Computability.Circuit.Frontier.Projection
 public import Complexity.Computability.Circuit.Frontier.Rectangle
 public import Complexity.Computability.Circuit.Frontier.Reduction
 public import Complexity.Computability.Circuit.Frontier.Sweep
+public import Complexity.Computability.Circuit.Frontier.TwoSidedWitness
 public import Complexity.Computability.Circuit.Frontier.Unconditional
 public import Complexity.Computability.Circuit.Frontier.Witness
 public import Complexity.Computability.Circuit.FullArithmetic
@@ -1833,6 +1836,7 @@ public import Complexity.Foundations.Combinatorics.FunctionalGraph.Projection
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Spectrum
 public import Complexity.Foundations.Combinatorics.Hoeffding
 public import Complexity.Foundations.Combinatorics.Hypergeometric
+public import Complexity.Foundations.Combinatorics.HypergraphCut
 public import Complexity.Foundations.Combinatorics.Janson
 public import Complexity.Foundations.Combinatorics.Lautemann
 public import Complexity.Foundations.Combinatorics.LineCode.Basic
