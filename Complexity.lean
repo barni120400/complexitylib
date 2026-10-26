@@ -854,6 +854,8 @@ public import Complexity.Computability.GenericRAM.Simulation.Run
 public import Complexity.Computability.GenericRAM.Simulation.Turing
 public import Complexity.Computability.GenericRAM.SparseMemory.Basic
 public import Complexity.Computability.GenericRAM.SparseMemory.Turing
+public import Complexity.Computability.Geometry.Orthogonal.Encoding
+public import Complexity.Computability.Geometry.Orthogonal.Subdivision
 public import Complexity.Computability.Interactive.Basic
 public import Complexity.Computability.Interactive.Bundle
 public import Complexity.Computability.Interactive.GKR.Layered
@@ -1907,6 +1909,7 @@ public import Complexity.Foundations.Geometry.Orthogonal
 public import Complexity.Foundations.Geometry.Orthogonal.Layout
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
+public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
 public import Complexity.Foundations.GroupTheory.Perm.Fin
 public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
