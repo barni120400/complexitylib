@@ -7,6 +7,7 @@ Authors: Samuel Schlesinger, Karn Seth
 module
 -- upstream: candidate
 
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeNatFrontends
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Arith
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -277,8 +278,10 @@ namespace Turing.MultiTapeTM.ComputableTidilyInPolyTime
 /-- Decode arbitrary little-endian bit words to binary naturals. -/
 @[fun_prop]
 theorem bitsToNat : ComputableTidilyInPolyTime ofBits encBits encNat := by
-  obtain ⟨d, e, h⟩ := Decoder.nat.computable
-  exact h.computableTidilyInPolyTime
+  obtain ⟨c, d, k, State, hfin, tm, htm⟩ :=
+    Internal.NormalForm.polyTime ComputableInPolyTime.bitsToNat
+  exact ⟨_, _, .of_forall_le c d (fun _ => le_rfl),
+    .of_forall_le c d (fun _ => le_rfl), k, State, hfin, tm, htm⟩
 
 
 /-- The binary digits of a natural number, as a raw bit string. -/
@@ -660,21 +663,5 @@ theorem binary_two_pow :
     ComputableInPolyTime (fun (k : ℕ) => 2 ^ k)
   encUnary encNat :=
   .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.binary_two_pow
-
-/-- Read the bit of a computed binary number at a computed unary position. -/
-@[fun_prop]
-theorem binary_testBit {α : Type} {input : α ↪ List Bool} {n i : α → ℕ}
-    (hn : ComputableInPolyTime n input encNat)
-    (hi : ComputableInPolyTime i input encUnary) :
-    ComputableInPolyTime (fun a => (n a).testBit (i a)) input encBool :=
-  .of_tidy (ComputableTidilyInPolyTime.binary_testBit hn.tidy hi.tidy)
-
-/-- Read the bit of a computed unary number at a computed unary position. -/
-@[fun_prop]
-theorem unary_testBit' {α : Type} {input : α ↪ List Bool} {n i : α → ℕ}
-    (hn : ComputableInPolyTime n input encUnary)
-    (hi : ComputableInPolyTime i input encUnary) :
-    ComputableInPolyTime (fun a => (n a).testBit (i a)) input encBool :=
-  binary_testBit (unary_to_binary.comp hn) hi
 
 end Turing.MultiTapeTM.ComputableInPolyTime

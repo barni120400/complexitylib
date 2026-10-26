@@ -8,6 +8,7 @@ module
 -- upstream: candidate
 
 public import Complexity.Crypto.Computational.Encryption.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Tactic.PPT
 
@@ -39,15 +40,16 @@ open Probability Turing.MultiTapeTM
 
 /-- The actual chosen-message experiment has a strict clock in the full encoded caller input. -/
 @[fun_prop]
-theorem isPPTOn_game {keyGen : ℕ → ProbComp (List Bool × List Bool)}
-    {encrypt : ℕ → List Bool → Bool → ProbComp (List Bool)}
+theorem isPPTOn_game {Msg : Type} {encMsg : Msg ↪ List Bool}
+    {keyGen : ℕ → ProbComp (List Bool × List Bool)}
+    {encrypt : ℕ → List Bool → Msg → ProbComp (List Bool)}
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen)
-    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encBool)) encBits
+    (hencrypt : IsPPTOn (encPair encUnary (encPair encBits encMsg)) encBits
       (fun p => encrypt p.1 p.2.1 p.2.2))
-    {adversary : Adversary} (hadversary : adversary.IsPPT)
+    {adversary : AdversaryOf Msg} (hadversary : AdversaryOf.IsPPT encMsg adversary)
     {α : Type} {input : α ↪ List Bool} {n : α → ℕ} {bit : α → Bool}
-    (hn : ComputableTidilyInPolyTime n input encUnary)
-    (hbit : ComputableTidilyInPolyTime bit input encBool) :
+    (hn : ComputableInPolyTime n input encUnary)
+    (hbit : ComputableInPolyTime bit input encBool) :
     IsPPTOn input encBool (fun a => game keyGen encrypt adversary (bit a) (n a)) := by
   have hchoose := hadversary.choose
   have hguess := hadversary.guess
@@ -59,9 +61,10 @@ and secret key material on every supported execution. No width function is assum
 theorem exists_keyLength_bound {keyGen : ℕ → ProbComp (List Bool × List Bool)}
     (hkeyGen : IsPPTOn encUnary (encPair encBits encBits) keyGen) :
     ∃ c d : ℕ,
-      ComputableTidilyInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary ∧
+      ComputableInPolyTime (fun n => c * (n + 1) ^ d) encUnary encUnary ∧
       ∀ n keys, keys ∈ (ProbComp.eval (keyGen n)).support →
         keys.1.length + keys.2.length ≤ c * (n + 1) ^ d := by
+  simp only [Turing.MultiTapeTM.computableInPolyTime_iff_computableTidilyInPolyTime]
   obtain ⟨c, d, hlength⟩ := hkeyGen.length_le
   refine ⟨c, d, by fun_prop, fun n keys hkeys => ?_⟩
   have hbound := hlength n keys hkeys
