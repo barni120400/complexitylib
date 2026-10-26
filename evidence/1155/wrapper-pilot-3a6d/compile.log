@@ -1,0 +1,78 @@
+Diag1155/Wrapper.lean:16:0: error(lean.unknownIdentifier): Unknown constant `Lean.Elab.Tactic.Tactic`
+
+Note: A public declaration `Tactic` exists but is imported privately; consider adding `public import Lean.Elab.Tactic.Basic`.
+Diag1155/Wrapper.lean:20:15: error: Type mismatch
+  getGoals
+has type
+  TacticM (List MVarId)
+but is expected to have type
+  BaseIO ?m.53
+Diag1155/Wrapper.lean:21:13: error(lean.synthInstanceFailed): failed to synthesize instance of type class
+  MonadOptions BaseIO
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+Diag1155/Wrapper.lean:25:61: error(lean.invalidField): Invalid field notation: Type of
+  before
+is not known; cannot resolve field `length`
+
+Hint: Consider replacing the field projection with a call to one of the following:
+  • `List.length`
+  • `String.length`
+  • `Std.Iter.length`
+  • `Std.IterM.length`
+  • `String.Internal.length`
+  • `String.Slice.length`
+  • `Omega.Coeffs.length`
+  • `Grind.CommRing.Mon.length`
+  • `Std.DHashMap.Internal.AssocList.length`
+Diag1155/Wrapper.lean:31:25: error: Application type mismatch: The argument
+  evalTactic child.raw
+has type
+  TacticM Unit
+but is expected to have type
+  BaseIO ?m.141
+in the application
+  observing (evalTactic child.raw)
+Diag1155/Wrapper.lean:31:15: error(lean.synthInstanceFailed): failed to synthesize instance of type class
+  MonadExcept ?m.140 BaseIO
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
+Diag1155/Wrapper.lean:36:22: error(lean.invalidField): Invalid field notation: Type of
+  ex
+is not known; cannot resolve field `isMaxHeartbeat`
+
+Hint: Consider replacing the field projection `.isMaxHeartbeat` with a call to the function `Exception.isMaxHeartbeat`.
+Diag1155/Wrapper.lean:37:14: error(lean.invalidField): Invalid field notation: Type of
+  ex
+is not known; cannot resolve field `isMaxRecDepth`
+
+Hint: Consider replacing the field projection `.isMaxRecDepth` with a call to the function `Exception.isMaxRecDepth`.
+Diag1155/Wrapper.lean:38:14: error(lean.invalidField): Invalid field notation: Type of
+  ex
+is not known; cannot resolve field `isInterrupt`
+
+Hint: Consider replacing the field projection `.isInterrupt` with a call to the function `Exception.isInterrupt`.
+Diag1155/Wrapper.lean:40:30: error: Type mismatch
+  getGoals
+has type
+  TacticM (List MVarId)
+but is expected to have type
+  BaseIO ?m.182
+Diag1155/Wrapper.lean:40:27: error(lean.invalidField): Invalid field notation: Type of
+  __do_lift✝
+is not known; cannot resolve field `length`
+
+Hint: Consider replacing the field projection with a call to one of the following:
+  • `List.length`
+  • `String.length`
+  • `Std.Iter.length`
+  • `Std.IterM.length`
+  • `String.Internal.length`
+  • `String.Slice.length`
+  • `Omega.Coeffs.length`
+  • `Grind.CommRing.Mon.length`
+  • `Std.DHashMap.Internal.AssocList.length`
+Diag1155/Wrapper.lean:16:0: error(lean.synthInstanceFailed): failed to synthesize instance of type class
+  MonadExceptOf Exception BaseIO
+
+Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.

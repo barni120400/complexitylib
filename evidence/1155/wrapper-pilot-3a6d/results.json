@@ -1,0 +1,59 @@
+[
+  {
+    "file": "guide",
+    "mode": "baseline",
+    "returncode": 0,
+    "process_wall_seconds": 9.921394135977607,
+    "command": [
+      "lake",
+      "-d",
+      "guide",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/pilot1155/guide-baseline.lean"
+    ],
+    "source_sha256": "92c480827f8bcb83897ed7156b8923e5f65009335415b8bc5d77f503f9b66210",
+    "telemetry_exists": false,
+    "maxHeartbeats": "unchanged original default/explicit200000",
+    "async_override": false
+  },
+  {
+    "file": "guide",
+    "mode": "import-only",
+    "returncode": 0,
+    "process_wall_seconds": 3.5675660569686443,
+    "command": [
+      "lake",
+      "-d",
+      "guide",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/pilot1155/guide-import-only.lean"
+    ],
+    "source_sha256": "97edd3dda9cfa5be10a7cc8b6b284547d28df2ff229a09a2977ccbce8575e14d",
+    "telemetry_exists": false,
+    "maxHeartbeats": "unchanged original default/explicit200000",
+    "async_override": false
+  },
+  {
+    "file": "guide",
+    "mode": "wrapped",
+    "returncode": 1,
+    "process_wall_seconds": 3.4797997620189562,
+    "command": [
+      "lake",
+      "-d",
+      "guide",
+      "env",
+      "lean",
+      "-DwarningAsError=true",
+      "/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/pilot1155/guide-wrapped.lean"
+    ],
+    "source_sha256": "d92d586bf6c32a4cae7d8194fb8548bb769df3a8458b1e894f5711684065e115",
+    "telemetry_exists": true,
+    "maxHeartbeats": "unchanged original default/explicit200000",
+    "async_override": false
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "case": "guide",
+    "call_id": "e67ed48a4e5f7b9a6a30c4b71f56cac5559abc4b2dd3b2082955e394b95823e3:guide/ComplexityGuide/NPCompleteness.lean:4977-4985:polytime",
+    "runtime_event": "e67ed48a4e5f7b9a6a30c4b71f56cac5559abc4b2dd3b2082955e394b95823e3:guide/ComplexityGuide/NPCompleteness.lean:4977-4985:polytime:2462766:468565194647955",
+    "status": "returned",
+    "goals_after": 0,
+    "raw_thread_heartbeats": 10067776,
+    "user_heartbeats": 10067.776,
+    "wall_nanoseconds": 715028485,
+    "command_returncode": 1,
+    "accepted_measurement": false,
+    "disposition": "command rejected by unchanged Verso line-length check; no proof-completion claim",
+    "async_option": false,
+    "maxHeartbeats_user": 200000
+  },
+  {
+    "case": "supplied",
+    "call_id": "6db6798ddaf6d7dcaeff46dec118058ec71176b2739f1d8c8823f07ebde7cb91:ComplexityTests/GuideFilterPolyTime.lean:2277-2285:polytime",
+    "runtime_event": null,
+    "status": "not_run_after_stop",
+    "goals_after": null,
+    "raw_thread_heartbeats": null,
+    "user_heartbeats": null,
+    "wall_nanoseconds": null,
+    "command_returncode": null,
+    "accepted_measurement": false,
+    "disposition": "stopped on guide command mismatch",
+    "async_option": null,
+    "maxHeartbeats_user": null
+  },
+  {
+    "case": "missing",
+    "call_id": "6db6798ddaf6d7dcaeff46dec118058ec71176b2739f1d8c8823f07ebde7cb91:ComplexityTests/GuideFilterPolyTime.lean:2727-2735:polytime",
+    "runtime_event": null,
+    "status": "not_run_after_stop",
+    "goals_after": null,
+    "raw_thread_heartbeats": null,
+    "user_heartbeats": null,
+    "wall_nanoseconds": null,
+    "command_returncode": null,
+    "accepted_measurement": false,
+    "disposition": "stopped on guide command mismatch",
+    "async_option": null,
+    "maxHeartbeats_user": null
+  }
+]

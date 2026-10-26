@@ -1,0 +1,9 @@
+Diag1155/Wrapper.lean:40:22: error: Type mismatch
+  some __do_lift✝.length
+has type
+  Option Nat
+but is expected to have type
+  Unit
+Diag1155/Wrapper.lean:45:44: error(lean.invalidField): Invalid field `toNat`: The environment does not contain `Nat.toNat`, so it is not possible to project the field `toNat` from an expression
+  ns1 - ns0
+of type `Nat`

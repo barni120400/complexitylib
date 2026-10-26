@@ -1,0 +1,5 @@
+/home/samuel/Code/complexitylib-codex/automation-wrapper-1155/pilot1155/guide-wrapped.lean:41:0: error: Line 3 is too long (155 columns exceeds 80).
+
+Note: Example code is shown on mobile devices and other narrow contexts. Long lines are likely to be truncated in the rendered output.
+
+Hint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.

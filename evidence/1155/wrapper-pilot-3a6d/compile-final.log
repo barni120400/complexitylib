@@ -1,0 +1,1 @@
+Diag1155/Wrapper.lean:16:0: error: Invalid `meta` definition `«_aux_Diag1155_Wrapper___elabRules_Diag1155_tacticDiag1155_call_=>__1»`, `instMonadExceptExceptionTacticM` is not accessible here; consider adding `public meta import Lean.Elab.Tactic.Basic`
