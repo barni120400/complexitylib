@@ -1,0 +1,80 @@
+{
+  "state": "prepared_not_executed",
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "source_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+  "module_name": "Complexity.Computability.PCP.Encoded.Cloud",
+  "mapping_sha256": "f452800ecaf0ae7418adc1aa1f6f1f89cfab45b00663873a8f8d0bb0959257c9",
+  "implementation_sha256": "90b3179209d69590434a542dd538e2175c81338ceb9ca6518ab55975c8f6f26f",
+  "required_modes": [
+    "baseline",
+    "import-only",
+    "wrapped"
+  ],
+  "variant_sha256": {
+    "baseline": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+    "import-only": "c99bfb45bff55b8465db962649b3fb68446dd207b2fb74d86357672a3a92eefe",
+    "wrapped": "30befe48f15041f6e95e9a32b854a9d68281757f4cb91e809e3c993f3dc6b031"
+  },
+  "user_maxHeartbeats": 200000,
+  "expected_calls": [
+    {
+      "case": "isPolyTime_halfEdges",
+      "call_id": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418:Complexity/Computability/PCP/Encoded/Cloud.lean:3036-3044:polytime",
+      "call_token": "c4b5fc8ce302aeabb",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "original_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+      "original_byte_start": 3036,
+      "original_byte_end": 3044,
+      "original_line": 75,
+      "original_text": "polytime",
+      "expected": "returned",
+      "selection": "manual standalone authored tactic, no quote/generated selection"
+    },
+    {
+      "case": "isPolyTime_endpoint",
+      "call_id": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418:Complexity/Computability/PCP/Encoded/Cloud.lean:3504-3512:polytime",
+      "call_token": "cf424e17a775e47f6",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "original_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+      "original_byte_start": 3504,
+      "original_byte_end": 3512,
+      "original_line": 86,
+      "original_text": "polytime",
+      "expected": "returned",
+      "selection": "manual standalone authored tactic, no quote/generated selection"
+    },
+    {
+      "case": "isPolyTime_cloud",
+      "call_id": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418:Complexity/Computability/PCP/Encoded/Cloud.lean:3973-3981:polytime",
+      "call_token": "c36d701736c1936d3",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "original_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+      "original_byte_start": 3973,
+      "original_byte_end": 3981,
+      "original_line": 96,
+      "original_text": "polytime",
+      "expected": "returned",
+      "selection": "manual standalone authored tactic, no quote/generated selection"
+    }
+  ],
+  "strict_requirements": [
+    "all three whole-source commands return0",
+    "exact source/module/variant/run/sidecar provenance",
+    "one begin and one end for each mapped original call",
+    "returned and zero goals with nonnegative measured costs",
+    "no partial/censored/unknown/duplicate/repeated/unmatched events"
+  ],
+  "options_from_original_lakefile": {
+    "autoImplicit": false,
+    "weak.linter.mathlibStandardSet": true,
+    "weak.linter.flexible": true,
+    "weak.linter.pythonStyle": false,
+    "weak.linter.checkInitImports": false,
+    "weak.linter.allScriptsDocumented": false,
+    "weak.linter.unicodeLinter": false
+  },
+  "async_override": false
+}

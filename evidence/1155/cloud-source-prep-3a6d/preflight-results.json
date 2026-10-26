@@ -1,0 +1,70 @@
+{
+  "state": "SOURCE_PREPARATION_ONLY",
+  "actual_Cloud_elaborations": 0,
+  "bootstrap_or_cache_operations": 0,
+  "source_mapping_verified": true,
+  "synthetic_complete_contract_smoke_passed": true,
+  "synthetic_rejections": [
+    {
+      "name": "partial_events",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "partial/censored/repeated events"
+    },
+    {
+      "name": "unobserved_calls",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "partial/censored/repeated events"
+    },
+    {
+      "name": "duplicate_end",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "duplicate/repeated attempt"
+    },
+    {
+      "name": "censored_status",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "unexpected/partial result"
+    },
+    {
+      "name": "unmatched_attempt",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "different attempts"
+    },
+    {
+      "name": "failed_whole_file",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "whole-file command failed"
+    },
+    {
+      "name": "missing_baseline_command",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "partial/duplicate commands"
+    },
+    {
+      "name": "duplicate_mode",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "command mode"
+    },
+    {
+      "name": "sidecar_mismatch",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "event provenance"
+    },
+    {
+      "name": "prep_is_not_execution",
+      "synthetic": true,
+      "rejected": true,
+      "reason": "no executed run"
+    }
+  ],
+  "actual_Cloud_result": "NOT_RUN; explicit builder handoff required"
+}

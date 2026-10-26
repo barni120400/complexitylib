@@ -1,0 +1,62 @@
+{
+  "state": "prepared_not_executed",
+  "source_pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+  "source_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+  "source_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+  "module_name": "Complexity.Computability.PCP.Encoded.Cloud",
+  "implementation_sha256": "90b3179209d69590434a542dd538e2175c81338ceb9ca6518ab55975c8f6f26f",
+  "calls": [
+    {
+      "case": "isPolyTime_halfEdges",
+      "call_id": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418:Complexity/Computability/PCP/Encoded/Cloud.lean:3036-3044:polytime",
+      "call_token": "c4b5fc8ce302aeabb",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "original_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+      "original_byte_start": 3036,
+      "original_byte_end": 3044,
+      "original_line": 75,
+      "original_text": "polytime",
+      "expected": "returned",
+      "selection": "manual standalone authored tactic, no quote/generated selection"
+    },
+    {
+      "case": "isPolyTime_endpoint",
+      "call_id": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418:Complexity/Computability/PCP/Encoded/Cloud.lean:3504-3512:polytime",
+      "call_token": "cf424e17a775e47f6",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "original_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+      "original_byte_start": 3504,
+      "original_byte_end": 3512,
+      "original_line": 86,
+      "original_text": "polytime",
+      "expected": "returned",
+      "selection": "manual standalone authored tactic, no quote/generated selection"
+    },
+    {
+      "case": "isPolyTime_cloud",
+      "call_id": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418:Complexity/Computability/PCP/Encoded/Cloud.lean:3973-3981:polytime",
+      "call_token": "c36d701736c1936d3",
+      "pin": "3a6d770645c1217689da774f519cd785c253d8a2",
+      "original_path": "Complexity/Computability/PCP/Encoded/Cloud.lean",
+      "original_sha256": "60726baa9f9781cdb21818c2adf34dc10b0a3393e66893db2bfbea839df88418",
+      "original_byte_start": 3973,
+      "original_byte_end": 3981,
+      "original_line": 96,
+      "original_text": "polytime",
+      "expected": "returned",
+      "selection": "manual standalone authored tactic, no quote/generated selection"
+    }
+  ],
+  "counts": {
+    "authored_polytime": 3,
+    "authored_fun_prop": 0,
+    "authored_ppt": 0,
+    "fun_prop_attributes_excluded": 3
+  },
+  "all_other_tactics": "unchanged and unmeasured",
+  "explicit_private_declarations": 0,
+  "expose_public_section": true,
+  "whole_source_lines": 174
+}
