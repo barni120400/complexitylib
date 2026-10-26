@@ -27,7 +27,6 @@ open Cslib NatAdd NatSucc
 namespace ComputableInPolyTime
 
 /-- Addition of binary naturals, using the carry and remaining-word folds. -/
-@[fun_prop]
 theorem binary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
     (encPair encNat encNat) encNat := by
   let encS := encPair encBool (encPair encBits encBits)
@@ -93,6 +92,14 @@ theorem binary_add : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 + p.2)
   simp only [Function.comp_apply, id_eq, encBits_apply, encNat_apply]
   rw [succFinish_foldl, ← foldl_addStep, List.nil_append, addBits_bits]
   rfl
+
+/-- Add computed binary values while retaining both complete input certificates. -/
+@[fun_prop]
+theorem binary_add' {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hleft : ComputableInPolyTime left input encNat)
+    (hright : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a + right a) input encNat :=
+  binary_add.comp (hleft.prod hright)
 
 /-- Strict comparison by scanning binary bit positions, never the numeric operand range. -/
 @[fun_prop]
