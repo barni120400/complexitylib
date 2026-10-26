@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 module
--- upstream: candidate; machine assembly from crei/tidy-universal @7f7c0696.
-
+-- upstream: candidate
+-- vendored: machine assembly from crei/tidy-universal @7f7c0696.
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelIte
 import Mathlib.Tactic.Linarith
 

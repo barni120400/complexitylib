@@ -5,8 +5,8 @@ Authors: Christian Reitwiessner, Samuel Schlesinger
 -/
 
 module
--- upstream: candidate; codec machines retain crei/tidy-universal @7f7c0696 credit.
-
+-- upstream: candidate
+-- vendored: codec machines retain crei/tidy-universal @7f7c0696 credit.
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.CodecWordMachines
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelAppend
