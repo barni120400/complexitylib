@@ -151,11 +151,7 @@ theorem nodeCount_mapQueries {κ : Type*} (f : ι → κ) (t : DecisionTree ι �
 private theorem sum_choose_succ_add (r d : ℕ) :
     (∑ j ∈ Finset.range (r + 1 + 1), d.choose j) + (∑ j ∈ Finset.range (r + 1), d.choose j) =
       ∑ j ∈ Finset.range (r + 1 + 1), (d + 1).choose j := by
-  rw [Finset.sum_range_succ' (fun j => (d + 1).choose j) (r + 1),
-    Finset.sum_range_succ' (fun j => d.choose j) (r + 1)]
-  simp only [Nat.choose_succ_succ, Nat.succ_eq_add_one, Nat.succ_eq_add_one, Nat.choose_zero_right,
-    Finset.sum_add_distrib]
-  omega
+  simpa only [BitString.ballSize] using (BitString.ballSize_succ_succ d r).symm
 
 /-- The Ehrenfeucht–Haussler rank of a binary decision tree: leaves have rank zero, a node
 with unequal child ranks has their maximum, and equal child ranks `r` give rank `r + 1`. -/
@@ -262,7 +258,7 @@ theorem rank_eq_zero_of_leafCount_eq_one {t : DecisionTree ι β} (h : t.leafCou
 theorem IsDecisionList.rank_le_one {t : DecisionTree ι β} (h : t.IsDecisionList) :
     t.rank ≤ 1 := by
   induction t with
-  | leaf => exact Nat.zero_le_one.le
+  | leaf => exact Nat.zero_le 1
   | node _ left right ihl ihr =>
     simp only [rank]
     rcases h with ⟨hl, hr⟩ | ⟨hr, hl⟩
@@ -347,7 +343,7 @@ theorem leafCount_le_sum_choose_of_energy_le (t : DecisionTree ι β) {e d : ℕ
     omega
 
 /-- A decision tree of depth `d` and energy `e` has at most
-`∑ j ∈ Finset.range (t.energy + 1), t.depth.choose j` structural leaves. -/
+`∑ j ∈ Finset.range (e + 1), d.choose j` structural leaves. -/
 theorem leafCount_le_sum_choose_energy (t : DecisionTree ι β) :
     t.leafCount ≤ ∑ j ∈ Finset.range (t.energy + 1), t.depth.choose j :=
   t.leafCount_le_sum_choose_of_energy_le le_rfl le_rfl
