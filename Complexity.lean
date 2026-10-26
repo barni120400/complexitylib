@@ -173,6 +173,8 @@ public import Complexity.Computability.Circuit.Boolean.Hierarchy
 public import Complexity.Computability.Circuit.Boolean.Iteration
 public import Complexity.Computability.Circuit.Boolean.Iteration.Active
 public import Complexity.Computability.Circuit.Boolean.Iteration.AffineController
+public import Complexity.Computability.Circuit.Boolean.Iteration.AffineControllerLupanov
+public import Complexity.Computability.Circuit.Boolean.Iteration.AffineControllerSynthesis
 public import Complexity.Computability.Circuit.Boolean.Iteration.Batch
 public import Complexity.Computability.Circuit.Boolean.Iteration.CircuitCounting
 public import Complexity.Computability.Circuit.Boolean.Iteration.CounterBatch
