@@ -1046,6 +1046,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Size
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.MultiPass
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Arithmetic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
@@ -1094,6 +1095,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCount
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OLoops
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OnWords
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeBinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListBinaryLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
