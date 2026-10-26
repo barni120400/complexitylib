@@ -819,6 +819,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCoun
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayout
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayoutChecks
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayoutData
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedGeometry
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedOccurrence
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedPolyTime
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PairedSemantics
