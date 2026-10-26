@@ -312,18 +312,21 @@ theorem prefixBank_eval_castAdd (p : Program signature n g) (reads : Fin d → F
     (patterns : Fin m → Fin d → Bool) (x : Fin n → Bool) (j : Fin g) :
     (prefixBank p reads m patterns).eval interpretation x (j.castAdd m) =
       p.eval interpretation x j := by
-  induction m generalizing patterns with
+  induction m with
   | zero => rfl
   | succ m ih =>
-    simpa only [prefixBank, Program.eval_gate_castSucc] using
-      ih (fun i => patterns i.castSucc)
+    change ((prefixBank p reads m (fun i => patterns i.castSucc)).gate
+      (prefixLine (fun k => (reads k).castAdd m) (patterns (Fin.last m)))).eval
+        interpretation x (j.castAdd m).castSucc = _
+    rw [Program.eval_gate_castSucc]
+    exact ih (fun i => patterns i.castSucc)
 
 /-- Each newly appended bank gate computes its own pattern indicator. -/
 theorem prefixBank_eval_natAdd (p : Program signature n g) (reads : Fin d → Fin g)
     (patterns : Fin m → Fin d → Bool) (x : Fin n → Bool) : ∀ i : Fin m,
     (prefixBank p reads m patterns).eval interpretation x (Fin.natAdd g i) =
       decide ((fun j => p.eval interpretation x (reads j)) = patterns i) := by
-  induction m generalizing patterns with
+  induction m with
   | zero => intro i; exact i.elim0
   | succ m ih =>
     intro i
@@ -335,8 +338,11 @@ theorem prefixBank_eval_natAdd (p : Program signature n g) (reads : Fin d → Fi
       rw [Program.eval_gate_last, prefixLine_eval]
       simp only [prefixBank_eval_castAdd]
     | cast i =>
-      simpa only [prefixBank, Program.eval_gate_castSucc] using
-        ih (fun j => patterns j.castSucc) i
+      change ((prefixBank p reads m (fun j => patterns j.castSucc)).gate
+        (prefixLine (fun j => (reads j).castAdd m) (patterns (Fin.last m)))).eval
+          interpretation x (Fin.natAdd g i).castSucc = _
+      rw [Program.eval_gate_castSucc]
+      exact ih (fun j => patterns j.castSucc) i
 
 private theorem lineWeight_castSucc_input (line : Line signature n g) (i : Fin n) :
     lineWeight (line.mapWires Wire.Renaming.castSucc) (.input i) =
@@ -345,6 +351,7 @@ private theorem lineWeight_castSucc_input (line : Line signature n g) (i : Fin n
     cases wire <;> simp
   simp only [lineWeight, Line.mapWires_op, Line.mapWires_wires,
     Wire.Renaming.castSucc_apply, hw]
+  rfl
 
 private theorem inputWeight_gate_castSucc (p : Program signature n g)
     (line : Line signature n g) (j : Fin g) (i : Fin n) :
@@ -369,17 +376,20 @@ private theorem card_inputGates_gate (p : Program signature n g) (line : Line si
 theorem prefixBank_inputWeight_castAdd (p : Program signature n g) (reads : Fin d → Fin g)
     (patterns : Fin m → Fin d → Bool) (j : Fin g) (i : Fin n) :
     inputWeight (prefixBank p reads m patterns) (j.castAdd m) i = inputWeight p j i := by
-  induction m generalizing patterns with
+  induction m with
   | zero => rfl
   | succ m ih =>
-    simpa only [prefixBank, inputWeight_gate_castSucc] using
-      ih (fun k => patterns k.castSucc)
+    change inputWeight ((prefixBank p reads m (fun k => patterns k.castSucc)).gate
+      (prefixLine (fun k => (reads k).castAdd m) (patterns (Fin.last m))))
+        (j.castAdd m).castSucc i = _
+    rw [inputWeight_gate_castSucc]
+    exact ih (fun k => patterns k.castSucc)
 
 /-- Every new bank gate has zero direct input vector, including with repeated history wires. -/
 theorem prefixBank_inputWeight_natAdd (p : Program signature n g) (reads : Fin d → Fin g)
     (patterns : Fin m → Fin d → Bool) (i : Fin n) : ∀ j : Fin m,
     inputWeight (prefixBank p reads m patterns) (Fin.natAdd g j) i = 0 := by
-  induction m generalizing patterns with
+  induction m with
   | zero => intro j; exact j.elim0
   | succ m ih =>
     intro j
@@ -390,14 +400,17 @@ theorem prefixBank_inputWeight_natAdd (p : Program signature n g) (reads : Fin d
           (Fin.last (g + m)) i = 0
       rw [inputWeight_gate_last, prefixLine_inputWeight]
     | cast j =>
-      simpa only [prefixBank, inputWeight_gate_castSucc] using
-        ih (fun k => patterns k.castSucc) j
+      change inputWeight ((prefixBank p reads m (fun k => patterns k.castSucc)).gate
+        (prefixLine (fun k => (reads k).castAdd m) (patterns (Fin.last m))))
+          (Fin.natAdd g j).castSucc i = 0
+      rw [inputWeight_gate_castSucc]
+      exact ih (fun k => patterns k.castSucc) j
 
 /-- Appending any prefix bank adds no input-reading gates. -/
 theorem card_inputGates_prefixBank (p : Program signature n g) (reads : Fin d → Fin g)
     (patterns : Fin m → Fin d → Bool) :
     (inputGates (prefixBank p reads m patterns)).card = (inputGates p).card := by
-  induction m generalizing patterns with
+  induction m with
   | zero => rfl
   | succ m ih =>
     rw [prefixBank, card_inputGates_gate]
@@ -416,13 +429,20 @@ theorem queryLine_eval (w : Fin n → ℝ) (flags : Fin m → Fin g) (adjust : F
     (queryLine w flags adjust baseline).eval interpretation x z =
       decide (baseline ≤ (∑ i, w i * (x i).toNat) +
         ∑ j, adjust j * (z (flags j)).toNat) := by
-  simp [queryLine, Line.eval, interpretation, Fin.sum_univ_add, Function.comp_def]
+  change decide (baseline ≤ ∑ a : Fin (n + m), Fin.addCases w adjust a *
+    (Wire.elim x z (Fin.addCases Wire.input (fun j => .gate (flags j)) a)).toNat) = _
+  rw [Fin.sum_univ_add]
+  simp
 
 /-- The effective coefficient on an original input is exactly the supplied coefficient. -/
 theorem queryLine_inputWeight (w : Fin n → ℝ) (flags : Fin m → Fin g)
     (adjust : Fin m → ℝ) (baseline : ℝ) (i : Fin n) :
     lineWeight (queryLine w flags adjust baseline) (.input i) = w i := by
-  simp [lineWeight, queryLine, sum_filter, Fin.sum_univ_add]
+  change (∑ a : Fin (n + m) with
+    Fin.addCases Wire.input (fun j => .gate (flags j)) a = .input i,
+      Fin.addCases w adjust a) = w i
+  rw [sum_filter, Fin.sum_univ_add]
+  simp
 
 /-- Append one adaptive scalar stage: a bank of `m` prefix indicators and one query.
 A matching pattern contributes `baseline - threshold`, so a unique match selects that threshold.
@@ -521,10 +541,15 @@ theorem card_inputGates_append (p : Program signature n g) (reads : Fin d → Fi
   classical
   rw [append, card_inputGates_gate, card_inputGates_prefixBank]
   simp only [queryLine_inputWeight]
-  have hw : (∃ i, w i ≠ 0) ↔ w ≠ 0 := by
-    simp only [funext_iff, Pi.zero_apply, not_forall]
-  rw [hw]
-  by_cases h : w = 0 <;> simp [h]
+  by_cases h : w = 0
+  · simp [h]
+  · have hex : ∃ i, w i ≠ 0 := by
+      by_contra hn
+      apply h
+      funext i
+      by_contra hi
+      exact hn ⟨i, hi⟩
+    simp [h, hex]
 
 end ScalarStage
 
