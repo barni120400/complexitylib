@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.NormalForm
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearPrimitives
-public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.Foldl
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.FoldCompiler
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List
 public import Complexity.Computability.Machines.Turing.MultiTape.ResourceBounds.Polynomial
@@ -152,7 +152,7 @@ theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
   obtain ⟨c₀, d₀, k₀, S₀, _, tm₀, h₀⟩ := Internal.NormalForm.polyTime hc
   obtain ⟨c₁, d₁, k₁, S₁, _, tm₁, h₁⟩ := Internal.NormalForm.polyTime hf
   obtain ⟨c₂, d₂, k₂, S₂, _, tm₂, h₂⟩ := Internal.NormalForm.polyTime hg
-  obtain ⟨k, K, S, _, tm, h⟩ := ComputableTidilyInTimeAndSpace.ite (encOut := encMid)
+  obtain ⟨k, K, S, _, tm, h⟩ := Internal.conditional (encOut := encMid)
     (f := f) (g := g)
     (tc := fun a => c₀ * ((encIn a).length + 1) ^ d₀)
     (sc := fun a => c₀ * ((encIn a).length + 1) ^ d₀)
@@ -160,8 +160,7 @@ theorem ite {encC : Bool ↪ List Bool} {c : α → Bool} {f g : α → β}
     (sf := fun a => c₁ * ((encIn a).length + 1) ^ d₁)
     (tg := fun a => c₂ * ((encIn a).length + 1) ^ d₂)
     (sg := fun a => c₂ * ((encIn a).length + 1) ^ d₂)
-    ⟨k₀, S₀, inferInstance, tm₀, h₀⟩ ⟨k₁, S₁, inferInstance, tm₁, fun x => h₁ x.1⟩
-    ⟨k₂, S₂, inferInstance, tm₂, fun x => h₂ x.1⟩
+    h₀ (fun x => h₁ x.1) (fun x => h₂ x.1)
   refine of_computesTidily (T := fun n =>
       c₀ * (n + 1) ^ d₀ + (c₁ * (n + 1) ^ d₁ + c₂ * (n + 1) ^ d₂) + k)
     (by fun_prop) h (fun a => ?_) (fun a => ?_) <;>
@@ -194,7 +193,7 @@ theorem foldl {γ α β : Type u} {encIn : γ ↪ List Bool}
       c₃ * ((encBA (((list x).take i).foldl step (init x), (list x)[i])).length + 1) ^ d₃ ≤
         c₃ * (L (encIn x).length + 1) ^ d₃ :=
     Nat.mul_le_mul_left c₃ (Nat.pow_le_pow_left (Nat.add_le_add_right (harg x i hi) 1) d₃)
-  obtain ⟨c, k, S, _, tm, h⟩ := ComputableTidilyInTimeAndSpace.foldl (encA := encA)
+  obtain ⟨c, k, S, _, tm, h⟩ := Internal.FoldCompiler.foldl (encA := encA)
     (encL := encL) (encBA := encBA) (encS := encS) (encO := encO) (step := step)
     (t := fun x => c₁ * ((encIn x).length + 1) ^ d₁ + c₂ * ((encIn x).length + 1) ^ d₂)
     (s := fun x => c₁ * ((encIn x).length + 1) ^ d₁ + c₂ * ((encIn x).length + 1) ^ d₂)
@@ -203,11 +202,9 @@ theorem foldl {γ α β : Type u} {encIn : γ ↪ List Bool}
     (tMax := fun x => c₃ * (L (encIn x).length + 1) ^ d₃)
     (sMax := fun x => c₃ * (L (encIn x).length + 1) ^ d₃)
     (lMax := fun x => L (encIn x).length)
-    ⟨k₁, S₁, inferInstance, tm₁,
-      fun x => (h₁ x).mono (Nat.le_add_right _ _) (Nat.le_add_right _ _)⟩
-    ⟨k₂, S₂, inferInstance, tm₂,
-      fun x => (h₂ x).mono (Nat.le_add_left _ _) (Nat.le_add_left _ _)⟩
-    ⟨k₃, S₃, inferInstance, tm₃, h₃⟩ hmax hmax hstate
+    (fun x => (h₁ x).mono (Nat.le_add_right _ _) (Nat.le_add_right _ _))
+    (fun x => (h₂ x).mono (Nat.le_add_left _ _) (Nat.le_add_left _ _))
+    h₃ hmax hmax hstate
   refine of_computesTidily (T := fun n =>
       c * (c₁ * (n + 1) ^ d₁ + c₂ * (n + 1) ^ d₂ +
         (L n + 1) * (c₃ * (L n + 1) ^ d₃ + L n + 1)) +

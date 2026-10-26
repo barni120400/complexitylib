@@ -1119,12 +1119,15 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Degree
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.DegreeUnaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.FoldCompiler
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.FrameMachines
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelAppend
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelComp
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelFacts
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelIte
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelIterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelNormalForm
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelOnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelTransducer
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.KernelZeroSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.LinearCodecPrimitives
