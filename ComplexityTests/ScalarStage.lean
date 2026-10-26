@@ -45,7 +45,7 @@ private theorem child_root_eval (x : Fin 2 → Bool) :
   exact ScalarStage.eval_append_castSucc root (fun _ : Fin 1 => 1)
     (fun (_ : Fin 1) (_ : Fin 1) => false) (fun _ => 1) (fun _ => 1) 3 x 1
 
-example : (inputGates child).card = 2 := by
+private theorem child_readers : (inputGates child).card = 2 := by
   rw [child, ScalarStage.card_inputGates_append, root_readers]
   norm_num [funext_iff]
 
@@ -72,6 +72,23 @@ example (x : Fin 2 → Bool) : orCircuit.eval interpretation x 0 = (x 0 || x 1) 
   simp only [Fin.isValue, ↓reduceIte, zero_mul, zero_add, one_mul]
   rw [child_root_eval, root_eval, child_eval]
   cases x 0 <;> cases x 1 <;> norm_num
+
+-- The same stage also implements accepting-leaf readout, without a new constructor.
+-- The accepting paths [false,true] and [true] become [false,true] and [true,false].
+private def paddedReadout : Program signature 2 7 :=
+  ScalarStage.append child (fun j : Fin 2 => if j = 0 then 1 else 3)
+    (fun a j : Fin 2 => decide (a ≠ j)) (fun _ => 0) (fun _ => 0) 1
+
+example : (inputGates paddedReadout).card = 2 := by
+  rw [paddedReadout, ScalarStage.card_inputGates_append, child_readers]
+  simp
+
+example (x : Fin 2 → Bool) : paddedReadout.eval interpretation x 6 = (x 0 || x 1) := by
+  change (ScalarStage.append _ _ _ _ _ _).eval interpretation x (Fin.last 6) = _
+  rw [ScalarStage.eval_append_last]
+  cases h0 : x 0 <;> cases h1 : x 1 <;>
+    norm_num [Fin.sum_univ_two, funext_iff, Fin.forall_fin_two,
+      child_root_eval, root_eval, child_eval, h0, h1]
 
 -- Repeated reads with contradictory requested bits must give a false indicator.
 example (x : Fin 2 → Bool) (z : Fin 1 → Bool) :
