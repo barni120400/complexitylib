@@ -532,12 +532,10 @@ theorem eval_append_readout (p : Program signature n g) (reads : Fin d → Fin g
       fun ha => hn ⟨a, ha⟩
     norm_num [hmiss] at hs
   · rintro ⟨a, ha⟩
-    have hle : ((decide ((fun j => p.eval interpretation x (reads j)) = patterns a)).toNat : ℝ) ≤
-        ∑ b : Fin m,
-          ((decide ((fun j => p.eval interpretation x (reads j)) = patterns b)).toNat : ℝ) := by
-      refine single_le_sum ?_ (mem_univ a)
-      intro b _
-      exact Nat.cast_nonneg _
+    have hle := single_le_sum
+      (f := fun b : Fin m =>
+        ((decide ((fun j => p.eval interpretation x (reads j)) = patterns b)).toNat : ℝ))
+      (fun _ _ => Nat.cast_nonneg _) (mem_univ a)
     simpa [ha] using hle
 
 /-- The scalar stage preserves all prior direct input coefficients. -/
