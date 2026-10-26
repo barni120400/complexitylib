@@ -837,6 +837,7 @@ public import Complexity.Computability.DecisionTree.Symmetric
 public import Complexity.Computability.GenericRAM.Algebraic
 public import Complexity.Computability.GenericRAM.Defs
 public import Complexity.Computability.GenericRAM.Native
+public import Complexity.Computability.GenericRAM.Native.Certificate
 public import Complexity.Computability.GenericRAM.Native.Combinators
 public import Complexity.Computability.GenericRAM.Native.Nat
 public import Complexity.Computability.GenericRAM.Signed
@@ -1031,6 +1032,8 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Basic
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Configuration
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.DPi
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Basic
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Decoder.Nat
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Finite
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Frame.Basic
@@ -1089,6 +1092,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCombi
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OLoops
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OnWords
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListBinaryLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
@@ -1099,6 +1103,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTi
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePiPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimePrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.ResourceFacts
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.StepMachineCompiler
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.UnaryMachines
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.WordPredicates
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
