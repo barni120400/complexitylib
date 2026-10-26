@@ -808,6 +808,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverL
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutData
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Geometry
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Occurrence
+public import Complexity.Computability.Complexity.Problems.SAT.Planar.OrdinaryRing
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.Paths.Occupancy
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.PolyTime
@@ -1951,6 +1952,9 @@ public import Complexity.Foundations.Geometry.Orthogonal.Endpoint
 public import Complexity.Foundations.Geometry.Orthogonal.Layout
 public import Complexity.Foundations.Geometry.Orthogonal.Macrocell
 public import Complexity.Foundations.Geometry.Orthogonal.Neighborhood
+public import Complexity.Foundations.Geometry.Orthogonal.PairedBoundary
+public import Complexity.Foundations.Geometry.Orthogonal.PairedPorts
+public import Complexity.Foundations.Geometry.Orthogonal.PairedSpokes
 public import Complexity.Foundations.Geometry.Orthogonal.Separation
 public import Complexity.Foundations.Geometry.Orthogonal.Simple
 public import Complexity.Foundations.Geometry.Orthogonal.Subdivision
@@ -2094,8 +2098,11 @@ public import Complexity.Logics.Propositional.CNF.ModelCount
 public import Complexity.Logics.Propositional.CNF.Occurrence
 public import Complexity.Logics.Propositional.CNF.Parity
 public import Complexity.Logics.Propositional.CNF.Planar.Crossover
+public import Complexity.Logics.Propositional.CNF.Planar.CrossoverCounting
 public import Complexity.Logics.Propositional.CNF.Planar.CrossoverSplit
 public import Complexity.Logics.Propositional.CNF.Planar.DirectedWire
+public import Complexity.Logics.Propositional.CNF.Planar.PairedCrossover
+public import Complexity.Logics.Propositional.CNF.Planar.PairedWire
 public import Complexity.Logics.Propositional.CNF.PolyTime
 public import Complexity.Logics.Propositional.CNF.ThreeCNF
 public import Complexity.Logics.Propositional.CNF.ThreeCNF.PolyTime
