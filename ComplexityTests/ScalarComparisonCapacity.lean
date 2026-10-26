@@ -10,7 +10,6 @@ import Mathlib.Algebra.BigOperators.Fin
 /-! Real-score clients of ordered query-activity capacity, including ties and obstructions. -/
 
 open Cslib Cslib.Circuits.Boolean.WeightedThreshold
-open scoped Classical
 
 private def tiedIndex (x : Fin 2 → Bool) : ℕ :=
   (x 0).toNat + (x 1).toNat
@@ -28,6 +27,7 @@ private theorem tiedIndex_order (x y : Fin 2 → Bool) (h : tiedIndex x < tiedIn
   exact_mod_cast h
 
 -- Four inputs, three score classes: the two weight-one inputs have the same score and label.
+open scoped Classical in
 example : ∃ t : DecisionTree ℝ ℕ,
     t.leafCount = 3 ∧ t.depth ≤ 2 ∧ t.energy ≤ 1 ∧
       ∀ x : Fin 2 → Bool,
@@ -42,12 +42,13 @@ private def tiedTree : DecisionTree ℝ ℕ :=
 example : tiedTree.leafCount = 3 ∧ tiedTree.depth = 2 ∧ tiedTree.energy = 1 := by
   decide
 
+open scoped Classical in
 example (x : Fin 2 → Bool) :
     tiedTree.eval (fun θ => decide (θ ≤ weightedSum (fun _ => 1) x)) = tiedIndex x := by
   cases h0 : x 0 <;> cases h1 : x 1 <;>
     norm_num [tiedTree, DecisionTree.eval, weightedSum, Fin.sum_univ_two, tiedIndex, h0, h1]
 
-private def signedWeight (i : Fin 2) : ℝ :=
+private noncomputable def signedWeight (i : Fin 2) : ℝ :=
   if i = 0 then -1 else 1 / 2
 
 private def signedIndex (x : Fin 2 → Bool) : ℕ :=
@@ -68,6 +69,7 @@ private theorem signedIndex_order (x y : Fin 2 → Bool) (h : signedIndex x < si
   linarith
 
 -- Negative and fractional coefficients give scores -1, -1/2, 0, 1/2 in index order.
+open scoped Classical in
 example : ∃ t : DecisionTree ℝ ℕ,
     t.leafCount = 4 ∧ t.depth ≤ 3 ∧ t.energy ≤ 1 ∧
       ∀ x, t.eval (fun θ => decide (θ ≤ weightedSum signedWeight x)) = signedIndex x :=
@@ -79,6 +81,7 @@ example : ∀ j : Fin 4, ∃ x : Fin 2 → Bool, signedIndex x = j.val := by
   decide
 
 -- Two queries with energy one have capacity three, not four.
+open scoped Classical in
 example : ¬∃ t : DecisionTree ℝ ℕ,
     t.leafCount = 4 ∧ t.depth ≤ 2 ∧ t.energy ≤ 1 ∧
       ∀ x, t.eval (fun θ => decide (θ ≤ weightedSum signedWeight x)) = signedIndex x := by
@@ -88,6 +91,7 @@ example : ¬∃ t : DecisionTree ℝ ℕ,
   exact (by decide : ¬(0 < 4 ∧ 4 ≤ BitString.ballSize 2 1)) hcap
 
 -- A zero direction and a constant class index require no queries, even on a nonempty cube.
+open scoped Classical in
 example : ∃ t : DecisionTree ℝ ℕ,
     t.leafCount = 1 ∧ t.depth ≤ 0 ∧ t.energy ≤ 0 ∧
       ∀ x : Fin 3 → Bool,
@@ -97,6 +101,7 @@ example : ∃ t : DecisionTree ℝ ℕ,
   decide
 
 -- Dimension zero is included: its Boolean cube still has one input and one score class.
+open scoped Classical in
 example : ∃ t : DecisionTree ℝ ℕ,
     t.leafCount = 1 ∧ t.depth ≤ 0 ∧ t.energy ≤ 4 ∧
       ∀ x : Fin 0 → Bool,
@@ -106,6 +111,7 @@ example : ∃ t : DecisionTree ℝ ℕ,
   decide
 
 -- Equal scores cannot carry different labels, regardless of the tree's resource bounds.
+open scoped Classical in
 example : ¬∃ t : DecisionTree ℝ ℕ, ∀ x : Fin 1 → Bool,
     t.eval (fun θ => decide (θ ≤ weightedSum (fun _ => 0) x)) = (x 0).toNat := by
   rintro ⟨t, ht⟩
