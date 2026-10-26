@@ -132,7 +132,7 @@ families and full-input native runtime.
   general moduli; module SIS and module LWE toward Dilithium-style schemes, as theory.
 - **Symmetric:** Carter–Wegman word-level `IsOraclePPT` PRF reduction wrappers, `MACScheme`
   packaging for randomized Carter–Wegman, and a computational nonce-MAC interface ([#736]); the
-  4-round strong Feistel bound ([#748]); the Naor–Reingold PRF from DDH (efficient lazy-sampling
+  Naor–Reingold PRF from DDH (efficient lazy-sampling
   reduction and `PseudorandomFunction` bridge; algebraic/tree evaluation and distributional
   prefix-hybrid bound landed) ([#1093]).
 - **General:** reusable adaptive reductions, public-key encryption, universal-instance zero
@@ -478,7 +478,6 @@ not planned, not as proved.
 [#643]: https://github.com/cslib-community/complexitylib/issues/643
 [#645]: https://github.com/cslib-community/complexitylib/issues/645
 [#736]: https://github.com/cslib-community/complexitylib/issues/736
-[#748]: https://github.com/cslib-community/complexitylib/issues/748
 [#798]: https://github.com/cslib-community/complexitylib/issues/798
 [#862]: https://github.com/cslib-community/complexitylib/issues/862
 [#881]: https://github.com/cslib-community/complexitylib/issues/881
