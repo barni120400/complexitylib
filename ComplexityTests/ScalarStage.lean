@@ -86,7 +86,8 @@ private def acceptingReadout : Program signature 2 7 :=
     (fun a j : Fin 2 => decide (a ≠ j)) (fun _ => 0) (fun _ => 0) 1
 
 example : (inputGates acceptingReadout).card = 2 := by
-  rw [acceptingReadout, ScalarStage.card_inputGates_append, scalarChild_readers, if_pos rfl]
+  have hz : (fun _ : Fin 2 => (0 : ℝ)) = 0 := funext (fun _ => rfl)
+  rw [acceptingReadout, ScalarStage.card_inputGates_append, scalarChild_readers, ite_eq_left hz]
 
 example (x : Fin 2 → Bool) :
     acceptingReadout.eval interpretation x 6 = (x 0 || x 1) := by
@@ -135,10 +136,11 @@ example : (inputGates paddingStage).card = 1 := by
 example : (inputGates (ScalarStage.append (Program.empty : Program signature 2 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
       (fun _ => 0) (fun _ => -1) 3)).card = 0 := by
+  have hz : (fun _ : Fin 2 => (0 : ℝ)) = 0 := funext (fun _ => rfl)
   refine (ScalarStage.card_inputGates_append (Program.empty : Program signature 2 0)
     (Fin.elim0 : Fin 0 → Fin 0) (fun (_ : Fin 1) (_ : Fin 0) => false)
     (fun _ : Fin 2 => (0 : ℝ)) (fun _ : Fin 1 => (-1 : ℝ)) 3).trans ?_
-  rw [empty_readers, if_pos rfl]
+  rw [empty_readers, ite_eq_left hz]
 
 private noncomputable def fractionalWeight (i : Fin 2) : ℝ :=
   if i = 0 then -1 else 1 / 2
