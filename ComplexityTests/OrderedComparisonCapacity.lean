@@ -18,9 +18,9 @@ private def fourValues : DecisionTree ℕ ℕ :=
 example : fourValues.leafCount = 4 ∧ fourValues.depth = 3 ∧ fourValues.energy = 1 := by
   decide
 
-example (j : Fin 4) :
+example : ∀ j : Fin 4,
     fourValues.eval (fun k => decide (k ≤ 10 + j.val)) = 10 + j.val := by
-  fin_cases j <;> decide
+  decide
 
 -- The constructive direction realizes all eleven values at the exact capacity B(4, 2).
 example : ∃ t : DecisionTree ℕ ℕ,
