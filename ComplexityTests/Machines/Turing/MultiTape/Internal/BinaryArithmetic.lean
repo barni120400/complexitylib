@@ -47,6 +47,39 @@ example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
 example : ComputableInPolyTime (fun p : ℕ × ℕ => decide (p.1 < p.2))
     (encPair encNat encNat) encBool := by fun_prop
 
+-- Multiplication keeps the existing global captured rule and both independently supplied inputs.
+example {α : Type} {input : α ↪ List Bool} {left right : α → ℕ}
+    (hl : ComputableInPolyTime left input encNat)
+    (hr : ComputableInPolyTime right input encNat) :
+    ComputableInPolyTime (fun a => left a * right a) input encNat := by
+  fail_if_success (clear hr; fun_prop)
+  fail_if_success (clear hl; fun_prop)
+  fun_prop
+
+example : ComputableInPolyTime (fun p : ℕ × ℕ => p.1 * p.2)
+    (encPair encNat encNat) encNat := by
+  fun_prop
+
+-- The moved public word algorithm retains its defining data, not just an extensional theorem.
+example (s : ℕ × ℕ) (a : Bool) :
+    NatMul.mulStep s a = (if a then s.1 + s.2 else s.1, s.2 + s.2) := rfl
+
+-- The unchanged multiply fold computes arbitrary shifted accumulators, including zero/empty.
+example (m acc sh : ℕ) : (m.bits.foldl NatMul.mulStep (acc, sh)).1 = acc + m * sh :=
+  NatMul.foldl_mulStep m acc sh
+
+example : ((0 : ℕ).bits.foldl NatMul.mulStep (0, 7)).1 = 0 := rfl
+example : NatMul.mulStep (0, 7) false = (0, 14) := rfl
+example : NatMul.mulStep (0, 7) true = (7, 14) := rfl
+
+-- Binary length, rather than a unary materialization of either numeric operand, controls the fold.
+example (n : ℕ) :
+    (((2 ^ n).bits).foldl NatMul.mulStep (0, 3)).1 = 2 ^ n * 3 := by
+  simp only [NatMul.foldl_mulStep, zero_add]
+
+example : (encNat (2 ^ 128)).length = 129 := by
+  rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_pow]
+
 -- Numerically exponential values still have linear-size binary inputs.
 example (n : ℕ) : (encNat (2 ^ n)).length = n + 1 := by
   rw [encNat_apply, Nat.size_eq_bits_len, Nat.size_pow]
@@ -83,3 +116,7 @@ run_cmd do
 /-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_lt
+
+/-- info: 'Turing.MultiTapeTM.ComputableInPolyTime.binary_mul'' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Turing.MultiTapeTM.ComputableInPolyTime.binary_mul'
