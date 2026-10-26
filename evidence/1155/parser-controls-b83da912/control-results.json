@@ -1,0 +1,174 @@
+{
+  "scope": "parser-level SYNTHETIC controls; no new Lean/runtime measurements",
+  "original_evidence_head": "b83da912f9c0230bd9047e5f473ad9a27cff28b3",
+  "original_event_sources": [
+    {
+      "path": "wrapper-compact-3a6d/guide-wrapped.events.jsonl",
+      "sha256": "7d6718e04bcd876f9d0a793123ad716400023b76e485786fe1f368b10f65acaa"
+    },
+    {
+      "path": "wrapper-compact-3a6d/operands-wrapped.events.jsonl",
+      "sha256": "133b7f2f39f98e53be0dbe55283b9dc01e57da30c3749d1ad2fdfb75e5a81209"
+    }
+  ],
+  "original_sidecar_sha256": "0cd3f2983ab83d4e8c5653e682546674932fc0df6e8c1a2351384729de5cb466",
+  "original_parsed_sha256": "d64b074e21820d88e8a8a77af0c4e47e3db1d768ac8759c9d4d6a3110dd124b7",
+  "real_measurement_rows_written": false,
+  "controls": [
+    {
+      "name": "complete_real_pilot_unchanged",
+      "synthetic": false,
+      "transformation": "none; read-only reconciliation",
+      "passed": true,
+      "detail": "same three invocation outcomes/costs/IDs; strict six-command acceptance passes"
+    },
+    {
+      "name": "begin_without_end",
+      "synthetic": true,
+      "transformation": "retain guide begin only",
+      "passed": true,
+      "detail": "censored_unknown; all costs/goals null; strict pilot acceptance rejects"
+    },
+    {
+      "name": "no_observed_begin",
+      "synthetic": true,
+      "transformation": "remove all events",
+      "passed": true,
+      "detail": "not_observed with no invented attempts/costs; strict acceptance rejects"
+    },
+    {
+      "name": "caught_ordinary_failure",
+      "synthetic": true,
+      "transformation": "retain missing-operand pair only",
+      "passed": true,
+      "detail": "invocation remains exception; cannot confer complete pilot acceptance"
+    },
+    {
+      "name": "repeated_backtracked_call_attempts",
+      "synthetic": true,
+      "transformation": "clone guide pair with distinct synthetic event ID; second exception",
+      "passed": true,
+      "detail": "two runtime attempts under ONE authored call; final retention unknown; strict fixed pilot rejects"
+    },
+    {
+      "name": "duplicate_begin",
+      "synthetic": true,
+      "transformation": "duplicate guide begin",
+      "passed": true,
+      "detail": "fail closed: duplicate begin"
+    },
+    {
+      "name": "duplicate_end",
+      "synthetic": true,
+      "transformation": "duplicate guide end",
+      "passed": true,
+      "detail": "fail closed: duplicate end"
+    },
+    {
+      "name": "unmatched_end",
+      "synthetic": true,
+      "transformation": "guide end without begin",
+      "passed": true,
+      "detail": "fail closed: unmatched end"
+    },
+    {
+      "name": "cross_call_event_reuse",
+      "synthetic": true,
+      "transformation": "end uses existing different call token",
+      "passed": true,
+      "detail": "fail closed: event reused across calls"
+    },
+    {
+      "name": "event_sidecar_hash_mismatch",
+      "synthetic": true,
+      "transformation": "forge one event digest",
+      "passed": true,
+      "detail": "fail closed: sidecar digest mismatch"
+    },
+    {
+      "name": "run_mismatch",
+      "synthetic": true,
+      "transformation": "forge event run",
+      "passed": true,
+      "detail": "fail closed: run mismatch"
+    },
+    {
+      "name": "unknown_token",
+      "synthetic": true,
+      "transformation": "forge call token",
+      "passed": true,
+      "detail": "fail closed: unknown call token"
+    },
+    {
+      "name": "thread_mismatch",
+      "synthetic": true,
+      "transformation": "forge end thread",
+      "passed": true,
+      "detail": "fail closed: thread mismatch"
+    },
+    {
+      "name": "unknown_phase",
+      "synthetic": true,
+      "transformation": "forge event phase",
+      "passed": true,
+      "detail": "fail closed: unknown phase"
+    },
+    {
+      "name": "invalid_cost",
+      "synthetic": true,
+      "transformation": "negative synthetic cost",
+      "passed": true,
+      "detail": "fail closed: invalid raw_thread_heartbeats"
+    },
+    {
+      "name": "implementation_hash_mismatch",
+      "synthetic": true,
+      "transformation": "alter implementation bytes",
+      "passed": true,
+      "detail": "fail closed: implementation digest mismatch"
+    },
+    {
+      "name": "changed_sidecar",
+      "synthetic": true,
+      "transformation": "alter sidecar bytes without matching provenance",
+      "passed": true,
+      "detail": "fail closed: run mismatch"
+    },
+    {
+      "name": "partial_cannot_use_real_command_success",
+      "synthetic": true,
+      "transformation": "remove guide end but retain all actual successful commands",
+      "passed": true,
+      "detail": "real command return codes cannot bless censored attempt"
+    },
+    {
+      "name": "negative_as_success_rejected",
+      "synthetic": true,
+      "transformation": "synthetically change missing invocation to returned",
+      "passed": true,
+      "detail": "parse retains observed status; strict expected-outcome acceptance rejects"
+    },
+    {
+      "name": "missing_command",
+      "synthetic": true,
+      "transformation": "remove/duplicate one command row",
+      "passed": true,
+      "detail": "strict command acceptance rejects"
+    },
+    {
+      "name": "duplicate_command",
+      "synthetic": true,
+      "transformation": "remove/duplicate one command row",
+      "passed": true,
+      "detail": "strict command acceptance rejects"
+    },
+    {
+      "name": "failed_command",
+      "synthetic": true,
+      "transformation": "set one command returncode to 1",
+      "passed": true,
+      "detail": "strict acceptance rejects"
+    }
+  ],
+  "all_passed": true
+}

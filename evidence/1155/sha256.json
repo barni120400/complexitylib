@@ -1,6 +1,11 @@
 {
   "README.md": "5dd9c8168b4ca15bd364e5e450cfa7d375fa8ce6c74cd924dd79509e19d812c3",
   "census.py": "32a5e939b43ce7dc856db7430ce4c5458bf398fbe7d55e2f8d8d57ab8ca2e994",
+  "parser-controls-b83da912/README.md": "aceedf37fe5eb0580fd10b0e5e5e6b5f2c71af9d0016c00bd0928ed5519409e8",
+  "parser-controls-b83da912/control-results.json": "10d51b7c8f8b25752bc349b22c1495e049cc97e28b00231e75715e65251718bb",
+  "parser-controls-b83da912/control_checks.py": "87bf517a5924fbc7d089f13a1636668f1584762264b4c7ab1a21966cf566895f",
+  "parser-controls-b83da912/pilot_parser.py": "b98745b0f9d953dd6ab73086cfaeb5f4751237417bc3718278b7d2dd60e4d231",
+  "parser-controls-b83da912/preservation.json": "71f6ddb377fb3faf1ba797223169bff3f0569c16223a8ab6246d7cd6b5cae7ec",
   "pilot-3a6d/README.md": "3511e4636010a37941d005695a2092d11d7594a9435642ffd9e922fa6cd9b24e",
   "pilot-3a6d/baseline-results.json": "dfea2089c490900a53643adc4171a69dbbd06744304fc01fd8f69e462c2465fe",
   "pilot-3a6d/bootstrap.log": "15fb3d45b037bd6fe9f8ae57fc74a2b48e3552224f0c0d6722c67b0ccf75264b",

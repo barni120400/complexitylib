@@ -1,0 +1,10 @@
+{
+  "reference_head": "b83da912f9c0230bd9047e5f473ad9a27cff28b3",
+  "prior_artifact_count_verified": 138,
+  "all_prior_artifacts_byte_identical": true,
+  "real_measurement_rows_rewritten": false,
+  "Lean_runs": 0,
+  "build_runs": 0,
+  "cache_operations": 0,
+  "all_jobs_terminal": true
+}
