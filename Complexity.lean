@@ -493,6 +493,7 @@ public import Complexity.Computability.Circuit.Rational.Rectangular
 public import Complexity.Computability.Circuit.Rational.Runtime
 public import Complexity.Computability.Circuit.Rational.Runtime.Determinant
 public import Complexity.Computability.Circuit.Rational.Runtime.Encode
+public import Complexity.Computability.Circuit.Rational.Runtime.HermiteCramer
 public import Complexity.Computability.Circuit.Rational.Runtime.Lift
 public import Complexity.Computability.Circuit.Rational.Runtime.Lift.Defs
 public import Complexity.Computability.Circuit.Rational.Runtime.Parameters
@@ -1362,6 +1363,7 @@ public import Complexity.Computability.PCP.SelectedComposition
 public import Complexity.Computability.PCP.ThreeSAT
 public import Complexity.Computability.PCP.TwoProverGame
 public import Complexity.Computability.PolyTime.CNF.SparsePolyCompile
+public import Complexity.Computability.PolyTime.Int.ExactDiv
 public import Complexity.Computability.PolyTime.Int.Table
 public import Complexity.Computability.PolyTime.JetArray
 public import Complexity.Computability.PolyTime.ParityFactorEval
