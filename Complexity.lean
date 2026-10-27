@@ -765,6 +765,7 @@ public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.CountingEndpoint
 public import Complexity.Computability.Complexity.FineGrained.CountingScale
 public import Complexity.Computability.Complexity.FineGrained.CountingSparsification
+public import Complexity.Computability.Complexity.FineGrained.CountingTreeBound
 public import Complexity.Computability.Complexity.FineGrained.ExhaustiveSearch
 public import Complexity.Computability.Complexity.FineGrained.Exponents
 public import Complexity.Computability.Complexity.FineGrained.GraphProblems
@@ -2234,6 +2235,7 @@ public import Complexity.Logics.Propositional.ClauseSet.Basic
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Bounds
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Counting
+public import Complexity.Logics.Propositional.ClauseSet.Sparsification.CountingBounds
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.CountingDeletion
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.CountingInsertions
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.CountingList
