@@ -36,6 +36,16 @@ public import Complexity.Algorithms.Streaming.CountMin.Basic
 public import Complexity.Algorithms.Streaming.CountMin.LinearHash
 public import Complexity.Algorithms.Streaming.CountMin.Probability
 public import Complexity.Algorithms.Streaming.CountMin.Program
+public import Complexity.Algorithms.WordRAM.Dijkstra.BinaryHeap
+public import Complexity.Algorithms.WordRAM.Dijkstra.ExactNotation
+public import Complexity.Algorithms.WordRAM.Dijkstra.HeapProgram
+public import Complexity.Algorithms.WordRAM.Dijkstra.HeapRelax
+public import Complexity.Algorithms.WordRAM.Dijkstra.HeapSift
+public import Complexity.Algorithms.WordRAM.Dijkstra.HeapStatement
+public import Complexity.Algorithms.WordRAM.Dijkstra.Invariant
+public import Complexity.Algorithms.WordRAM.Dijkstra.ListEncode
+public import Complexity.Algorithms.WordRAM.Dijkstra.LogLinear
+public import Complexity.Algorithms.WordRAM.Dijkstra.Statement
 public import Complexity.Algorithms.WordRAM.DynamicArray
 public import Complexity.Algorithms.WordRAM.ElementDistinctness
 public import Complexity.Algorithms.WordRAM.ElementDistinctnessRAM
