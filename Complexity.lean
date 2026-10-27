@@ -780,6 +780,7 @@ public import Complexity.Computability.Complexity.FineGrained.SparseBranchSchedu
 public import Complexity.Computability.Complexity.FineGrained.SparseCountingScale
 public import Complexity.Computability.Complexity.FineGrained.SparseParitySchedule
 public import Complexity.Computability.Complexity.FineGrained.Sparsification
+public import Complexity.Computability.Complexity.FineGrained.ThreeOccurrenceReduction
 public import Complexity.Computability.Complexity.HardnessEncoding.PolyTime
 public import Complexity.Computability.Complexity.HardnessEncoding.Program
 public import Complexity.Computability.Complexity.Parameterized
