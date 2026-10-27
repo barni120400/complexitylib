@@ -1396,6 +1396,7 @@ public import Complexity.Computability.PolyTime.Int.ExactDiv
 public import Complexity.Computability.PolyTime.Int.Jet
 public import Complexity.Computability.PolyTime.Int.Table
 public import Complexity.Computability.PolyTime.JetArray
+public import Complexity.Computability.PolyTime.LinearAlgebra.BooleanMeasurements
 public import Complexity.Computability.PolyTime.LinearAlgebra.CopyPlacement
 public import Complexity.Computability.PolyTime.LinearAlgebra.ExchangeReplacement
 public import Complexity.Computability.PolyTime.ParityFactorEval
