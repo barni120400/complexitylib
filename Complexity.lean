@@ -888,6 +888,7 @@ public import Complexity.Computability.DecisionTree.Symmetric
 public import Complexity.Computability.GenericRAM.Algebraic
 public import Complexity.Computability.GenericRAM.Defs
 public import Complexity.Computability.GenericRAM.Native
+public import Complexity.Computability.GenericRAM.Native.BooleanFold
 public import Complexity.Computability.GenericRAM.Native.Certificate
 public import Complexity.Computability.GenericRAM.Native.Combinators
 public import Complexity.Computability.GenericRAM.Native.IndexFold
@@ -1169,6 +1170,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTi
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListLookup
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListMap
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListPrimitives
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListToBits
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeLoops
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeNatFrontends
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.PolyTimeOptionPrimitives
