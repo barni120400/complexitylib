@@ -1848,6 +1848,7 @@ public import Complexity.Foundations.Combinatorics.FunctionalGraph.HittingTime
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Powers
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Projection
 public import Complexity.Foundations.Combinatorics.FunctionalGraph.Spectrum
+public import Complexity.Foundations.Combinatorics.GreedySchedules
 public import Complexity.Foundations.Combinatorics.Hoeffding
 public import Complexity.Foundations.Combinatorics.Hypergeometric
 public import Complexity.Foundations.Combinatorics.HypergraphCut
