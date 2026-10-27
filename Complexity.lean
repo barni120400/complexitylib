@@ -1782,6 +1782,7 @@ public import Complexity.Foundations.BooleanAnalysis.QuadraticForm
 public import Complexity.Foundations.BooleanAnalysis.RelevantCoordinates
 public import Complexity.Foundations.BooleanAnalysis.SignApproximation
 public import Complexity.Foundations.BooleanAnalysis.SparseBranching
+public import Complexity.Foundations.BooleanAnalysis.SparseClearedSpecialization
 public import Complexity.Foundations.BooleanAnalysis.SparseEquations
 public import Complexity.Foundations.BooleanAnalysis.Symmetrization
 public import Complexity.Foundations.Combinatorics.AffineDisperser
@@ -1991,6 +1992,7 @@ public import Complexity.Foundations.Data.Nat.Radix
 public import Complexity.Foundations.Data.Option
 public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.OrderedSet.Spec
+public import Complexity.Foundations.Data.Polynomial.BivariateCoeffNorm1
 public import Complexity.Foundations.Data.Polynomial.CoeffList
 public import Complexity.Foundations.Data.Polynomial.CoeffNorm1
 public import Complexity.Foundations.Data.Polynomial.HermiteInterpolation
