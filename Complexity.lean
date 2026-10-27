@@ -1980,6 +1980,7 @@ public import Complexity.Foundations.Data.Option
 public import Complexity.Foundations.Data.OrderedSet
 public import Complexity.Foundations.Data.OrderedSet.Spec
 public import Complexity.Foundations.Data.Polynomial.CoeffList
+public import Complexity.Foundations.Data.Polynomial.CoeffNorm1
 public import Complexity.Foundations.Data.Polynomial.HermiteInterpolation
 public import Complexity.Foundations.Data.Polynomial.ParityAmplifier
 public import Complexity.Foundations.Data.Polynomial.SignQueries
@@ -2024,6 +2025,7 @@ public import Complexity.Foundations.LinearAlgebra.Matrix.SubmatrixRobust
 public import Complexity.Foundations.LinearAlgebra.Matrix.Toeplitz
 public import Complexity.Foundations.LinearAlgebra.PivotSpace
 public import Complexity.Foundations.LinearAlgebra.Rank
+public import Complexity.Foundations.LinearAlgebra.VariableCopyPlacement
 public import Complexity.Foundations.Logic.Function.Iterate
 public import Complexity.Foundations.MeasureTheory.Constructions.BorelSpace.Order
 public import Complexity.Foundations.NumberTheory.AKS.Correctness
