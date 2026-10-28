@@ -399,6 +399,9 @@ each statement against the numbered result. Organize modules by subject, not cha
 - **Plain computability** ([#862]): complete the plain calculus ([#608]), delete the tidy
   calculus, keeping only a machine-level kernel inside the Machines layer, and switch the
   abstract bridges to the shared predicate.
+- **Logspace automation** ([#1449]): `fun_prop` rules for `ComputableInLogSpace` (composition,
+  `ite`, word, arithmetic and list primitives), with the one-way transition from logspace to
+  polynomial time.
 - **Certificate APIs and automation** ([#1155]): predictable search, with fixed heartbeat budgets
   on regression goals, failures that name the subterm lacking a certificate, and cheap
   syntax-directed composition for glue code. Infer encodings for ordinary functional expressions
@@ -545,3 +548,4 @@ not planned, not as proved.
 [#1394]: https://github.com/cslib-community/complexitylib/issues/1394
 
 [#1435]: https://github.com/cslib-community/complexitylib/issues/1435
+[#1449]: https://github.com/cslib-community/complexitylib/issues/1449
