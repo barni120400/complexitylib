@@ -1,6 +1,4 @@
 {
- "Complexity/Computability/Complexity/Classes/SharpP/Combinators.lean": 3,
- "Complexity/Computability/Complexity/Classes/Toda/Counting.lean": 1,
  "Complexity/Computability/Complexity/Problems/Clique.lean": 1,
  "Complexity/Computability/GenericRAM/Simulation/Run.lean": 8,
  "Complexity/Computability/GenericRAM/Simulation/Turing.lean": 1,
