@@ -14,7 +14,9 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.It
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
+import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LinearSpaceArith
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
 import Mathlib.Data.List.GetD

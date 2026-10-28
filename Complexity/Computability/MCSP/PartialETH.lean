@@ -1802,14 +1802,15 @@ private theorem computableTidilyInO_twoPow :
     simp only [length_encPair, encUnary_apply, List.length_replicate, encBool_apply,
       List.length_singleton]
     omega
-  have hfold := ComputableTidilyInO.foldl (encA := encBool) (encL := encBits) (encB := encUnary)
-    (step := fun n _ => n + n) hlist (ComputableTidilyInO.const 1) hstep
+  have hfold := (ComputableInO.foldl (encA := encBool) (encL := encBits) (encB := encUnary)
+    (step := fun n _ => n + n) hlist.computableInO (ComputableTidilyInO.const 1).computableInO
+    hstep.computableInO
     (R := fun m => 4 * 2 ^ m + 4) (Q := fun m => 4 * 2 ^ m + 4) (B := fun m => 2 ^ m)
     hstep_bound hstep_bound (fun m i _ => by
       have := Nat.pow_le_pow_right two_pos (Nat.min_le_right i m)
       rw [List.take_replicate, foldl_double_replicate, one_mul, encUnary_apply,
         List.length_replicate]
-      omega)
+      omega)).tidy
   refine (hfold.mono 16 (fun m => ?_) (fun m => ?_)).of_enc_eq fun m => ?_
   · simp only [encUnary_apply, encBits_apply, List.length_replicate]
     have hm : m < 2 ^ m := Nat.lt_two_pow_self

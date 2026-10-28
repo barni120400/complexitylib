@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.InSpace
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
+import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
 
 /-!
 # Basic functions within linear work space
@@ -111,29 +112,29 @@ theorem budget_iterate [Inhabited β] {n : α → ℕ} {init : α → β} {step 
 /-! ### Arithmetic -/
 
 theorem natSucc : ComputableTidilyInSpace (· + 1) encNat encNat fun n => (encNat n).length + 1 :=
-  of_inO ComputableTidilyInO.natSucc
+  of_inO ComputableInO.natSucc.tidy
 
 theorem natPred : ComputableTidilyInSpace (· - 1) encNat encNat fun n => (encNat n).length + 1 :=
-  of_inO ComputableTidilyInO.natPred
+  of_inO ComputableInO.natPred.tidy
 
 theorem natIsZero :
     ComputableTidilyInSpace (fun n => decide (n = 0)) encNat encBool fun n => (encNat n).length :=
-  of_inO ComputableTidilyInO.natIsZero
+  of_inO ComputableInO.natIsZero.tidy
 
 theorem natEq :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => decide (p.1 = p.2)) (encPair encNat encNat) encBool
       fun p => (encPair encNat encNat p).length :=
-  of_inO (ComputableTidilyInO.eq encNat)
+  of_inO (ComputableInO.eq encNat).tidy
 
 theorem natLt :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => decide (p.1 < p.2)) (encPair encNat encNat) encBool
       fun p => (encPair encNat encNat p).length + 1 :=
-  of_inO ComputableTidilyInO.natLt
+  of_inO ComputableInO.natLt.tidy
 
 theorem natSub :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => p.2 - p.1) (encPair encNat encNat) encNat
       fun p => (encPair encNat encNat p).length + 1 :=
-  of_inO ComputableTidilyInO.natSub
+  of_inO ComputableInO.natSub.tidy
 
 theorem natAdd :
     ComputableTidilyInSpace (fun p : ℕ × ℕ => p.1 + p.2) (encPair encNat encNat) encNat
