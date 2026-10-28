@@ -20,7 +20,9 @@ Restrictions of polynomial-time truth-table reductions
   reduction makes at most `k` queries for some fixed `k`;
 * a **disjunctive** (**conjunctive**) truth-table reduction accepts exactly when some (every)
   query is in the target set, so it needs no combiner;
-* a **positive** truth-table reduction has a combiner that is monotone in the answers.
+* a **positive** truth-table reduction has a combiner that is monotone in the answers. Positivity
+  is taken semantically, as a monotone polynomial-time combiner, as in Selman's positive
+  reductions; it is not the syntactic notion of a Boolean formula built from `∧` and `∨`.
 
 ## Main definitions
 
@@ -40,8 +42,8 @@ Restrictions of polynomial-time truth-table reductions
   `Cslib.Complexity.PolyTimeDTTReducible.polyTimePTTReducible`,
   `Cslib.Complexity.PolyTimeCTTReducible.polyTimePTTReducible`,
   `Cslib.Complexity.PolyTimePTTReducible.polyTimeTruthTableReducible`.
-* `Cslib.Complexity.polyTimeDTTReducible_compl_iff`: disjunctive reductions of `L` to `B` are the
-  conjunctive reductions of `Lᶜ` to `Bᶜ`.
+* `Cslib.Complexity.polyTimeDTTReducible_iff_polyTimeCTTReducible_compl`: disjunctive reductions
+  of `L` to `B` are the conjunctive reductions of `Lᶜ` to `Bᶜ`.
 * Reflexivity and closure of `P` for each reducibility.
 
 ## References
@@ -90,19 +92,23 @@ theorem PolyTimeKTruthTableReducible.mono {k k' : ℕ}
   let ⟨r, q, d, hr, hq, hd, hrk, hL⟩ := h
   ⟨r, q, d, hr, hq, hd, fun a => (hrk a).trans hk, hL⟩
 
+/-- A `k`-truth-table reduction is a bounded truth-table reduction. -/
 theorem PolyTimeKTruthTableReducible.polyTimeBTTReducible {k : ℕ}
     (h : PolyTimeKTruthTableReducible k encA encB L B) : PolyTimeBTTReducible encA encB L B :=
   ⟨k, h⟩
 
+/-- A bounded truth-table reduction is a truth-table reduction. -/
 theorem PolyTimeBTTReducible.polyTimeTruthTableReducible (h : PolyTimeBTTReducible encA encB L B) :
     PolyTimeTruthTableReducible encA encB L B :=
   let ⟨_, r, q, d, hr, hq, hd, _, hL⟩ := h
   ⟨r, q, d, hr, hq, hd, hL⟩
 
+/-- A many-one reduction is a bounded truth-table reduction. -/
 theorem PolyTimeReducible.polyTimeBTTReducible (h : PolyTimeReducible encA encB L B) :
     PolyTimeBTTReducible encA encB L B :=
   h.polyTimeKTruthTableReducible_one.polyTimeBTTReducible
 
+/-- Bounded truth-table reducibility is reflexive. -/
 @[refl]
 theorem PolyTimeBTTReducible.refl (encA : α ↪ List Bool) (L : Set α) :
     PolyTimeBTTReducible encA encA L L :=
@@ -117,6 +123,7 @@ theorem PolyTimeKTruthTableReducible.compl_left {k : ℕ}
   refine ⟨r, q, fun x => !d x, hr, hq, by fun_prop, hrk, fun a => ?_⟩
   simp [Set.mem_compl_iff, hL a]
 
+/-- `P` is closed under bounded truth-table reductions. -/
 theorem PolyTimeBTTReducible.mem_P (h : PolyTimeBTTReducible encA encB L B) (hB : B ∈ P encB) :
     L ∈ P encA :=
   h.polyTimeTruthTableReducible.mem_P hB
@@ -139,7 +146,7 @@ def PolyTimeCTTReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (L 
 
 /-- Disjunctive reductions of `L` to `B` are the conjunctive reductions of `Lᶜ` to `Bᶜ`, with the
 same queries. -/
-theorem polyTimeDTTReducible_compl_iff :
+theorem polyTimeDTTReducible_iff_polyTimeCTTReducible_compl :
     PolyTimeDTTReducible encA encB L B ↔ PolyTimeCTTReducible encA encB Lᶜ Bᶜ := by
   constructor
   · rintro ⟨r, q, hr, hq, hL⟩
@@ -162,11 +169,13 @@ theorem PolyTimeReducible.polyTimeCTTReducible (h : PolyTimeReducible encA encB 
   obtain ⟨f, hf, hL⟩ := h
   exact ⟨fun _ => 1, fun x => f x.1, by fun_prop, by fun_prop, fun a => by simp [hL a]⟩
 
+/-- Disjunctive truth-table reducibility is reflexive. -/
 @[refl]
 theorem PolyTimeDTTReducible.refl (encA : α ↪ List Bool) (L : Set α) :
     PolyTimeDTTReducible encA encA L L :=
   (PolyTimeReducible.refl encA L).polyTimeDTTReducible
 
+/-- Conjunctive truth-table reducibility is reflexive. -/
 @[refl]
 theorem PolyTimeCTTReducible.refl (encA : α ↪ List Bool) (L : Set α) :
     PolyTimeCTTReducible encA encA L L :=
@@ -185,6 +194,7 @@ def PolyTimePTTReducible (encA : α ↪ List Bool) (encB : β ↪ List Bool) (L 
     (∀ a u v, List.Forall₂ (· ≤ ·) u v → d (a, u) ≤ d (a, v)) ∧
     ∀ a, a ∈ L ↔ d (a, truthTableAnswers (q ⁻¹' B) r a) = true
 
+/-- A positive truth-table reduction is a truth-table reduction. -/
 theorem PolyTimePTTReducible.polyTimeTruthTableReducible (h : PolyTimePTTReducible encA encB L B) :
     PolyTimeTruthTableReducible encA encB L B :=
   let ⟨r, q, d, hr, hq, hd, _, hL⟩ := h
@@ -238,22 +248,27 @@ theorem PolyTimeCTTReducible.polyTimePTTReducible (h : PolyTimeCTTReducible encA
   rw [hL a]
   simp [truthTableAnswers, List.all_eq_true, List.mem_ofFn, Fin.forall_iff]
 
+/-- A disjunctive truth-table reduction is a truth-table reduction. -/
 theorem PolyTimeDTTReducible.polyTimeTruthTableReducible (h : PolyTimeDTTReducible encA encB L B) :
     PolyTimeTruthTableReducible encA encB L B :=
   h.polyTimePTTReducible.polyTimeTruthTableReducible
 
+/-- A conjunctive truth-table reduction is a truth-table reduction. -/
 theorem PolyTimeCTTReducible.polyTimeTruthTableReducible (h : PolyTimeCTTReducible encA encB L B) :
     PolyTimeTruthTableReducible encA encB L B :=
   h.polyTimePTTReducible.polyTimeTruthTableReducible
 
+/-- `P` is closed under disjunctive truth-table reductions. -/
 theorem PolyTimeDTTReducible.mem_P (h : PolyTimeDTTReducible encA encB L B) (hB : B ∈ P encB) :
     L ∈ P encA :=
   h.polyTimeTruthTableReducible.mem_P hB
 
+/-- `P` is closed under conjunctive truth-table reductions. -/
 theorem PolyTimeCTTReducible.mem_P (h : PolyTimeCTTReducible encA encB L B) (hB : B ∈ P encB) :
     L ∈ P encA :=
   h.polyTimeTruthTableReducible.mem_P hB
 
+/-- `P` is closed under positive truth-table reductions. -/
 theorem PolyTimePTTReducible.mem_P (h : PolyTimePTTReducible encA encB L B) (hB : B ∈ P encB) :
     L ∈ P encA :=
   h.polyTimeTruthTableReducible.mem_P hB

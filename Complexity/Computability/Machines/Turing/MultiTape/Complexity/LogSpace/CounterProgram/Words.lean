@@ -28,12 +28,22 @@ into registers (`headerCode`), and keeps its registers below the input length, s
 function in logarithmic space by `Turing.CounterProgram.computableInLogSpace_of_reachesOut`.
 None of this uses logarithmic-space composition.
 
+## Main definitions
+
+* `Turing.CounterProgram.Words.shiftProgram`: emitting a shifted segment of a framed word.
+* `Turing.CounterProgram.Words.rangeProgram`: enumerating `0, …, n - 1`.
+* `Turing.CounterProgram.Words.lookupProgram`: list lookup at a unary index.
+
 ## Main results
 
 * `Turing.MultiTapeTM.ComputableInLogSpace.bitsTake`,
   `Turing.MultiTapeTM.ComputableInLogSpace.bitsDrop`: taking and dropping bits.
 * `Turing.MultiTapeTM.ComputableInLogSpace.range`: the list `0, …, n - 1`.
 * `Turing.MultiTapeTM.ComputableInLogSpace.getElem?`: list lookup at a unary index.
+
+## References
+
+* [M. Sipser, *Introduction to the Theory of Computation*, Section 8.5][Sipser2013]
 -/
 
 @[expose] public section
@@ -48,29 +58,31 @@ section Input
 
 variable (w : List Bool) (k : ℕ)
 
-theorem encPair_bits_unary : encPair encBits encUnary (w, k) = frame w ++ List.replicate k true :=
+private theorem encPair_bits_unary :
+    encPair encBits encUnary (w, k) = frame w ++ List.replicate k true :=
   rfl
 
-theorem length_input : (frame w ++ List.replicate k true).length = 2 * w.length + 1 + k := by
+private theorem length_input :
+    (frame w ++ List.replicate k true).length = 2 * w.length + 1 + k := by
   simp [length_frame]
 
-theorem input_marker {i : ℕ} (hi : i < w.length) :
+private theorem input_marker {i : ℕ} (hi : i < w.length) :
     (frame w ++ List.replicate k true)[2 * i]? = some true := by
   rw [List.getElem?_append_left (by rw [length_frame]; omega), getElem?_frame_two_mul hi]
 
-theorem input_end : (frame w ++ List.replicate k true)[2 * w.length]? = some false := by
+private theorem input_end : (frame w ++ List.replicate k true)[2 * w.length]? = some false := by
   rw [List.getElem?_append_left (by rw [length_frame]; omega), getElem?_frame_two_mul_length]
 
-theorem input_bit {i : ℕ} (hi : i < w.length) :
+private theorem input_bit {i : ℕ} (hi : i < w.length) :
     (frame w ++ List.replicate k true)[2 * i + 1]? = w[i]? := by
   rw [List.getElem?_append_left (by rw [length_frame]; omega), getElem?_frame_two_mul_add_one hi]
 
-theorem input_unary {j : ℕ} (hj : j < k) :
+private theorem input_unary {j : ℕ} (hj : j < k) :
     (frame w ++ List.replicate k true)[2 * w.length + 1 + j]? = some true := by
   rw [List.getElem?_append_right (by rw [length_frame]; omega)]
   simp [length_frame, hj]
 
-theorem input_after :
+private theorem input_after :
     (frame w ++ List.replicate k true)[2 * w.length + 1 + k]? = none := by
   rw [List.getElem?_eq_none]
   rw [length_input]
@@ -78,7 +90,7 @@ theorem input_after :
 end Input
 
 /-- Emitting the defined entries of `v` at the indices below `N` gives the first `N` entries. -/
-theorem flatMap_range_getElem?_toList (v : List Bool) (N : ℕ) :
+private theorem flatMap_range_getElem?_toList (v : List Bool) (N : ℕ) :
     (List.range N).flatMap (fun i => v[i]?.toList) = v.take N := by
   induction N with
   | zero => simp
@@ -101,7 +113,7 @@ def headerCode : List Instr :=
 
 variable {P : CounterProgram} {w : List Bool} {k B : ℕ}
 
-theorem reachesOut_header (hP : P.CodeAt 0 headerCode)
+private theorem reachesOut_header (hP : P.CodeAt 0 headerCode)
     (hB : 2 * w.length + 1 + k ≤ B) :
     P.ReachesOut (frame w ++ List.replicate k true) (P.Active B) (0, [0, 0, 0, 0])
       (4, [w.length, k, 0, 0]) [] := by
@@ -161,12 +173,12 @@ def shiftProgram (o : ℕ) (bound : Expr) : CounterProgram where
     [halt []]
   registers := 4
 
-theorem codeAt_header (o : ℕ) (bound : Expr) : (shiftProgram o bound).CodeAt 0 headerCode :=
+private theorem codeAt_header (o : ℕ) (bound : Expr) : (shiftProgram o bound).CodeAt 0 headerCode :=
   codeAt_of_code_eq (pre := [])
     (post := [assign 3 (const o) 5] ++ forCode 5 2 bound 8 12 ++ emitCode ++ [halt []])
     (by simp [shiftProgram])
 
-theorem reachesOut_emit {o : ℕ} {bound : Expr} {i : ℕ} (hB : 2 * w.length + 1 + k ≤ B)
+private theorem reachesOut_emit {o : ℕ} {bound : Expr} {i : ℕ} (hB : 2 * w.length + 1 + k ≤ B)
     (hi : i ≤ B) (ho : o ≤ 1) :
     (shiftProgram o bound).ReachesOut (frame w ++ List.replicate k true)
       ((shiftProgram o bound).Active B) (8, [w.length, k, i, o]) (7, [w.length, k, i, o])
@@ -190,7 +202,7 @@ theorem reachesOut_emit {o : ℕ} {bound : Expr} {i : ℕ} (hB : 2 * w.length + 
 
 /-- **The run of `shiftProgram`**: it emits `w[i + o·k]` for `i` below the value `N` of its loop
 bound, and halts. -/
-theorem reachesOut_shiftProgram {o N : ℕ} {bound : Expr} (ho : o ≤ 1)
+private theorem reachesOut_shiftProgram {o N : ℕ} {bound : Expr} (ho : o ≤ 1)
     (hbound : ∀ i, bound.eval [w.length, k, i, o] = N) (hN : N ≤ 2 * w.length + 1 + k)
     (hB : 2 * w.length + 1 + k ≤ B) :
     ∃ regs, (shiftProgram o bound).ReachesOut (frame w ++ List.replicate k true)
@@ -222,7 +234,7 @@ theorem reachesOut_shiftProgram {o N : ℕ} {bound : Expr} (ho : o ≤ 1)
 
 /-- A function whose encoded value is emitted by `shiftProgram` is computable in logarithmic
 space. -/
-theorem computableInLogSpace_shiftProgram {α : Type} {f : List Bool × ℕ → α}
+private theorem computableInLogSpace_shiftProgram {α : Type} {f : List Bool × ℕ → α}
     {encOut : α ↪ List Bool} {o : ℕ} (ho : o ≤ 1) {bound : Expr} (N : List Bool → ℕ → ℕ)
     (hbound : ∀ w k i, bound.eval [w.length, k, i, o] = N w k)
     (hN : ∀ w k, N w k ≤ 2 * w.length + 1 + k)
@@ -254,7 +266,7 @@ def rangeProgram : CounterProgram where
   registers := 4
 
 /-- The bits written for the element `i`: its unary digits, framed. -/
-theorem frame_replicate (i : ℕ) :
+private theorem frame_replicate (i : ℕ) :
     frame (List.replicate i true) = (List.range i).flatMap (fun _ => [true, true]) ++ [false] := by
   simp only [frame, List.flatMap_replicate]
   congr 1
@@ -263,7 +275,7 @@ theorem frame_replicate (i : ℕ) :
   | succ i ih => rw [List.replicate_succ', List.flatten_append, List.range_succ,
       List.flatMap_append, ih]; simp
 
-theorem reachesOut_rangeProgram (n : ℕ) :
+private theorem reachesOut_rangeProgram (n : ℕ) :
     ∃ regs, rangeProgram.ReachesOut (List.replicate n true) (rangeProgram.Active (n + 1))
       rangeProgram.init (11, regs)
       ((List.range n).flatMap fun i => (List.range i).flatMap (fun _ => [true, true]) ++ [false]) ∧
@@ -348,12 +360,12 @@ section Offsets
 
 variable {α : Type} (enc : α ↪ List Bool)
 
-theorem encList_eq (l : List α) : encList enc l = l.flatMap (frame ∘ enc) := rfl
+private theorem encList_eq (l : List α) : encList enc l = l.flatMap (frame ∘ enc) := rfl
 
 /-- The offset of the `t`-th element in a list encoding. -/
-def off (l : List α) (t : ℕ) : ℕ := (encList enc (l.take t)).length
+private def off (l : List α) (t : ℕ) : ℕ := (encList enc (l.take t)).length
 
-theorem encList_split (l : List α) {t : ℕ} (ht : t < l.length) :
+private theorem encList_split (l : List α) {t : ℕ} (ht : t < l.length) :
     encList enc l =
       encList enc (l.take t) ++ (frame (enc l[t]) ++ encList enc (l.drop (t + 1))) := by
   simp only [encList_eq]
@@ -361,35 +373,37 @@ theorem encList_split (l : List α) {t : ℕ} (ht : t < l.length) :
   rw [List.flatMap_append, List.flatMap_cons]
   rfl
 
-theorem off_succ (l : List α) {t : ℕ} (ht : t < l.length) :
+private theorem off_succ (l : List α) {t : ℕ} (ht : t < l.length) :
     off enc l (t + 1) = off enc l t + (2 * (enc l[t]).length + 1) := by
   simp only [off, encList_eq, List.take_add_one, List.getElem?_eq_getElem ht, Option.toList_some,
     List.flatMap_append, List.flatMap_cons, List.flatMap_nil, List.append_nil, List.length_append,
     Function.comp_apply, length_frame]
 
-theorem off_of_le (l : List α) {t : ℕ} (ht : l.length ≤ t) :
+private theorem off_of_le (l : List α) {t : ℕ} (ht : l.length ≤ t) :
     off enc l t = (encList enc l).length := by
   simp only [off, List.take_of_length_le ht]
 
-theorem off_le (l : List α) (t : ℕ) : off enc l t ≤ (encList enc l).length := by
+private theorem off_le (l : List α) (t : ℕ) : off enc l t ≤ (encList enc l).length := by
   simp only [off, encList_eq]
   conv_rhs => rw [← List.take_append_drop t l]
   rw [List.flatMap_append, List.length_append]
   omega
 
-theorem getElem?_marker (l : List α) {t j : ℕ} (ht : t < l.length) (hj : j < (enc l[t]).length) :
+private theorem getElem?_marker (l : List α) {t j : ℕ} (ht : t < l.length)
+    (hj : j < (enc l[t]).length) :
     (encList enc l)[off enc l t + 2 * j]? = some true := by
   rw [encList_split enc l ht, List.getElem?_append_right (by simp [off]),
     List.getElem?_append_left (by simp [off, length_frame]; omega)]
   simpa [off] using getElem?_frame_two_mul hj
 
-theorem getElem?_end (l : List α) {t : ℕ} (ht : t < l.length) :
+private theorem getElem?_end (l : List α) {t : ℕ} (ht : t < l.length) :
     (encList enc l)[off enc l t + 2 * (enc l[t]).length]? = some false := by
   rw [encList_split enc l ht, List.getElem?_append_right (by simp [off]),
     List.getElem?_append_left (by simp [off, length_frame])]
   simpa [off] using getElem?_frame_two_mul_length (enc l[t])
 
-theorem getElem?_bit (l : List α) {t j : ℕ} (ht : t < l.length) (hj : j < (enc l[t]).length) :
+private theorem getElem?_bit (l : List α) {t j : ℕ} (ht : t < l.length)
+    (hj : j < (enc l[t]).length) :
     (encList enc l)[off enc l t + 2 * j + 1]? = (enc l[t])[j]? := by
   rw [encList_split enc l ht, List.getElem?_append_right (by simp [off]; omega),
     List.getElem?_append_left (by simp [off, length_frame]; omega)]
@@ -429,13 +443,14 @@ local notation "X" => frame (encList enc l) ++ List.replicate k true
 private theorem read_W {p : ℕ} (hp : p < (encList enc l).length) :
     X[2 * p + 1]? = (encList enc l)[p]? := input_bit _ k hp
 
-theorem off_lt_length {t : ℕ} (ht : t < l.length) : off enc l t < (encList enc l).length :=
+private theorem off_lt_length {t : ℕ} (ht : t < l.length) : off enc l t < (encList enc l).length :=
   lt_of_lt_of_le (by rw [off_succ enc l ht]; omega) (off_le enc l (t + 1))
 
 variable {l k} {B : ℕ}
 
 /-- Skipping the element at position `t`, or nothing past the end of the list. -/
-theorem reachesOut_skip (hB : 2 * (encList enc l).length + 1 + k ≤ B) {t : ℕ} (htk : t ≤ k) :
+private theorem reachesOut_skip (hB : 2 * (encList enc l).length + 1 + k ≤ B) {t : ℕ}
+    (htk : t ≤ k) :
     lookupProgram.ReachesOut X (lookupProgram.Active B)
       (7, [(encList enc l).length, k, off enc l t, t])
       (6, [(encList enc l).length, k, off enc l (t + 1), t]) [] := by
@@ -486,7 +501,7 @@ theorem reachesOut_skip (hB : 2 * (encList enc l).length + 1 + k ≤ B) {t : ℕ
     exact ReachesOut.refl _
 
 /-- Copying the digits of the element at position `t`, from its `j`-th digit on. -/
-theorem reachesOut_copy (hB : 2 * (encList enc l).length + 1 + k ≤ B) {t : ℕ}
+private theorem reachesOut_copy (hB : 2 * (encList enc l).length + 1 + k ≤ B) {t : ℕ}
     (ht : t < l.length) (htk : t ≤ k) :
     ∀ j ≤ (enc l[t]).length, lookupProgram.ReachesOut X (lookupProgram.Active B)
       (13, [(encList enc l).length, k, off enc l t + 2 * j, t])
@@ -530,7 +545,7 @@ theorem reachesOut_copy (hB : 2 * (encList enc l).length + 1 + k ≤ B) {t : ℕ
     · exact ReachesOut.emit (show lookupProgram.instr 16 = _ from rfl) hb hstep
     · exact ReachesOut.emit (show lookupProgram.instr 15 = _ from rfl) hb hstep
 
-theorem reachesOut_lookupProgram :
+private theorem reachesOut_lookupProgram :
     ∃ s fin, lookupProgram.ReachesOut X
       (lookupProgram.Active (((frame (encList enc l) ++ List.replicate k true).length + 1) ^ 1))
       lookupProgram.init s

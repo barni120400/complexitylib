@@ -15,12 +15,14 @@ import Complexity.Computability.Complexity.Classes.PP.Characterization
 # Bounded-error postselected polynomial time
 
 `BPPpath` was introduced by [Han, Hemaspaandra and Thierauf][HanHemaspaandraThierauf1997] as the
-class of languages accepted by polynomial-time nondeterministic machines, with computation paths
-of possibly different lengths, on which at least three quarters of the paths agree with the
-answer. We state it through its path counts: there are #P functions `acc` and `rej` counting the
-accepting and rejecting paths, with at least one path on every input, such that `acc ≥ 3 rej` on
-members and `rej ≥ 3 acc` on nonmembers. As for `SBP` (`Cslib.Complexity.SBP`), these are
-verifier counts; the equivalence with the machine definition is not proved here.
+class of languages accepted by polynomial-time nondeterministic threshold machines, with computation
+paths of possibly different lengths, whose fraction of accepting paths is bounded away from one
+half. We fix the ratio gap at three quarters; by their error reduction any fixed gap gives the same
+class, which is not proved here. We state it through its path counts: there are #P functions `acc`
+and `rej` counting the accepting and rejecting paths, with at least one path on every input, such
+that `acc ≥ 3 rej` on members and `rej ≥ 3 acc` on nonmembers. As for `SBP`
+(`Cslib.Complexity.SBP`), these are verifier counts; the equivalence with the machine definition is
+not proved here.
 
 SBP lies between BPP and BPPpath [Böhler, Glaßer and Meister][BoehlerGlasserMeister2006]: an SBP
 count `f` with an FP threshold `k` and an amplified gap is turned into the path counts `3f` and
@@ -79,6 +81,8 @@ theorem SBP_subset_BPPpath : SBP enc ⊆ BPPpath enc := by
     dsimp only
     omega
 
+/-- **BPP ⊆ BPPpath**, through `BPP ⊆ SBP`
+[Han, Hemaspaandra and Thierauf][HanHemaspaandraThierauf1997]. -/
 theorem BPP_subset_BPPpath : BPP enc ⊆ BPPpath enc :=
   BPP_subset_SBP.trans SBP_subset_BPPpath
 

@@ -45,6 +45,9 @@ open Encodings Internal.FrameMachines
 
 namespace ComputableTidilyInLinearTimeAndSpace
 
+-- vendored: `of_cons_true`, `of_tail`, `of_take_one` and `of_isEmpty` below use the run equations
+-- of `Internal/CodecWordMachines` instead of the inline case analysis of crei:crei/tidy-universal
+
 variable {α β : Type*} {encIn : α ↪ List Bool} {encOut : β ↪ List Bool} {f : α → β}
 
 /-- Framing an encoded value. -/
