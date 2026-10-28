@@ -647,6 +647,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Ou
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Reduction
 public import Complexity.Computability.Complexity.Classes.LogSpace.FirstOrder.Transducer
 public import Complexity.Computability.Complexity.Classes.LogSpace.PolyTime
+public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 public import Complexity.Computability.Complexity.Classes.MIP
 public import Complexity.Computability.Complexity.Classes.MIP.Defs
