@@ -5,6 +5,7 @@ Authors: Samuel Schlesinger
 -/
 
 import Complexity.Crypto.Protocols.MPC.Basic
+import Complexity.Crypto.Protocols.MPC.SharedMul
 import Mathlib.Algebra.Ring.BooleanRing
 import Mathlib.Data.ZMod.Basic
 
@@ -457,5 +458,40 @@ theorem not_perfectSemiHonestPrivate_independentCoinProtocol
   have h01 := hIdealAgree res hres
   rw [h0, h1] at h01
   exact Bool.false_ne_true h01
+
+/-! ### Ideal $\text{OT}_1^4$, 2-party shared multiplication, and $m$-party pairwise reduction -/
+
+example : fin4ToBoolPair (boolPairToFin4 (true, false)) = (true, false) := by decide
+
+/-- Exhaustive check of the 4-entry $\text{OT}_1^4$ residual table (Goldreich Section 7.3.3,
+CUP print p. 643): for all party inputs `(a₀, b₀)` and `(a₁, b₁)` and sender coin `c₀`, the
+receiver's $\text{OT}_1^4$ answer equals `c₀ + (a₀ + a₁) * (b₀ + b₁)`. -/
+example (a₀ b₀ a₁ b₁ c₀ : Bool) :
+    ot14Answer
+      (fun s =>
+        twoPartyMulQuery s
+          (Fin.cases (a₀, b₀) (fun _ => (a₁, b₁)) s, twoPartyMulCoins c₀ s))
+      1 = c₀ + (a₀ + a₁) * (b₀ + b₁) := by
+  cases a₀ <;> cases b₀ <;> cases a₁ <;> cases b₁ <;> cases c₀ <;> rfl
+
+/-- Locality of pairwise oracle rounds: in the 3-party setting, party `2` receives a subsingleton
+record during the `(0, 1)` pairwise shared-multiplication round. -/
+example :
+    Subsingleton ((pairRound (m := 3) ⟨(0, 1), by decide⟩).Received 2) :=
+  subsingleton_received_pairRound ⟨(0, 1), by decide⟩ (by decide) (by decide)
+
+example : orderedPairs 1 = [] := by decide
+
+example : (orderedPairs 3).length = 3 := by decide
+
+example (I : Finset (Fin 1)) (x : Fin 1 → Bool × Bool) :
+    ProbComp.eval (idealJoint (sharedMulFunctionality 1) I (multiPartyMulSim 1 I) x) =
+      (multiPartyMulProtocol 1).realJoint (sharedMulWorld 2) I x :=
+  perfectSemiHonestPrivate_multiPartyMul 1 I x
+
+example (I : Finset (Fin 3)) (x : Fin 3 → Bool × Bool) :
+    ProbComp.eval (idealJoint (sharedMulFunctionality 3) I (multiPartyMulSim 3 I) x) =
+      (multiPartyMulProtocol 3).realJoint (sharedMulWorld 2) I x :=
+  perfectSemiHonestPrivate_multiPartyMul 3 I x
 
 end ComplexityTests.Crypto.MPC
