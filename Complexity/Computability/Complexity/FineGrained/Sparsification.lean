@@ -12,14 +12,15 @@ public import Complexity.Logics.Propositional.ClauseSet.Sparsification.Search
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.PolyTime
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Logics.Propositional.ClauseSet.Sparsification
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Binary
+import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Basic
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Bounds
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Binary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.Div
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 
 /-!
 # Algorithmic sparsification
@@ -343,63 +344,78 @@ theorem search_eq_true_iff {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M) {
 
 section PolyTime
 
-open ComputableTidilyInPolyTime
+open ComputableInPolyTime
 
-private theorem computableTidilyInPolyTime_isSparse_head (K α : ℕ) :
-    ComputableTidilyInPolyTime (fun s : State => isSparse (threshold K α) K (s.1.headD []))
+@[local fun_prop]
+private theorem computableInPolyTime_listIsEmpty {β : Type} (enc : β ↪ List Bool) :
+    ComputableInPolyTime List.isEmpty (encList enc) encBool := by
+  have heq : (List.isEmpty : List β → Bool) = fun l => decide (l.length = 0) := by
+    funext l; cases l <;> simp
+  rw [heq]
+  fun_prop
+
+@[local fun_prop]
+private theorem computableInPolyTime_listTail {β : Type} (enc : β ↪ List Bool) :
+    ComputableInPolyTime List.tail (encList enc) (encList enc) := by
+  have heq : (List.tail : List β → List β) = fun l => l.drop 1 := by
+    funext l; cases l <;> rfl
+  rw [heq]
+  exact (dropUnary (encA := enc)).comp (id'.prod (const 1))
+
+private theorem computableInPolyTime_isSparse_head (K α : ℕ) :
+    ComputableInPolyTime (fun s : State => isSparse (threshold K α) K (s.1.headD []))
       encState encBool := by
-  have h := (computableInPolyTime_isSparse encNat
-    (ClauseSet.Sparsification.computableInPolyTime_threshold_le K α) K).tidy
-  have hH : ComputableTidilyInPolyTime (fun s : State => s.1.headD []) encState encCNF := by
+  have h := computableInPolyTime_isSparse encNat
+    (ClauseSet.Sparsification.computableInPolyTime_threshold_le K α) K
+  have hH : ComputableInPolyTime (fun s : State => s.1.headD []) encState encCNF := by
     unfold encState
     fun_prop
   exact h.comp hH
 
-private theorem computableTidilyInPolyTime_inner (K α : ℕ) :
-    ComputableTidilyInPolyTime (fun s : State => (next (threshold K α) K (s.1.headD []) false ::
+private theorem computableInPolyTime_inner (K α : ℕ) :
+    ComputableInPolyTime (fun s : State => (next (threshold K α) K (s.1.headD []) false ::
       next (threshold K α) K (s.1.headD []) true :: s.1.tail, s.2)) encState encState := by
-  have h := (computableInPolyTime_next encNat
-    (ClauseSet.Sparsification.computableInPolyTime_threshold_le K α) K).tidy
+  have h := computableInPolyTime_next encNat
+    (ClauseSet.Sparsification.computableInPolyTime_threshold_le K α) K
   unfold encState encCNF
   fun_prop
 
-private theorem computableTidilyInPolyTime_root (k : ℕ) :
-    ComputableTidilyInPolyTime (fun φ : CNF ℕ => (([root k φ], false) : State)) encCNF
+private theorem computableInPolyTime_root (k : ℕ) :
+    ComputableInPolyTime (fun φ : CNF ℕ => (([root k φ], false) : State)) encCNF
       encState := by
-  have h := (computableInPolyTime_normalize encNat).tidy
+  have h := computableInPolyTime_normalize encNat
   unfold root encState encCNF
   fun_prop
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
-private theorem computableTidilyInPolyTime_rounds (M : ℕ) :
-    ComputableTidilyInPolyTime (rounds M) encCNF encNat := by
-  have hvars := SAT.computableInPolyTime_distinctVars.tidy
+private theorem computableInPolyTime_rounds (M : ℕ) :
+    ComputableInPolyTime (rounds M) encCNF encNat := by
+  have hvars := SAT.computableInPolyTime_distinctVars
   have h := unary_div_const M
   unfold rounds
   fun_prop
 
 /-- **The time of a step**: a polynomial in the length of the encoded state, plus the time of the
 decider when it runs on the formula on top of the stack. -/
-private theorem exists_computableTidilyInO_step (K α : ℕ) {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ}
-    (hg : ComputableTidilyInO g encCNF encBool t t) :
-    ∃ d, ComputableTidilyInO (step K α g) encState encState
+private theorem exists_computableInO_step (K α : ℕ) {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ}
+    (hg : ComputableInO g encCNF encBool t t) :
+    ∃ d, ComputableInO (step K α g) encState encState
       (fun s => ((encState s).length + 1) ^ d +
         if s.1.isEmpty = false ∧ isSparse (threshold K α) K (s.1.headD []) = true then
           t (s.1.headD []) else 0)
       (fun s => ((encState s).length + 1) ^ d +
         if s.1.isEmpty = false ∧ isSparse (threshold K α) K (s.1.headD []) = true then
           t (s.1.headD []) else 0) := by
-  obtain ⟨dE, eE, hE⟩ := (show ComputableTidilyInPolyTime (fun s : State => s.1.isEmpty) encState
-    encBool by fun_prop).exists_degree
+  obtain ⟨dE, eE, hE⟩ := (show ComputableInPolyTime (fun s : State => s.1.isEmpty) encState
+    encBool by unfold encState; fun_prop).exists_degree
   obtain ⟨dI, eI, hI⟩ := (id' (encIn := encState)).exists_degree
-  obtain ⟨dS, eS, hS⟩ := (computableTidilyInPolyTime_isSparse_head K α).exists_degree
-  obtain ⟨dH, eH, hH⟩ := (show ComputableTidilyInPolyTime (fun s : State => s.1.headD []) encState
+  obtain ⟨dS, eS, hS⟩ := (computableInPolyTime_isSparse_head K α).exists_degree
+  obtain ⟨dH, eH, hH⟩ := (show ComputableInPolyTime (fun s : State => s.1.headD []) encState
     encCNF by unfold encState; fun_prop).exists_degree
-  obtain ⟨dB, eB, hB⟩ := (show ComputableTidilyInPolyTime (fun s : State => s.2) encState
-    encBool by fun_prop).exists_degree
-  obtain ⟨dT, eT, hT⟩ := (show ComputableTidilyInPolyTime (fun s : State => s.1.tail) encState
-    (encList encCNF) by fun_prop).exists_degree
-  obtain ⟨dN, eN, hN⟩ := (computableTidilyInPolyTime_inner K α).exists_degree
+  obtain ⟨dB, eB, hB⟩ := (show ComputableInPolyTime (fun s : State => s.2) encState
+    encBool by unfold encState; fun_prop).exists_degree
+  obtain ⟨dT, eT, hT⟩ := (show ComputableInPolyTime (fun s : State => s.1.tail) encState
+    (encList encCNF) by unfold encState; fun_prop).exists_degree
+  obtain ⟨dN, eN, hN⟩ := (computableInPolyTime_inner K α).exists_degree
   obtain ⟨dO, eO, hO⟩ := bool_or.exists_degree
   set D := dE + dI + dS + dH + dB + dT + dN
   have hE' := (hE.mono (d' := D) (e' := eE) (by omega) le_rfl).inO
@@ -483,20 +499,20 @@ include hK hα in
 a round: a polynomial in the length of the encoded states (`stateBound`), plus the time bound of
 the decider on the leaves (`leafTime`), plus the cost of the counter; and within polynomial time
 for the start. -/
-private theorem exists_computableTidilyInO_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
-    {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ} (hg : ComputableTidilyInO g encCNF encBool t t)
+private theorem exists_computableInO_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K α M)
+    {g : CNF ℕ → Bool} {t : CNF ℕ → ℕ} (hg : ComputableInO g encCNF encBool t t)
     {δ : ℝ} (hδ : 0 ≤ δ) {c e : ℕ}
     (ht : ∀ ψ : CNF ℕ, (t ψ : ℝ) ≤ c * (2 ^ (δ * ψ.length) * ((encCNF ψ).length + 1) ^ e) + c) :
-    ∃ d dn di, ComputableTidilyInO (search K α k M g) encCNF encBool
+    ∃ d dn di, ComputableInO (search K α k M g) encCNF encBool
       (fun φ => ((encCNF φ).length + 1) ^ dn + ((encCNF φ).length + 1) ^ di +
         (rounds M φ + 1) * ((stateBound K α φ + 1) ^ d + leafTime K α δ c e φ +
           stateBound K α φ + ((encNat (rounds M φ)).length + 1) ^ 2))
       (fun φ => ((encCNF φ).length + 1) ^ dn + ((encCNF φ).length + 1) ^ di +
         ((stateBound K α φ + 1) ^ d + leafTime K α δ c e φ) + stateBound K α φ +
           (encNat (rounds M φ)).length) := by
-  obtain ⟨d, hstep⟩ := exists_computableTidilyInO_step K α hg
-  obtain ⟨dn, en, hn⟩ := (computableTidilyInPolyTime_rounds M).exists_degree
-  obtain ⟨di, ei, hi⟩ := (computableTidilyInPolyTime_root k).exists_degree
+  obtain ⟨d, hstep⟩ := exists_computableInO_step K α hg
+  obtain ⟨dn, en, hn⟩ := (computableInPolyTime_rounds M).exists_degree
+  obtain ⟨di, ei, hi⟩ := (computableInPolyTime_root k).exists_degree
   have hround : ∀ φ, ∀ i ≤ rounds M φ,
       (fun s : State => ((encState s).length + 1) ^ d +
         if s.1.isEmpty = false ∧ isSparse (threshold K α) K (s.1.headD []) = true then
@@ -533,7 +549,8 @@ private theorem exists_computableTidilyInO_search {k M : ℕ} (hkK : k ≤ K) (h
     obtain ⟨stk, acc, heq, hstk, hmem⟩ := (iterate_step hK hα hkK hM g φ).2 i
     rw [heq]
     exact length_encState_le hK hα hkK hstk hmem
-  exact ⟨d, dn, di, (ComputableTidilyInO.iterate hn.inO hi.inO hstep hround hround hstate).snd'⟩
+  exact ⟨d, dn, di, (ComputableInO.iterate hn.inO hi.inO
+    hstep hround hround hstate).snd'⟩
 
 include hK hα in
 /-- **The time of the search.** With a decider within time `2 ^ (δ m)` times a polynomial, on
@@ -546,8 +563,7 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
     (ht : ∀ ψ : CNF ℕ, (t ψ : ℝ) ≤ c * (2 ^ (δ * ψ.length) * ((encCNF ψ).length + 1) ^ e) + c) :
     DecidableInExpTime {φ | search K α k M g φ = true} encCNF CNF.numVars
       (1 / M + occBound K α * δ) := by
-  have hg := hg.tidy
-  obtain ⟨d, dn, di, h⟩ := exists_computableTidilyInO_search hK hα hkK hM hg hδ ht
+  obtain ⟨d, dn, di, h⟩ := exists_computableInO_search hK hα hkK hM hg hδ ht
   set Kx := K * base K α ^ (2 * K)
   set c₁ := (1 + Kx) * (6 * K + 1)
   set c₂ := 2 * (Kx + 1) * (2 * c₁ + 1) + 2
@@ -555,7 +571,7 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
   set E := dn + di + 3 * d + 2 * e + 3
   set C₂ : ℝ := c * 2 ^ δ * ((c₁ : ℝ) + 1) ^ e + c + 1
   set C₀ : ℝ := 2 + 5 * (C₁ + C₂)
-  refine DecidableInExpTime.of_computableInO (.of_tidy h) (fun φ => Iff.rfl) ⌈C₀⌉₊ E fun φ => ?_
+  refine DecidableInExpTime.of_computableInO h (fun φ => Iff.rfl) ⌈C₀⌉₊ E fun φ => ?_
   set L := (encCNF φ).length
   set N := φ.numVars
   set P := (L + 1) ^ E
@@ -637,7 +653,7 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
           (0 : ℝ) ≤ L)])
         have e₁ : ((c₁ : ℝ) + 1) * ((L : ℝ) + 1) ^ 2 = c₁ * ((L : ℝ) + 1) ^ 2 +
           ((L : ℝ) + 1) ^ 2 := by ring
-        linarith
+        linarith only [h₁, h₂, e₁]
       calc ((nodeBound K α φ : ℝ) + 1) ^ e ≤ (((c₁ : ℝ) + 1) * ((L : ℝ) + 1) ^ 2) ^ e :=
             pow_le_pow_left₀ (by positivity) this e
         _ = ((c₁ : ℝ) + 1) ^ e * ((L : ℝ) + 1) ^ (2 * e) := by rw [mul_pow, ← pow_mul]
@@ -651,13 +667,14 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
     have h₄ : (c : ℝ) * (2 ^ δ * Y * ((nodeBound K α φ : ℝ) + 1) ^ e) ≤
         c * 2 ^ δ * ((c₁ : ℝ) + 1) ^ e * Y * P := by
       have := mul_le_mul_of_nonneg_left h₂ (by positivity : (0 : ℝ) ≤ c * 2 ^ δ * Y)
-      nlinarith
+      linarith only [this]
     have h₅ : (c : ℝ) + 1 ≤ ((c : ℝ) + 1) * Y * P := by
-      have : (1 : ℝ) ≤ Y * P := one_le_mul_of_one_le_of_one_le hY hP1
-      nlinarith
+      rw [mul_assoc]
+      exact le_mul_of_one_le_right (by positivity)
+        (one_le_mul_of_one_le_of_one_le hY hP1)
     calc (⌈(c : ℝ) * (2 ^ δ * Y * ((nodeBound K α φ : ℝ) + 1) ^ e) + c⌉₊ : ℝ)
         ≤ (c : ℝ) * (2 ^ δ * Y * ((nodeBound K α φ : ℝ) + 1) ^ e) + c + 1 := h₃.le
-      _ ≤ C₂ * Y * P := by simp only [C₂]; nlinarith
+      _ ≤ C₂ * Y * P := by simp only [C₂]; linarith only [h₄, h₅]
   -- together
   set X : ℝ := 2 ^ ((1 / M : ℝ) * N)
   have hX : ((2 ^ (N / M) : ℕ) : ℝ) ≤ X := by
@@ -678,29 +695,28 @@ theorem decidableInExpTime_search {k M : ℕ} (hkK : k ≤ K) (hM : LeafBound K 
       have : ((rounds M φ + 1 : ℕ) : ℝ) ≤ ((5 * 2 ^ (N / M) : ℕ) : ℝ) := by exact_mod_cast hr
       rw [Nat.cast_mul] at this
       push_cast at this hX ⊢
-      linarith
+      linarith only [this, hX]
     have h₃ : (((stateBound K α φ + 1) ^ d + stateBound K α φ +
         ((encNat (rounds M φ)).length + 1) ^ 2 : ℕ) : ℝ) ≤ C₁ * P := by exact_mod_cast hrnd
     have h₄ : (((stateBound K α φ + 1) ^ d + leafTime K α δ c e φ + stateBound K α φ +
         ((encNat (rounds M φ)).length + 1) ^ 2 : ℕ) : ℝ) ≤ C₁ * P + C₂ * Y * P := by
       push_cast at h₃ ⊢
-      linarith
+      linarith only [h₃, hleaf]
     have h₅ := mul_le_mul h₂ h₄ (by positivity) (by positivity)
     push_cast at h₁ h₅ ⊢
-    linarith
+    linarith only [h₁, h₅]
   calc _ ≤ 2 * P + 5 * X * (C₁ * P + C₂ * Y * P) := by exact_mod_cast hT
     _ ≤ C₀ * (X * Y * P) := by
         have hXY1 : 1 ≤ X * Y := one_le_mul_of_one_le_of_one_le hX1 hY
-        have hC₂ : 0 ≤ C₂ := by positivity
         have hC₁ : (0 : ℝ) ≤ C₁ := by positivity
         have hP0 : (0 : ℝ) ≤ P := by positivity
         have a₁ : (P : ℝ) ≤ X * Y * P := le_mul_of_one_le_left hP0 hXY1
         have a₂ : X * P ≤ X * Y * P := by
           have := mul_le_mul_of_nonneg_left hY (by positivity : (0 : ℝ) ≤ X * P)
-          linarith [show X * P * Y = X * Y * P by ring]
+          linarith only [this, show X * P * Y = X * Y * P by ring]
         have a₃ := mul_le_mul_of_nonneg_left a₂ hC₁
         simp only [C₀]
-        nlinarith
+        linarith only [a₁, a₃]
     _ ≤ ⌈C₀⌉₊ * (2 ^ ((1 / M + occBound K α * δ) * N) * ((L : ℝ) + 1) ^ E) := by
         rw [← hXY]
         push_cast [P]
@@ -746,12 +762,11 @@ theorem exists_decidableInExpTime_numVars_of_length (k : ℕ) {ε : ℝ} (hε : 
   refine ⟨Sparsify.occBound K α, fun δ hδ h => ?_⟩
   obtain ⟨e, h⟩ := h
   obtain ⟨g, t, c, hg, hgA, ht⟩ := h.exists_computableInO
-  have hg := hg.tidy
   have hgsat : ∀ ψ : CNF ℕ, (∀ c ∈ ψ, c.length ≤ k) → (g ψ = true ↔ ψ.Satisfiable) :=
     fun ψ hψ => by
       rw [← hgA]
       exact ⟨fun h => h.2, fun h => ⟨hψ, h⟩⟩
-  have hsearch := Sparsify.decidableInExpTime_search hK hα hkK hLB (.of_tidy hg) hδ ht
+  have hsearch := Sparsify.decidableInExpTime_search hK hα hkK hLB hg hδ ht
   have heq : KSAT k = {φ : CNF ℕ | (φ.all fun c => decide (c.length ≤ k)) = true} ∩
       {φ | Sparsify.search K α k M g φ = true} := by
     ext φ

@@ -308,15 +308,26 @@ end Example
         self.assertNotIn(r"\paragraph{", rendered)
 
     def test_catalogue_symbols_and_author_names_are_pdflatex_safe(self):
-        sample = "∏ ∑ ⊥ ⊤ χ π ρ μ ν ι ℓ ∞ ⨅ ⨆ ≃ Σ ⦃x⦄ ⌈x⌉₊ x₀ x₁ x₂ xₖ f⁻¹ x² x³ x⁵ x⁹ ∑ˢ ⋃ ⊂ ·"
+        sample = "∏ ∑ ⊥ ⊤ χ π ρ μ ν ι ℓ ∞ ⨅ ⨆ ≃ Σ ⦃x⦄ ⌈x⌉₊ x₀ x₁ x₂ xₖ f⁻¹ x⁰ x² x³ x⁵ x⁹ ∑ˢ ⋃ ⊂ ·"
         rendered = abstract_to_tex.escape_tex_code_line(sample)
         self.assertTrue(rendered.isascii())
-        for command in (r"\prod", r"\sum", r"\bot", r"\top", r"\chi", r"\infty"):
+        for command in (r"\prod", r"\sum", r"\bot", r"\top", r"\chi", r"\infty", r"^{0}"):
             self.assertIn(command, rendered)
+        self.assertEqual(abstract_to_tex.escape_tex_prose("AC⁰ circuits"), r"AC$^{0}$ circuits")
         self.assertEqual(abstract_to_tex.escape_tex_prose("Håstad, Erdős, Bonami–Beckner"),
                          r"H\r{a}stad, Erd\H{o}s, Bonami--Beckner")
         self.assertEqual(abstract_to_tex.escape_tex_prose("2^(n/24), {0,1}, $5 and ~n"),
                          r"2\textasciicircum{}(n/24), \{0,1\}, \$5 and \textasciitilde{}n")
+
+    def test_floor_delta_omega_eventually_and_cdots_are_pdflatex_safe(self):
+        sample = "d = ⌊log₂ ⌊log₂ n⌋⌋, Δ, ω(1), ∀ᶠ n in atTop, X_0 ⋯ X_{d-1}"
+        for rendered in (abstract_to_tex.escape_tex_code_line(sample),
+                         abstract_to_tex.escape_tex_prose(sample)):
+            with self.subTest(rendered=rendered):
+                self.assertTrue(rendered.isascii())
+                for command in (r"\lfloor", r"\rfloor", r"\Delta", r"\omega",
+                                r"^{\mathsf{f}}", r"\cdots"):
+                    self.assertIn(command, rendered)
 
     def test_named_axiom_audits_are_stripped(self):
         sample = (

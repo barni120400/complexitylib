@@ -29,11 +29,13 @@ open Cslib Cslib.Probability Cslib.Crypto Cslib.Crypto.Protocols SigmaProtocol
 A second stage that passes only at the challenge `0 : Fin 4` succeeds once with probability
 `1 / 4` and never twice at distinct challenges, so `ε ^ 2 - ε / N = 0` is attained. -/
 
-example : (Rewinding.once (PMF.pure ()) (fun _ _ => PMF.pure ()) fun _ (t : Fin 4) _ =>
+example : (Rewinding.once (PMF.pure ()) (fun _ => PMF.uniformOfFintype (Fin 4))
+    (fun _ _ => PMF.pure ()) fun _ (t : Fin 4) _ =>
     decide (t = 0)) true = 1 / 4 := by
   simp [Rewinding.once, PMF.bind_apply, tsum_fintype]
 
-example : (Rewinding.twice (PMF.pure ()) (fun _ _ => PMF.pure ()) fun _ (t : Fin 4) _ =>
+example : (Rewinding.twice (PMF.pure ()) (fun _ => PMF.uniformOfFintype (Fin 4))
+    (fun _ _ => PMF.pure ()) fun _ (t : Fin 4) _ =>
     decide (t = 0)) true = 0 := by
   simp [Rewinding.twice, PMF.bind_apply, tsum_fintype, Fin.sum_univ_four]
 
@@ -84,13 +86,17 @@ example : (10 / 11 : ℝ) ≤ Game.succProbability (oneWayGame (schnorrKeyGen (2
   norm_num at h ⊢
   exact h
 
-/-- An eavesdropper on Schnorr identification in `ZMod 11` is no stronger than the direct
-impersonator that simulates its two conversations. -/
-example (A : Impersonator (ZMod 11 × (Fin 2 → ZMod 11 × ZMod 11 × ZMod 11)) (ZMod 11) (ZMod 11)
-    (ZMod 11)) :
+/-- An eavesdropper on Schnorr identification in `ZMod 11` that ignores the eavesdropped views
+and runs `knower` has the same attack distribution as the direct simulated-view impersonator. -/
+example :
+    let A : Impersonator (ZMod 11 × (Fin 2 → ZMod 11 × ZMod 11 × ZMod 11)) (ZMod 11) (ZMod 11)
+      (ZMod 11) :=
+      { State := ZMod 11 × ZMod 11
+        commit := fun u => knower.commit u.1
+        respond := knower.respond }
     (schnorr ι (2 : ZMod 11)).eavesdropAttack (schnorrKeyGen 2) 2 A =
       (schnorr ι (2 : ZMod 11)).directAttack (schnorrKeyGen 2) (A.withSimulatedViews
         (linearSimulate (fun _ => LinearMap.toSpanSingleton (ZMod 11) (ZMod 11) 2) id ι)) :=
-  schnorr_eavesdropAttack_eq_directAttack A
+  schnorr_eavesdropAttack_eq_directAttack _
 
 end ComplexityTests.Crypto.SigmaIdentification

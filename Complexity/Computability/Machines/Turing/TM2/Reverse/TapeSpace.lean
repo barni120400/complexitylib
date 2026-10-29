@@ -9,7 +9,7 @@ module
 
 public import Complexity.Computability.Machines.Turing.TM2.Reverse.Tape
 public import Complexity.Computability.Machines.Turing.MultiTape.Deterministic
-public import Cslib.Computability.Machines.Turing.MultiTape.TapeLemmas
+public import Complexity.Computability.Machines.Turing.MultiTape.TapeLemmas
 
 /-!
 # Raw tape storage equals native visited space
@@ -42,14 +42,14 @@ variable {k : ℕ} {Symbol State : Type*} {input : List Symbol}
 def window (t : RawTape Symbol) (pos : ℤ) : Finset ℤ :=
   Finset.Icc (pos - t.left.length) (pos + t.right.length)
 
-@[simp] private theorem card_window (t : RawTape Symbol) (pos : ℤ) :
+@[simp] theorem card_window (t : RawTape Symbol) (pos : ℤ) :
     (t.window pos).card = t.span := by
   rw [window, Int.card_Icc]
   unfold span
   omega
 
 /-- A tape step stores precisely its previous window and its new head position. -/
-private theorem window_step (t : RawTape Symbol) (a : Option (Option Symbol) × SignType) (pos : ℤ) :
+theorem window_step (t : RawTape Symbol) (a : Option (Option Symbol) × SignType) (pos : ℤ) :
     (t.step a).window (pos + a.2) = insert (pos + a.2) (t.window pos) := by
   ext z
   simp only [window, Finset.mem_Icc, Finset.mem_insert]
@@ -66,7 +66,7 @@ private theorem window_step (t : RawTape Symbol) (a : Option (Option Symbol) × 
   | some q => (tm.tr q c.inputSymbol c.workTapeSymbols).workTapes i
 
 /-- The effective action gives the exact new head position, including after halting. -/
-private theorem nativeAction_pos (tm : MultiTapeTM k Symbol State)
+theorem nativeAction_pos (tm : MultiTapeTM k Symbol State)
     (c : Cfg k Symbol State input) (i : Fin k) :
     (tm.step c).workTapePos i = c.workTapePos i + (nativeAction tm c i).2 := by
   cases hs : c.state with
@@ -74,7 +74,7 @@ private theorem nativeAction_pos (tm : MultiTapeTM k Symbol State)
   | some q => rw [tm.step_of_state hs]; simp [nativeAction, hs, Action.apply]
 
 /-- Raw tape semantics follows the native step, also at halted configurations. -/
-private theorem Represents.nativeStep {t : RawTape Symbol} {tm : MultiTapeTM k Symbol State}
+theorem Represents.nativeStep {t : RawTape Symbol} {tm : MultiTapeTM k Symbol State}
     {c : Cfg k Symbol State input} {i : Fin k}
     (h : t.Represents (c.workTapes i) (c.workTapePos i)) :
     (t.step (nativeAction tm c i)).Represents
@@ -104,12 +104,14 @@ theorem represents_run (tm : MultiTapeTM k Symbol State) (input : List Symbol) (
   | zero => exact Represents.init
   | succ n ih => rw [run, runFrom_succ]; exact ih.nativeStep
 
-private theorem visited_succ (tm : MultiTapeTM k Symbol State)
+/-- Advancing a deterministic run by one step inserts the new head position into the visited set. -/
+theorem visited_succ (tm : MultiTapeTM k Symbol State)
     (c : Cfg k Symbol State input) (n : ℕ) (i : Fin k) :
-    tm.visitedByTapeHead c (n + 1) i =
-      insert ((tm.runFrom c (n + 1)).workTapePos i) (tm.visitedByTapeHead c n i) := by
+    (MultiTapeNTM.RunPath.ofDeterministic tm c (n + 1)).visitedByTapeHead i =
+      insert ((tm.runFrom c (n + 1)).workTapePos i)
+        ((MultiTapeNTM.RunPath.ofDeterministic tm c n).visitedByTapeHead i) := by
   ext z
-  simp only [tm.mem_visitedByTapeHead, Finset.mem_insert]
+  simp only [MultiTapeNTM.RunPath.mem_visitedByTapeHead_ofDeterministic, Finset.mem_insert]
   constructor
   · rintro ⟨m, hm, hz⟩
     by_cases h : m = n + 1
@@ -123,9 +125,12 @@ private theorem visited_succ (tm : MultiTapeTM k Symbol State)
 theorem window_run (tm : MultiTapeTM k Symbol State) (input : List Symbol) (n : ℕ)
     (i : Fin k) :
     (run tm input n i).window ((tm.runFrom (tm.initCfg input) n).workTapePos i) =
-      tm.visitedByTapeHead (tm.initCfg input) n i := by
+      (MultiTapeNTM.RunPath.ofDeterministic tm (tm.initCfg input) n).visitedByTapeHead i := by
   induction n with
-  | zero => simp [run, window, init, MultiTapeTM.visitedByTapeHead, runFrom, MultiTapeNTM.initCfg]
+  | zero =>
+    ext z
+    rw [MultiTapeNTM.RunPath.mem_visitedByTapeHead_ofDeterministic]
+    simp [run, window, init, runFrom, MultiTapeNTM.initCfg, eq_comm]
   | succ n ih =>
     rw [run, runFrom_succ, nativeAction_pos, window_step, ih, visited_succ, runFrom_succ,
       nativeAction_pos]
@@ -133,13 +138,15 @@ theorem window_run (tm : MultiTapeTM k Symbol State) (input : List Symbol) (n : 
 /-- Raw tape storage is exactly the number of native visited cells on that tape. -/
 theorem span_run_eq_spaceUsedByTape (tm : MultiTapeTM k Symbol State) (input : List Symbol)
     (n : ℕ) (i : Fin k) :
-    (run tm input n i).span = tm.spaceUsedByTape (tm.initCfg input) n i := by
+    (run tm input n i).span =
+      (MultiTapeNTM.RunPath.ofDeterministic tm (tm.initCfg input) n).spaceUsedByTape i := by
   rw [← card_window _ ((tm.runFrom (tm.initCfg input) n).workTapePos i), window_run]
   rfl
 
 /-- Summed raw storage equals native space, with no runtime term. -/
 theorem sum_span_run_eq_space (tm : MultiTapeTM k Symbol State) (input : List Symbol) (n : ℕ) :
-    ∑ i, (run tm input n i).span = tm.space (tm.initCfg input) n := by
+    ∑ i, (run tm input n i).span =
+      (MultiTapeNTM.RunPath.ofDeterministic tm (tm.initCfg input) n).space := by
   simp only [span_run_eq_spaceUsedByTape]
   rfl
 

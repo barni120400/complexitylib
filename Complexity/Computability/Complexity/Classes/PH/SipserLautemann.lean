@@ -349,10 +349,19 @@ def verifier (enc : α ↪ List Bool) (p : Polynomial ℕ) (V : α × List Bool 
 theorem verifier_polyTime {enc : α ↪ List Bool} {p : Polynomial ℕ} {V : α × List Bool → Bool}
     (hV : ComputableInPolyTime V (encPair enc encBits) encBool) :
     ComputableInPolyTime (verifier enc p V) (encPair enc encBits) encBool := by
-  have hV := hV.tidy
-  refine .of_tidy ?_
-  unfold verifier shiftAccepts trialSeed shifts runs halfRuns
-  fun_prop
+  unfold verifier
+  apply ComputableInPolyTime.anyWithInput (encA := encUnary)
+  · unfold shifts runs halfRuns
+    fun_prop
+  · unfold shiftAccepts
+    apply ComputableInPolyTime.unary_lt'
+    · unfold halfRuns
+      fun_prop
+    · apply ComputableInPolyTime.countPWithInput (encA := encUnary)
+      · unfold runs halfRuns
+        fun_prop
+      · unfold trialSeed shifts runs halfRuns
+        fun_prop
 
 /-! ### Correctness of the matrix verifier -/
 

@@ -48,8 +48,8 @@ phases:
   `(ofSingleTapeTM tm).Computes x y`.
 * `Cslib.Turing.SingleTapeTM.TimeComputable.computableInTimeAndSpace`: transfers
   `SingleTapeTM.TimeComputable` to `MultiTapeTM.ComputableInTimeAndSpace`.
-* `Cslib.Turing.SingleTapeTM.PolyTimeComputable.computableTidilyInPolyTime`: transfers
-  `SingleTapeTM.PolyTimeComputable` to `MultiTapeTM.ComputableTidilyInPolyTime`.
+* `Cslib.Turing.SingleTapeTM.PolyTimeComputable.computableInPolyTime`: transfers
+  `SingleTapeTM.PolyTimeComputable` to `MultiTapeTM.ComputableInPolyTime`.
 
 ## References
 
@@ -360,7 +360,9 @@ theorem computesInTimeAndSpace_ofSingleTapeTM (tm : SingleTapeTM Symbol)
   rcases runFrom_ofSingleTapeTM_of_outputsWithinTime tm h with ⟨hhalt, hout⟩
   have h1 : (ofSingleTapeTM tm).ComputesInTimeAndSpace x y T (1 * T + 1) :=
     ⟨⟨T, hhalt, hout⟩, runsInTime_of_halted hhalt,
-      runsInSpace_of_halted hhalt ((ofSingleTapeTM tm).space_linear _ T)⟩
+      runsInSpace_of_halted hhalt
+        ((MultiTapeNTM.RunPath.space_le_mul_time_add_one (.ofDeterministic _ _ T)).trans_eq
+          (Nat.mul_add_one _ _))⟩
   exact ⟨h1.1, h1.2.1, h1.2.2.mono (by omega)⟩
 
 /-- Input-only time bound for `ofSingleTapeTM tm`: since `y.length ≤ max 1 x.length + t`,
@@ -440,29 +442,30 @@ theorem TimeComputable.computableInTimeAndSpace {α β : Type*} {f : List Bool �
   ⟨1, OfSingleTapeState hf.tm, inferInstance, ofSingleTapeTM hf.tm,
     hf.computesFunInTimeAndSpace encIn encOut g hfg⟩
 
-/-- A `SingleTapeTM.PolyTimeComputable` function over `Bool` is tidily computable in polynomial
-time on a multi-tape Turing machine (`MultiTapeTM.ComputableTidilyInPolyTime`). -/
-theorem PolyTimeComputable.computableTidilyInPolyTime {α β : Type*} {f : List Bool → List Bool}
+/-- A `SingleTapeTM.PolyTimeComputable` function over `Bool` is computable in polynomial time on a
+multi-tape Turing machine (`MultiTapeTM.ComputableInPolyTime`). -/
+theorem PolyTimeComputable.computableInPolyTime {α β : Type*} {f : List Bool → List Bool}
     (hf : PolyTimeComputable f) (encIn : α ↪ List Bool) (encOut : β ↪ List Bool) (g : α → β)
     (hfg : ∀ a, f (encIn a) = encOut (g a)) :
-    ComputableTidilyInPolyTime g encIn encOut := by
-  have htime : PolynomiallyBounded (fun n => 3 * n + 2 * hf.poly.eval n + 6) := by fun_prop
-  have hcomp : ComputableInTimeAndSpace g encIn encOut
-      (fun a => 3 * (encIn a).length + 2 * hf.poly.eval (encIn a).length + 6)
-      (fun a => 3 * (encIn a).length + 2 * hf.timeBound (encIn a).length + 7) := by
-    refine
-      (hf.toTimeComputable.computableInTimeAndSpace encIn encOut g hfg).mono ?_ (fun _ => le_rfl)
-    intro a
+    ComputableInPolyTime g encIn encOut := by
+  refine ⟨fun n => 3 * n + 2 * hf.poly.eval n + 6,
+    fun n => 3 * n + 2 * hf.poly.eval n + 7, by fun_prop, by fun_prop, ?_⟩
+  refine (hf.toTimeComputable.computableInTimeAndSpace encIn encOut g hfg).mono ?_ ?_
+  · intro a
     have hb := hf.bounds (encIn a).length
+    dsimp only
     omega
-  exact hcomp.computableTidilyInPolyTime htime
+  · intro a
+    have hb := hf.bounds (encIn a).length
+    dsimp only
+    omega
 
-/-- Special case of `PolyTimeComputable.computableTidilyInPolyTime` for `f : List Bool → List Bool`
+/-- Special case of `PolyTimeComputable.computableInPolyTime` for `f : List Bool → List Bool`
 under the identity encoding. -/
-theorem PolyTimeComputable.computableTidilyInPolyTime_id {f : List Bool → List Bool}
+theorem PolyTimeComputable.computableInPolyTime_id {f : List Bool → List Bool}
     (hf : PolyTimeComputable f) :
-    ComputableTidilyInPolyTime f (Function.Embedding.refl _) (Function.Embedding.refl _) :=
-  hf.computableTidilyInPolyTime (Function.Embedding.refl _) (Function.Embedding.refl _) f
+    ComputableInPolyTime f (Function.Embedding.refl _) (Function.Embedding.refl _) :=
+  hf.computableInPolyTime (Function.Embedding.refl _) (Function.Embedding.refl _) f
     (fun _ => rfl)
 
 end Cslib.Turing.SingleTapeTM

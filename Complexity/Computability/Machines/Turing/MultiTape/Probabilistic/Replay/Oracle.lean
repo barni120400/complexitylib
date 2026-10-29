@@ -11,6 +11,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.R
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Fold
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.List
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
+import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 
 /-!
 # Deterministic replay of Boolean oracle replies
@@ -37,6 +38,9 @@ supplied random coins for a closed machine using an additional work tape.
 
 * `Turing.MultiTapePTM.replayConfig_pt`: replay is polynomial-time.
 * `Turing.MultiTapePTM.replayPrefix_pt`: prefix configurations are uniformly polynomial-time.
+* `Turing.MultiTapePTM.computableInPolyTime_replayPrefix`,
+  `Turing.MultiTapePTM.computableInPolyTime_replayOutput`: prefix configurations and the replayed
+  output are polynomial-time, for plain certificates.
 * `Turing.MultiTapePTM.length_pendingRequest_replayPrefix_le`: request size is bounded by the
   number of elapsed instructions.
 * `Turing.MultiTapePTM.replayOutput_oracleReplies`: canonical replay is the certified oracle run.
@@ -81,7 +85,7 @@ def replayOutput (input answers : List Bool) : List Bool :=
   (machine.replayConfig input answers).tapes.output
 
 /-- A supplied bit is equivalent to a constant one-bit oracle for this instruction. -/
-private theorem replyStep_eq_answerStep (cfg : FiniteConfig k Bool Control Operation) (bit : Bool) :
+theorem replyStep_eq_answerStep (cfg : FiniteConfig k Bool Control Operation) (bit : Bool) :
     machine.replyStep cfg bit = machine.answerStep (fun _ => [bit]) cfg :=
   (machine.answerStep_bit (fun _ => bit) cfg).symm
 
@@ -107,7 +111,7 @@ theorem replayFrom_append (cfg : FiniteConfig k Bool Control Operation)
   List.foldl_append
 
 /-- Appending a bit executes exactly one further instruction. -/
-private theorem replayConfig_append_singleton (input answers : List Bool) (bit : Bool) :
+theorem replayConfig_append_singleton (input answers : List Bool) (bit : Bool) :
     machine.replayConfig input (answers ++ [bit]) =
       machine.replyStep (machine.replayConfig input answers) bit := by
   simp only [replayConfig, replayFrom, List.foldl_append, List.foldl_cons, List.foldl_nil]
@@ -121,7 +125,7 @@ theorem replayPrefix_succ (input answers : List Bool) (index : ℕ)
   rw [List.take_succ_eq_append_getElem hindex, replayConfig_append_singleton]
 
 /-- Every replayed instruction preserves the native one-bit-reply storage bound. -/
-private theorem spaceBound_replyStep {inputSize steps : ℕ}
+theorem spaceBound_replyStep {inputSize steps : ℕ}
     {cfg : FiniteConfig k Bool Control Operation}
     (h : FiniteConfig.SpaceBound inputSize steps 1 cfg) (bit : Bool) :
     FiniteConfig.SpaceBound inputSize (steps + 1) 1 (machine.replyStep cfg bit) := by
@@ -129,7 +133,7 @@ private theorem spaceBound_replyStep {inputSize steps : ℕ}
   exact machine.spaceBound_answerStep (fun _ => bit) h
 
 /-- A transcript of length `r` executes `r` instructions with replies of length one. -/
-private theorem spaceBound_replayFrom {inputSize steps : ℕ}
+theorem spaceBound_replayFrom {inputSize steps : ℕ}
     {cfg : FiniteConfig k Bool Control Operation}
     (h : FiniteConfig.SpaceBound inputSize steps 1 cfg) (answers : List Bool) :
     FiniteConfig.SpaceBound inputSize (steps + answers.length) 1
@@ -141,13 +145,13 @@ private theorem spaceBound_replayFrom {inputSize steps : ℕ}
       Nat.add_left_comm, Nat.add_comm] using ih (machine.spaceBound_replyStep h bit)
 
 /-- Replay from the initial configuration has linear storage in the input and transcript. -/
-private theorem spaceBound_replayConfig (input answers : List Bool) :
+theorem spaceBound_replayConfig (input answers : List Bool) :
     FiniteConfig.SpaceBound input.length answers.length 1 (machine.replayConfig input answers) := by
   simpa only [replayConfig, Nat.zero_add] using
     machine.spaceBound_replayFrom (FiniteConfig.spaceBound_init machine.initial input 1) answers
 
 /-- A pending request contains at most one symbol per elapsed native instruction. -/
-private theorem length_pendingRequest_replayConfig_le (input answers : List Bool) :
+theorem length_pendingRequest_replayConfig_le (input answers : List Bool) :
     (machine.pendingRequest (machine.replayConfig input answers)).length ≤ answers.length :=
   machine.length_pendingRequest_le (machine.spaceBound_replayConfig input answers)
 
@@ -197,6 +201,12 @@ variable [Finite Control] [Fintype Operation]
   exact machine.replayConfig_pt.comp (g := fun p : (List Bool × List Bool) × ℕ =>
     (p.1.1, p.1.2.take p.2)) (by fun_prop)
 
+/-- `Turing.MultiTapePTM.replayPrefix_pt` for plain certificates. -/
+@[fun_prop] theorem computableInPolyTime_replayPrefix : ComputableInPolyTime
+    (fun p : (List Bool × List Bool) × ℕ => machine.replayPrefix p.1.1 p.1.2 p.2)
+    (encPair (encPair encBits encBits) encUnary) encFiniteConfig :=
+  machine.replayPrefix_pt.computableInPolyTime
+
 end PolyTime
 
 section PolyTimeOutput
@@ -204,14 +214,14 @@ section PolyTimeOutput
 variable [Finite Control] [Finite Operation]
 
 /-- The replayed output is polynomial-time. -/
-@[fun_prop] theorem replayOutput_pt : ComputableTidilyInPolyTime
+@[fun_prop] theorem computableInPolyTime_replayOutput : ComputableInPolyTime
     (fun p : List Bool × List Bool => machine.replayOutput p.1 p.2)
     (encPair encBits encBits) encBits := by
   let _ := Fintype.ofFinite Operation
   have hout : ComputableTidilyInPolyTime
       (fun cfg : FiniteConfig k Bool Control Operation => cfg.tapes.output)
       encFiniteConfig encBits := by fun_prop
-  exact hout.comp machine.replayConfig_pt
+  exact (hout.comp machine.replayConfig_pt).computableInPolyTime
 
 /-- The next query in a guessed-reply execution is uniformly polynomial-time. -/
 @[fun_prop] theorem replayPrefix_pendingRequest_pt : ComputableTidilyInPolyTime
@@ -246,7 +256,7 @@ def oracleReplies (g : List Bool → Bool) (fuel : ℕ) (input : List Bool) : Li
   machine.oracleRepliesFrom g (FiniteConfig.init machine.initial input) fuel
 
 /-- A canonical transcript has exactly one bit per clocked instruction. -/
-private theorem length_oracleRepliesFrom (g : List Bool → Bool)
+theorem length_oracleRepliesFrom (g : List Bool → Bool)
     (cfg : FiniteConfig k Bool Control Operation) (fuel : ℕ) :
     (machine.oracleRepliesFrom g cfg fuel).length = fuel := by
   induction fuel generalizing cfg with
@@ -259,7 +269,7 @@ theorem length_oracleReplies (g : List Bool → Bool) (fuel : ℕ) (input : List
   machine.length_oracleRepliesFrom g _ fuel
 
 /-- Canonical transcripts are consistent under truncation of their clock. -/
-private theorem take_oracleRepliesFrom (g : List Bool → Bool)
+theorem take_oracleRepliesFrom (g : List Bool → Bool)
     (cfg : FiniteConfig k Bool Control Operation) (fuel index : ℕ) :
     (machine.oracleRepliesFrom g cfg fuel).take index =
       machine.oracleRepliesFrom g cfg (min index fuel) := by
@@ -281,7 +291,7 @@ private theorem replyStep_oracleBit (g : List Bool → Bool)
   split <;> rfl
 
 /-- Canonical replay recovers the entire finite configuration, not only its output. -/
-private theorem replayFrom_oracleRepliesFrom (g : List Bool → Bool)
+theorem replayFrom_oracleRepliesFrom (g : List Bool → Bool)
     (cfg : FiniteConfig k Bool Control Operation) (fuel : ℕ) :
     machine.replayFrom cfg (machine.oracleRepliesFrom g cfg fuel) =
       (machine.answerStep (fun q => [g q.2]))^[fuel] cfg := by
@@ -300,7 +310,7 @@ theorem replayConfig_oracleReplies (g : List Bool → Bool) (fuel : ℕ) (input 
   machine.replayFrom_oracleRepliesFrom g _ fuel
 
 /-- A canonical prefix recovers the configuration after the corresponding elapsed instructions. -/
-private theorem replayPrefix_oracleReplies (g : List Bool → Bool) (fuel : ℕ) (input : List Bool)
+theorem replayPrefix_oracleReplies (g : List Bool → Bool) (fuel : ℕ) (input : List Bool)
     (index : ℕ) :
     machine.replayPrefix input (machine.oracleReplies g fuel input) index =
       (machine.answerStep (fun q => [g q.2]))^[min index fuel]
@@ -311,7 +321,7 @@ private theorem replayPrefix_oracleReplies (g : List Bool → Bool) (fuel : ℕ)
 
 /-- The bit of a canonical transcript at a live clock index is the pending oracle answer, with
 `false` at local or halted instructions. -/
-private theorem getD_oracleRepliesFrom (g : List Bool → Bool)
+theorem getD_oracleRepliesFrom (g : List Bool → Bool)
     (cfg : FiniteConfig k Bool Control Operation) (fuel index : ℕ) (hindex : index < fuel) :
     (machine.oracleRepliesFrom g cfg fuel).getD index false =
       let current := (machine.answerStep (fun q => [g q.2]))^[index] cfg

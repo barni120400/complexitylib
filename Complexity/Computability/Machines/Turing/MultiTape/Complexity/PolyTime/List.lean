@@ -14,6 +14,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Lists
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
+import Complexity.Computability.Machines.Turing.MultiTape.Internal.DecoderPrimitives
 
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Length
@@ -160,14 +161,6 @@ theorem bitsReverse : ComputableTidilyInPolyTime List.reverse encBits encBits :=
       (encPair encBits encBool) encBits by fun_prop)
     (growth := 1) (fun _ _ => by simp)
   simpa using h
-
-/-- Reverse a computed word, fixing its raw intermediate encoding before proof search.
-The input certificate may itself convert from another representation. -/
-@[fun_prop]
-theorem bitsReverseWithInput {word : γ → List Bool}
-    (hword : ComputableTidilyInPolyTime word encIn encBits) :
-    ComputableTidilyInPolyTime (fun a => (word a).reverse) encIn encBits :=
-  bitsReverse.comp hword
 
 /-- Prepending an element to a framed list is polynomial-time. -/
 @[fun_prop]
@@ -941,7 +934,37 @@ theorem length_list {α : Type} (enc : α ↪ List Bool) :
 theorem length_bits :
     ComputableInPolyTime (fun (l : List Bool) => l.length)
   encBits encUnary :=
-  .of_tidy Turing.MultiTapeTM.ComputableTidilyInPolyTime.length_bits
+  Internal.DecoderWords.unary_degree.computableInPolyTime
+
+/-- Count matches of a predicate that captures the original input. The count is in unary. -/
+@[fun_prop]
+theorem countPWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun p : γ × α => test p.1 p.2)
+      (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun x => (list x).countP (test x)) encIn encUnary :=
+  .of_tidy (ComputableTidilyInPolyTime.countPWithInput hlist.tidy htest.tidy)
+
+/-- Read a computed framed list at a computed unary index with a fixed fallback, inferring the
+element encoding from the list. -/
+@[fun_prop]
+theorem listGetDWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {list : γ → List α} {index : γ → ℕ}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (hindex : ComputableInPolyTime index encIn encUnary) (fallback : α) :
+    ComputableInPolyTime (fun x => (list x).getD (index x) fallback) encIn encA :=
+  (listGetD fallback).comp (hlist.prod hindex)
+
+/-- Read a computed bit string at a computed unary index. Registered after `listGetDWithInput` so
+`fun_prop` tries raw bit-string lookup before framed-list lookup on `Bool`. -/
+@[fun_prop]
+theorem bitsGetDWithInput {γ : Type} {encIn : γ ↪ List Bool}
+    {list : γ → List Bool} {index : γ → ℕ}
+    (hlist : ComputableInPolyTime list encIn encBits)
+    (hindex : ComputableInPolyTime index encIn encUnary) (fallback : Bool) :
+    ComputableInPolyTime (fun x => (list x).getD (index x) fallback) encIn encBool :=
+  (listGetD fallback).comp (hlist.prod hindex)
 
 /-- Drop a computed unary number of bits from a computed raw word. Counts beyond the word
 length return the empty word, with no promise on the count or input. -/
@@ -959,6 +982,42 @@ theorem length_bits_comp {α : Type} {input : α ↪ List Bool} {word : α → L
     (hword : ComputableInPolyTime word input encBits) :
     ComputableInPolyTime (fun a => (word a).length) input encUnary :=
   length_bits.comp hword
+
+/-- Find the first list element passing a test that captures the original input. -/
+@[fun_prop]
+theorem findWithInput {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {test : γ → α → Bool} {list : γ → List α}
+    (hlist : ComputableInPolyTime list encIn (encList encA))
+    (htest : ComputableInPolyTime (fun p : γ × α => test p.1 p.2) (encPair encIn encA) encBool) :
+    ComputableInPolyTime (fun x => (list x).find? (test x)) encIn (encOption encA) :=
+  .of_tidy (ComputableTidilyInPolyTime.findWithInput hlist.tidy htest.tidy)
+
+/-- Count the list elements passing a test with a parameter, in unary. -/
+theorem countPWith {α γ π : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {encP : π ↪ List Bool} {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableInPolyTime par encIn encP) (hlist : ComputableInPolyTime list encIn encL) :
+    ComputableInPolyTime (fun x => (list x).countP fun a => test (par x, a)) encIn encUnary :=
+  .of_tidy (ComputableTidilyInPolyTime.countPWith htest.tidy hpar.tidy hlist.tidy)
+
+/-- Test whether some list element passes a test with a parameter. -/
+theorem anyWithEncoding {α γ π : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {encP : π ↪ List Bool} {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableInPolyTime par encIn encP) (hlist : ComputableInPolyTime list encIn encL) :
+    ComputableInPolyTime (fun x => (list x).any fun a => test (par x, a)) encIn encBool :=
+  .of_tidy (ComputableTidilyInPolyTime.anyWithEncoding htest.tidy hpar.tidy hlist.tidy)
+
+/-- Test whether every list element passes a test with a parameter. -/
+theorem allWithEncoding {α γ π : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
+    {encP : π ↪ List Bool} {encL : List α ↪ List Bool} [ListEncoding encA encL]
+    [SizedListEncoding encA encL] {test : π × α → Bool} {par : γ → π} {list : γ → List α}
+    (htest : ComputableInPolyTime test (encPair encP encA) encBool)
+    (hpar : ComputableInPolyTime par encIn encP) (hlist : ComputableInPolyTime list encIn encL) :
+    ComputableInPolyTime (fun x => (list x).all fun a => test (par x, a)) encIn encBool :=
+  .of_tidy (ComputableTidilyInPolyTime.allWithEncoding htest.tidy hpar.tidy hlist.tidy)
 
 end Turing.MultiTapeTM.ComputableInPolyTime
 

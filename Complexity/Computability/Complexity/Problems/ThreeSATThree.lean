@@ -9,6 +9,7 @@ module
 
 public import Complexity.Computability.Complexity.Problems.ThreeSAT
 public import Complexity.Logics.Propositional.CNF.ThreeOccurrence
+import Complexity.Logics.Propositional.CNF.ModelCount.Relabel
 import Complexity.Logics.Propositional.CNF.ThreeOccurrence.PolyTime
 import Complexity.Computability.Complexity.Problems.SAT.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
@@ -31,7 +32,9 @@ Original natural labels stay binary throughout; only syntactic positions use una
 
 The construction is adapted from `lean-trominoes` revision
 `6d5b36c15cec6cb18d30137b7f1c7fb92ea24332`,
-`SAT/ThreeSAT/PeriodicThreeSATThree{,Correctness,ExactSize}.lean`.
+[PeriodicThreeSATThree.lean](https://github.com/edemaine/lean-trominoes/blob/6d5b36c15cec6cb18d30137b7f1c7fb92ea24332/LeanTrominoes/SAT/ThreeSAT/PeriodicThreeSATThree.lean),
+[PeriodicThreeSATThreeCorrectness.lean](https://github.com/edemaine/lean-trominoes/blob/6d5b36c15cec6cb18d30137b7f1c7fb92ea24332/LeanTrominoes/SAT/ThreeSAT/PeriodicThreeSATThreeCorrectness.lean), and
+[PeriodicThreeSATThreeExactSize.lean](https://github.com/edemaine/lean-trominoes/blob/6d5b36c15cec6cb18d30137b7f1c7fb92ea24332/LeanTrominoes/SAT/ThreeSAT/PeriodicThreeSATThreeExactSize.lean).
 This endpoint imposes no planarity condition.
 
 ## Main definitions
@@ -42,6 +45,7 @@ This endpoint imposes no planarity condition.
 ## Main results
 
 * `Cslib.Complexity.mem_ThreeSATThree_toThreeSATThree_iff`: correctness of the reduction.
+* `Cslib.Complexity.modelCount_toThreeSATThree`: preservation of counts for width-three inputs.
 * `Cslib.Complexity.computableInPolyTime_toThreeSATThree`: native polynomial time under `encCNF`.
 * `Cslib.Complexity.ThreeSATThree_npComplete`: 3SAT-3 is NP-complete.
 
@@ -114,15 +118,12 @@ theorem isVerifier : IsVerifier encCNF Polynomial.X verifier ThreeSATThree := by
   rw [he]
   exact SAT.isVerifier.guard
 
-attribute [local fun_prop] ComputableInPolyTime.tidy in
 /-- The width/occurrence tests and SAT evaluation run in native polynomial time. -/
 @[fun_prop]
 theorem computableInPolyTime_verifier :
     ComputableInPolyTime verifier (encPair encCNF encBits) encBool := by
-  have hv := (CNF.computableInPolyTime_vars encNat).tidy
-  have hs := SAT.computableInPolyTime_verifier.tidy
-  refine .of_tidy ?_
   unfold verifier
+  simp only [List.count_eq_countP]
   fun_prop
 
 /-- 3SAT-3 belongs to NP under the ordinary binary CNF encoding. -/
@@ -148,6 +149,14 @@ theorem length_vars_toThreeSATThree (φ : CNF ℕ) (hφ : ∀ c ∈ φ, c.length
     (toThreeSATThree φ).vars.length = 3 * φ.vars.length := by
   have hg : φ.all (fun c => decide (c.length ≤ 3)) = true := by simpa using hφ
   simp [toThreeSATThree, hg, CNF.vars_relabel, CNF.length_vars_toThreeOccurrence]
+
+/-- For a width-three input, occurrence splitting and injective numbering preserve the number of
+satisfying assignments on occurring variables. -/
+theorem modelCount_toThreeSATThree (φ : CNF ℕ) (hφ : ∀ c ∈ φ, c.length ≤ 3) :
+    (toThreeSATThree φ).modelCount = φ.modelCount := by
+  have hg : φ.all (fun c => decide (c.length ≤ 3)) = true := by simpa using hφ
+  simp only [toThreeSATThree, hg, ↓reduceIte]
+  rw [CNF.modelCount_relabel ThreeSATThree.numberCopy_injective, CNF.modelCount_toThreeOccurrence]
 
 /-- The total splitter is polynomial-time under binary `encCNF`. -/
 @[fun_prop]

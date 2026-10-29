@@ -67,4 +67,33 @@ example : |(((interpret honest askOnce).run false).bind (fun x => PMF.pure x.1) 
 example : ((interpret silent askOnce).run false).toOuterMeasure {x | x.2 = true} = 1 / 2 := by
   rw [← identicalUntilBad.bad_eq, toOuterMeasure_bad]
 
+open Cslib.Crypto Cslib.Crypto.Game
+open scoped NNReal ENNReal
+
+-- The games differ only at one of the two equiprobable inputs; the premise is checked here.
+example : Game.advantage
+    ((PMF.uniformOfFintype (ZMod 2)).bind fun x => PMF.pure (decide (x = 0)))
+    ((PMF.uniformOfFintype (ZMod 2)).bind fun _ => PMF.pure false) ≤ 1 / 2 := by
+  exact advantage_uniform_bind_of_eq_of_ne (0 : ZMod 2)
+    (fun x => PMF.pure (decide (x = 0))) (fun _ => PMF.pure false)
+    (fun x hx => by simp [hx])
+
+/-- Concrete non-bad query (`req = [false]`) leaves the witness state `none` and evaluates to
+`PMF.pure false`. -/
+example :
+    runFinderOracle id (fun r => r == [true]) id
+      ((query (Sum.inr ((), [false])) >>= pure) : WordOracleComp Unit (List Bool))
+      none (fun w => w == [true]) = PMF.pure false := by
+  rw [runFinderOracle_query_inr]
+  simp [runFinderOracle_pure]
+
+/-- Concrete bad query (`req = [true]`) records the witness `some [true]` and evaluates to
+`PMF.pure true`. -/
+example :
+    runFinderOracle id (fun r => r == [true]) id
+      ((query (Sum.inr ((), [true])) >>= pure) : WordOracleComp Unit (List Bool))
+      none (fun w => w == [true]) = PMF.pure true := by
+  rw [runFinderOracle_query_inr]
+  simp [runFinderOracle_pure]
+
 end ComplexityTests.Crypto.UntilBad
