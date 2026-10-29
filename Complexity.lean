@@ -1589,7 +1589,6 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.S
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Words
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
-public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatStream
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Option
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Padding
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Pair
