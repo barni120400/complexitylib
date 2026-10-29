@@ -484,6 +484,12 @@ each statement against the numbered result. Organize modules by subject, not cha
   `ShortestPathSpec p bound` predicate in `Dijkstra/HeapStatement.lean` across `LogLinearSpec`,
   `FibonacciSpec`, and `FibonacciLinearSpec`.
 
+- **Native ExactTriangle preparation** ([#1532](https://github.com/cslib-community/complexitylib/issues/1532)):
+  initialized execution computes the complete catalogue and raw zero/one instance matrices,
+  with exact finite readback, logarithmic width, polynomial prefix words and address space,
+  and a `690n²Dg` charged bound in the source's admissible parameter regime. Prime selection,
+  solving the prepared instances, product/backend composition and the full #1394 endpoint remain.
+
 ## Coverage and reuse
 
 The long-term bar is to support formalizing every paper in the
