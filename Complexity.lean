@@ -1565,6 +1565,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.A
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Bits
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Division
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Subtraction
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Nat.Words
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatLength
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatPower
 public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.NatStream
@@ -1594,6 +1595,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import Complexity.Computability.Machines.Turing.MultiTape.Halting.SMN
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryComparison
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryCounter
+public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryNormalization
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinaryPrimitives
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.BinarySizeFacts
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.CodecWordMachines
