@@ -218,6 +218,7 @@ public import Complexity.Computability.Circuit.Boolean.Comparison
 public import Complexity.Computability.Circuit.Boolean.Conondeterministic
 public import Complexity.Computability.Circuit.Boolean.ConstDepth
 public import Complexity.Computability.Circuit.Boolean.Continuity
+public import Complexity.Computability.Circuit.Boolean.Convolution
 public import Complexity.Computability.Circuit.Boolean.Correction
 public import Complexity.Computability.Circuit.Boolean.DepthClasses
 public import Complexity.Computability.Circuit.Boolean.DepthTime
@@ -1965,6 +1966,8 @@ public import Complexity.Foundations.BooleanAnalysis.LightPatterns
 public import Complexity.Foundations.BooleanAnalysis.Linearity
 public import Complexity.Foundations.BooleanAnalysis.LongCode
 public import Complexity.Foundations.BooleanAnalysis.LowDegree
+public import Complexity.Foundations.BooleanAnalysis.LowDegree.Addition
+public import Complexity.Foundations.BooleanAnalysis.LowDegree.Dimension
 public import Complexity.Foundations.BooleanAnalysis.LowDegreeParity
 public import Complexity.Foundations.BooleanAnalysis.MaximalSupport
 public import Complexity.Foundations.BooleanAnalysis.MirrorSets
@@ -1982,6 +1985,7 @@ public import Complexity.Foundations.BooleanAnalysis.SparseEquations
 public import Complexity.Foundations.BooleanAnalysis.SparseHermiteRecovery
 public import Complexity.Foundations.BooleanAnalysis.SparseReplacementDesign
 public import Complexity.Foundations.BooleanAnalysis.Symmetrization
+public import Complexity.Foundations.Combinatorics.Additive.SumsetCover
 public import Complexity.Foundations.Combinatorics.AffineDisperser
 public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Basic
@@ -2070,6 +2074,7 @@ public import Complexity.Foundations.Combinatorics.ReplacementCounting
 public import Complexity.Foundations.Combinatorics.ReplacementDesignBridge
 public import Complexity.Foundations.Combinatorics.SharedSummaries
 public import Complexity.Foundations.Combinatorics.SimpleGraph.Metric
+public import Complexity.Foundations.Combinatorics.SmallSubsets
 public import Complexity.Foundations.Combinatorics.SubsetPairCount
 public import Complexity.Foundations.Combinatorics.Sunflower
 public import Complexity.Foundations.Combinatorics.Sunflower.LowerBound
@@ -2084,6 +2089,7 @@ public import Complexity.Foundations.Data.BitString.Agree
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Binary
 public import Complexity.Foundations.Data.BitString.Block
+public import Complexity.Foundations.Data.BitString.Convolution
 public import Complexity.Foundations.Data.BitString.Counter
 public import Complexity.Foundations.Data.BitString.CoverCoding
 public import Complexity.Foundations.Data.BitString.Enumeration
@@ -2252,6 +2258,7 @@ public import Complexity.Foundations.GroupTheory.Perm.FiveCycle
 public import Complexity.Foundations.GroupTheory.Perm.Last
 public import Complexity.Foundations.LinearAlgebra.CubeSum
 public import Complexity.Foundations.LinearAlgebra.ExchangeReplacement
+public import Complexity.Foundations.LinearAlgebra.ImageSparsification
 public import Complexity.Foundations.LinearAlgebra.Interpolation
 public import Complexity.Foundations.LinearAlgebra.KernelVector
 public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
