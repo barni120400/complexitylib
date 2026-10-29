@@ -92,6 +92,7 @@ public import Complexity.Algorithms.WordRAM.FusionTree.Query.Traversal
 public import Complexity.Algorithms.WordRAM.FusionTree.Rank
 public import Complexity.Algorithms.WordRAM.FusionTree.ReadHeader
 public import Complexity.Algorithms.WordRAM.FusionTree.Static
+public import Complexity.Algorithms.WordRAM.Histogram
 public import Complexity.Algorithms.WordRAM.Karger.Contract
 public import Complexity.Algorithms.WordRAM.Karger.FastCut
 public import Complexity.Algorithms.WordRAM.Karger.Graph
@@ -127,6 +128,9 @@ public import Complexity.Algorithms.WordRAM.RadixSort.Scan
 public import Complexity.Algorithms.WordRAM.Stack
 public import Complexity.Algorithms.WordRAM.Stack.Controller
 public import Complexity.Algorithms.WordRAM.ThreeSum.Cell
+public import Complexity.Algorithms.WordRAM.ThreeSum.ChanHe.Collisions
+public import Complexity.Algorithms.WordRAM.ThreeSum.ChanHe.Count
+public import Complexity.Algorithms.WordRAM.ThreeSum.ChanHe.Residues
 public import Complexity.Algorithms.WordRAM.ThreeSum.Fill
 public import Complexity.Algorithms.WordRAM.ThreeSum.Memory
 public import Complexity.Algorithms.WordRAM.ThreeSum.Weight
