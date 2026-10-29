@@ -149,6 +149,7 @@ public import Complexity.Computability.Circuit.Approximation.Hamming
 public import Complexity.Computability.Circuit.Arithmetic
 public import Complexity.Computability.Circuit.Arithmetic.Determinant
 public import Complexity.Computability.Circuit.Arithmetic.Formula
+public import Complexity.Computability.Circuit.Arithmetic.GeneralLowerBound
 public import Complexity.Computability.Circuit.Arithmetic.Hessian
 public import Complexity.Computability.Circuit.Arithmetic.Hessian.SourceComplexity
 public import Complexity.Computability.Circuit.Arithmetic.Pairing
@@ -156,7 +157,9 @@ public import Complexity.Computability.Circuit.Arithmetic.Power
 public import Complexity.Computability.Circuit.Arithmetic.RelativeRank
 public import Complexity.Computability.Circuit.Arithmetic.RelativeRankUpper
 public import Complexity.Computability.Circuit.Arithmetic.SetMultilinear
+public import Complexity.Computability.Circuit.Arithmetic.SetMultilinearGadget
 public import Complexity.Computability.Circuit.Arithmetic.SetMultilinearLowerBound
+public import Complexity.Computability.Circuit.Arithmetic.SetMultilinearize
 public import Complexity.Computability.Circuit.Arithmetic.SigmaPi
 public import Complexity.Computability.Circuit.Arithmetic.VNP
 public import Complexity.Computability.Circuit.Arithmetic.VP
@@ -2122,6 +2125,7 @@ public import Complexity.Foundations.Data.Fin.Order
 public import Complexity.Foundations.Data.Fin.Tuple
 public import Complexity.Foundations.Data.Finset.Average
 public import Complexity.Foundations.Data.Finset.Expect
+public import Complexity.Foundations.Data.Finset.Finpartition
 public import Complexity.Foundations.Data.Finset.Markov
 public import Complexity.Foundations.Data.Finset.Quantile
 public import Complexity.Foundations.Data.Finset.Quotient
@@ -2159,6 +2163,7 @@ public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.MvPolynomial.HessianRank
 public import Complexity.Foundations.Data.MvPolynomial.SetMultilinear
 public import Complexity.Foundations.Data.MvPolynomial.SetMultilinearProjection
+public import Complexity.Foundations.Data.MvPolynomial.SetMultilinearProjectionProd
 public import Complexity.Foundations.Data.Nat.ArithmeticProgression
 public import Complexity.Foundations.Data.Nat.Asymptotics
 public import Complexity.Foundations.Data.Nat.BinarySize
