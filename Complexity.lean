@@ -685,6 +685,7 @@ public import Complexity.Computability.Circuit.Boolean.Threshold.Parity
 public import Complexity.Computability.Circuit.Boolean.ThresholdNC1
 public import Complexity.Computability.Circuit.Boolean.TopDown
 public import Complexity.Computability.Circuit.Boolean.Tournament
+public import Complexity.Computability.Circuit.Boolean.Tribes
 public import Complexity.Computability.Circuit.Boolean.Unbounded
 public import Complexity.Computability.Circuit.Boolean.Unbounded.Restriction
 public import Complexity.Computability.Circuit.Boolean.WeightedThreshold
@@ -2310,6 +2311,7 @@ public import Complexity.Foundations.BooleanAnalysis.SparseEquations
 public import Complexity.Foundations.BooleanAnalysis.SparseHermiteRecovery
 public import Complexity.Foundations.BooleanAnalysis.SparseReplacementDesign
 public import Complexity.Foundations.BooleanAnalysis.Symmetrization
+public import Complexity.Foundations.BooleanAnalysis.Tribes
 public import Complexity.Foundations.Combinatorics.Additive.SumsetCover
 public import Complexity.Foundations.Combinatorics.AffineDisperser
 public import Complexity.Foundations.Combinatorics.AffineDisperser.AffineSubspace
@@ -2412,6 +2414,7 @@ public import Complexity.Foundations.Data.BiTape
 public import Complexity.Foundations.Data.BitString.Affine
 public import Complexity.Foundations.Data.BitString.AffineSubspace
 public import Complexity.Foundations.Data.BitString.Agree
+public import Complexity.Foundations.Data.BitString.AgreeExpect
 public import Complexity.Foundations.Data.BitString.Basic
 public import Complexity.Foundations.Data.BitString.Binary
 public import Complexity.Foundations.Data.BitString.Block
