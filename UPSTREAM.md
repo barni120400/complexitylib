@@ -206,10 +206,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   error, full evaluation, shared encodings, pruned values, visited leaves and passed-set totals.
   Its pure finite recursion traces are not native machine semantics or charged instruction costs.
   The zero-depth empty-query root exception is explicit, with an unconditional root-or-leaf API.
-  See [#1459](https://github.com/cslib-community/complexitylib/issues/1459); tiling/sparse leaf bounds
-  remain in #1394.
-  The existing
-  signed and unsigned APIs were reused; no source machine or separate run semantics were copied.
+  See [#1459](https://github.com/cslib-community/complexitylib/issues/1459). The complete finite
+  thin-product component ([#1463](https://github.com/cslib-community/complexitylib/issues/1463))
+  adapts `Sec2/{Levels,Lemma9,Tiling,Orders,Lemma11,Theorem5}` and needed finite magnitude bounds.
+  Layouts contain only indexing choices, whose existence is proved; sparse bounds are derived
+  from exact contributing-leaf counts. Generic function-position counts, ordered gluing, binomial
+  and finite-sum bounds live in small Foundations modules. Mathlib `Finset.orderEmbOfFin` indexes
+  both a level set and its complement, and `Finset.piecewise` restricts answers. No source machine,
+  problem-statement universe or solver/time hypothesis is imported.
+  The existing signed and unsigned APIs were reused; no source machine or separate run semantics were copied.
   Tensor/sparse query programs, the full reduction host, native Chan–He preprocessing, fast Exact
   Triangle and full input/time/width/asymptotic composition remain in
   [#1394](https://github.com/cslib-community/complexitylib/issues/1394), including the improved
@@ -293,6 +298,7 @@ agreement during upstream review.
 | `Foundations/Combinatorics/{FiniteCover,Hoeffding,Hypergeometric,PowersetTail,Sunflower}` | Consider Mathlib combinatorics; probabilistic-method lemmas belong near `Combinatorics/Probabilistic`. |
 | `Foundations/Data/Finset/Expect` | Product-type expectation helpers extracted from `Foundations/Combinatorics/Expander/Products` (#317); Mathlib candidates. |
 | `Foundations/Data/Finset/Markov` | Mathlib candidate: `Algebra/Order/BigOperators/Group/Finset` (`Finset.card_filter_mul_le_sum`, `Finset.mul_card_filter_le_sum`). |
+| `Foundations/Data/Finset/OrderGlue` | Follow-up to #1496: rename the generic `forall_level_iff`, `exists_innerLevel`, `outerLevel_notMem` and `filter_glue` using order-embedding/complement terminology (for example `forall_iff_orderEmb_and_compl`), retaining this topic module. Migrate the concrete `Schonhage/Levels` and `Schonhage/Batch` clients together with the active native band-preparation client; defer that API migration until the latter is stable. |
 | `Foundations/Data/Matrix/Permanent` | Mathlib candidate: Laplace expansion of the permanent along row and column 0, beside `LinearAlgebra/Matrix/Permanent` (mirroring `Matrix.det_succ_row_zero`). |
 | `Foundations/LinearAlgebra/{Rank,Matrix/CutRank,Matrix/Lindsey}` | Mathlib candidates: `LinearAlgebra/Dimension/LinearMap` and `LinearAlgebra/Matrix/Rank`; placement of Lindsey's lemma needs agreement. |
 | `Probability/PairwiseIndependentHash/Shift` | Consider integration into `PairwiseIndependentHash`. |
