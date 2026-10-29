@@ -127,6 +127,9 @@ public import Complexity.Computability.Circuit.Arithmetic.Hessian
 public import Complexity.Computability.Circuit.Arithmetic.Hessian.SourceComplexity
 public import Complexity.Computability.Circuit.Arithmetic.Pairing
 public import Complexity.Computability.Circuit.Arithmetic.Power
+public import Complexity.Computability.Circuit.Arithmetic.RelativeRank
+public import Complexity.Computability.Circuit.Arithmetic.SetMultilinear
+public import Complexity.Computability.Circuit.Arithmetic.SigmaPi
 public import Complexity.Computability.Circuit.Arithmetic.VNP
 public import Complexity.Computability.Circuit.Arithmetic.VP
 public import Complexity.Computability.Circuit.Arithmetic.Waring
@@ -398,6 +401,7 @@ public import Complexity.Computability.Circuit.Erase
 public import Complexity.Computability.Circuit.Evaluation
 public import Complexity.Computability.Circuit.FanIn
 public import Complexity.Computability.Circuit.Formula
+public import Complexity.Computability.Circuit.Formula.NodeCount
 public import Complexity.Computability.Circuit.Frontier.AverageCase
 public import Complexity.Computability.Circuit.Frontier.BoundedFanIn
 public import Complexity.Computability.Circuit.Frontier.BranchingProgram
@@ -2108,6 +2112,7 @@ public import Complexity.Foundations.Data.MvPolynomial.CoefficientDegree
 public import Complexity.Foundations.Data.MvPolynomial.DualNumber
 public import Complexity.Foundations.Data.MvPolynomial.Hessian
 public import Complexity.Foundations.Data.MvPolynomial.HessianRank
+public import Complexity.Foundations.Data.MvPolynomial.SetMultilinear
 public import Complexity.Foundations.Data.Nat.ArithmeticProgression
 public import Complexity.Foundations.Data.Nat.Asymptotics
 public import Complexity.Foundations.Data.Nat.BinarySize
@@ -2185,6 +2190,7 @@ public import Complexity.Foundations.LinearAlgebra.ExchangeReplacement
 public import Complexity.Foundations.LinearAlgebra.Interpolation
 public import Complexity.Foundations.LinearAlgebra.KernelVector
 public import Complexity.Foundations.LinearAlgebra.Matrix.CutRank
+public import Complexity.Foundations.LinearAlgebra.Matrix.Kronecker
 public import Complexity.Foundations.LinearAlgebra.Matrix.Lindsey
 public import Complexity.Foundations.LinearAlgebra.Matrix.Moore
 public import Complexity.Foundations.LinearAlgebra.Matrix.Rank
