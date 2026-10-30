@@ -2740,6 +2740,7 @@ public import Complexity.Foundations.Probability.Gaussian.Sheppard
 public import Complexity.Foundations.Probability.HierarchyParams
 public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.SecondMoment
+public import Complexity.Foundations.Probability.SourceRelease
 public import Complexity.Foundations.Probability.StochasticAtom
 public import Complexity.Foundations.Quantum.Measurement
 public import Complexity.Foundations.Relation.InductiveCounting
