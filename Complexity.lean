@@ -84,6 +84,8 @@ public import Complexity.Algorithms.WordRAM.Deduplicate.Program
 public import Complexity.Algorithms.WordRAM.Dictionary.ChainedHash
 public import Complexity.Algorithms.WordRAM.Dictionary.CuckooHashing
 public import Complexity.Algorithms.WordRAM.Dictionary.CuckooHashing.HashFamily
+public import Complexity.Algorithms.WordRAM.Dictionary.LinearProbing
+public import Complexity.Algorithms.WordRAM.Dictionary.LinearProbing.FiveWise
 public import Complexity.Algorithms.WordRAM.Dijkstra.Fibonacci
 public import Complexity.Algorithms.WordRAM.Dijkstra.FibonacciStatement
 public import Complexity.Algorithms.WordRAM.Dijkstra.GenericPQ
