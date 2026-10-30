@@ -2285,6 +2285,7 @@ public import Complexity.Crypto.Computational.OneWayToPRG
 public import Complexity.Crypto.Computational.OneWayToSignature
 public import Complexity.Crypto.Computational.PRGToOneWay
 public import Complexity.Crypto.Computational.PedersenCommitment
+public import Complexity.Crypto.Computational.PedersenCommitment.ProbComp
 public import Complexity.Crypto.Computational.PedersenCommitment.PublicOperations
 public import Complexity.Crypto.Computational.Prediction
 public import Complexity.Crypto.Computational.Pseudoentropy.Basic
@@ -2832,6 +2833,7 @@ public import Complexity.Languages.Probabilistic.Sum
 public import Complexity.Languages.Probabilistic.Transcript
 public import Complexity.Languages.Probabilistic.Traverse
 public import Complexity.Languages.Probabilistic.UniformNat
+public import Complexity.Languages.Probabilistic.UniformNat.Support
 public import Complexity.Languages.Probabilistic.UntilBad
 public import Complexity.Languages.Probabilistic.Vector
 public import Complexity.Logics.FirstOrder.Basic
