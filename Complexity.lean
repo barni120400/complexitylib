@@ -1068,6 +1068,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.Amplification
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.BPP
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.ConfigurationMatrix
+public import Complexity.Computability.Complexity.Classes.LogSpace.Savitch
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
 public import Complexity.Computability.Complexity.Classes.MIP
 public import Complexity.Computability.Complexity.Classes.MIP.Defs
@@ -1554,6 +1555,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogS
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.NondeterministicQueryMachine.Termination
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Reachability
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Words
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Nondeterministic
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
