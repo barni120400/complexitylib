@@ -216,20 +216,8 @@ polynomial in the input length. -/
 private theorem rounds_le (k : ℕ) (State : Type) (c n : ℕ) :
     2 ^ (2 * coreLengthBound k State n (c * (Nat.log2 n + 1)) + 1) ≤
       2 * 2 ^ (2 * (8 + 2 * Nat.card (Option State) + 200 * k) * (c + 1)) *
-        (n + 1) ^ (2 * (8 + 2 * Nat.card (Option State) + 200 * k) * (c + 1)) := by
-  set M := 8 + 2 * Nat.card (Option State) + 200 * k
-  set D := 2 * M * (c + 1)
-  have hexp : 2 * coreLengthBound k State n (c * (Nat.log2 n + 1)) + 1 ≤
-      (Nat.log2 n + 1) * D + 1 := by
-    simp only [coreLengthBound, D]
-    rw [← show M = 8 + 2 * Nat.card (Option State) + 200 * k from rfl]
-    nlinarith
-  calc 2 ^ (2 * coreLengthBound k State n (c * (Nat.log2 n + 1)) + 1)
-      ≤ 2 ^ ((Nat.log2 n + 1) * D + 1) := Nat.pow_le_pow_right (by norm_num) hexp
-    _ = 2 * (2 ^ (Nat.log2 n + 1)) ^ D := by rw [pow_succ, pow_mul, mul_comm]
-    _ ≤ 2 * (2 * (n + 1)) ^ D :=
-        Nat.mul_le_mul_left 2 (Nat.pow_le_pow_left (Nat.two_pow_log2_succ_le n) D)
-    _ = 2 * 2 ^ D * (n + 1) ^ D := by rw [mul_pow, mul_assoc]
+        (n + 1) ^ (2 * (8 + 2 * Nat.card (Option State) + 200 * k) * (c + 1)) :=
+  (two_pow_coreLengthBound_log_le k State c n).trans_eq (by rw [mul_pow, ← mul_assoc])
 
 open scoped Classical in
 /-- **Acceptance within logarithmic space is decided by breadth-first search in polynomial time.**
