@@ -2423,6 +2423,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Connected
 public import Complexity.Foundations.Combinatorics.Expander.Contraction
 public import Complexity.Foundations.Combinatorics.Expander.Existence
 public import Complexity.Foundations.Combinatorics.Expander.Family
+public import Complexity.Foundations.Combinatorics.Expander.FourthMoment
 public import Complexity.Foundations.Combinatorics.Expander.Hitting
 public import Complexity.Foundations.Combinatorics.Expander.Hom
 public import Complexity.Foundations.Combinatorics.Expander.IteratedProd
