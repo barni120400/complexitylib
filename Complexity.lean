@@ -503,6 +503,7 @@ public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Program
 public import Complexity.Algorithms.WordRAM.VanEmdeBoas.Successor
 public import Complexity.Computability.BranchingProgram.MonoidProgram
 public import Complexity.Computability.BranchingProgram.PolyLength
+public import Complexity.Computability.Catalytic.Comparison
 public import Complexity.Computability.Circuit.Approximation
 public import Complexity.Computability.Circuit.Approximation.Hamming
 public import Complexity.Computability.Circuit.Arithmetic
