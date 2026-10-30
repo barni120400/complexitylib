@@ -2655,6 +2655,7 @@ public import Complexity.Foundations.Data.Nat.SqrtRatio
 public import Complexity.Foundations.Data.Nat.Subexponential
 public import Complexity.Foundations.Data.Option
 public import Complexity.Foundations.Data.OrderedSet
+public import Complexity.Foundations.Data.OrderedSet.ExtractMin
 public import Complexity.Foundations.Data.OrderedSet.Spec
 public import Complexity.Foundations.Data.Polynomial.BivariateCoeffNorm1
 public import Complexity.Foundations.Data.Polynomial.CoeffList
