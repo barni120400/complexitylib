@@ -2759,6 +2759,8 @@ public import Complexity.Foundations.Probability.EstimatorPrecision
 public import Complexity.Foundations.Probability.Gaussian.Multivariate
 public import Complexity.Foundations.Probability.Gaussian.Real
 public import Complexity.Foundations.Probability.Gaussian.Sheppard
+public import Complexity.Foundations.Probability.HeavyCount
+public import Complexity.Foundations.Probability.HeavyCountRarity
 public import Complexity.Foundations.Probability.HierarchyParams
 public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.SecondMoment
@@ -3032,6 +3034,7 @@ public import Complexity.Probability.PairwiseIndependentHash
 public import Complexity.Probability.PairwiseIndependentHash.Affine
 public import Complexity.Probability.PairwiseIndependentHash.AtomChannels
 public import Complexity.Probability.PairwiseIndependentHash.DetectorChannels
+public import Complexity.Probability.PairwiseIndependentHash.HeavyCount
 public import Complexity.Probability.PairwiseIndependentHash.HierarchyChannels
 public import Complexity.Probability.PairwiseIndependentHash.Retention
 public import Complexity.Probability.PairwiseIndependentHash.RetentionChannel
