@@ -2501,6 +2501,7 @@ public import Complexity.Foundations.Combinatorics.Expander.Cayley
 public import Complexity.Foundations.Combinatorics.Expander.Cheeger
 public import Complexity.Foundations.Combinatorics.Expander.Connected
 public import Complexity.Foundations.Combinatorics.Expander.Contraction
+public import Complexity.Foundations.Combinatorics.Expander.ElementaryMove
 public import Complexity.Foundations.Combinatorics.Expander.Existence
 public import Complexity.Foundations.Combinatorics.Expander.Family
 public import Complexity.Foundations.Combinatorics.Expander.FourthMoment
