@@ -180,9 +180,12 @@ index links to canonical definitions rather than keeping a second set.
   completeness, padding, self-reducibility, relativization and oracle separations, preserving
   each reduction's resource bound.
 - **Time hierarchies** ([#1572]): native polynomial padding separates every pair of integer
-  degrees `1 ≤ a < b`. Remaining targets include the general deterministic `f log f` hierarchy
-  with its simulation bound ([#800]), noninteger polynomial degrees and finer logarithmic
-  gaps, and sharp nondeterministic and alternating time hierarchies with certified simulators.
+  degrees `1 ≤ a < b`, and the `O(t log t)` universal simulation ([#800]) gives
+  `DTIME f ⊂ DTIME g` for time-constructible `f ≥ n` once `(f + 1) * polylog f ≤ g`, with an
+  absolute exponent (`Hierarchy/TimePolylog`). Remaining targets include the textbook
+  `f log f = o(g)` hierarchy, which needs the diagonal to clock the universal machine's own
+  steps, noninteger polynomial degrees, and sharp nondeterministic and alternating time
+  hierarchies with certified simulators.
 - The space hierarchy for `log n ≤ g n`, which needs a universal simulation that does not hold
   its input.
 - **Space:** Savitch bounds for general space-constructible functions.
@@ -568,10 +571,12 @@ reusing graph and matroid foundations and the shared data-structure interfaces.
   compact root descriptors, with derived logarithmic width and uniform
   `Oκ((n+1) log²(n+2))` charged cost. This frontend is composed into the complete native
   preprocessing and the conditional ordinary host described below.
-- **Efficient universal simulation** ([#800]): realize the buffered Hennie–Stearns backend
-  with time `O_M(t log(t + 2))`, together with a source-space-sensitive storage bound.
-  The current interpreter has a stronger polynomial certificate and a streaming input lookup;
-  the buffered representation, its native cleanup routines and their amortized bounds remain.
+- **Efficient universal simulation** ([#800]): the clocked universal function runs in time
+  `O(N + poly(D, M) · (t + 1) log(t + 2))`, for encoded input length `N`, description length `D`
+  and largest input symbol `M`, by a divide-and-conquer windowed simulation
+  (`computableInO_universal_nlogn`). Remaining: a source-space-sensitive storage bound (the
+  space is currently bounded only by the time), and an unclocked form that runs until the
+  simulated machine halts.
 - **Plain computability** ([#862]): complete the plain calculus ([#608]), delete the tidy
   calculus, keeping only a machine-level kernel inside the Machines layer, and switch the
   abstract bridges to the shared predicate.
