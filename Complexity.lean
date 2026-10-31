@@ -2889,6 +2889,7 @@ public import Complexity.Foundations.Probability.HeavyCount
 public import Complexity.Foundations.Probability.HeavyCountRarity
 public import Complexity.Foundations.Probability.HierarchyParams
 public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
+public import Complexity.Foundations.Probability.PolynomialAtomFalseOverflow
 public import Complexity.Foundations.Probability.PolynomialAtomRows
 public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
