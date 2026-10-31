@@ -88,6 +88,7 @@ public import Complexity.Algorithms.ThreeSum.ChanHe.Sizes
 public import Complexity.Algorithms.ThreeSum.Convolution
 public import Complexity.Algorithms.ThreeSum.Defs
 public import Complexity.Algorithms.ThreeSum.ThreeSets
+public import Complexity.Algorithms.WordRAM.AKS
 public import Complexity.Algorithms.WordRAM.AKS.Congruence
 public import Complexity.Algorithms.WordRAM.AKS.CongruenceLoop
 public import Complexity.Algorithms.WordRAM.AKS.GcdTotient
@@ -1366,6 +1367,7 @@ public import Complexity.Computability.Complexity.Problems.OneInThreeSAT.Reducti
 public import Complexity.Computability.Complexity.Problems.Partition
 public import Complexity.Computability.Complexity.Problems.PlanarPositiveOneInThreeSAT
 public import Complexity.Computability.Complexity.Problems.PlanarThreeSATThree
+public import Complexity.Computability.Complexity.Problems.Primes
 public import Complexity.Computability.Complexity.Problems.SAT
 public import Complexity.Computability.Complexity.Problems.SAT.ExactOne.Drawing
 public import Complexity.Computability.Complexity.Problems.SAT.ExactOne.DrawingAssembly
