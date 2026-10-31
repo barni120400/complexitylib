@@ -38,6 +38,9 @@ public import Complexity.Algorithms.Lean.Online.Basic
 public import Complexity.Algorithms.Lean.Paging.Basic
 public import Complexity.Algorithms.Lean.Paging.LRU
 public import Complexity.Algorithms.Lean.Paging.LowerBound
+public import Complexity.Algorithms.Lean.Query.Submodular.Greedy
+public import Complexity.Algorithms.Lean.Query.Submodular.LowerBound
+public import Complexity.Algorithms.Lean.Query.Submodular.ValueQuery
 public import Complexity.Algorithms.Lean.Queue
 public import Complexity.Algorithms.Lean.Retroactive
 public import Complexity.Algorithms.Lean.SearchTree.Basic
@@ -48,6 +51,8 @@ public import Complexity.Algorithms.Lean.Sort.Bitonic.Basic
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Correctness
 public import Complexity.Algorithms.Lean.Sort.Bitonic.Trace
 public import Complexity.Algorithms.Lean.Sort.Bitonic.ZeroOne
+public import Complexity.Algorithms.Lean.Submodular.Basic
+public import Complexity.Algorithms.Lean.Submodular.Greedy
 public import Complexity.Algorithms.Lean.UniformProbing
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Basic
 public import Complexity.Algorithms.Lean.VanEmdeBoas.Elements
