@@ -2460,6 +2460,7 @@ public import Complexity.Foundations.Analysis.RowCompression
 public import Complexity.Foundations.Analysis.RowCompression.FalseOverflow
 public import Complexity.Foundations.Analysis.RowCompression.Floors
 public import Complexity.Foundations.Analysis.RowCompression.Iteration
+public import Complexity.Foundations.Analysis.RowCompression.OverflowBudget
 public import Complexity.Foundations.Analysis.RowCompression.OverflowNoise
 public import Complexity.Foundations.Analysis.RowCompression.Preloss
 public import Complexity.Foundations.Analysis.RowCompression.Reference
@@ -2891,6 +2892,7 @@ public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
 public import Complexity.Foundations.Probability.PolynomialAtomRows
 public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
+public import Complexity.Foundations.Probability.RootMetric.Minkowski
 public import Complexity.Foundations.Probability.SecondMoment
 public import Complexity.Foundations.Probability.SourceRelease
 public import Complexity.Foundations.Probability.StochasticAtom
