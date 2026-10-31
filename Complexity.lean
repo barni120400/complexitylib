@@ -33,11 +33,15 @@ public import Complexity.Algorithms.Lean.Huffman.TwoQueue
 public import Complexity.Algorithms.Lean.IndexedMinPQ
 public import Complexity.Algorithms.Lean.KMP.Basic
 public import Complexity.Algorithms.Lean.KMP.Search
+public import Complexity.Algorithms.Lean.Matroid.Greedy
 public import Complexity.Algorithms.Lean.MinPQ
 public import Complexity.Algorithms.Lean.Online.Basic
 public import Complexity.Algorithms.Lean.Paging.Basic
 public import Complexity.Algorithms.Lean.Paging.LRU
 public import Complexity.Algorithms.Lean.Paging.LowerBound
+public import Complexity.Algorithms.Lean.Query.Matroid.Greedy
+public import Complexity.Algorithms.Lean.Query.Matroid.IndepQuery
+public import Complexity.Algorithms.Lean.Query.Matroid.LowerBound
 public import Complexity.Algorithms.Lean.Query.Submodular.Greedy
 public import Complexity.Algorithms.Lean.Query.Submodular.LowerBound
 public import Complexity.Algorithms.Lean.Query.Submodular.ValueQuery
