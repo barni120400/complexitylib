@@ -14,6 +14,7 @@ public import Complexity.Algorithms.WordRAM.Karger.FastCut
 public import Complexity.Computability.WordRAM.Copy
 public import Complexity.Computability.WordRAM.Randomized.LoopSegment
 public import Complexity.Computability.WordRAM.Time
+import Complexity.Languages.Probabilistic.Event
 
 /-!
 # Karger–Stein's recursive `FastCut` algorithm on the word RAM
@@ -88,6 +89,8 @@ endpoints on `n :: flattenMatrix W`:
 namespace Cslib.Algorithms.WordRAM.Karger
 
 open scoped ENNReal
+open Cslib.WeightedCut
+open Cslib.Probability.PMF
 open Cslib.WordRAM
 
 /-! ### Word-size sufficiency (`logWidth 4 n ≤ w`) and input layout -/
@@ -168,7 +171,7 @@ private theorem toOuterMeasure_mono_support {α : Type} (m : ProbComp α) {S T :
     m.eval.toOuterMeasure S ≤ m.eval.toOuterMeasure T := by
   classical
   rw [PMF.toOuterMeasure_apply, PMF.toOuterMeasure_apply]
-  refine ENNReal.tsum_le_tsum fun a => ?_
+  refine tsum_le_tsum fun a => ?_
   by_cases ha : a ∈ S
   · simp only [Set.indicator_of_mem ha]
     by_cases hs : a ∈ m.support
@@ -2684,7 +2687,7 @@ theorem fastCutNode_spec {n w : ℕ} {W₀ : Fin n → Fin n → ℕ}
               have hcompl0 : (ms2_fn z₂.1).eval.toOuterMeasure
                   {zs | zs.1.regs retVal = minCut W₀}ᶜ = 0 := by
                 rw [PMF.toOuterMeasure_apply]
-                refine ENNReal.tsum_eq_zero.mpr fun zs => ?_
+                refine tsum_eq_zero_iff.mpr fun zs => ?_
                 by_cases hzs_ev : zs ∈ (ms2_fn z₂.1).eval.support
                 · have hzs : zs ∈ (ms2_fn z₂.1).support :=
                     (ProbComp.support_eval (ms2_fn z₂.1)) ▸ hzs_ev
@@ -2724,7 +2727,7 @@ theorem fastCutNode_spec {n w : ℕ} {W₀ : Fin n → Fin n → ℕ}
         dsimp only [t] at ht₁ ht₂
         omega
       · intro B hmin_pos hB_nt hB_min
-        have hrec := two_branch_hit_prob_ge m_b1 (fun z₁ => m₂_fn z₁.1)
+        have hrec := ProbComp.two_branch_hit_prob_ge m_b1 (fun z₁ => m₂_fn z₁.1)
           (fun z₁ z₂ => (z₂.1, z₁.2 + z₂.2))
           {z₁ | z₁.1.regs retVal = minCut W₀}
           {z | z.1.regs retVal = minCut W₀}
@@ -2979,7 +2982,7 @@ theorem fastCutTree_spec {n w sb : ℕ} {W : Fin n → Fin n → ℕ} {x : Data 
         hmod_x₃ Finset.Subset.rfl Finset.Subset.rfl)
       hmod₀ Finset.Subset.rfl hsub_seg
   · intro hmin_pos
-    obtain ⟨C_star, hC_nt, hC_min⟩ := exists_minCut_achiever hn W
+    obtain ⟨C_star, hC_nt, hC_min⟩ := exists_minCut_achiever (by rwa [Fintype.card_fin]) W
     have hpb : pullbackCut (id : Fin n → Fin n) C_star = C_star := by
       ext u; simp [pullbackCut]
     have hprob := hsurv_seg C_star hmin_pos hC_nt (by rw [hpb, hC_min])
@@ -3679,7 +3682,7 @@ theorem fastCutAmpLoop_spec {w sb n R : ℕ} {W : Fin n → Fin n → ℕ} {mem�
         have hbv₁ : z₁.1.regs bestVal = minCut W := not_not.mp hhit
         obtain ⟨m_r, hm_r, _, hsup_r, _⟩ := hnext z₁ hz₁
         rw [hml_def, hm_r.codeComp_eq, PMF.toOuterMeasure_map_apply, PMF.toOuterMeasure_apply]
-        refine ENNReal.tsum_eq_zero.mpr fun z₂ => ?_
+        refine tsum_eq_zero_iff.mpr fun z₂ => ?_
         by_cases hz₂_eval : z₂ ∈ m_r.eval.support
         · have hz₂ : z₂ ∈ m_r.support := (ProbComp.support_eval m_r) ▸ hz₂_eval
           have hbv₂ : z₂.1.regs bestVal = minCut W :=

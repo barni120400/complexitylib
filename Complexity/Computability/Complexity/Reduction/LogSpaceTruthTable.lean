@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Classes.LogSpace
 public import Complexity.Computability.Complexity.Reduction.TruthTable
 public import Complexity.Computability.Complexity.Reduction.TruthTableVariants
+import Complexity.Foundations.Data.List.Filter
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Unary
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.CounterProgram.Words
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.Words
@@ -216,29 +217,13 @@ theorem LogSpaceReducible.logSpaceCTTReducible (h : LogSpaceReducible encA encB 
   exact ⟨fun _ => 1, fun p => f p.1, ComputableInLogSpace.const 1, by fun_prop,
     fun a => by simp [hA a]⟩
 
-private theorem any_id_le_of_forall₂ {u v : List Bool} (h : List.Forall₂ (· ≤ ·) u v) :
-    u.any id ≤ v.any id := by
-  induction h with
-  | nil => exact le_rfl
-  | cons hab _ ih =>
-    simp only [List.any_cons, id]
-    exact max_le_max hab ih
-
-private theorem all_id_le_of_forall₂ {u v : List Bool} (h : List.Forall₂ (· ≤ ·) u v) :
-    u.all id ≤ v.all id := by
-  induction h with
-  | nil => exact le_rfl
-  | cons hab _ ih =>
-    simp only [List.all_cons, id]
-    exact min_le_min hab ih
-
 /-- A logspace disjunctive truth-table reduction is a logspace positive truth-table reduction,
 evaluated by `List.any id`. -/
 theorem LogSpaceDTTReducible.logSpacePTTReducible (h : LogSpaceDTTReducible encA encB A B) :
     LogSpacePTTReducible encA encB A B := by
   obtain ⟨r, q, hr, hq, hA⟩ := h
   refine ⟨r, q, fun p => p.2.any id, hr, hq, by fun_prop,
-    fun _ _ _ huv => any_id_le_of_forall₂ huv, fun a => ?_⟩
+    fun _ _ _ huv => List.any_id_le_of_forall₂ huv, fun a => ?_⟩
   rw [hA a]
   simp [truthTableAnswers, List.any_eq_true, List.mem_ofFn, Fin.exists_iff]
 
@@ -248,7 +233,7 @@ theorem LogSpaceCTTReducible.logSpacePTTReducible (h : LogSpaceCTTReducible encA
     LogSpacePTTReducible encA encB A B := by
   obtain ⟨r, q, hr, hq, hA⟩ := h
   refine ⟨r, q, fun p => p.2.all id, hr, hq, by fun_prop,
-    fun _ _ _ huv => all_id_le_of_forall₂ huv, fun a => ?_⟩
+    fun _ _ _ huv => List.all_id_le_of_forall₂ huv, fun a => ?_⟩
   rw [hA a]
   simp [truthTableAnswers, List.all_eq_true, List.mem_ofFn, Fin.forall_iff]
 

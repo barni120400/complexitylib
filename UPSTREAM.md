@@ -47,6 +47,11 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   without repeatedly copying list tails. Retain these local improvements when synchronizing
   `Universal/Complexity`, `Bound` and their resource consumers with `crei/tidy-universal`.
   This is an extension of the existing interpreter, not a buffered Hennie–Stearns backend.
+  `Universal/Windowed*` adds a divide-and-conquer windowed simulation on top of the vendored
+  description format and `stepWith`; with the native `Combinators/StackLoop` and
+  `Combinators/DivConq` combinators it proves the `O(t log t)` bound
+  `computableInO_universal_nlogn`. It is a new local construction layered beside the vendored
+  files, not a revision of them; keep it out of the copied modules when synchronizing.
 * **Polynomial bounds.** The tidy calculus's size-parameterized `PolyBounded` adapts CSLib's
   `PolynomiallyBounded` and shares its closure API. Coordinate this adaptation with the tidy
   branch; preserve it when resynchronizing the vendored files.
@@ -112,9 +117,10 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   Cook–Reckhow and supporting both unit and logarithmic costs, remains a separate candidate.
 * **Generic RAM values.** `Computability/GenericRAM/*` supplies a shared finite-register RAM
   interpreter with configurable value, address, configuration and literal types, operation/test
-  signatures, and fault policies. `WordRAM/Generic` embeds every existing word-operation basis
+  signatures, and fault policies. `WordRAM/Defs` embeds every existing word-operation basis
   with exact step, fault, output and instruction-count preservation, including arbitrary initial
-  states; no existing public WordRAM definition changes. The signed instance follows the
+  states, and derives the word RAM's interpreter metatheory from the generic one; the WordRAM
+  definitions keep their own syntax and step function. The signed instance follows the
   lean-trominoes signed range and its address, move, halt and program-counter checks, retaining
   its source credit. The algebraic instances use tagged natural words and exact field values:
   only natural words can address memory. Real comparison is mathematical, noncomputable
@@ -167,14 +173,18 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   `w+2`. The two extra bits and actual arithmetic-block costs come from the existing native
   signed kernels, without a copied source machine or a whole-program simulation hypothesis.
   The existing array-copy interface is retained, with a narrow generalization for disjoint
-  blocks in either address order or identical blocks.
+  blocks in either address order or identical blocks. `Encoding.setup` and `Encoding.powerBody`
+  retain their simultaneous `7^L`/`10^L` loop sharing the `stage` counter (`5*L+18` setup
+  instructions) rather than running two sequential `WordRAM.Power.program` loops.
   This is the encoder component only; band/tile preparation and full native composition remain
   in [#1394](https://github.com/cslib-community/complexitylib/issues/1394).
 * **Native shared-band preparation.** The native shared-band preparation component
   ([#1523](https://github.com/cslib-community/complexitylib/issues/1523)) computes a deterministic
   `Layout` and both subset tables by native mask/popcount scans, computes the square-root block
-  count by a charged loop, and decodes each band-array index into the original row/column and
-  thin-dimension coordinates. Real matrix bounds are checked before row-major multiplication.
+  count and its square by renaming `NatSqrt.program` (`BandPreparation.rootRegisters`) followed by
+  one multiplication (`5*sqrt(k)+8` steps), and decodes each band-array index into the original
+  row/column and thin-dimension coordinates. Real matrix bounds are checked before row-major
+  multiplication.
   Each shared row/column band calls the unchanged encoder once; tiles refer to its catalogue
   block in the existing leaf order. The fixed 96-register standard code starts from actual
   `State.init` scalar/matrix input, charges snapshot and restoration of the complete original
@@ -203,16 +213,52 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   theorem connects the actual pre-halt state to the Convolution-3SUM answer and preserves the input.
   The host's source-width threshold is `(20κ+125)clog₂(N+2)`; signed kernels use target width `w+2`.
   This remains conditional on the supplied solver's native execution/correctness/frame theorem;
-  it does not establish a fast solver. Native Chan–He preprocessing, fast Exact Triangle and full
-  input/time/width/asymptotic composition remain in
+  it does not establish a fast solver. Fast Exact Triangle and its final native backend/asymptotic
+  composition remain in
   [#1394](https://github.com/cslib-community/complexitylib/issues/1394), including the improved
   Section 4 route needed for the published exponent 1.9992. Anthropic's copyright and attribution
   are retained; the native proofs and representation choices are local.
   Native numeric parameter computation, signed-residue/histogram counting, trial-division prime
-  tables and collision-tested least-prime scans also use the existing `WordRAM.Code`/`ExecWithin`
-  APIs. Their explicit local fit, frame and charged-cost contracts do not yet compose the complete
-  preprocessing from input through frontend, heavy sets, recursion and packed output; the global
-  logarithmic width and subquadratic preprocessing bound remain in #1446.
+  tables, collision-tested least-prime scans and complete two-prime modulus selection also use
+  the existing `WordRAM.Code`/`ExecWithin` APIs. Their explicit local fit, frame and charged-cost
+  contracts are composed by a fixed 128-register bounded traversal with an explicit seven-word
+  stack frame and exact preorder packed output. The traversal consumes a root descriptor and
+  runtime fuel; its polynomial local envelope derives kernel fits and charges every stack,
+  descriptor and address operation. It does not invoke a Convolution-3SUM solver. Composition
+  from initialized input through every frontend root is proved in
+  `Algorithms/WordRAM/ThreeSum/ChanHe/Preprocessing.lean`. One finite 128-register program per
+  fixed magnitude exponent returns the existing exact finite instance list. All fits derive from
+  `(1300κ+7865) clog₂(n+2)` physical width; every run prefix uses polynomial words/addresses even
+  at wider admitted widths. Its charged cost is at most
+  `Kκ (n+2)(sqrt(n+2)+1)(log₂(n+2)+1)^13`, including the final halt. The complete native
+  preprocessing milestone is #1446. `Algorithms/WordRAM/ThreeSum/Decision.lean` composes that
+  actual initialized output with the Convolution host (#1559): raw registers 78/79/116 supply the
+  actual pointer table, count and common packed length. The caller-owned host reads each signed
+  payload directly and reserves matrices above twice the preprocessing polynomial word bound,
+  preserving every future instance. One finite program per fixed exponent and certified finite
+  Exact Triangle block returns the existing distinct-position verdict, with derived positive
+  logarithmic physical width, polynomial words/space at every admitted-width prefix, and a fully
+  charged compositional bound at the actual packed size. `Host.Callee` requires actual finite-code
+  execution, matrix correctness, logarithmic width and a protected-prefix frame on arbitrary old
+  scratch memory; `Host.Slow.callee` is a proved exhaustive native instance. This conditional host
+  does not provide a fast solver. The unconditional native solver/backend and final asymptotic
+  composition, including exponent 1.9992, remain #1394. These components do not affect the curated
+  headlines. The caller layout, exhaustive callee and ordinary composition are original; the
+  underlying finite reductions and builder retain their existing Anthropic credit.
+
+  Bounded API follow-ups from the traversal/preprocessing reviews: merge the stage proof modules
+  `PreprocessingSnapshot`, `PreprocessingPrimes`, `PreprocessingSetup`, `PreprocessingFinish`,
+  `PreprocessingInvariant`, `PreprocessingStep` and `PreprocessingLoop` with their controller
+  consumer `PreprocessingExecute`, or use `import all` to make their proof plumbing private.
+  This includes `Saved`, `ForestCursor`, `snapshot_exec`, `primes_exec`, `setupTraversal_exec`,
+  `finish_exec`, `execute_next_root` and `forest_body_exec`; keep the initialized-input, readback,
+  width and resource endpoints available through `Preprocessing`. Separately, move
+  `modulus_bounds_of_candidates` from `SelectorBounds` beside `Collisions`' `modulus_bounds` and
+  derive or cross-reference the stronger bound, migrating `TraversalCall` and selector tests.
+  Derive `Structured`'s `ExecWithin.loop_invariant` as the `Data`-state case of
+  `GhostLoop`'s `ExecWithin.loop_invariant_state`, preserving the existing copy/residue/padding/
+  search/reservation clients. Resolve the current import direction by keeping both rules in one
+  loop topic module before changing those clients.
 
   `Algorithms/ThreeSum/ThreeSets.lean` and `ArrayPacking.lean` provide the generic distinct-position
   frontend and three-array packing. `Algorithms/ThreeSum/ChanHe/` now adapts the core mathematical
@@ -243,6 +289,13 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   the source credit to Mathlib, Patrick Stevens and Bolton Bailey. These are mathematical
   statements, not native instructions or an assumed solver. See
   [#1442](https://github.com/cslib-community/complexitylib/issues/1442).
+  The native cyclic-convolution prerequisite under
+  [#1701](https://github.com/cslib-community/complexitylib/issues/1701) reuses that quotient in
+  `Foundations/RingTheory/CyclicIntRing/Coefficients.lean` and supplies actual standard signed
+  array multiplication in `Algorithms/WordRAM/MatrixMultiplication/CyclicConvolution/`.
+  Source indexing/quotient mathematics adapt pinned Anthropic `RingOps.lean`/`Cyclic.lean`;
+  the native execution, frame and `42p² + 9p + 4` pre-halt instruction bound are proved directly.
+  Full Strassen/modular-counter composition, fast prime selection and #1394 remain open.
   `Algorithms/ExactTriangle/{Splitting,Witnesses}.lean` adapts the complete finite splitting and
   witness recovery component ([#1447](https://github.com/cslib-community/complexitylib/issues/1447)),
   using the existing matrices, lopsided graph and `Set.EqOn` answer API. Computable integer parameters
@@ -275,8 +328,9 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   both a level set and its complement, and `Finset.piecewise` restricts answers. No source machine,
   problem-statement universe or solver/time hypothesis is imported.
   The existing signed and unsigned APIs were reused; no source machine or separate run semantics were copied.
-  Tensor/sparse query programs, the full reduction host, native Chan–He preprocessing, fast Exact
-  Triangle and full input/time/width/asymptotic composition remain in
+  The conditional ordinary host and its exhaustive reference callee are complete. Native
+  pruned/sparse-query backend composition, a concrete fast Exact Triangle solver and the
+  unconditional fast input/time/width/asymptotic bound remain in
   [#1394](https://github.com/cslib-community/complexitylib/issues/1394), including the improved
   Section 4 route needed for the published exponent 1.9992. Anthropic's copyright and attribution
   are retained; the native proofs and representation choices are local.
@@ -325,15 +379,96 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   proofs, not a transfer of the source Light semantics or instruction constants. Exact Triangle
   parameter/instance preparation and outer solving, full ordinary-3SUM composition, and the
   improved Section 4 route to exponent 1.9992 remain separate work under #1394.
+  Caller-safe queried products ([#1618](https://github.com/cslib-community/complexitylib/issues/1618))
+  rebase actual memory accesses above a runtime caller base. The generic `WordRAM.MemoryWindow`
+  compiler charges an addition/load/remainder for each load and an addition/store for each
+  store, reusing ordinary native `Exec` and `Code`. Its clipped-memory view permits dirty
+  workspace without bulk initialization; it is a value relation, not independent run semantics.
+  The original product program is unchanged. Existing `NatClog` (the exact module already
+  landed in #1469) and `WordRAM.Power` compute the source modulus from original counts; fixed
+  register normalization and two `WordRAM.ArrayNormalize` span loops are actual charged code.
+  The callable raw-zero/one thin-regime client uses 163 registers and at most 131072 flat
+  instructions. It restores local input, returns exact product words at an absolute pointer,
+  preserves the caller outside its window, and retains the original charged raw-to-signed
+  doubling. At `D=4^m`, `L=19m`, `D^18≤N`, its standalone charge including halt is at most
+  three times the original product charge plus `2048*(N*D+Q+1)`. Distinct-set sparsity retains
+  the additive occurrence charge; `Q*2^m≤N²` gives `17301504*(19m+1)*N²/D^(1/18)`.
+  The window is at most `(2*(N+Q+3))^128`; this deliberately large polynomial address-space
+  reservation is not a claim about a tightly packed physical allocation. Every width at least
+  `256*clog₂(base+N+Q+P+5)` suffices for initialized callers with prefix words bounded by `P`.
+  The arbitrary dirty-caller interface uses `P` to bound every initial register and memory
+  word, including words loaded before the actual remainder; native prefix bounds then follow
+  from that derived physical admission. Initialized scratch is zero, so its `P` only needs
+  to bound the protected caller prefix. The generic compiler theorem remains separate from
+  the concrete thin-geometry admission and saving.
+  The real ET-record/matrix/query adapter is tracked in
+  [#1626](https://github.com/cslib-community/complexitylib/issues/1626). Its fixed 320-register
+  native code computes the selected record address, reads all six fields, recovers the exact
+  `4^m` exponent with existing `NatLog`, stores local original headers and copies the two raw
+  matrices and interleaved occurrence coordinates above the actual producer heap. Raw zero/one
+  words are copied unchanged; the callee's existing loop performs charged signed doubling.
+  The complete 163-register callable bank is renamed together, preserving the producer's low
+  64 registers. Memory relocation uses the real callable compiler, never register renaming alone.
+  `PreparationInput.exec_input` exposes the existing structured initialized derivation so real
+  caller code can compose it. Its private fit proof stays private; existing `runs_input` reuses
+  the new rule with unchanged statement, assumptions, exact readback and halt-inclusive budget.
+  The first-record initialized client supplies no layout/run/time/fit/solver certificate;
+  actual producer readback derives all source pointer ranges and coordinate meanings, and
+  actual chunk counts derive occurrence sparsity. The general caller supports every occupied
+  record ordinal. The per-record charge including halt is at most three times the original
+  product plus `4096*(nD+Q+1)`, or `34603008*(19m+1)*n²/D^(1/18)` under the admitted geometry.
+  The original producer word bound supplies caller `P` and heap placement; the complete wider
+  initialized prefixes have a positive logarithmic width threshold and polynomial words/support
+  independent of the physical width. Outer parameter/prime selection and instance iteration,
+  aggregate solving/witness reconstruction and the whole #1394 endpoint remain separate.
+  The original-weight consumer in
+  [#1639](https://github.com/cslib-community/complexitylib/issues/1639) composes actual producer,
+  product and verification code in 400 registers. It reads original interleaved pairs, computes
+  the piece interval with the native square-root kernel, and invokes the entire renamed
+  32-register signed verifier only while searching and on nonzero actual answers. The native
+  scan counter is at most existing finite false positives plus the returned 0/1 flag. Thus a
+  failed record has no additive successful-scan charge. Caller memory outside the original
+  product window and the complete producer bank are framed; widths and all-prefix words/support
+  are derived from original headers/weights at every sufficiently wide physical word size.
+  Source Light semantics and costs are not imported or simulated by assumption. The native
+  verifier returns its last zero, while finite `scanPiece` returns its first; failure and
+  original-weight soundness agree. The existing decoded queries now expose chunk membership,
+  nonrepetition and rank order, with an actual initialized client. The general raw writer bound
+  is placed at `WriteMatrices.entry_le_one`, and shared finite piece coordinates are in the
+  narrow `ExactTriangle.PieceBounds` module, reused by preparation and recovery. Parameter/prime
+  choice, the outer ET loop, aggregate savings and the full #1394 endpoint remain open; no curated
+  abstract changes.
+  The bounded fixed-prime continuation
+  [#1662](https://github.com/cslib-community/complexitylib/issues/1662) runs the producer once
+  and traverses every actual occupied ordinal using the full 400-register callee in a fixed
+  416-register program. Its initialized verdict decides original ET across all records;
+  protected readback survives dirty scratch via `Instances.Output.reframe`, which reframes
+  against the current state without asserting preservation of the old external frame.
+  Distinct record/query occurrences inject into the existing global `failedScans`; actual
+  total scans satisfy `S≤F(p)+returnedFlag`, with only one possible successful-return flag.
+  Native preparation, products, root/query/controller/loop/halt and original verification
+  costs are charged. Aggregate product work is bounded by
+  `138412032*(19m+1)*n³*g/D^(1/18)` under the unchanged positive thin geometry and prime window;
+  one-time `690n²Dg`, explicit query/root/controller work and one global failed-scan term remain
+  separate. The actual program has original-input logarithmic admission and polynomial
+  all-prefix words/support independently of every larger physical width. Validation and
+  integration are tracked in #1662; this is not a parameter/prime-selection host or a completed
+  aggregate source exponent. The source's Light host uses piece-major rounds and
+  per-round matrix construction; the native producer prepares the chunk-major catalogue once
+  and later products stop after success. No source-trace equivalence or Light simulation is
+  assumed. The full ordinary-3SUM 1.9992 objective remains open under #1394; no abstract changes.
   Stage `exec_*` lemmas are internal implementation APIs exported across proof modules;
   callers use the flat initialized runs, width theorem or pointer/epoch kernel. The narrow
   `WordRAM.ArrayAppend` and `WordRAM.InputArray` topic modules keep append/input dependencies
   and interface changes away from the widely imported `Allocation` core.
-  Post-integration [#1553](https://github.com/cslib-community/complexitylib/issues/1553) includes
-  replacing pruned `powers` with sibling #1536's generic `Power.program`, preserving the
-  `4L+10` budget via five retained constant initializations plus its `4L+5` run. Its exact
-  register map, affected execution/width/cost clients and sibling integration order are
-  recorded there. This documentation/test repair does not change either sibling's program.
+  Post-integration [#1553](https://github.com/cslib-community/complexitylib/issues/1553) replaces
+  pruned `powers` with five retained constant initializations (`powerSetup`) followed by
+  `Power.program.rename powerRegisters`, preserving the `4L+10` step bound and `PowersLocal`
+  frame, and replaces `BandPreparation.rootCode` with `NatSqrt.program.rename rootRegisters`
+  followed by `square ← root * root` (`5*sqrt(k)+8` steps). `ChanHe.Parameters.power` retains
+  its compile-time fixed-exponent unrolling (`κ+1` straight-line instructions over `magnitude`
+  and `base` without a runtime exponent/counter register or `Fits w (κ+1)` premise at `n=0`),
+  and `Encoding.setup`/`powerBody` retains its simultaneous `7^L`/`10^L` loop sharing `stage`.
 * **Typed RAM upstream core.** [CSLib #1158](https://github.com/leanprover/cslib/pull/1158) at
   `beea60a15eddc91d93e92fa5af9fb965c351d0d5` proposes
   `Cslib/Computability/Machines/RAM/Basic.lean`, in namespace `Cslib.RAM.Typed`.
@@ -359,13 +494,15 @@ Do not add a ledger row for an ordinary candidate or repeat its source marker he
   representation from the standard input. `WordRAM/Function` gives separate nonuniform and
   uniform RAM function-time predicates, with named-certificate reuse by `polytime`. Arbitrary continuation
   synthesis, iterative clients and a Turing-machine simulation remain open.
-  `Foundations/Data/OrderedSet` and `Foundations/Semantics/Stateful/OrderedSet` provide neutral
-  optional-minimum contracts, a typed finite-set interface and adaptive clients, with no tree or
-  cost dependency. Bounded-key implementations may specialize insertion admissibility.
+  `Foundations/Data/OrderedSet` and `Foundations/Data/OrderedSet/*` provide neutral
+  optional-minimum contracts, a typed finite-set interface including deletion, and adaptive
+  minimum extraction, with no tree or cost dependency. Bounded-key implementations may specialize
+  insertion admissibility.
   `Algorithms/Lean/SearchTree/*` reuses Mathlib's `BinaryTree`, height and node count for an
   unbalanced ordered-set realization. Finite-set behavior, strict invariants and height-bounded
-  node visits are proved, including for the pure deletion operation `erase`; allocation,
-  comparison implementation and client computation are excluded from that cost model. It is not
+  node visits are proved, including deletion through the shared interface and adaptive clients;
+  allocation, comparison implementation and client computation are excluded from that cost model.
+  It is not
   a balanced tree or machine-time certificate.
   `WordRAM/Dynamic` separately connects
   fixed bounded-word operation programs and faithful memory transcripts to those contracts.

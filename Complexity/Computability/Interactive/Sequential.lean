@@ -567,11 +567,6 @@ private theorem toOuterMeasure_bind_le_add {α β : Type} (μ : PMF α) (f : α 
   simpa only [compl_compl] using
     Probability.PMF.toOuterMeasure_bind_failure_le μ f Aᶜ t K fun a _ ha => h a ha
 
-private theorem toOuterMeasure_bind_le {α β : Type} (p : PMF α) (f : α → PMF β) (t : Set β)
-    {K : ℝ≥0∞} (h : ∀ a, (f a).toOuterMeasure t ≤ K) : (p.bind f).toOuterMeasure t ≤ K := by
-  rw [PMF.toOuterMeasure_bind_apply]
-  exact Probability.PMF.tsum_mul_le_of_forall_le _ h
-
 section Compose
 
 /-- The honest run of a composed reduction runs the first reduction, then the second on the
@@ -721,7 +716,7 @@ theorem Verifier.KnowledgeSound.append {V₁ : Verifier OracleSpec.empty s₁ S�
     congr 1
     ext r₂
     cases hout : V₁.outputOn x r₁.1 <;> simp [T₁, Spec.Transcript.split_append, hout]
-  · refine toOuterMeasure_bind_le _ _ _ fun r₁ => ?_
+  · refine Probability.PMF.toOuterMeasure_bind_le _ _ _ fun r₁ => ?_
     rw [PMF.toOuterMeasure_map_apply]
     cases hout : V₁.outputOn x r₁.1 with
     | none =>

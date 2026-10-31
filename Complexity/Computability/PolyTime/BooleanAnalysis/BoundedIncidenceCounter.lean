@@ -24,6 +24,7 @@ import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Na
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Nat.BinaryDiv
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Complexity.Computability.Machines.Turing.MultiTape.Encodings.List.Size
+import Complexity.Foundations.Data.List.Fold
 import Mathlib.Data.List.GetD
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -66,8 +67,8 @@ bounded-incidence, bounded-width $\mathbb{F}_2$ polynomial-system branch evaluat
 
 namespace Cslib.Complexity.SubexponentialSAT.SparsePolyCounter
 
-open Finset Cslib Cslib.BitString Cslib.Complexity Cslib.GenericRAM Cslib.LinearAlgebra
-open Turing.MultiTapeTM
+open Finset Cslib Cslib.BitString Cslib.CommonCountingAccum Cslib.Complexity Cslib.GenericRAM
+open Cslib.LinearAlgebra Turing.MultiTapeTM
 
 local notation "encSys" => encList (encList (encList encNat))
 
@@ -472,7 +473,7 @@ private theorem exists_computableInO_signedMeasJet :
         (evalMeasPayload (Cslib.Radix.measurementValues dc.2.2.1.1 dc.2.2.1.2 i, pa.1)).elim pa.2
           fun y => addJet pa.1.2.1.1 pa.1.2.1.2.1 pa.2 y) := by
       funext pa i; cases evalMeasPayload _ <;> rfl
-    rw [hfn]; exact foldl_keep_fst
+    rw [hfn]; exact List.foldl_keep_fst
       (fun (m : MeasStepCtx) (acc : JetRows) (i : ℕ) =>
         (evalMeasPayload (Cslib.Radix.measurementValues dc.2.2.1.1 dc.2.2.1.2 i, m)).elim acc
           (fun y => addJet m.2.1.1 m.2.1.2.1 acc y))
@@ -683,7 +684,7 @@ private theorem exists_computableInO_nodeJet :
       (eSubAcc (SubsetPairFold.runPrefix subsetPairStepBody qs.2.1.1 qs.1 j
         (qs.2, zeroJet qs.2.2.2.1.1 qs.2.2.2.1.2.1)).2.2).length ≤ B_sub qs := by
     intro qs j hj; rw [SubsetPairFold.runPrefix_acc]; simp only [subsetPairStepBody_eq]
-    rw [foldl_keep_fst (fun (s : SubsetStepCtx) (acc : JetRows) (i : ℕ) =>
+    rw [List.foldl_keep_fst (fun (s : SubsetStepCtx) (acc : JetRows) (i : ℕ) =>
       addJet s.2.2.1.1 s.2.2.1.2.1 acc
         (evalSignedMeasJet (SubsetPairFold.unrankSubsetPair qs.2.1.1 qs.1 i, s)))]
     have hf_le := length_encJetRows_foldl_optAddJet_le (J := qs.2.2.2.1.1) (ℓ := qs.2.2.2.1.2.1)
@@ -731,7 +732,7 @@ private theorem exists_computableInO_nodeJet :
         (Nat.mul_le_mul_left co (Nat.pow_le_pow_left (Nat.add_le_add_right hinp_len 1) do_))
       have hfst_eq : inp.2.1 = qs.2 := by
         dsimp only [inp]; rw [SubsetPairFold.runPrefix_acc]; simp only [subsetPairStepBody_eq]
-        rw [foldl_keep_fst (fun (s : SubsetStepCtx) (acc : JetRows) (i : ℕ) =>
+        rw [List.foldl_keep_fst (fun (s : SubsetStepCtx) (acc : JetRows) (i : ℕ) =>
           addJet s.2.2.1.1 s.2.2.1.2.1 acc
             (evalSignedMeasJet (SubsetPairFold.unrankSubsetPair qs.2.1.1 qs.1 i, s)))]
       have hdc_len : (eDC (inp.1, inp.2.1)).length ≤ L_dc qs := by
@@ -797,8 +798,8 @@ private theorem bi_insertSorted : PolyT (fun p : List ℕ × ℕ => insertSorted
   have hv := snd (encList encNat) encNat
   have hp := fst (encPair (encList encNat) encNat) encNat
   have hu := snd (encPair (encList encNat) encNat) encNat
-  exact bi_listAppend'
-    (bi_listAppend' (bi_filterWithId (binary_lt' hu (hv.comp hp)) hm) (bi_cons' hv (const [])))
+  exact listAppend'
+    (listAppend' (bi_filterWithId (binary_lt' hu (hv.comp hp)) hm) (cons' hv (const [])))
     (bi_filterWithId (binary_lt' (hv.comp hp) hu) hm)
 
 private theorem bi_sortDedup : PolyT sortDedup (encList encNat) (encList encNat) :=
@@ -1341,9 +1342,15 @@ public theorem exists_boundedIncidenceBranchCertificate_time_bound
       simp only [Rat.cast_natCast, Rat.cast_mul, Rat.cast_ofNat,
         ReplacementParams.cast_tauRat] at hrat_r
       exact (Nat.cast_le.mpr hc_le).trans hrat_r
-    · unfold d_max maxAllGroupDim; refine foldl_max_le (Nat.zero_le _) fun x hx => ?_
+    · unfold d_max maxAllGroupDim
+      refine (List.max_le_iff (l := _ :: _) (by simp)).mpr ?_
+      simp only [List.mem_cons, forall_eq_or_imp]
+      refine ⟨Nat.zero_le _, fun x hx => ?_⟩
       obtain ⟨t, ht_mem, rfl⟩ := List.mem_map.mp hx; have ht : t < Q := List.mem_range.mp ht_mem
-      unfold maxGroupDim; refine foldl_max_le (Nat.zero_le _) fun y hy => ?_
+      unfold maxGroupDim
+      refine (List.max_le_iff (l := _ :: _) (by simp)).mpr ?_
+      simp only [List.mem_cons, forall_eq_or_imp]
+      refine ⟨Nat.zero_le _, fun y hy => ?_⟩
       obtain ⟨g, hg_mem, rfl⟩ := List.mem_map.mp hy; have hg : g < r := List.mem_range.mp hg_mem
       refine (Nat.min_le_right _ _).trans ?_; have hgrp := (href.2.2.1 ⟨t, ht⟩ ⟨g, hg⟩).2.1
       dsimp only [data, mkDesignPair, mkDesignFromScheds, prepScheduleParams,

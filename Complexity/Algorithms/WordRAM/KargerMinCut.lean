@@ -112,6 +112,8 @@ three complete machine-level endpoints built on the workspace-relocatable subrou
 namespace Cslib.Algorithms.WordRAM.Karger
 
 open scoped ENNReal
+open Cslib.WeightedCut
+open Cslib.Probability.PMF
 open Cslib.WordRAM
 
 /-! ### Word-size sufficiency and `Data.init` matrix layout -/
@@ -402,11 +404,11 @@ theorem singleCode_spec {n w : ℕ} {W : Fin n → Fin n → ℕ}
         omega
       exact modifies_trans_subset (hmem_setup ▸ hmod_deg) hmod_c hsub1 hsub2
     · refine ⟨pullbackCut part' {0},
-        isNonTrivialCut_pullbackCut hC'.surj (isNonTrivialCut_singleton (le_refl 2) 0), ?_⟩
+        isNonTrivialCut_pullbackCut hC'.surj (isNonTrivialCut_singleton (by simp) 0), ?_⟩
       rw [hv1_p, cutWeight_pullbackCut hC', cutWeight_two_singleton_zero hC'.multigraph]
       simpa using hst'.workspace.1 0 1
   · intro hmin_pos
-    obtain ⟨C_star, hC_nt, hC_min⟩ := exists_minCut_achiever hn W
+    obtain ⟨C_star, hC_nt, hC_min⟩ := exists_minCut_achiever (by rwa [Fintype.card_fin]) W
     have hpb_id : pullbackCut (id : Fin n → Fin n) C_star = C_star := by
       ext u
       simp [pullbackCut]
@@ -990,7 +992,7 @@ theorem ampTrialBody_spec {w sb n R i : ℕ} {W : Fin n → Fin n → ℕ} {mem�
       rw [cutWeight_pullbackCut hC', cutWeight_two_singleton_zero hC'.multigraph]
       simpa using hst'.workspace.1 0 1
     have hnew_nt : IsNonTrivialCut (pullbackCut part' {0}) :=
-      isNonTrivialCut_pullbackCut hC'.surj (isNonTrivialCut_singleton (le_refl 2) 0)
+      isNonTrivialCut_pullbackCut hC'.surj (isNonTrivialCut_singleton (by simp) 0)
     refine ⟨ampTrial_step_bound hn_cp hn_deg ht_c hn_p, ?_, ?_⟩
     · refine ⟨hsb_p, hwb_p, hdb_p, hn_p_r, hml_p, hnt_p, hti_p, hsrc_preserved,
         modifies_trans_subset hinv.modifies_ws hmod_ws_all Finset.Subset.rfl Finset.Subset.rfl,
@@ -1010,7 +1012,7 @@ theorem ampTrialBody_spec {w sb n R i : ℕ} {W : Fin n → Fin n → ℕ} {mem�
       simp only [hbv_p, hi0, ↓reduceIte, hbv_min]
       exact Nat.min_eq_right hge
   · intro hmin_pos
-    obtain ⟨C_star, hC_nt, hC_min⟩ := exists_minCut_achiever hn W
+    obtain ⟨C_star, hC_nt, hC_min⟩ := exists_minCut_achiever (by rwa [Fintype.card_fin]) W
     have hpb_id : pullbackCut (id : Fin n → Fin n) C_star = C_star := by
       ext u
       simp [pullbackCut]
@@ -1181,7 +1183,7 @@ theorem ampLoop_spec {w sb n R : ℕ} {W : Fin n → Fin n → ℕ} {mem₀ : �
         obtain ⟨m_r, hm_r, _, hsup_r, _⟩ := hnext z₁ hz₁
         rw [hml_def, hm_r.codeComp_eq, PMF.toOuterMeasure_map_apply,
           PMF.toOuterMeasure_apply]
-        convert ENNReal.tsum_eq_zero.mpr _
+        refine tsum_eq_zero_iff.mpr ?_
         intro z₂
         by_cases hz₂_eval : z₂ ∈ m_r.eval.support
         · have hz₂ : z₂ ∈ m_r.support := (ProbComp.support_eval m_r) ▸ hz₂_eval

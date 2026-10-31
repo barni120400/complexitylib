@@ -9,12 +9,12 @@ module
 
 public import Complexity.Algorithms.Reachability.Savitch
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO
+public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.OCountedIteration
 public import Complexity.Computability.Machines.Turing.MultiTape.Combinators.IterateWhile
 public import Complexity.Computability.Machines.Turing.MultiTape.Complexity.Quantitative
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.BigO.PolyTime
 import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolySpace
-import Complexity.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Plain
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimitives
@@ -24,19 +24,19 @@ import Complexity.Computability.Machines.Turing.MultiTape.Internal.EqualityPrimi
 
 Savitch's algorithm (`Cslib.Reachability.savitch`) runs the midpoint recursion on an explicit
 stack, for `Cslib.Reachability.Savitch.steps w d` steps. This file bounds its time and space in the
-quantitative calculus of tidy computability (`Turing.MultiTapeTM.ComputableTidilyInO`), charging
-every stored frame, counter, returned value and copy.
+quantitative calculus (`Turing.MultiTapeTM.ComputableInO`), charging every stored frame, counter,
+returned value and copy.
 
 The states are encoded by framed pairs, options and lists, with the levels in unary
 (`Cslib.Reachability.Savitch.encState`). The edge test may depend on a parameter, which a round of
 the iteration keeps in its state together with the width of the midpoints
 (`Cslib.Reachability.Savitch.roundStep`). A round takes time quadratic and space linear in its
 encoded state, plus the cost of the edge test on the endpoints of a call at level `0`
-(`Cslib.Reachability.Savitch.computableTidilyInO_roundStep`). Every state of a run from a call at
+(`Cslib.Reachability.Savitch.computableInO_roundStep`). Every state of a run from a call at
 level `d` holds at most `d` frames of size `O(d + w)`, so iterating the rounds with a binary
 counter takes space `O((d + 1) * (d + w + 1))`, plus the parameter and the space of the edge test
 on the worst endpoints (`Cslib.Reachability.edgeMax`), and exponential time
-(`Cslib.Reachability.computableTidilyInO_savitch`). With an edge test and inputs computable in
+(`Cslib.Reachability.computableInO_savitch`). With an edge test and inputs computable in
 polynomial time, the space is polynomial (`Cslib.Reachability.exists_polyBounded_space_savitch`).
 
 ## Main definitions
@@ -47,12 +47,15 @@ polynomial time, the space is polynomial (`Cslib.Reachability.exists_polyBounded
   `Cslib.Reachability.Savitch.encState`: the encoded states of the machine.
 * `Cslib.Reachability.Savitch.roundStep`, `Cslib.Reachability.Savitch.encRound`: a step carrying
   the parameter of the edge test and the width, and its encoding.
+* `Cslib.Reachability.Savitch.Invariant`: the states of a run from a call at a given level.
 
 ## Main results
 
-* `Cslib.Reachability.Savitch.computableTidilyInO_roundStep`: the time and space of a round.
-* `Cslib.Reachability.computableTidilyInO_savitch`: the time and space of Savitch's algorithm.
-* `Cslib.Reachability.computableInO_savitch`: the same bounds for plain certificates.
+* `Cslib.Reachability.Savitch.computableInO_roundStep`: the time and space of a round.
+* `Cslib.Reachability.Savitch.invariant_iterate`, `Cslib.Reachability.Savitch.length_encState_le`:
+  the states of a run hold at most `d` frames, so their encodings have length
+  `O((d + 1) * (d + w + 1))`.
+* `Cslib.Reachability.computableInO_savitch`: the time and space of Savitch's algorithm.
 * `Cslib.Reachability.exists_polyBounded_space_savitch`: Savitch's algorithm in polynomial space.
 
 ## References
@@ -146,7 +149,7 @@ private theorem next_eq (u : List Bool) :
 
 /-- The transducer testing whether all bits are ones. -/
 @[simps q₀ step final]
-private def allT : Transducer Bool Bool where
+def allT : Transducer Bool Bool where
   q₀ := true
   step a b := (a && b, [])
   final a := [a]
@@ -154,7 +157,7 @@ private def allT : Transducer Bool Bool where
   length_final_le _ := by simp
 
 /-- The transducer `allT` tests whether all bits are ones. -/
-private theorem allT_run (a : Bool) (u : List Bool) : allT.run a u = [a && u.all id] := by
+theorem allT_run (a : Bool) (u : List Bool) : allT.run a u = [a && u.all id] := by
   induction u generalizing a with
   | nil => simp [allT_final]
   | cons b u ih => simp [allT_step, ih, Bool.and_assoc]
@@ -407,7 +410,7 @@ private theorem eq_call_of_isBase {s : State} (h : s.isBase = true) :
 /-- **A round within the time and space of the edge test, plus quadratic time and linear
 space.** A call at level `0` compares its endpoints, in quadratic time, and runs the edge test on
 them; the other cases copy and rearrange the encoded state, in linear time. -/
-theorem computableTidilyInO_roundStep {edge : π → List Bool → List Bool → Bool}
+private theorem computableTidilyInO_roundStep {edge : π → List Bool → List Bool → Bool}
     {Te Se : π × List Bool × List Bool → ℕ}
     (hedge : ComputableTidilyInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
       (encPair encP (encPair encBits encBits)) encBool Te Se) :
@@ -462,6 +465,18 @@ theorem computableTidilyInO_roundStep {edge : π → List Bool → List Bool →
       omega
     · omega
 
+/-- **A round within the time and space of the edge test, plus quadratic time and linear
+space.** A call at level `0` compares its endpoints, in quadratic time, and runs the edge test on
+them; the other cases copy and rearrange the encoded state, in linear time. -/
+theorem computableInO_roundStep {edge : π → List Bool → List Bool → Bool}
+    {Te Se : π × List Bool × List Bool → ℕ}
+    (hedge : ComputableInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
+      (encPair encP (encPair encBits encBits)) encBool Te Se) :
+    ComputableInO (roundStep edge) (encRound encP) (encRound encP)
+      (fun q => ((encRound encP q).length + 1) ^ 2 + q.2.reg.edgeCost Te q.1.1)
+      (fun q => (encRound encP q).length + q.2.reg.edgeCost Se q.1.1) :=
+  (computableTidilyInO_roundStep hedge.tidy).computableInO
+
 /-! ### The states of a run -/
 
 /-- The rounds keep the parameter and the width, and run the machine. -/
@@ -473,13 +488,13 @@ theorem roundStep_iterate (edge : π → List Bool → List Bool → Bool) (p : 
 
 /-- The frames of a run from a call at level `d` with words of width `w`: a frame with `n` frames
 below it is at a level below `d - n`, and its words have width `w`. -/
-private def StackOk (w d : ℕ) : List Frame → Prop
+def StackOk (w d : ℕ) : List Frame → Prop
   | [] => True
   | f :: stack => f.level + 1 + stack.length ≤ d ∧ f.src.length = w ∧ f.dst.length = w ∧
       f.mid.length = w ∧ StackOk w d stack
 
 /-- The states of a run from a call at level `d` with words of width `w`. -/
-private def Invariant (w d : ℕ) (s : State) : Prop :=
+def Invariant (w d : ℕ) (s : State) : Prop :=
   StackOk w d s.stack ∧
     ∀ i u v, s.reg = .call i u v → i + s.stack.length ≤ d ∧ u.length = w ∧ v.length = w
 
@@ -491,7 +506,7 @@ private theorem length_of_next {u m : List Bool} (h : next u = some m) : m.lengt
   exact length_increment u
 
 /-- The step keeps the invariant of a run. -/
-private theorem invariant_step (edge : List Bool → List Bool → Bool) {w d : ℕ} {s : State}
+theorem invariant_step (edge : List Bool → List Bool → Bool) {w d : ℕ} {s : State}
     (h : Invariant w d s) : Invariant w d (step edge w s) := by
   obtain ⟨hst, hreg⟩ := h
   obtain ⟨stack, (⟨_ | i, u, v⟩ | b)⟩ := s
@@ -524,21 +539,21 @@ private theorem invariant_step (edge : List Bool → List Bool → Bool) {w d : 
           exact ⟨hst, fun _ _ _ h => by cases h⟩
 
 /-- Every state of a run keeps the invariant. -/
-private theorem invariant_iterate (edge : List Bool → List Bool → Bool) {w d : ℕ} {s : State}
+theorem invariant_iterate (edge : List Bool → List Bool → Bool) {w d : ℕ} {s : State}
     (h : Invariant w d s) (k : ℕ) : Invariant w d ((step edge w)^[k] s) := by
   induction k with
   | zero => exact h
   | succ k ih => rw [Function.iterate_succ_apply']; exact invariant_step edge ih
 
 /-- A run from a call at level `d` holds at most `d` frames. -/
-private theorem StackOk.length_le {w d : ℕ} :
+theorem StackOk.length_le {w d : ℕ} :
     ∀ {stack : List Frame}, StackOk w d stack → stack.length ≤ d
   | [], _ => Nat.zero_le _
   | _ :: _, h => by have := h.1; simp only [List.length_cons]; omega
 
 /-- The frames of a run from a call at level `d` are below level `d`, with words of width
 `w`. -/
-private theorem StackOk.mem {w d : ℕ} :
+theorem StackOk.mem {w d : ℕ} :
     ∀ {stack : List Frame}, StackOk w d stack → ∀ f ∈ stack,
       f.level < d ∧ f.src.length = w ∧ f.dst.length = w ∧ f.mid.length = w
   | [], _, _, hf => by simp at hf
@@ -550,7 +565,7 @@ private theorem StackOk.mem {w d : ℕ} :
 /-- The states of a run from a call at level `d`, with words of width `w`, are of size
 `O((d + 1) * (d + w + 1))`: at most `d` frames of size `O(d + w)`, and a call of size
 `O(d + w)`. -/
-private theorem length_encState_le {w d : ℕ} {s : State} (h : Invariant w d s) :
+theorem length_encState_le {w d : ℕ} {s : State} (h : Invariant w d s) :
     (encState s).length ≤ 24 * (d + 1) * (d + w + 1) := by
   obtain ⟨hst, hreg⟩ := h
   have hlist : (encList encFrame s.stack).length ≤ d * (2 * (2 * d + 6 * w + 5) + 1) := by
@@ -727,7 +742,7 @@ computable within time `O(Te)` and space `O(Se)`, and let the parameter, the wid
 level and three words, the register, the parameter, the width, and the counter of the rounds; the
 time charges every round, which copies the state [Sipser, Theorem 8.5][Sipser2013]
 [Arora and Barak, Section 4.2][AroraBarak09]. -/
-theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
+private theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
     {edge : π → List Bool → List Bool → Bool} {Te Se : π × List Bool × List Bool → ℕ}
     (hedge : ComputableTidilyInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
       (encPair encP (encPair encBits encBits)) encBool Te Se)
@@ -756,7 +771,7 @@ theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
         obtain ⟨rfl, rfl, rfl⟩ := Reg.call.inj h
         exact ⟨by simp, hsrc x, hdst x⟩⟩ k
   have hiter := (ComputableInO.iterate hn.computableInO hinit.computableInO
-    (computableTidilyInO_roundStep hedge).computableInO
+    (computableInO_roundStep hedge.computableInO)
     (R := fun x => (stateBound (encP (par x)).length (width x) (depth x) + 1) ^ 2 +
       edgeMax Te (par x) (width x))
     (Q := fun x => stateBound (encP (par x)).length (width x) (depth x) +
@@ -797,7 +812,10 @@ theorem computableTidilyInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
     nlinarith
   · rw [roundStep_iterate, savitch, answer_eq]
 
-/-- `computableTidilyInO_savitch` for plain certificates. -/
+/-- **Savitch's algorithm in the space of its stack.** If the edge test is computable with time
+`Te` and space `Se`, and the parameter, the width and depth in unary, and endpoints of width `w`
+are computable from `x` with time `Tin` and space `Sin`, then Savitch's algorithm is computable
+within space `O(Sin + (d + 1) * (d + w + 1) + |par| + edgeMax Se)` and exponential time. -/
 theorem computableInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
     {edge : π → List Bool → List Bool → Bool} {Te Se : π × List Bool × List Bool → ℕ}
     (hedge : ComputableInO (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
@@ -815,29 +833,29 @@ theorem computableInO_savitch {γ : Type} {encIn : γ ↪ List Bool}
         edgeMax Se (par x) (width x) :=
   (computableTidilyInO_savitch hedge.tidy hin.tidy hsrc hdst).computableInO
 
-/-- **Savitch's algorithm in polynomial space.** If the edge test is tidily computable in
-polynomial time, and the parameter, the width and depth in unary, and endpoints of width `w` are
-computable from `x` in polynomial time, then Savitch's algorithm is tidily computable within
-space polynomial in the length of the encoded input; the time is exponential, see
-`Cslib.Reachability.computableTidilyInO_savitch`. The width and the depth are polynomial since they
-are computed in unary [Sipser, Theorem 8.5][Sipser2013]. -/
+/-- **Savitch's algorithm in polynomial space.** If the edge test is computable in polynomial time,
+and the parameter, the width and depth in unary, and endpoints of width `w` are computable from `x`
+in polynomial time, then Savitch's algorithm is computable within space polynomial in the length of
+the encoded input; the time is exponential, see `Cslib.Reachability.computableInO_savitch`. The
+width and the depth are polynomial since they are computed in unary
+[Sipser, Theorem 8.5][Sipser2013]. -/
 theorem exists_polyBounded_space_savitch {γ : Type} {encIn : γ ↪ List Bool}
     {edge : π → List Bool → List Bool → Bool}
-    (hedge : ComputableTidilyInPolyTime (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
+    (hedge : ComputableInPolyTime (fun q : π × List Bool × List Bool => edge q.1 q.2.1 q.2.2)
       (encPair encP (encPair encBits encBits)) encBool)
     {par : γ → π} {width depth : γ → ℕ} {src dst : γ → List Bool}
-    (hin : ComputableTidilyInPolyTime (fun x => (par x, width x, depth x, src x, dst x)) encIn
+    (hin : ComputableInPolyTime (fun x => (par x, width x, depth x, src x, dst x)) encIn
       (encArgs encP))
     (hsrc : ∀ x, (src x).length = width x) (hdst : ∀ x, (dst x).length = width x) :
     ∃ t s, PolyBounded (fun x => (encIn x).length) s ∧
-      ComputableTidilyInTimeAndSpace
+      ComputableInTimeAndSpace
         (fun x => savitch (edge (par x)) (width x) (depth x) (src x) (dst x)) encIn encBool t
         s := by
-  have hlen := hin.polyBounded_length
-  obtain ⟨_, se, -, hse, hedgeO⟩ := hedge.computableInPolyTime.exists_computableInO
-  obtain ⟨_, si, -, hsi, hinO⟩ := hin.computableInPolyTime.exists_computableInO
+  have hlen := hin.tidy.polyBounded_length
+  obtain ⟨_, se, -, hse, hedgeO⟩ := hedge.exists_computableInO
+  obtain ⟨_, si, -, hsi, hinO⟩ := hin.exists_computableInO
   obtain ⟨cs, ds, hcs⟩ := hse.exists_le
-  obtain ⟨c, h, -⟩ := (computableInO_savitch hedgeO hinO hsrc hdst).tidy
+  obtain ⟨c, h, -⟩ := computableInO_savitch hedgeO hinO hsrc hdst
   refine ⟨_, _, ?_, h⟩
   -- the stack, the parameter and the edge test are polynomial in the encoded arguments
   set L := fun x => (encArgs encP (par x, width x, depth x, src x, dst x)).length

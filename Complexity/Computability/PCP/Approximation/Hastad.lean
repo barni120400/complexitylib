@@ -9,19 +9,23 @@ module
 
 public import Complexity.Computability.PCP.Approximation.LabelCover
 public import Complexity.Computability.PCP.Approximation.Hastad.LinearTest
+import Complexity.Foundations.Data.Finset.Average
 import Complexity.Foundations.Data.Finset.Expect
 
 /-!
 # Håstad's 3-bit linear test: soundness against Label Cover
 
-Håstad [Hastad2001] proved that, for every `ε > 0`, it is NP-hard to satisfy more than a
-`7 / 8 + ε` fraction of the clauses of a satisfiable E3-CNF formula, matching the random-assignment
-bound `Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth`. Together with its submodule
-`LinearTest`, this module formalizes the analytic core of that proof, the completeness and
-soundness of Håstad's noisy 3-bit linear test on folded Long Code tables over a Label Cover
-projection `π : β → γ`. It does not prove the hardness result: no reduction to MAX-E3LIN or
-MAX-E3SAT is constructed, and NP-hardness of Label Cover (the PCP theorem with parallel repetition)
-is not formalized.
+Håstad proved that, for every `ε > 0`, it is NP-hard to approximate MAX-E3LIN-2 within a factor
+`2 - ε` [Håstad, Theorem 5.4][Hastad2001]. His four-clause gadget turns this into NP-hardness of
+approximating MAX-E3SAT within `8 / 7 - ε` [Håstad, Theorem 6.1][Hastad2001], so the
+random-assignment bound `Cslib.Logic.PL.CNF.IsExactThreeDistinct.unsatVal_le_one_eighth` is
+optimal. Together with its submodule `LinearTest`, this module formalizes the analytic core of
+the MAX-E3LIN proof: the completeness and soundness of Håstad's noisy 3-bit linear test on folded
+Long Code tables over a Label Cover projection `π : β → γ`
+[Håstad, Lemmas 5.1 and 5.2][Hastad2001]. It does not prove a hardness result: no reduction to
+MAX-E3LIN or MAX-E3SAT is constructed, and NP-hardness of Label Cover (the PCP theorem with
+parallel repetition) is not formalized. The stronger statement for satisfiable E3-CNF formulas
+[Håstad, Theorem 6.5][Hastad2001] uses a different test and is not addressed here.
 
 1. The **Long Code** of `x : α` (`Cslib.BitString.longCode`) evaluates each Boolean function
    `g : α → Bool` at `x`. A table `B : (γ → Bool) → Bool` is **folded**, that is, odd
@@ -79,52 +83,6 @@ open Cslib.BitString Cslib.Complexity Cslib.PCP.Encoded
 /-! ### Multi-edge Label Cover decoding and soundness -/
 
 section LabelCoverSoundness
-
-/-- **Deterministic vertex-choice lemma**: given a vertex map `v : I → ℕ`, nonnegative payoffs
-`W : I → α → ℝ`, and vertex-wise sub-probability distributions `p : ℕ → α → ℝ` (`0 ≤ p u a` and
-`∑ a, p u a ≤ 1`), choosing the best label at each vertex produces a deterministic assignment
-`f : ℕ → α` whose payoff is at least the expected payoff under `p`. -/
-theorem exists_choice_sum_le {I α : Type*} [Fintype I] [Fintype α] [Nonempty α]
-    (v : I → ℕ) (W : I → α → ℝ) (hW : ∀ i a, 0 ≤ W i a)
-    (p : ℕ → α → ℝ) (hp0 : ∀ u a, 0 ≤ p u a) (hp1 : ∀ u, ∑ a : α, p u a ≤ 1) :
-    ∃ f : ℕ → α, (∑ i : I, ∑ a : α, p (v i) a * W i a) ≤ ∑ i : I, W i (f (v i)) := by
-  let U (u : ℕ) (a : α) : ℝ := ∑ i : I, if v i = u then W i a else 0
-  have hmax (u : ℕ) : ∃ b : α, ∀ a : α, U u a ≤ U u b := by
-    obtain ⟨b, _, hb⟩ := univ.exists_max_image (U u) univ_nonempty
-    exact ⟨b, fun a => hb a (mem_univ a)⟩
-  choose f hf using hmax
-  refine ⟨f, ?_⟩
-  have hpart (F : I → ℕ → ℝ) :
-      (∑ i : I, F i (v i)) =
-        ∑ u ∈ univ.image v, ∑ i : I, if v i = u then F i u else 0 := by
-    rw [sum_comm]
-    refine sum_congr rfl fun i _ => ?_
-    simp [sum_ite_eq, mem_image_of_mem v (mem_univ i)]
-  rw [hpart (fun i u => ∑ a : α, p u a * W i a), hpart (fun i u => W i (f u))]
-  refine sum_le_sum fun u _ => ?_
-  have hU_nonneg : 0 ≤ U u (f u) := by
-    refine sum_nonneg fun i _ => ?_
-    split_ifs
-    · exact hW i (f u)
-    · rfl
-  have hswap :
-      (∑ i : I, if v i = u then (∑ a : α, p u a * W i a) else 0) =
-        ∑ a : α, p u a * U u a := by
-    trans ∑ i : I, ∑ a : α, if v i = u then p u a * W i a else 0
-    · refine sum_congr rfl fun i _ => ?_
-      split_ifs <;> simp
-    · rw [sum_comm]
-      refine sum_congr rfl fun a _ => ?_
-      rw [mul_sum]
-      refine sum_congr rfl fun i _ => ?_
-      split_ifs <;> ring
-  rw [hswap]
-  calc ∑ a : α, p u a * U u a
-    _ ≤ ∑ a : α, p u a * U u (f u) :=
-      sum_le_sum fun a _ => mul_le_mul_of_nonneg_left (hf u a) (hp0 u a)
-    _ = (∑ a : α, p u a) * U u (f u) := by rw [← sum_mul]
-    _ ≤ 1 * U u (f u) := mul_le_mul_of_nonneg_right (hp1 u) hU_nonneg
-    _ = ∑ i : I, if v i = u then W i (f u) else 0 := one_mul _
 
 /-- Any deterministic labelling `(ℓ, r)` of a Label Cover instance `g` satisfies at most
 `g.edges.length * (1 - (g.toGraph projectionEval).unsatVal)` edges. -/
@@ -250,8 +208,8 @@ theorem graphLinearProb_longCode_of_satisfies {g : Graph (β → γ)} (hg : g.ed
     rw [← hℓr (g.edges.get i) (List.get_mem _ _), linearProb_longCode]
   simp only [hterm, expect_const hne]
 
-/-- **Multi-edge soundness bound for Håstad's 3-bit test over Label Cover**
-[Håstad, Theorem 5.6][Hastad2001]: for any Label Cover instance `g : Graph (β → γ)`, noise rate
+/-- **Multi-edge soundness bound for Håstad's 3-bit test over Label Cover**, adapting the proof of
+[Håstad, Lemma 5.2][Hastad2001]: for any Label Cover instance `g : Graph (β → γ)`, noise rate
 `0 ≤ δ ≤ 1 / 2`, degree cutoff `k`, folded right tables `B`, and left tables `A`, the squared
 average correlation `graphLinearCorr g δ B A ^ 2` is at most
 `(1 - 2 * δ) ^ (2 * k) + k ^ 2 * (1 - (g.toGraph projectionEval).unsatVal)`. -/
@@ -332,7 +290,7 @@ private theorem exists_params {ε δ : ℝ} (hε : 0 < ε) (hδ0 : 0 < δ) (hδ1
 end LabelCoverSoundness
 
 /-- **Completeness and soundness of Håstad's 3-bit linear test against Label Cover**
-[Håstad, Theorem 5.6][Hastad2001]:
+[Håstad, Lemmas 5.1 and 5.2][Hastad2001]:
 for every `ε > 0` and `0 < δ < 1 / 2`, there exists a Label Cover soundness parameter `0 < η < 1`,
 independent of the label sets `β` and `γ`, such that for every Label Cover instance
 `g : Graph (β → γ)` with `g.edges ≠ []`:

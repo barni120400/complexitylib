@@ -12,7 +12,7 @@ public import Complexity.Computability.Complexity.FineGrained.CountingSparsifica
 public import Complexity.Computability.Complexity.FineGrained.GeneralCNFBranchSchedule
 public import Complexity.Computability.Complexity.FineGrained.SparseBranchAsymptotics
 public import Complexity.Computability.Complexity.FineGrained.SparseCountingScale
-public import Complexity.Computability.Machines.Turing.MultiTape.Universal.Complexity
+public import Complexity.Computability.Machines.Turing.MultiTape.Encodings.Bool
 public import Complexity.Computability.PolyTime.BooleanAnalysis.SparsePolyCounter
 public import Complexity.Computability.PolyTime.CNF.SparseCNFLeafCounter
 public import Complexity.Logics.Propositional.ClauseSet.Sparsification.CountingParametersPolyTime
@@ -79,7 +79,6 @@ open Cslib.Complexity.SubexponentialSAT Cslib.Complexity.SubexponentialSAT.Spars
 open Cslib.GenericRAM Cslib.GenericRAM.ExhaustiveCountFallback
 open Cslib.Logic.PL Cslib.Logic.PL.CNF Cslib.Logic.PL.ClauseSet.Sparsification
 open Turing.MultiTapeTM
-open Turing.MultiTapeTM.Universal (encUnit)
 
 local notation "encSys" => encList (encList (encList encNat))
 local notation "encLeafCtx" => encPair encUnit encUnary
@@ -538,13 +537,6 @@ private theorem scopeWidthOn_le_mul (N k maxTerms : ℕ) (eq : List (List ℕ))
     _ ≤ eq.length * k := List.length_flatMap_le hdeg
     _ ≤ maxTerms * k := Nat.mul_le_mul_right k hlen
 
-private theorem foldl_max_le_of_forall {l : List ℕ} {init B : ℕ} (hi : init ≤ B)
-    (hl : ∀ x ∈ l, x ≤ B) : l.foldl max init ≤ B := by
-  induction l generalizing init with
-  | nil => exact hi
-  | cons a as ih =>
-    exact ih (max_le hi (hl a List.mem_cons_self)) fun x hx => hl x (List.mem_cons_of_mem a hx)
-
 private theorem compiled_system_incidence_bounds (k C_B β_B : ℕ) :
     ∃ C_inc : ℕ, 12 ≤ C_inc ∧ ∀ {N m B : ℕ} {sys : List (List (List ℕ))},
       2 ≤ N → B ≤ C_B * Nat.clog 2 N ^ β_B → m ≤ B * N →
@@ -573,7 +565,9 @@ private theorem compiled_system_incidence_bounds (k C_B β_B : ℕ) :
     Nat.pow_le_pow_right hlam1 (by omega)
   have hw_le : branchMaxFactorWidth N sys ≤ C_inc * lam ^ (2 * β_B + 4) := by
     unfold branchMaxFactorWidth
-    refine foldl_max_le_of_forall (Nat.mul_pos (by dsimp only [C_inc]; omega) hpow1) fun w hw => ?_
+    refine (List.max_le_iff (l := _ :: _) (by simp)).mpr ?_
+    simp only [List.mem_cons, forall_eq_or_imp]
+    refine ⟨Nat.mul_pos (by dsimp only [C_inc]; omega) hpow1, fun w hw => ?_⟩
     obtain ⟨eq, heq, rfl⟩ := List.mem_map.mp hw
     have h1 := (hsc_all eq heq).trans (hT_le.trans (Nat.mul_le_mul_left _ hpow_step))
     dsimp only [C_inc]; nlinarith

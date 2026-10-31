@@ -76,8 +76,8 @@ globally polynomial workspace.
 
 namespace Cslib.Complexity.SubexponentialSAT.SparsePolyCounter
 
-open Finset Cslib Cslib.BitString Cslib.Complexity Cslib.GenericRAM Cslib.LinearAlgebra
-open Turing.MultiTapeTM
+open Finset Cslib Cslib.BitString Cslib.CommonCountingAccum Cslib.Complexity Cslib.GenericRAM
+open Cslib.LinearAlgebra Turing.MultiTapeTM
 
 local notation "encSys" => encList (encList (encList encNat))
 
@@ -210,28 +210,6 @@ private theorem bi_intBin_pow' {α : Type} {encIn : α ↪ List Bool} {a : α �
     (ha : ComputableInPolyTime a encIn encIntBin) (hb : ComputableInPolyTime b encIn encUnary) :
     ComputableInPolyTime (fun x => a x ^ b x) encIn encIntBin :=
   bi_intBin_pow.comp (ha.prod hb)
-
-private theorem bi_cons {α : Type} (enc : α ↪ List Bool) :
-    ComputableInPolyTime (fun p : α × List α => p.1 :: p.2)
-      (encPair enc (encList enc)) (encList enc) := by fun_prop
-
-private theorem bi_cons' {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
-    {head : γ → α} {tail : γ → List α}
-    (hhead : ComputableInPolyTime head encIn encA)
-    (htail : ComputableInPolyTime tail encIn (encList encA)) :
-    ComputableInPolyTime (fun x => head x :: tail x) encIn (encList encA) :=
-  (bi_cons encA).comp (hhead.prod htail)
-
-private theorem bi_listAppend {α : Type} (enc : α ↪ List Bool) :
-    ComputableInPolyTime (fun p : List α × List α => p.1 ++ p.2)
-      (encPair (encList enc) (encList enc)) (encList enc) := by fun_prop
-
-private theorem bi_listAppend' {α γ : Type} {encA : α ↪ List Bool} {encIn : γ ↪ List Bool}
-    {left right : γ → List α}
-    (hleft : ComputableInPolyTime left encIn (encList encA))
-    (hright : ComputableInPolyTime right encIn (encList encA)) :
-    ComputableInPolyTime (fun x => left x ++ right x) encIn (encList encA) :=
-  (bi_listAppend encA).comp (hleft.prod hright)
 
 private theorem bi_replicate_base {α : Type} (enc : α ↪ List Bool) :
     ComputableInPolyTime (fun p : ℕ × α => List.replicate p.1 p.2)
@@ -566,28 +544,6 @@ section LoopCertificates
 
 open ComputableInPolyTime
 
-private theorem le_foldl_max_init (init : ℕ) (xs : List ℕ) : init ≤ xs.foldl max init := by
-  induction xs generalizing init with
-  | nil => exact le_rfl
-  | cons b bs ih => exact (Nat.le_max_left init b).trans (ih (max init b))
-
-private theorem le_foldl_max_of_mem {xs : List ℕ} {x init : ℕ} (hx : x ∈ xs) :
-    x ≤ xs.foldl max init := by
-  induction xs generalizing init with
-  | nil => cases hx
-  | cons a as ih =>
-    rcases List.mem_cons.mp hx with rfl | hmem
-    · exact (Nat.le_max_right init x).trans (le_foldl_max_init (max init x) as)
-    · exact ih hmem
-
-private theorem foldl_max_le {xs : List ℕ} {init B : ℕ} (hinit : init ≤ B)
-    (hxs : ∀ x ∈ xs, x ≤ B) : xs.foldl max init ≤ B := by
-  induction xs generalizing init with
-  | nil => exact hinit
-  | cons a as ih =>
-    exact ih (max_le hinit (hxs a (List.mem_cons_self ..))) fun x hx =>
-      hxs x (List.mem_cons_of_mem _ hx)
-
 /-- Maximum unary-clamped variable-group dimension `min (2 * n') |V_{t,g}|` across `g < r_u` at a
 fixed interpolation node `t`. -/
 def maxGroupDim (n' r_u : ℕ) (vGroups_t : List (List ℕ)) : ℕ :=
@@ -601,57 +557,16 @@ def maxAllGroupDim (n' Q_u r_u : ℕ) (varGroups : List (List (List ℕ))) : ℕ
 private theorem min_length_le_maxGroupDim {n' r_u g : ℕ} {vGroups_t : List (List ℕ)}
     (hg : g < r_u) :
     min (2 * n') (vGroups_t.getD g []).length ≤ maxGroupDim n' r_u vGroups_t :=
-  le_foldl_max_of_mem (List.mem_map.mpr ⟨g, List.mem_range.mpr hg, rfl⟩)
+  List.le_max_of_mem
+    (l := 0 :: (List.range r_u).map (fun g => min (2 * n') (vGroups_t.getD g []).length))
+    (List.mem_cons_of_mem _ (List.mem_map.mpr ⟨g, List.mem_range.mpr hg, rfl⟩))
 
 private theorem maxGroupDim_le_maxAllGroupDim {n' Q_u r_u t : ℕ}
     {varGroups : List (List (List ℕ))} (ht : t < Q_u) :
     maxGroupDim n' r_u (varGroups.getD t []) ≤ maxAllGroupDim n' Q_u r_u varGroups :=
-  le_foldl_max_of_mem (List.mem_map.mpr ⟨t, List.mem_range.mpr ht, rfl⟩)
-
-private def HasPolySpace {α β : Type} {ei : α ↪ List Bool} {eo : β ↪ List Bool}
-    {f : α → β} (c : NativeCertificate f ei eo) : Prop :=
-  PolyBounded (fun a => (ei a).length) c.space
-
-private theorem polyBounded_length_of_hasPolySpace {α β : Type} {ei : α ↪ List Bool}
-    {eo : β ↪ List Bool} {f : α → β} {c : NativeCertificate f ei eo} (hc : HasPolySpace c) :
-    PolyBounded (fun a => (ei a).length) (fun a => (eo (f a)).length) := by
-  obtain ⟨c₀, d₀, hs⟩ := hc.exists_le
-  obtain ⟨k, _, hl⟩ := c.computes
-  refine .of_forall_le (k * (c₀ + 1)) d₀ fun a => (hl a).trans ?_
-  have h1 : 1 ≤ ((ei a).length + 1) ^ d₀ := Nat.one_le_pow _ _ (Nat.succ_pos _)
-  have := hs a; nlinarith
-
-private theorem hasPolySpace_comp {α β γ : Type} {ei : α ↪ List Bool} {em : β ↪ List Bool}
-    {eo : γ ↪ List Bool} {f : α → β} {g : β → γ} {d : NativeCertificate g em eo}
-    {c : NativeCertificate f ei em} (hd : HasPolySpace d) (hc : HasPolySpace c) :
-    HasPolySpace (d.comp c) := hc.add (hd.comp (polyBounded_length_of_hasPolySpace hc))
-
-private theorem hasPolySpace_prod {α β γ : Type} {ei : α ↪ List Bool} {em : β ↪ List Bool}
-    {eo : γ ↪ List Bool} {f : α → β} {g : α → γ} {c : NativeCertificate f ei em}
-    {d : NativeCertificate g ei eo} (hc : HasPolySpace c) (hd : HasPolySpace d) :
-    HasPolySpace (c.prod d) := hc.add hd
-
-private theorem exists_natAbs_rowEntry_le_two_pow {ι γ : Type} {sz : ι → ℕ}
-    {encΓ : γ ↪ List Bool} {f : γ → JetRows} {L : ι → ℕ}
-    (hf : PolyBounded (fun y => (encΓ y).length) (fun y => (encJet (f y)).length))
-    (hL : PolyBounded sz L) :
-    ∃ M : ι → ℕ, PolyBounded sz M ∧
-      ∀ x y, (encΓ y).length ≤ L x → ∀ j u, (rowEntry (f y) j u).natAbs ≤ 2 ^ M x := by
-  obtain ⟨c, d, hle⟩ := hf.exists_le
-  refine ⟨fun x => c * (L x + 1) ^ d, NativeCertificate.polyBounded_pow_of_polyBounded hL c d,
-    fun x y hy j u => ?_⟩
-  have hout := (hle y).trans
-    (Nat.mul_le_mul_left c (Nat.pow_le_pow_left (Nat.add_le_add_right hy 1) d))
-  exact (Nat.size_le.mp
-    ((CommonCountingAccum.size_natAbs_rowEntry_le_length_encJetRows (f y) j u).trans hout)).le
-
-private theorem foldl_keep_fst {ι π α : Type*} (step : π → α → ι → α)
-    (par : π) (xs : List ι) (init : α) :
-    xs.foldl (fun pa i => (pa.1, step pa.1 pa.2 i)) (par, init) =
-      (par, xs.foldl (step par) init) := by
-  induction xs generalizing init with
-  | nil => rfl
-  | cons _ _ ih => exact ih _
+  List.le_max_of_mem
+    (l := 0 :: (List.range Q_u).map (fun t => maxGroupDim n' r_u (varGroups.getD t [])))
+    (List.mem_cons_of_mem _ (List.mem_map.mpr ⟨t, List.mem_range.mpr ht, rfl⟩))
 
 private theorem foldl_optAddJet_spec (J ℓ j M : ℕ) (f : ℕ → Option JetRows)
     (hf : ∀ i < j, ∀ y, f i = some y → ∀ j' < J, ∀ u' < ℓ, (rowEntry y j' u').natAbs ≤ M) :
@@ -687,52 +602,6 @@ private theorem length_encJetRows_foldl_optAddJet_le {J ℓ j N M : ℕ} {f : �
   exact CommonCountingAccum.length_encJetRows_le_of_size_le hsh fun j' hj' u' hu' =>
     (Nat.size_le_size ((hbd j' hj' u' hu').trans (Nat.mul_le_mul_right M hj))).trans
       (Nat.size_mul_le N M)
-
-private theorem computableInO_snd_indexFold {ι β : Type} {encIn : ι ↪ List Bool}
-    {encB : β ↪ List Bool} {count : ι → ℕ} {initial : ι → β} {body : ℕ × β → β}
-    (cn : NativeCertificate count encIn encNat) (ci : NativeCertificate initial encIn encB)
-    (cb : NativeCertificate body (encPair encNat encB) encB)
-    (hcn : cn.IsPolynomial) (hci : ci.IsPolynomial) (hcb : HasPolySpace cb)
-    {B : ι → ℕ} (hB_pb : PolyBounded (fun x => (encIn x).length) B)
-    (hB : ∀ x j, j ≤ count x → (encB (IndexFold.run body j (initial x)).2).length ≤ B x)
-    (R P_cb : ι → ℕ) (hP_cb : PolyBounded (fun x => (encIn x).length) P_cb)
-    (hR : ∀ x j, j ≤ count x →
-      (encPair encNat encB (IndexFold.run body j (initial x))).length ≤
-        2 * (encNat (count x)).length + 1 + B x →
-      cb.time (IndexFold.run body j (initial x)) ≤ R x + P_cb x) :
-    ∃ P : ι → ℕ, PolyBounded (fun x => (encIn x).length) P ∧
-      ComputableInO (fun x => (IndexFold.run body (count x) (initial x)).2) encIn encB
-        (fun x => (count x + 1) * (R x + P x)) P := by
-  have hcnt_pb := (cn.polyTime hcn).polyBounded_length
-  let S_st : ι → ℕ := fun x => 2 * (encNat (count x)).length + 1 + B x
-  have hSst_pb := (((PolyBounded.const 2).mul hcnt_pb).add (.const 1)).add hB_pb
-  obtain ⟨cs, ds, hcs⟩ := hcb.exists_le
-  let Q : ι → ℕ := fun x => cs * (S_st x + 1) ^ ds
-  have hQ_pb := NativeCertificate.polyBounded_pow_of_polyBounded hSst_pb cs ds
-  have hsq_pb := NativeCertificate.polyBounded_pow_of_polyBounded hcnt_pb 1 2
-  have hloop := IndexFold.computableInO cn ci cb (fun x => R x + P_cb x) Q B
-    (fun x j hj => hR x j hj (IndexFold.length_run_le body (initial x) hj (hB x j hj)))
-    (fun x j hj => (hcs _).trans (Nat.mul_le_mul_left cs (Nat.pow_le_pow_left
-      (Nat.add_le_add_right (IndexFold.length_run_le body (initial x) hj (hB x j hj)) 1) ds))) hB
-  let cLoop : NativeCertificate (fun x => IndexFold.run body (count x) (initial x))
-      encIn (encPair encNat encB) := ⟨_, _, hloop⟩
-  let P : ι → ℕ := fun x => cn.time x + cn.space x + (encIn x).length + ci.time x + ci.space x +
-    2 * S_st x + 2 * (1 * ((encNat (count x)).length + 1) ^ 2) + P_cb x + Q x +
-    2 * (encNat (count x)).length + 1
-  have hP_pb : PolyBounded (fun x => (encIn x).length) P :=
-    ((((((((((hcn.1.add hcn.2).add .self).add hci.1).add hci.2).add
-      ((PolyBounded.const 2).mul hSst_pb)).add ((PolyBounded.const 2).mul hsq_pb)).add
-      hP_cb).add hQ_pb).add ((PolyBounded.const 2).mul hcnt_pb)).add (.const 1))
-  refine ⟨P, hP_pb, (NativeCertificate.snd cLoop).computes.mono_le (fun x => ?_) (fun x => ?_)⟩
-  · have hinit_le := Nat.le_mul_of_pos_left (cn.time x + ((encIn x).length + ci.time x))
-      (Nat.succ_pos (count x))
-    have hstep_le : (S_st x + ((encNat (count x)).length + 1) ^ 2 + (R x + P_cb x)) +
-        S_st x + ((encNat (count x)).length + 1) ^ 2 ≤
-        R x + (2 * S_st x + 2 * (1 * ((encNat (count x)).length + 1) ^ 2) + P_cb x) := by omega
-    have hmul_le := Nat.add_le_add hinit_le (Nat.mul_le_mul_left (count x + 1) hstep_le)
-    rw [← Nat.mul_add] at hmul_le
-    exact hmul_le.trans (Nat.mul_le_mul_left (count x + 1) (by dsimp only [P]; omega))
-  · dsimp only [NativeCertificate.snd_space, cLoop, S_st, P]; omega
 
 private def mapRangeStep {γ δ : Type} (f : γ × ℕ → δ)
     (p : ℕ × ((ℕ × γ) × List δ)) : (ℕ × γ) × List δ :=
@@ -782,7 +651,7 @@ private theorem exists_computableInO_mapRange {ι γ δ : Type} {encIn : ι ↪ 
       (fun q : (ℕ × ((ℕ × γ) × List δ)) × δ => (q.1.2.1, q.1.2.2 ++ [q.2]))
       (encPair eSt encB) encAcc := by
     have hq1 := fst eSt encB; have hq2 := snd eSt encB
-    exact hq1.snd'.fst'.prod (bi_listAppend' hq1.snd'.snd' (bi_cons' hq2 (const [])))
+    exact hq1.snd'.fst'.prod (listAppend' hq1.snd'.snd' (cons' hq2 (const [])))
   let cCond := NativeCertificate.ofPolyTime hcond
   let cPrep := NativeCertificate.ofPolyTime hprep
   let cComb := NativeCertificate.ofPolyTime hcomb
@@ -898,12 +767,8 @@ groups, searches each unrestricted group fiber via `BooleanMeasurements.search` 
 every fiber is nonempty streams restricted local-cube factor-jet sums via
 `CommonCountingAccum.streamGroupJetSum` and returns `some (prodJet J ℓ groupJets)` (Pass 2). -/
 def evalMeasPayload (wc : List ℤ × MeasStepCtx) : Option JetRows :=
-  let word := wc.1; let ctx := wc.2
-  let n' := ctx.1.1; let r_u := ctx.1.2.1; let m_rows := ctx.1.2.2
-  let J := ctx.2.1.1; let ℓ := ctx.2.1.2.1; let k' := ctx.2.1.2.2
-  let node := ctx.2.2.1.1; let dDen := ctx.2.2.1.2
-  let vGroups_t := ctx.2.2.2.1.1; let grpMeas_t := ctx.2.2.2.1.2
-  let indE := ctx.2.2.2.2.1.1; let indU := ctx.2.2.2.2.1.2; let grpEqLists := ctx.2.2.2.2.2
+  let (word, ((n', r_u, m_rows), (J, ℓ, k'), (node, dDen), (vGroups_t, grpMeas_t),
+    (indE, indU), grpEqLists)) := wc
   let repOpts := (List.range r_u).map fun g =>
     BooleanMeasurements.search Prod.fst Prod.snd
       ((grpMeas_t.getD g [], (word.drop (g * m_rows)).take m_rows),
@@ -919,12 +784,35 @@ def evalMeasPayload (wc : List ℤ × MeasStepCtx) : Option JetRows :=
     some (CommonCountingAccum.prodJet J ℓ groupJets)
   else none
 
+/-- Variable count `n'` in `MeasStepCtx`. -/
+abbrev MeasStepCtx.numVars (ctx : MeasStepCtx) : ℕ :=
+  let dims := ctx.1; dims.1
+
+/-- Group count `r_u` in `MeasStepCtx`. -/
+abbrev MeasStepCtx.numGroups (ctx : MeasStepCtx) : ℕ :=
+  let dims := ctx.1; let rg := dims.2; rg.1
+
+/-- Jet order `J` in `MeasStepCtx`. -/
+abbrev MeasStepCtx.jetOrder (ctx : MeasStepCtx) : ℕ :=
+  let r1 := ctx.2; let jetDims := r1.1; jetDims.1
+
+/-- Jet precision `ℓ` in `MeasStepCtx`. -/
+abbrev MeasStepCtx.precision (ctx : MeasStepCtx) : ℕ :=
+  let r1 := ctx.2; let jetDims := r1.1; let lk := jetDims.2; lk.1
+
+/-- Variable-group partition `vGroups_t` in `MeasStepCtx`. -/
+abbrev MeasStepCtx.varGroups (ctx : MeasStepCtx) : List (List ℕ) :=
+  let r1 := ctx.2; let r2 := r1.2; let r3 := r2.2; let vgMeas := r3.1; vgMeas.1
+
 /-- `measurementStepBody` factors into `evalMeasPayload` followed by optional `addJet`
 accumulation. -/
 theorem measurementStepBody_eq (inp : ((ℕ × ℕ) × List ℤ) × (MeasStepCtx × JetRows)) :
+    let pw := inp.1
+    let ca := inp.2
+    let ctx := ca.1
     measurementStepBody inp =
-      (evalMeasPayload (inp.1.2, inp.2.1)).elim inp.2
-        (fun y => (inp.2.1, addJet inp.2.1.2.1.1 inp.2.1.2.1.2.1 inp.2.2 y)) := by
+      (evalMeasPayload (pw.2, ctx)).elim ca
+        (fun y => (ctx, addJet ctx.jetOrder ctx.precision ca.2 y)) := by
   unfold measurementStepBody evalMeasPayload; dsimp only; split_ifs <;> rfl
 
 /-- Uniform `ComputableInO` runtime and global `PolyBounded` workspace bound for `evalMeasPayload`,
@@ -935,7 +823,9 @@ theorem exists_computableInO_measPayload :
       ComputableInO evalMeasPayload (encPair (encList encIntBin) encMeasStepCtx)
         (encOption (encList (encList encIntBin)))
         (fun wc =>
-          (wc.2.1.2.1 * (2 ^ maxGroupDim wc.2.1.1 wc.2.1.2.1 wc.2.2.2.2.1.1 + 1) + 1) * P wc)
+          let ctx := wc.2
+          (ctx.numGroups * (2 ^ maxGroupDim ctx.numVars ctx.numGroups ctx.varGroups + 1) + 1) *
+            P wc)
         P := by
   let eWC := encPair (encList encIntBin) encMeasStepCtx
   have hru_wc : ComputableInPolyTime (fun wc : List ℤ × MeasStepCtx => wc.2.1.2.1)

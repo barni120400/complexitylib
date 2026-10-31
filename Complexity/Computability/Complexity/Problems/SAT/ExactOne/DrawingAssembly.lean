@@ -10,6 +10,7 @@ module
 public import Complexity.Computability.Complexity.Problems.SAT.ExactOne.DrawingData
 public import Complexity.Computability.Complexity.Problems.SAT.ExactOne.DrawingCounts
 public import Complexity.Computability.Complexity.Problems.SAT.ExactOne.DrawingClauseVertices
+import Complexity.Foundations.Data.List.Lookup
 import Mathlib.Data.List.GetD
 
 /-!
@@ -45,15 +46,6 @@ def positiveFormulaDrawing (φ : CNF ℕ) (d : Graph.OrthogonalDrawing) :
   incidenceRoute := fun o =>
     ((positivePlacedClauses φ d).getD o.1 ([], (0, 0), [])).2.2.getD o.2.1 []
 
-private theorem map_getD_zipIdx {A B : Type*} (xs : List A) (ys : List B) (fallback : B)
-    (hlen : ys.length = xs.length) :
-    (xs.zipIdx.map fun a => ys.getD a.2 fallback) = ys := by
-  apply List.ext_getElem
-  · simpa using hlen.symm
-  · intro i hi hj
-    simp only [List.getElem_map, List.getElem_zipIdx, Nat.zero_add]
-    rw [List.getD_eq_getElem _ _ hj]
-
 private theorem placed_occurrence_routes (pcs : List PositivePlacedClause)
     (hc : ∀ pc ∈ pcs, pc.2.2.length = pc.1.length) :
     ((Cslib.Logic.PL.occurrences (pcs.map Prod.fst)).map fun o =>
@@ -76,7 +68,7 @@ private theorem placed_occurrence_routes (pcs : List PositivePlacedClause)
     rfl
   change pc.1.zipIdx.map (fun x => (pcs.getD i ([], (0, 0), [])).2.2.getD x.2 []) = _
   rw [hg]
-  exact map_getD_zipIdx pc.1 pc.2.2 [] (hc pc (List.mem_of_getElem? hi'))
+  exact List.map_getD_zipIdx pc.1 pc.2.2 [] (hc pc (List.mem_of_getElem? hi'))
 
 /-- The occurrence-indexed view has exactly the compiler's actual position and route lists. -/
 theorem positiveFormulaDrawing_drawing (φ : CNF ℕ) (d : Graph.OrthogonalDrawing) :

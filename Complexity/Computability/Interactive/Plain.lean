@@ -142,11 +142,6 @@ private theorem runLaw_output {s : Spec} {StmtIn StmtOut : Type}
   · exact e.elim
   · rfl
 
-private theorem toOuterMeasure_bind_le {α β : Type} (p : PMF α) (f : α → PMF β) (t : Set β)
-    {K : ℝ≥0∞} (h : ∀ a, (f a).toOuterMeasure t ≤ K) : (p.bind f).toOuterMeasure t ≤ K := by
-  rw [PMF.toOuterMeasure_bind_apply]
-  exact Probability.PMF.tsum_mul_le_of_forall_le _ h
-
 private theorem toOuterMeasure_bind_pure {α β : Type} (p : PMF α) (g : α → β) (t : Set β) :
     (p.bind fun a => PMF.pure (g a)).toOuterMeasure t = p.toOuterMeasure (g ⁻¹' t) := by
   rw [← PMF.toOuterMeasure_map_apply]
@@ -175,7 +170,7 @@ private theorem rbrFrom_le : ∀ (s : Spec) (smp : PerChallenge ProbComp s)
     simp [runStrategy, hw]
   | .prover M I :: s, smp, ε, S, wins, h, hS, _, st => by
     simp only [runStrategy, plainLaw_bind]
-    refine toOuterMeasure_bind_le _ _ _ fun p => ?_
+    refine Probability.PMF.toOuterMeasure_bind_le _ _ _ fun p => ?_
     rcases p with ⟨msg, st'⟩
     simp only [plainLaw_pure]
     rw [toOuterMeasure_bind_pure]
@@ -194,16 +189,16 @@ private theorem rbrFrom_le : ∀ (s : Spec) (smp : PerChallenge ProbComp s)
         rw [Set.indicator_of_mem hc]
         exact Probability.PMF.toOuterMeasure_le_one _ _
       · rw [Set.indicator_of_notMem hc, zero_add]
-        refine toOuterMeasure_bind_le _ _ _ fun st' => ?_
+        refine Probability.PMF.toOuterMeasure_bind_le _ _ _ fun st' => ?_
         simp only [plainLaw_pure]
         rw [toOuterMeasure_bind_pure]
         exact rbrFrom_le s smp.2 ε.2 (fun p => S (some (c, p))) (fun τ => wins (c, τ)) (h.2 c) hc
           st'
     calc ∑' c, ProbComp.eval smp.1 c * _ ≤
           ∑' c, ProbComp.eval smp.1 c * (A.indicator 1 c + PerChallenge.sum s ε.2) :=
-          ENNReal.tsum_le_tsum fun c => by gcongr; exact hinner c
+          tsum_le_tsum fun c => by gcongr; exact hinner c
       _ = (ProbComp.eval smp.1).toOuterMeasure A + PerChallenge.sum s ε.2 := by
-          simp only [mul_add, ENNReal.tsum_add, ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul,
+          simp only [mul_add, tsum_add, ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul,
             PMF.toOuterMeasure_apply]
           congr 1
           refine tsum_congr fun c => ?_
@@ -219,7 +214,7 @@ theorem Verifier.RbrSound.sound {s : Spec} {StmtIn StmtOut : Type}
   obtain ⟨S, hinit, hround⟩ := h
   intro x hx α P
   rw [World.plain_eval_execute, PMF.toOuterMeasure_map_apply, plainLaw_bind]
-  exact toOuterMeasure_bind_le _ _ _ fun st => rbrFrom_le s V.samplers ε (S x) _ (hround x)
-    (hinit x hx) st
+  exact Probability.PMF.toOuterMeasure_bind_le _ _ _ fun st =>
+    rbrFrom_le s V.samplers ε (S x) _ (hround x) (hinit x hx) st
 
 end Cslib.Interactive

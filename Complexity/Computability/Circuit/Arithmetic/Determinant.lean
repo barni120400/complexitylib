@@ -33,8 +33,8 @@ entries, which a sharper count would exploit. Only the gate count is certified; 
 obtained from a synthesis bound, not constructed by a certified uniform procedure.
 
 The permanent family `permFamily K` of generic permanents is also a p-family
-(`isPFamily_permFamily`). Nothing here places it in `VP` or proves Valiant's `VNP`-completeness of
-the permanent.
+(`isPFamily_permFamily`). The separate `Arithmetic/Permanent` module proves membership in `VNP`.
+Nothing here places it in `VP` or proves Valiant's `VNP`-completeness of the permanent.
 
 ## Main definitions
 
@@ -272,7 +272,9 @@ generic determinants has `n * n` variables, degree at most `n` and arithmetic ci
 `3 * n ^ 4 + 4` gates. -/
 theorem detFamily_mem_VP : detFamily K ∈ VP K := by
   choose c hc hsize using exists_circuit_det (K := K)
-  refine ⟨⟨by fun_prop, PolynomiallyBounded.id.mono_of_le fun n =>
+  refine ⟨⟨?_, PolynomiallyBounded.id.mono_of_le fun n =>
     totalDegree_det_genericMatrix_le n⟩, c, PolynomiallyBounded.mono_of_le (by fun_prop) hsize, hc⟩
+  change PolynomiallyBounded (fun n : ℕ => n * n)
+  fun_prop
 
 end Cslib.Circuits.Arithmetic

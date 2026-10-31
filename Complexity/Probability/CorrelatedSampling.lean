@@ -20,7 +20,7 @@ Two parties hold distributions `P` and `Q` on a finite set and share randomness,
 communicate. Correlated sampling lets each party output a sample with exactly its own distribution
 so that the two samples agree with probability at least `(1 - δ) / (1 + δ) ≥ 1 - 2δ`, where `δ` is
 the statistical distance between `P` and `Q`. This is the sampling step of Holenstein's proof of
-the parallel repetition theorem [Holenstein, Lemma 8][Holenstein2009].
+the parallel repetition theorem [Holenstein, Lemma 5.2][Holenstein2009].
 
 Holenstein's parties scan a shared infinite sequence of uniform points of `S × [0, 1]` and output
 the first point under the graph of their own distribution. We use a finite version of the same
@@ -171,7 +171,7 @@ theorem map_firstIn_weightedOrderAux (w : Ω → ℝ≥0) :
     rcases o with _ | c
     · rw [PMF.bind_apply, PMF.map_apply]
       simp only [reduceCtorEq, ite_false, tsum_zero]
-      refine ENNReal.tsum_eq_zero.mpr fun a => ?_
+      refine tsum_eq_zero_iff.mpr fun a => ?_
       split_ifs <;> simp [PMF.map_apply]
     rw [PMF.bind_apply, tsum_fintype, hrhs]
     set du := weightedDraw w U hU0
@@ -406,7 +406,7 @@ theorem sum_weight_region_union (i j : I) :
     · exact (congrArg (· ∈ values P s) h).mpr (mem_values j s)
 
 open scoped Cslib.Probability.PMF in
-/-- **Correlated sampling** [Holenstein, proof of Lemma 8][Holenstein2009]. The outputs of
+/-- **Correlated sampling** [Holenstein, proof of Lemma 5.2][Holenstein2009]. The outputs of
 parties `i` and `j` agree with probability at least `(1 - δ) / (1 + δ)`, where `δ` is the
 statistical distance between `P i` and `P j`. -/
 theorem agree_ge (i j : I) :

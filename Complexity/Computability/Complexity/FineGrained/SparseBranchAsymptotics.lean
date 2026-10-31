@@ -9,6 +9,7 @@ module
 
 public import Complexity.Init
 public import Complexity.Computability.Complexity.FineGrained.SparseParitySchedule
+import Complexity.Foundations.Data.Nat.Log
 import Mathlib.Analysis.Complex.ExponentialBounds
 
 /-!
@@ -95,18 +96,6 @@ open Cslib.Complexity.SubexponentialSAT
 
 /-! ### 1. Free-variable (`n / 2 ≤ n' ≤ n`) to original-variable (`n`) `rowCost` transfer -/
 
-private theorem clog_two_le_two_mul_of_le_two_mul {n n' : ℕ} (hn : n ≤ 2 * n') (hn' : 2 ≤ n') :
-    Nat.clog 2 n ≤ 2 * Nat.clog 2 n' := by
-  have h1 : 1 ≤ Nat.clog 2 n' :=
-    (Nat.lt_clog_iff_pow_lt one_lt_two).mpr (by omega : 2 ^ 0 < n')
-  have h2 : n ≤ 2 ^ (Nat.clog 2 n' + 1) := by
-    calc n ≤ 2 * n' := hn
-      _ ≤ 2 * 2 ^ Nat.clog 2 n' := Nat.mul_le_mul_left 2 (Nat.le_pow_clog one_lt_two n')
-      _ = 2 ^ (Nat.clog 2 n' + 1) := (pow_succ' 2 _).symm
-  have h3 : Nat.clog 2 n ≤ Nat.clog 2 n' + 1 :=
-    (Nat.clog_le_iff_le_pow one_lt_two).mpr h2
-  omega
-
 /-- **Section 5.5 free-variable `rowCost` transfer (printed p. 39):**
 Whenever `n ≤ 2 * n'`, `n' ≤ n`, and `hF : Feasible β n' b_occ w_width M'`, the free-variable
 exponent factor `(n' : ℝ) * rowCost β n'` is bounded in terms of the original variable count `n` by
@@ -129,7 +118,7 @@ theorem Feasible.mul_rowCost_le_of_le_two_mul {β n n' b_occ w_width M' : ℕ}
   have hsqrt_le : Real.sqrt (Nat.clog 2 n) ≤ 2 * Real.sqrt (Nat.clog 2 n') := by
     have hclog_le : (Nat.clog 2 n : ℝ) ≤ (2 : ℝ) ^ 2 * (Nat.clog 2 n' : ℝ) := by
       have hnat : Nat.clog 2 n ≤ 2 * Nat.clog 2 n' :=
-        clog_two_le_two_mul_of_le_two_mul hn_le (by omega)
+        Nat.clog_two_le_two_mul_of_le_two_mul hn_le (by omega)
       have hcast : (Nat.clog 2 n : ℝ) ≤ 2 * (Nat.clog 2 n' : ℝ) := by exact_mod_cast hnat
       have hnn : (0 : ℝ) ≤ (Nat.clog 2 n' : ℝ) := Nat.cast_nonneg _
       linarith
