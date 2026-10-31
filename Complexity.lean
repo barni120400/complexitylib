@@ -912,6 +912,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.LocalDefor
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ModeExpansion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.NativeRecovery
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketEntry
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketEvaluator
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Recursion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Reindex
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Schedule
