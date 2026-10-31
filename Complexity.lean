@@ -910,6 +910,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.CauchyMode
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ChildCursor
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ChildNumbering
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ChildSize
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.CoeffScheme
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Constraint
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Deformation
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.DescribedContraction
