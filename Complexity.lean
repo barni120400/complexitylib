@@ -2494,6 +2494,7 @@ public import Complexity.Foundations.Analysis.LpNormMeasure
 public import Complexity.Foundations.Analysis.MarkovBrothersInequality
 public import Complexity.Foundations.Analysis.RootError
 public import Complexity.Foundations.Analysis.RowCompression
+public import Complexity.Foundations.Analysis.RowCompression.ClippedError
 public import Complexity.Foundations.Analysis.RowCompression.FalseOverflow
 public import Complexity.Foundations.Analysis.RowCompression.Floors
 public import Complexity.Foundations.Analysis.RowCompression.GateClosure
@@ -2738,6 +2739,7 @@ public import Complexity.Foundations.Data.Finset.Average
 public import Complexity.Foundations.Data.Finset.Expect
 public import Complexity.Foundations.Data.Finset.Finpartition
 public import Complexity.Foundations.Data.Finset.KthLargest
+public import Complexity.Foundations.Data.Finset.KthLargest.Truncation
 public import Complexity.Foundations.Data.Finset.Markov
 public import Complexity.Foundations.Data.Finset.OrderGlue
 public import Complexity.Foundations.Data.Finset.OrderedFilter
@@ -2938,9 +2940,12 @@ public import Complexity.Foundations.Probability.HierarchyParams
 public import Complexity.Foundations.Probability.PolynomialAtomCutoffs
 public import Complexity.Foundations.Probability.PolynomialAtomFalseOverflow
 public import Complexity.Foundations.Probability.PolynomialAtomRows
+public import Complexity.Foundations.Probability.PolynomialAtomRows.ClippedError
 public import Complexity.Foundations.Probability.PolynomialAtomRows.FirstOverflow
+public import Complexity.Foundations.Probability.PolynomialAtomRows.NoOverflow
 public import Complexity.Foundations.Probability.PolynomialAtomRows.Relative
 public import Complexity.Foundations.Probability.PolynomialAtomRows.RootError
+public import Complexity.Foundations.Probability.PolynomialAtomRows.Saturation
 public import Complexity.Foundations.Probability.ProductError
 public import Complexity.Foundations.Probability.RootMetric
 public import Complexity.Foundations.Probability.RootMetric.Minkowski
