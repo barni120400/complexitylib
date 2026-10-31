@@ -3242,6 +3242,8 @@ public import Complexity.Logics.Propositional.QBF.Arithmetization
 public import Complexity.Logics.Propositional.Resolution
 public import Complexity.Logics.Propositional.Resolution.CliqueColoring
 public import Complexity.Logics.Propositional.Resolution.Interpolation
+public import Complexity.Logics.Propositional.Resolution.Interpolation.Extraction
+public import Complexity.Logics.Propositional.Resolution.Interpolation.PolyTime
 public import Complexity.Logics.Propositional.Resolution.Pigeonhole
 public import Complexity.Logics.Propositional.Resolution.Proof
 public import Complexity.Logics.Propositional.Resolution.Restrict
