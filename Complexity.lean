@@ -1487,6 +1487,7 @@ public import Complexity.Computability.Geometry.Orthogonal.Encoding
 public import Complexity.Computability.Geometry.Orthogonal.Subdivision
 public import Complexity.Computability.Interactive.Basic
 public import Complexity.Computability.Interactive.Bundle
+public import Complexity.Computability.Interactive.Efficient
 public import Complexity.Computability.Interactive.GKR.Layered
 public import Complexity.Computability.Interactive.GKR.Protocol
 public import Complexity.Computability.Interactive.GKR.Summand
@@ -2392,6 +2393,7 @@ public import Complexity.Crypto.Computational.PseudorandomFunction.TruthTable
 public import Complexity.Crypto.Computational.PseudorandomGenerator
 public import Complexity.Crypto.Computational.SIS.Basic
 public import Complexity.Crypto.Computational.SchnorrIdentification
+public import Complexity.Crypto.Computational.SchnorrProtocol
 public import Complexity.Crypto.Computational.Signature
 public import Complexity.Crypto.Computational.Stretch
 public import Complexity.Crypto.Computational.Stretch.Quantitative
@@ -2425,6 +2427,7 @@ public import Complexity.Crypto.Protocols.MPC.SharedMul
 public import Complexity.Crypto.Protocols.SigmaProtocol.Abort
 public import Complexity.Crypto.Protocols.SigmaProtocol.Basic
 public import Complexity.Crypto.Protocols.SigmaProtocol.Composition
+public import Complexity.Crypto.Protocols.SigmaProtocol.Efficient
 public import Complexity.Crypto.Protocols.SigmaProtocol.FiatShamir
 public import Complexity.Crypto.Protocols.SigmaProtocol.Identification
 public import Complexity.Crypto.Protocols.SigmaProtocol.Linear
