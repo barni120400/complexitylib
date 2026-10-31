@@ -1248,6 +1248,7 @@ public import Complexity.Computability.Complexity.Classes.Space.TQBF.Prenex
 public import Complexity.Computability.Complexity.Classes.Space.TQBF.Reduction
 public import Complexity.Computability.Complexity.Classes.Space.Time
 public import Complexity.Computability.Complexity.Classes.Sparse
+public import Complexity.Computability.Complexity.Classes.Sparse.Conjunctive
 public import Complexity.Computability.Complexity.Classes.Sparse.Fortune
 public import Complexity.Computability.Complexity.Classes.Sparse.Mahaney
 public import Complexity.Computability.Complexity.Classes.Sparse.OneQuery
@@ -1423,6 +1424,7 @@ public import Complexity.Computability.Complexity.Problems.SAT.ExactOne.Geometry
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Compact
 public import Complexity.Computability.Complexity.Problems.SAT.Incidence.Degree
+public import Complexity.Computability.Complexity.Problems.SAT.LeftSet
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayout
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutChecks
 public import Complexity.Computability.Complexity.Problems.SAT.Planar.CrossoverLayoutData
