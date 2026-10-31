@@ -2406,6 +2406,7 @@ public import Complexity.Foundations.Analysis.RowCompression.Floors
 public import Complexity.Foundations.Analysis.RowCompression.Iteration
 public import Complexity.Foundations.Analysis.RowCompression.Preloss
 public import Complexity.Foundations.Analysis.RowCompression.Reference
+public import Complexity.Foundations.Analysis.RowCompression.Stationary
 public import Complexity.Foundations.Analysis.SpecialFunctions.Arccos
 public import Complexity.Foundations.Analysis.SpecialFunctions.PolynomialSwitch
 public import Complexity.Foundations.Analysis.SpecialFunctions.RationalRamp
