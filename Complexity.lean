@@ -1349,6 +1349,7 @@ public import Complexity.Computability.Complexity.Classes.Tally
 public import Complexity.Computability.Complexity.Classes.Time
 public import Complexity.Computability.Complexity.Classes.Time.AcceptCount
 public import Complexity.Computability.Complexity.Classes.Time.Polynomial
+public import Complexity.Computability.Complexity.Classes.Time.Verifier
 public import Complexity.Computability.Complexity.Classes.Toda
 public import Complexity.Computability.Complexity.Classes.Toda.Counting
 public import Complexity.Computability.Complexity.Classes.Toda.Hierarchy
@@ -2025,6 +2026,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.O
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Oracle
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputPrefix
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.OutputToTape
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PairSampler
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.PolynomialClock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryBounds
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryTake
