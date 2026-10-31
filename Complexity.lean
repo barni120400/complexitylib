@@ -28,6 +28,8 @@ public import Complexity.Algorithms.Lean.Huffman.Kraft
 public import Complexity.Algorithms.Lean.Huffman.Optimality
 public import Complexity.Algorithms.Lean.Huffman.TwoQueue
 public import Complexity.Algorithms.Lean.IndexedMinPQ
+public import Complexity.Algorithms.Lean.KMP.Basic
+public import Complexity.Algorithms.Lean.KMP.Search
 public import Complexity.Algorithms.Lean.MinPQ
 public import Complexity.Algorithms.Lean.Online.Basic
 public import Complexity.Algorithms.Lean.Paging.Basic
