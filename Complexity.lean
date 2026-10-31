@@ -1268,6 +1268,7 @@ public import Complexity.Computability.Complexity.Classes.Oracle.CountingEquival
 public import Complexity.Computability.Complexity.Classes.Oracle.Deterministic
 public import Complexity.Computability.Complexity.Classes.Oracle.Diagonal
 public import Complexity.Computability.Complexity.Classes.Oracle.Exponential
+public import Complexity.Computability.Complexity.Classes.Oracle.ListOracle
 public import Complexity.Computability.Complexity.Classes.Oracle.Lowness
 public import Complexity.Computability.Complexity.Classes.Oracle.Monotone
 public import Complexity.Computability.Complexity.Classes.Oracle.PP
@@ -1356,6 +1357,7 @@ public import Complexity.Computability.Complexity.Classes.Sparse.Hausdorff
 public import Complexity.Computability.Complexity.Classes.Sparse.Mahaney
 public import Complexity.Computability.Complexity.Classes.Sparse.OneQuery
 public import Complexity.Computability.Complexity.Classes.Sparse.Prune
+public import Complexity.Computability.Complexity.Classes.Sparse.Turing
 public import Complexity.Computability.Complexity.Classes.TFNP
 public import Complexity.Computability.Complexity.Classes.TFNP.SearchToDecision
 public import Complexity.Computability.Complexity.Classes.TFNP.Subclasses
@@ -2054,6 +2056,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Q
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.QueryTake
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Deterministic
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.ListOracle
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Oracle
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Replay.Simulation
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.ReplayInput
@@ -2869,6 +2872,7 @@ public import Complexity.Foundations.Data.BitString.PartialAssignment
 public import Complexity.Foundations.Data.BitString.PartialAssignment.Counting
 public import Complexity.Foundations.Data.BitString.Prefix
 public import Complexity.Foundations.Data.BitString.Propagation
+public import Complexity.Foundations.Data.BitString.ShortMembers
 public import Complexity.Foundations.Data.BitString.ShortWords
 public import Complexity.Foundations.Data.BitString.Sign
 public import Complexity.Foundations.Data.BitString.Support
