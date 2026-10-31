@@ -1094,6 +1094,7 @@ public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.Am
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.BPP
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.ConfigurationMatrix
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.ConfigurationReader
+public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.PolyTime
 public import Complexity.Computability.Complexity.Classes.LogSpace.Randomized.TimeLayer
 public import Complexity.Computability.Complexity.Classes.LogSpace.Savitch
 public import Complexity.Computability.Complexity.Classes.LogSpace.USTCON
