@@ -1768,6 +1768,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Internal.Resour
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.StepMachineCompiler
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.UnaryMachines
 public import Complexity.Computability.Machines.Turing.MultiTape.Internal.WordPredicates
+public import Complexity.Computability.Machines.Turing.MultiTape.Locality
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.ChoiceTable
 public import Complexity.Computability.Machines.Turing.MultiTape.Machine.Clock
@@ -1816,6 +1817,7 @@ public import Complexity.Computability.Machines.Turing.MultiTape.Plumbing.WhileI
 public import Complexity.Computability.Machines.Turing.MultiTape.PolyTime
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.AcceptCount
+public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Blocks
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Clock
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.Closed
 public import Complexity.Computability.Machines.Turing.MultiTape.Probabilistic.CoinTape
