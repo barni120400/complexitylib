@@ -950,7 +950,10 @@ public import Complexity.Computability.Circuit.Pi
 public import Complexity.Computability.Circuit.Pointwise
 public import Complexity.Computability.Circuit.Program
 public import Complexity.Computability.Circuit.Quantum.Basic
+public import Complexity.Computability.Circuit.Quantum.Classical
 public import Complexity.Computability.Circuit.Quantum.Code
+public import Complexity.Computability.Circuit.Quantum.Counter
+public import Complexity.Computability.Circuit.Quantum.Parallel
 public import Complexity.Computability.Circuit.Quantum.Uniform
 public import Complexity.Computability.Circuit.Rational
 public import Complexity.Computability.Circuit.Rational.Affine
@@ -1059,6 +1062,7 @@ public import Complexity.Computability.Complexity.Classes.BPP.Reduction
 public import Complexity.Computability.Complexity.Classes.BPP.WorstCaseHardness
 public import Complexity.Computability.Complexity.Classes.BPPpath
 public import Complexity.Computability.Complexity.Classes.BQP
+public import Complexity.Computability.Complexity.Classes.BQP.Amplification
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Closure
 public import Complexity.Computability.Complexity.Classes.BooleanHierarchy.Kadin
@@ -2640,6 +2644,7 @@ public import Complexity.Foundations.Combinatorics.LineCode.Menu.Collision
 public import Complexity.Foundations.Combinatorics.LineCode.Menu.Counting
 public import Complexity.Foundations.Combinatorics.MajorityTree
 public import Complexity.Foundations.Combinatorics.MajorityVote
+public import Complexity.Foundations.Combinatorics.MajorityVote.Weighted
 public import Complexity.Foundations.Combinatorics.Multigraph
 public import Complexity.Foundations.Combinatorics.PacketPacking
 public import Complexity.Foundations.Combinatorics.PartialLabelScores
