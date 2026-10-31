@@ -2039,6 +2039,7 @@ public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidence
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceSemantics
 public import Complexity.Computability.PolyTime.BooleanAnalysis.BoundedIncidenceStepCert
 public import Complexity.Computability.PolyTime.BooleanAnalysis.SparsePolyCounter
+public import Complexity.Computability.PolyTime.BudgetTuples
 public import Complexity.Computability.PolyTime.CNF.BranchedSparseCNFCounter
 public import Complexity.Computability.PolyTime.CNF.GreedyParityContext
 public import Complexity.Computability.PolyTime.CNF.GreedyParitySearch
@@ -2583,6 +2584,7 @@ public import Complexity.Foundations.Combinatorics.AffineDisperser.IndependentSo
 public import Complexity.Foundations.Combinatorics.AffineDisperser.Threshold
 public import Complexity.Foundations.Combinatorics.BalancedSchedules
 public import Complexity.Foundations.Combinatorics.BinomialTail
+public import Complexity.Foundations.Combinatorics.BudgetTuples
 public import Complexity.Foundations.Combinatorics.CentralBinomial
 public import Complexity.Foundations.Combinatorics.DepthReduction
 public import Complexity.Foundations.Combinatorics.Expander.AffineFamily
