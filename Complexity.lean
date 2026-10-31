@@ -926,6 +926,7 @@ public import Complexity.Computability.Circuit.Frontier.TensorNetwork.PacketEval
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Recursion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Reindex
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.Schedule
+public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ScheduleCount
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.ScheduledRecursion
 public import Complexity.Computability.Circuit.Frontier.TensorNetwork.TaperedRecovery
 public import Complexity.Computability.Circuit.Frontier.TwoSidedWitness
