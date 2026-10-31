@@ -1407,6 +1407,7 @@ public import Complexity.Computability.Complexity.FineGrained
 public import Complexity.Computability.Complexity.FineGrained.Assignment
 public import Complexity.Computability.Complexity.FineGrained.BruteForce
 public import Complexity.Computability.Complexity.FineGrained.CircuitCounting
+public import Complexity.Computability.Complexity.FineGrained.ContractionCircuitCounting
 public import Complexity.Computability.Complexity.FineGrained.ContractionCounting
 public import Complexity.Computability.Complexity.FineGrained.CountingCSP
 public import Complexity.Computability.Complexity.FineGrained.CountingEndpoint
@@ -2976,6 +2977,7 @@ public import Complexity.Foundations.Data.Nat.Radix.Measurement
 public import Complexity.Foundations.Data.Nat.RecursionTree
 public import Complexity.Foundations.Data.Nat.ResidueSum
 public import Complexity.Foundations.Data.Nat.SqrtLog
+public import Complexity.Foundations.Data.Nat.SqrtLog.Shifted
 public import Complexity.Foundations.Data.Nat.SqrtRatio
 public import Complexity.Foundations.Data.Nat.Subexponential
 public import Complexity.Foundations.Data.Option
