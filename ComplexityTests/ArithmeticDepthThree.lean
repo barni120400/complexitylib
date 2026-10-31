@@ -13,8 +13,9 @@ import Mathlib.Algebra.Field.ZMod
 
 The `2 × 2` determinant and permanent are sums of two products of two variables, and the
 partial-derivative bound shows that two product gates are necessary, over `ℚ` and over `ZMod 2`.
-Tests also exercise the splits zero and beyond the degree, the measure bounds on their own, and
-the exponential corollary.
+The two measure bounds together show that the `2 × 2` determinant is not a product of two affine
+forms, and the family corollaries rule out single product gates for the `2 × 2` members of the
+determinant and permanent families.
 -/
 
 namespace ComplexityTests.ArithmeticDepthThree
@@ -74,30 +75,36 @@ example : 2 ≤ (twoProducts (1 : ZMod 2)).program.cost SumOfTerms.termCost := b
   norm_num at h
   omega
 
--- Splits zero and beyond the degree give the trivial bounds.
-example : Nat.choose 2 0 ^ 2 ≤ Nat.choose 2 0 *
-    (twoProducts (-1 : ℚ)).program.cost SumOfTerms.termCost :=
-  DepthThree.choose_sq_le_mul_cost_det _ 0 0 twoProducts_det
+-- Both measure bounds together: the `2 × 2` determinant is not a product of two affine forms.
+example (a : Fin 2 → Fin 2 × Fin 2 → ℚ) (b : Fin 2 → ℚ) :
+    ∏ i, (∑ v, a i v • X v + C (b i)) ≠ (Matrix.mvPolynomialX (Fin 2) (Fin 2) ℚ).det := by
+  intro h
+  have hle := rank_partialDerivatives_prod_le a b 1
+  rw [h] at hle
+  have h' : Nat.choose 2 1 ^ 2 ≤ Nat.choose 2 1 := by
+    exact_mod_cast (Matrix.choose_sq_le_rank_partialDerivatives_det_mvPolynomialX 1).trans hle
+  norm_num at h'
 
-example : Nat.choose 2 3 ^ 2 ≤ Nat.choose 2 3 *
-    (twoProducts (1 : ℚ)).program.cost SumOfTerms.termCost :=
-  DepthThree.choose_sq_le_mul_cost_permanent _ 3 0 twoProducts_permanent
+/-- A circuit with a single product gate. -/
+private def oneProduct (t : DepthThree.Term K (Fin (2 * 2)) 2) :
+    Circuit (SumOfTerms.signature (DepthThree.Term K (Fin (2 * 2)) 2)) 0 1 :=
+  Circuit.oneGate (.term t) Fin.elim0
 
--- The measure bounds on their own.
-example : ((Nat.choose 3 1 ^ 2 : ℕ) : Cardinal) ≤
-    (partialDerivatives 1 (Matrix.mvPolynomialX (Fin 3) (Fin 3) ℚ).det).rank :=
-  Matrix.choose_sq_le_rank_partialDerivatives_det 1
+-- No single product gate computes the `2 × 2` members of the determinant and permanent families.
+example (t : DepthThree.Term ℚ (Fin (2 * 2)) 2) :
+    (oneProduct t).eval (SumOfTerms.interpretation DepthThree.Term.polynomial) Fin.elim0 0 ≠
+      (Arithmetic.detFamily ℚ).poly 2 := by
+  intro h
+  have h' := DepthThree.choose_sq_le_mul_cost_detFamily (oneProduct t) 1 0 h
+  rw [show (oneProduct t).program.cost SumOfTerms.termCost = 1 from rfl] at h'
+  norm_num at h'
 
-example (a : Fin 3 → Fin 2 → ℚ) (b : Fin 3 → ℚ) :
-    (partialDerivatives 2 (∏ i, (∑ v, a i v • X v + C (b i)))).rank ≤ Nat.choose 3 2 :=
-  rank_partialDerivatives_prod_le a b 2
-
--- Homogeneous depth-three circuits for the `8 × 8` permanent need more than `4 ^ 4 / 4` gates.
-example {m : ℕ} (c : Circuit (SumOfTerms.signature
-      (DepthThree.Term ℚ (Fin (2 * 4) × Fin (2 * 4)) (2 * 4))) 0 m) (j : Fin m)
-    (hc : c.eval (SumOfTerms.interpretation DepthThree.Term.polynomial) Fin.elim0 j =
-      (Matrix.mvPolynomialX (Fin (2 * 4)) (Fin (2 * 4)) ℚ).permanent) :
-    4 ^ 4 < 4 * c.program.cost SumOfTerms.termCost :=
-  DepthThree.four_pow_lt_mul_cost_permanent le_rfl c j hc
+example (t : DepthThree.Term (ZMod 2) (Fin (2 * 2)) 2) :
+    (oneProduct t).eval (SumOfTerms.interpretation DepthThree.Term.polynomial) Fin.elim0 0 ≠
+      (Arithmetic.permFamily (ZMod 2)).poly 2 := by
+  intro h
+  have h' := DepthThree.choose_sq_le_mul_cost_permFamily (oneProduct t) 1 0 h
+  rw [show (oneProduct t).program.cost SumOfTerms.termCost = 1 from rfl] at h'
+  norm_num at h'
 
 end ComplexityTests.ArithmeticDepthThree

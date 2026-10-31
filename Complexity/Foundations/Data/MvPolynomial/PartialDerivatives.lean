@@ -20,14 +20,19 @@ import Mathlib.LinearAlgebra.Dimension.Constructions
 `MvPolynomial.iteratedPDeriv α` differentiates along each variable of the tuple `α` in turn, and
 `MvPolynomial.partialDerivatives k p` sends a coefficient vector `c` to `∑ α, c α • ∂_α p`, the sum
 running over all `k`-tuples of variables. Its range is the span of the `k`-th order partial
-derivatives of `p` (`MvPolynomial.range_partialDerivatives`), so its rank is their dimension: the
-complexity measure of Nisan and Wigderson [NisanWigderson1996]. The map is linear in `p`, so the
-measure is subadditive.
+derivatives of `p` (`MvPolynomial.range_partialDerivatives`), so its rank is their dimension.
+This is the order-`k` measure `Γ_k` of [Kayal and Saptharishi, §5.2][KayalSaptharishi2014]. It
+refines the measure of Nisan and Wigderson, the dimension of the span of the partial derivatives
+of all orders [Nisan and Wigderson, §3][NisanWigderson1996]. The map is linear in `p`, so the
+measure is subadditive, and renaming the variables along an injection does not decrease it.
 
 Every partial derivative of a product of affine forms is a combination of products of fewer of
 the same forms: differentiating once removes one factor and leaves its coefficient. So the
 `k`-th order partial derivatives of a product of `d` affine forms lie in the span of the
-`choose d k` products omitting `k` of the factors.
+`choose d k` products omitting `k` of the factors. This is the order-`k` form of
+[Nisan and Wigderson, Lemma 3][NisanWigderson1996], which bounds the all-orders measure of such a
+product by `2 ^ d`, and it is a claim in the chapter "Lower bounds for depth-3 circuits" of
+[Saptharishi's survey][Saptharishi2026Survey]. It holds in every characteristic.
 
 ## Main definitions
 
@@ -37,20 +42,28 @@ the same forms: differentiating once removes one factor and leaves its coefficie
 ## Main results
 
 * `MvPolynomial.range_partialDerivatives`: the range is the span of the partial derivatives.
+* `MvPolynomial.rank_partialDerivatives_le_rename`: renaming variables injectively does not
+  decrease the measure.
 * `MvPolynomial.rank_partialDerivatives_prod_le`: for a product of `d` affine forms, the
   `k`-th order partial derivatives span at most `choose d k` dimensions.
 
 ## References
 
 * [N. Nisan, A. Wigderson, *Lower bounds on arithmetic circuits via partial
-  derivatives*][NisanWigderson1996]
+  derivatives*][NisanWigderson1996], §3 and Lemma 3
+* [N. Kayal, R. Saptharishi, *A selection of lower bounds for arithmetic
+  circuits*][KayalSaptharishi2014], §5.2
+* [R. Saptharishi, *A survey of lower bounds in arithmetic circuit
+  complexity*][Saptharishi2026Survey]
 -/
 
 @[expose] public section
 
 namespace MvPolynomial
 
-variable {R σ : Type*} [CommSemiring R]
+universe u v
+
+variable {R : Type u} {σ : Type v} [CommSemiring R]
 
 /-- The iterated partial derivative `∂_{α 0} ∘ ⋯ ∘ ∂_{α (k - 1)}`. -/
 noncomputable def iteratedPDeriv : {k : ℕ} → (Fin k → σ) → Module.End R (MvPolynomial σ R)
@@ -116,6 +129,15 @@ private theorem iteratedPDeriv_prod_mem_span {d : ℕ} (ℓ : Fin d → MvPolyno
     rw [Finset.mem_coe, Finset.mem_powersetCard, Finset.card_insert_of_notMem hi.2, hT'.2]
     exact ⟨Finset.subset_univ _, by omega⟩
 
+private theorem iteratedPDeriv_rename {τ : Type v} {f : σ → τ} (hf : Function.Injective f) {k : ℕ}
+    (α : Fin k → σ) (p : MvPolynomial σ K) :
+    iteratedPDeriv (f ∘ α) (rename f p) = rename f (iteratedPDeriv α p) := by
+  induction k with
+  | zero => rfl
+  | succ k ih =>
+    rw [iteratedPDeriv_succ_apply, iteratedPDeriv_succ_apply]
+    exact (congrArg (pderiv (f (α 0))) (ih (Fin.tail α))).trans (pderiv_rename hf _ _)
+
 end
 
 variable [Fintype σ]
@@ -141,8 +163,21 @@ theorem range_partialDerivatives (k : ℕ) (p : MvPolynomial σ R) :
 
 variable {K : Type*} [Field K]
 
-/-- **Nisan-Wigderson.** The `k`-th order partial derivatives of a product of `d` affine forms
-span at most `choose d k` dimensions. -/
+/-- Renaming the variables along an injection does not decrease the partial-derivative
+measure. -/
+theorem rank_partialDerivatives_le_rename {τ : Type v} [Fintype τ] {f : σ → τ}
+    (hf : Function.Injective f) (k : ℕ) (p : MvPolynomial σ K) :
+    (partialDerivatives k p).rank ≤ (partialDerivatives k (rename f p)).rank := by
+  rw [LinearMap.rank, LinearMap.rank, ← rank_map_eq (f := (rename f).toLinearMap)
+    (rename_injective f hf)]
+  refine Submodule.rank_mono ?_
+  rw [range_partialDerivatives, range_partialDerivatives, Submodule.map_span, Submodule.span_le]
+  rintro _ ⟨_, ⟨α, rfl⟩, rfl⟩
+  exact Submodule.subset_span ⟨f ∘ α, iteratedPDeriv_rename hf α p⟩
+
+/-- The `k`-th order partial derivatives of a product of `d` affine forms span at most
+`choose d k` dimensions: the order-`k` form of
+[Nisan and Wigderson, Lemma 3][NisanWigderson1996]. -/
 theorem rank_partialDerivatives_prod_le {d : ℕ} (a : Fin d → σ → K) (b : Fin d → K) (k : ℕ) :
     (partialDerivatives k (∏ i, (∑ v, a i v • X v + C (b i)))).rank ≤ d.choose k := by
   classical

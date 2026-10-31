@@ -17,25 +17,31 @@ import Mathlib.LinearAlgebra.StdBasis
 /-!
 # Partial derivatives of the generic determinant and permanent
 
-The generic `n × n` determinant and permanent are sums `∑ σ, w σ • ∏ i, X (σ i, i)` over the
-permutations, with nonzero weights `w σ`: signs and ones. Fix sets `R` of rows and `C` of columns,
-both of size `k`, and a permutation `τ` mapping `C` onto `R`. Differentiating along the entries
-`(τ c, c)`, `c ∈ C`, keeps the permutations that agree with `τ` on `C`, without these entries; this
-is, up to sign, the minor deleting `R` and `C`. Evaluating at the `0`/`1` point of the entries
-`(τ' i, i)` of another such pair `(R', C', τ')`, with `i ∉ C'`, keeps a permutation only if it
-agrees with `τ'` off `C`. Some permutation survives only if `(R', C') = (R, C)`, and then only `τ`.
-So these `choose n k ^ 2` derivatives are linearly independent.
+The `k`-th order partial derivatives of the generic `n × n` determinant and permanent include, up to
+sign, all their `(n - k) × (n - k)` minors, which have disjoint sets of monomials and so are
+linearly independent [Kayal and Saptharishi, §5.2][KayalSaptharishi2014]. So their
+partial-derivative measure is at least `choose n k ^ 2`. Kayal and Saptharishi state equality; this
+file proves the lower bound, over every field.
+
+Both polynomials are sums `∑ σ, w σ • ∏ i, X (σ i, i)` over the permutations, with nonzero weights
+`w σ`: signs and ones. Fix sets `R` of rows and `C` of columns, both of size `k`, and a permutation
+`τ` mapping `C` onto `R`. Differentiating along the entries `(τ c, c)`, `c ∈ C`, keeps the
+permutations that agree with `τ` on `C`, without these entries: the minor deleting `R` and `C`, up
+to sign. Instead of comparing supports, evaluate at the `0`/`1` point of the entries `(τ' i, i)` of
+another such pair `(R', C', τ')`, with `i ∉ C'`. Some permutation survives only if
+`(R', C') = (R, C)`, and then only `τ`. So these `choose n k ^ 2` derivatives are linearly
+independent.
 
 ## Main results
 
-* `Matrix.choose_sq_le_rank_partialDerivatives_det`,
-  `Matrix.choose_sq_le_rank_partialDerivatives_permanent`: the `k`-th order partial derivatives
-  of the generic determinant and permanent span at least `choose n k ^ 2` dimensions.
+* `Matrix.choose_sq_le_rank_partialDerivatives_det_mvPolynomialX`,
+  `Matrix.choose_sq_le_rank_partialDerivatives_permanent_mvPolynomialX`: the `k`-th order partial
+  derivatives of the generic determinant and permanent span at least `choose n k ^ 2` dimensions.
 
 ## References
 
-* [N. Nisan, A. Wigderson, *Lower bounds on arithmetic circuits via partial
-  derivatives*][NisanWigderson1996]
+* [N. Kayal, R. Saptharishi, *A selection of lower bounds for arithmetic
+  circuits*][KayalSaptharishi2014], §5.2
 -/
 
 @[expose] public section
@@ -198,8 +204,9 @@ private theorem det_eq_permSum :
 
 /-- The `k`-th order partial derivatives of the generic `n × n` determinant span at least
 `choose n k ^ 2` dimensions: up to sign, the `(n - k) × (n - k)` minors are among them, and they
-are linearly independent. This holds over every field. -/
-theorem choose_sq_le_rank_partialDerivatives_det (k : ℕ) :
+are linearly independent [Kayal and Saptharishi, §5.2][KayalSaptharishi2014]. This holds over
+every field. -/
+theorem choose_sq_le_rank_partialDerivatives_det_mvPolynomialX (k : ℕ) :
     ((n.choose k ^ 2 : ℕ) : Cardinal) ≤
       (partialDerivatives k (mvPolynomialX (Fin n) (Fin n) K).det).rank := by
   rw [det_eq_permSum]
@@ -208,8 +215,9 @@ theorem choose_sq_le_rank_partialDerivatives_det (k : ℕ) :
 
 /-- The `k`-th order partial derivatives of the generic `n × n` permanent span at least
 `choose n k ^ 2` dimensions: the `(n - k) × (n - k)` subpermanents are among them, and they are
-linearly independent. This holds over every field. -/
-theorem choose_sq_le_rank_partialDerivatives_permanent (k : ℕ) :
+linearly independent [Kayal and Saptharishi, §5.2][KayalSaptharishi2014]. This holds over every
+field. -/
+theorem choose_sq_le_rank_partialDerivatives_permanent_mvPolynomialX (k : ℕ) :
     ((n.choose k ^ 2 : ℕ) : Cardinal) ≤
       (partialDerivatives k (mvPolynomialX (Fin n) (Fin n) K).permanent).rank := by
   have : (mvPolynomialX (Fin n) (Fin n) K).permanent = permSum fun _ => 1 := by

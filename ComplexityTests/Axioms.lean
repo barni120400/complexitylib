@@ -394,31 +394,3 @@ info: 'Cslib.BitonicSort.unrouteSort_rel_sort' depends on axioms:
 /-- info: 'Cslib.Circuits.Circuit.cost_program_iterate' does not depend on any axioms -/
 #guard_msgs (whitespace := lax) in
 #print axioms Cslib.Circuits.Circuit.cost_program_iterate
-
-/--
-info: 'Cslib.Circuits.DepthThree.choose_sq_le_mul_cost_det' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.DepthThree.choose_sq_le_mul_cost_det
-
-/--
-info: 'Cslib.Circuits.DepthThree.choose_sq_le_mul_cost_permanent' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.DepthThree.choose_sq_le_mul_cost_permanent
-
-/--
-info: 'Cslib.Circuits.DepthThree.four_pow_lt_mul_cost_det' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.DepthThree.four_pow_lt_mul_cost_det
-
-/--
-info: 'Cslib.Circuits.DepthThree.four_pow_lt_mul_cost_permanent' depends on axioms:
-[propext, Classical.choice, Quot.sound]
--/
-#guard_msgs (whitespace := lax) in
-#print axioms Cslib.Circuits.DepthThree.four_pow_lt_mul_cost_permanent
