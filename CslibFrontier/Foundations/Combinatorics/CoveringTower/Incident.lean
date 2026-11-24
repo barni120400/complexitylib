@@ -8,8 +8,6 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Load
--- reads the unexposed bodies of `Tower.be`, `Tower.nEnd` and `Tower.NN2`
-import all CslibFrontier.Foundations.Combinatorics.CoveringTower.Load
 import Mathlib.Algebra.Order.Chebyshev
 
 /-!
@@ -129,6 +127,7 @@ theorem NN2_mono {n n' : Sym2 T.Fl → ℕ} (hn : ∀ q, n q ≤ n' q) : T.NN2 n
     · have : (1 : ℝ) ≤ b := by exact_mod_cast hb
       have : (0 : ℝ) ≤ b - 1 := by linarith
       positivity
+  rw [NN2_def, NN2_def]
   refine mul_le_mul_of_nonneg_left (sum_le_sum fun q _ => ?_) hb
   split_ifs
   · exact le_rfl
@@ -143,8 +142,8 @@ theorem nEnd_eq (i : Fin h) (n : T.Ed j → ℕ) (ω : T.V (j + 1) i) (q : Sym2 
         s(T.co i (T.host i (T.vx i (T.e0 e))), T.co i (T.e0 e)) = q then n e else 0) +
       ∑ e, if T.ty e = i ∧ T.πV (T.vx i (T.e1 e)) = ω ∧
         s(T.co i (T.host i (T.vx i (T.e1 e))), T.co i (T.e1 e)) = q then n e else 0 := by
-  rw [nEnd, ← sum_add_distrib]
-  simp only [be]
+  rw [nEnd_def, ← sum_add_distrib]
+  simp only [be_def]
   calc _ = ∑ c, ∑ e, if (T.πV (T.vx i c) = ω ∧ s(T.co i (T.host i (T.vx i c)), T.co i c) = q) ∧
         T.ty e = i ∧ (T.e0 e = c ∨ T.e1 e = c) then n e else 0 :=
         sum_congr rfl fun c _ => by split_ifs with hc <;> simp [hc]

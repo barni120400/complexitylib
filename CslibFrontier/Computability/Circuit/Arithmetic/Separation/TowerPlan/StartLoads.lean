@@ -8,8 +8,6 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Counts
--- reads the unexposed body of `Routes.path` (the two halves of a route)
-import all CslibFrontier.Foundations.Combinatorics.CoveringTower.Path
 import Mathlib.Data.Fintype.Fin
 import Mathlib.Data.Int.CardIntervalMod
 import Mathlib.Tactic.FinCases
@@ -501,7 +499,7 @@ private theorem sum_batchSize_le (e : T.Ed 0) :
               if a = c then 0 else batchSize ch lhat n a c γ * w c γ := by
           split_ifs
           · rfl
-          · rw [Routes.path, List.count_append, List.count_reverse, mul_add]
+          · rw [Routes.path_def, List.count_append, List.count_reverse, mul_add]
         simp only [h1, sum_add_distrib, mul_sum]
         rw [sum_comm (s := univ) (t := univ) (f := fun a c => ∑ γ,
           if a = c then 0 else batchSize ch lhat n a c γ * w c γ), ← sum_add_distrib]
