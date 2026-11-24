@@ -1288,11 +1288,14 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvatur
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Blocks
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Codes
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Contract
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.FinalTables
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Groups
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Initial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Law
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.MoveIdentity
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Moves
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Play
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Rows
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units

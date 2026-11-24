@@ -61,7 +61,7 @@ likewise for the string that `p` reads from `b`. -/
     ∀ b, unitCount ub (segmentString cb fun s => C s b) = n b p ∧
       ∀ k : Fin U0, y (.init b p k) = unitsOf ub (segmentString cb fun s => C s b) k
 
-noncomputable instance (ub : ℕ) (cb : Option Γ → BitString c) [Fintype S] [DecidableEq Γ]
+noncomputable instance (ub : ℕ) (cb : Option Γ → BitString c) [Fintype S]
     (ρ : Option S → RowData A) (n : Fin A → Fin A → ℕ) (p : Fin A)
     (y : UnitId A U0 N U1 → UnitContent ub) (R C : Option S → Fin A → List Γ) :
     Decidable (InitialOk ub cb ρ n p y R C) :=

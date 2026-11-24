@@ -130,7 +130,7 @@ and `o ν + 1` units on the channel `ν`. -/
   | .new ν _ => o ν + 1
 
 /-- All units, in a fixed order. -/
-noncomputable def list (A U0 : ℕ) (N : Type*) [Fintype N] [DecidableEq N] (U1 : ℕ) :
+@[expose] noncomputable def list (A U0 : ℕ) (N : Type*) [Fintype N] (U1 : ℕ) :
     List (UnitId A U0 N U1) :=
   (univ : Finset (UnitId A U0 N U1)).toList
 
@@ -246,7 +246,7 @@ variable {F : Type*} [CommSemiring F] {A A' E U0 U1 : ℕ} {M : Moves F (A + A')
 @[expose] def cur (x : ℕ) : Finset (UnitId A U0 M.Channel U1) := seenAt n o x \ P.used n o x
 
 /-- The units given at a slot, in the order of `UnitId.list`. -/
-noncomputable def ids (z : M.Slot) : List (UnitId A U0 M.Channel U1) :=
+@[expose] noncomputable def ids (z : M.Slot) : List (UnitId A U0 M.Channel U1) :=
   (UnitId.list A U0 M.Channel U1).filter fun id => id ∈ P.given n o z
 
 /-- The outcome of the move `x` is possible: there is an index for every bit such that the
