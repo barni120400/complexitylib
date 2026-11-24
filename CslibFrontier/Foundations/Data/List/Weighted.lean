@@ -38,6 +38,7 @@ programs use.
 * `List.weightedSum_weightedBind`: the weighted sum of a sequence is the iterated weighted sum.
 * `List.mem_weightedBind_iff`, `List.weightedBind_assoc`, `List.map_weightedBind`.
 * `List.weightedFoldl_singleton_one`: a fold of deterministic steps is `List.foldl`.
+* `List.weightedFoldl_ite`: a fold of steps that reject unless a condition holds.
 * `List.mem_weightedFoldl_induction`: an invariant of the steps holds at every outcome of a fold.
 
 ## References
@@ -160,6 +161,16 @@ theorem weightedFoldl_singleton_one (g : ε → β → β) (xs : List ε) (s : �
   induction xs generalizing s with
   | nil => rfl
   | cons x xs ih => simp [ih]
+
+/-- A fold of steps that reject unless their element satisfies `p`, and otherwise go on
+deterministically. -/
+theorem weightedFoldl_ite (p : ε → Prop) [DecidablePred p] (g : ε → β → β) (xs : List ε)
+    (s : β) :
+    weightedFoldl (A := A) (fun x s => if p x then [(1, g x s)] else []) xs s =
+      if ∀ x ∈ xs, p x then [(1, xs.foldl (fun s x => g x s) s)] else [] := by
+  induction xs generalizing s with
+  | nil => simp
+  | cons x xs ih => by_cases hx : p x <;> simp [hx, ih, weightedBind]
 
 /-- An invariant of the steps, with a counter of the steps, holds at every outcome of a fold. -/
 theorem mem_weightedFoldl_induction {f : ε → β → List (A × β)} {Inv : ℕ → β → Prop}

@@ -32,6 +32,8 @@ numbers of bits and by a number below a constant.
 * `Interpreter.nthF_gives`, `Interpreter.nthF_gives_ofFn`, `Interpreter.listF_gives`,
   `Interpreter.pushF_gives`, `Interpreter.dispF_does`, `Interpreter.switchF_does`: the values of
   these programs.
+* `Interpreter.rev_gives_ofBits`, `Interpreter.appF_gives_ofBits`: reversal and concatenation of
+  bit lists.
 * `Interpreter.hd_listT`, `Interpreter.tl_listT`, `Interpreter.Tree.hd_ofBits`,
   `Interpreter.Tree.tl_ofBits`: first entries and rests of lists as trees.
 * `Interpreter.num_eq_listT_replicate`, `Interpreter.Tree.num_eq_ofBits_replicate`: a number is
@@ -69,6 +71,20 @@ theorem Tree.num_eq_ofBits_replicate (k : ℕ) : num k = ofBits (List.replicate 
   induction k with
   | zero => rfl
   | succ k ih => rw [num, ih, List.replicate_succ, ofBits]; rfl
+
+/-- Reverse a bit list onto another one. -/
+theorem rev_gives_ofBits {s l : Fm} {x : Tree} {cs cl : ℕ} {v w : List Bool}
+    (hs : Gives θ s x (ofBits v) cs) (hl : Gives θ l x (ofBits w) cl) :
+    Gives θ (foldF .id s l) x (ofBits (w.reverse ++ v)) (cs + cl + w.length * 31 + 20) := by
+  rw [← listT_ofBits] at hs hl ⊢
+  simpa using rev_gives hs hl
+
+/-- Concatenation of bit lists. -/
+theorem appF_gives_ofBits {a b : Fm} {x : Tree} {ca cb : ℕ} {v w : List Bool}
+    (ha : Gives θ a x (ofBits v) ca) (hb : Gives θ b x (ofBits w) cb) :
+    Gives θ (appF a b) x (ofBits (v ++ w)) (ca + cb + v.length * 62 + 41) := by
+  rw [← listT_ofBits] at ha hb ⊢
+  simpa using appF_gives ha hb
 
 /-- The entry at position `k` of the list that `b` gives. -/
 @[expose] def nthF : ℕ → Fm → Fm
