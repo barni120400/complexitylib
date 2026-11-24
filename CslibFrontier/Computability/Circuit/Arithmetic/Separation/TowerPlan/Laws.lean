@@ -24,9 +24,15 @@ need.
 
 ## Main definitions
 
+* `RelayRole`, `RelayRole.elim`: the three roles of a relay, and functions on them.
 * `relaySlotEnd`, `relayChannelEnd`, `relayTable`, `relayLaw`: the relay.
 * `VertexLaws`, with `VertexLaws.slotPair` and `VertexLaws.slotCount`: the laws at the vertices
   of a tower, the pair of places at the ends of a slot, and the number of slots on a pair.
+
+## Main results
+
+* `RelayRole.elim_injective`, `RelayRole.prod_univ`: three different values give an injective
+  function on the roles, and a product over the roles.
 
 ## References
 
@@ -42,28 +48,60 @@ open Finset Cslib.CoveringTower Cut
 
 section Relay
 
-/-- The roles at the ends of the slot of a relay: the bit is shared by the roles `0` and `2`. -/
-@[expose] def relaySlotEnd (_ : Unit) (d : Bool) : Fin 3 := bif d then 2 else 0
+/-- The roles of a relay: a bit shared by `source` and `sink` is led through `via`. -/
+inductive RelayRole where
+  /-- the first end of the shared bit -/
+  | source
+  /-- the role in between -/
+  | via
+  /-- the second end of the shared bit -/
+  | sink
+  deriving DecidableEq
 
-/-- The roles at the ends of the two channels of a relay: the channel `false` joins the roles
-`0` and `1`, and the channel `true` joins the roles `1` and `2`. -/
-@[expose] def relayChannelEnd (ν d : Bool) : Fin 3 :=
-  bif ν then (bif d then 2 else 1) else (bif d then 1 else 0)
+instance : Fintype RelayRole := ⟨{.source, .via, .sink}, fun x => by cases x <;> simp⟩
+
+namespace RelayRole
+
+/-- The function on the roles of a relay with the values `x`, `y`, `z`. -/
+@[expose] def elim {α : Type*} (x y z : α) : RelayRole → α
+  | source => x
+  | via => y
+  | sink => z
+
+theorem elim_injective {α : Type*} {x y z : α} (hxy : x ≠ y) (hxz : x ≠ z) (hyz : y ≠ z) :
+    Function.Injective (elim x y z) := by
+  intro i j h
+  cases i <;> cases j <;> simp_all [elim, eq_comm]
+
+theorem prod_univ {M : Type*} [CommMonoid M] (f : RelayRole → M) :
+    ∏ p, f p = f source * f via * f sink := by
+  rw [show (Finset.univ : Finset RelayRole) = {source, via, sink} from rfl]
+  simp [mul_assoc]
+
+end RelayRole
+
+/-- The roles at the ends of the slot of a relay: the bit is shared by `source` and `sink`. -/
+@[expose] def relaySlotEnd (_ : Unit) (d : Bool) : RelayRole := bif d then .sink else .source
+
+/-- The roles at the ends of the two channels of a relay: the channel `false` joins `source` and
+`via`, and the channel `true` joins `via` and `sink`. -/
+@[expose] def relayChannelEnd (ν d : Bool) : RelayRole :=
+  bif ν then (bif d then .sink else .via) else (bif d then .via else .source)
 
 variable (F : Type*) [CommSemiring F]
 
-/-- The tables of a relay: the roles `0` and `2` compare their copy of the bit with the bit on
-their channel, and the role `1` compares the bits on its two channels. -/
-@[expose] def relayTable : (p : Fin 3) → ({e : Unit // Play.Holds relaySlotEnd p e} → Bool) →
+/-- The tables of a relay: `source` and `sink` compare their copy of the bit with the bit on
+their channel, and `via` compares the bits on its two channels. -/
+@[expose] def relayTable : (p : RelayRole) → ({e : Unit // Play.Holds relaySlotEnd p e} → Bool) →
     ((ν : {ν : Bool // Play.Holds relayChannelEnd p ν}) → BitString 1) → F
-  | 0, X, g => if X ⟨(), false, rfl⟩ = g ⟨false, false, rfl⟩ 0 then 1 else 0
-  | 1, _, g => if g ⟨false, true, rfl⟩ 0 = g ⟨true, false, rfl⟩ 0 then 1 else 0
-  | 2, X, g => if g ⟨true, true, rfl⟩ 0 = X ⟨(), true, rfl⟩ then 1 else 0
+  | .source, X, g => if X ⟨(), false, rfl⟩ = g ⟨false, false, rfl⟩ 0 then 1 else 0
+  | .via, _, g => if g ⟨false, true, rfl⟩ 0 = g ⟨true, false, rfl⟩ 0 then 1 else 0
+  | .sink, X, g => if g ⟨true, true, rfl⟩ 0 = X ⟨(), true, rfl⟩ then 1 else 0
 
-/-- The relay: a bit shared by the roles `0` and `2` is led through the role `1`. There is one
-index, and each of the two channels carries one bit. -/
+/-- The relay: a bit shared by `source` and `sink` is led through `via`. There is one index, and
+each of the two channels carries one bit. -/
 @[expose] def relayLaw : Law F where
-  Role := Fin 3
+  Role := RelayRole
   Slot := Unit
   Channel := Bool
   Index := Unit
@@ -80,9 +118,9 @@ index, and each of the two channels carries one bit. -/
     rw [Fintype.sum_unique, ← ((Equiv.piCongrRight fun _ : Bool =>
       Equiv.funUnique (Fin 1) Bool).trans (Equiv.boolArrowEquivProd Bool)).symm.sum_comp,
       Fintype.sum_prod_type]
-    rcases Bool.eq_false_or_eq_true (X 0 ()) with h0 | h0 <;>
-      rcases Bool.eq_false_or_eq_true (X 2 ()) with h2 | h2 <;>
-      simp [Fin.prod_univ_three, relayTable, relaySlotEnd, Equiv.boolArrowEquivProd, h0, h2]
+    rcases Bool.eq_false_or_eq_true (X .source ()) with h0 | h0 <;>
+      rcases Bool.eq_false_or_eq_true (X .sink ()) with h2 | h2 <;>
+      simp [RelayRole.prod_univ, relayTable, relaySlotEnd, Equiv.boolArrowEquivProd, h0, h2]
   connected _ _ _ _ := rfl
 
 end Relay

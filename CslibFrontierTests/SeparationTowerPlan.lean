@@ -32,24 +32,23 @@ variable {F : Type} [CommSemiring F] {h b D J r m Uu A A' U0 U1 lhat cap : ℕ}
 
 /-! ### The relay law -/
 
-/-- The middle role of a relay accepts equal bits on its two channels, and only those. -/
-example : relayTable ℕ 1 (fun _ => true) (fun _ _ => false) = 1 := by simp [relayTable]
+/-- The role `via` of a relay accepts equal bits on its two channels, and only those. -/
+example : relayTable ℕ .via (fun _ => true) (fun _ _ => false) = 1 := by simp [relayTable]
 
-example : relayTable ℕ 1 (fun _ => true) (fun ν _ => ν.1) = 0 := by simp [relayTable]
+example : relayTable ℕ .via (fun _ => true) (fun ν _ => ν.1) = 0 := by simp [relayTable]
 
-example : relayChannelEnd true false = 1 ∧ relaySlotEnd () true = 2 := by decide
+example : relayChannelEnd true false = .via ∧ relaySlotEnd () true = .sink := by decide
 
 /-- The identity of the relay for one bit: if the two copies agree, exactly one choice of the two
 bits on the channels passes all three tables. -/
-example (X : Fin 3 → Unit → Bool) (hX : X 0 () = X 2 ()) :
+example (X : RelayRole → Unit → Bool) (hX : X .source () = X .sink ()) :
     ∑ _i : Unit, ∑ g : Bool → BitString 1,
       ∏ p, relayTable F p (fun e => X p e.1) (fun ν => g ν.1) = 1 :=
   ((relayLaw F).identity X).symm.trans (ite_eq_left fun _ => hX)
 
-/-- The power of the relay law: `B` bits shared by the roles `0` and `2` are led through the
-role `1`. -/
-example (B : ℕ) (X : Fin 3 → Fin B → Unit → Bool) :
-    (if ∀ e k, X 0 k e = X 2 k e then (1 : F) else 0) =
+/-- The power of the relay law: `B` bits shared by `source` and `sink` are led through `via`. -/
+example (B : ℕ) (X : RelayRole → Fin B → Unit → Bool) :
+    (if ∀ e k, X .source k e = X .sink k e then (1 : F) else 0) =
       ∑ _i : Fin B → Unit, ∑ g : Bool → (k : Fin B) → BitString 1,
         ∏ p, ∏ k, relayTable F p (fun e => X p k e.1) fun ν => g ν.1 k :=
   (relayLaw F).pow B X
@@ -66,7 +65,7 @@ variable {T : Tower h b D J r} (R : Routes T m Uu) (ch : Fin A ↪ T.X 0) (e : T
 
 /-- The relay of an edge of the last stage goes through the root, at the last time, and its
 units stay where they are. -/
-example : (Relay.final e : Relay T m A).party R ch 1 = .root := rfl
+example : (Relay.final e : Relay T m A).party R ch .via = .root := rfl
 
 example : (Relay.final e : Relay T m A).time m + 1 = endTime J m := rfl
 
@@ -76,7 +75,8 @@ example (d : Bool) : (Relay.final e : Relay T m A).target R ch d = .done := rfl
 
 /-- The two ends of an edge of the last stage are different nodes. -/
 example : Node.ofChamber le_rfl (T.e0 e) ≠ Node.ofChamber le_rfl (T.e1 e) := fun he =>
-  absurd (Relay.party_injective (R := R) (ch := ch) (x := .final e) trivial (a₁ := 0) (a₂ := 2) he)
+  absurd (Relay.party_injective (R := R) (ch := ch) (x := .final e) trivial (a₁ := .source)
+    (a₂ := .sink) he)
     (by decide)
 
 /-- The units of a channel of a relay are given later than the relay. -/

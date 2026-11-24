@@ -124,7 +124,7 @@ private theorem slotParty_eq (z : (moves R FL Pl).Slot) :
   rw [slotParty_moves, slotParty_moves]
   generalize moveSlotEquiv R FL Pl z = w
   rcases w with ⟨⟨x, hx⟩ | l, e⟩
-  · have h1 : x.input.holders R ch = s(x.party R ch 0, x.party R ch 2) := by
+  · have h1 : x.input.holders R ch = s(x.party R ch .source, x.party R ch .sink) := by
       rcases x with ⟨a, c, γ, s⟩ | ⟨j, i, e⟩ | ⟨j, e, s⟩ | e
       · rfl
       · rfl

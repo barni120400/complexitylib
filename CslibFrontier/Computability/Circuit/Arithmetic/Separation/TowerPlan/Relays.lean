@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Chamber
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Path
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Laws
 public import Mathlib.Data.Fin.VecNotation
 public import Mathlib.Data.Fintype.Sigma
 public import Mathlib.Data.Fintype.Sum
@@ -127,21 +128,22 @@ namespace Relay
 
 variable (R : Routes T m Uu) (ch : Fin A ↪ T.X 0)
 
-/-- The three parties of a relay: the units between the parties `0` and `2` are led through the
-party `1`. -/
-@[expose] def party : Relay T m A → Fin 3 → Node T
-  | .start a c γ s => ![.ofChamber (Nat.zero_le J) (R.pn (ch a) (ch c) γ s),
-      .ofChamber (Nat.zero_le J) (R.pn (ch a) (ch c) γ (s + 1)), .ofChamber (Nat.zero_le J) (ch c)]
-  | .inner j i e => ![.ofChamber j.2.le (T.e0 e), .ofChamber j.2 (T.hostOf i (T.e0 e)),
-      .ofChamber j.2.le (T.e1 e)]
+/-- The three parties of a relay: the units between `source` and `sink` are led through
+`via`. -/
+@[expose] def party : Relay T m A → RelayRole → Node T
+  | .start a c γ s => RelayRole.elim (.ofChamber (Nat.zero_le J) (R.pn (ch a) (ch c) γ s))
+      (.ofChamber (Nat.zero_le J) (R.pn (ch a) (ch c) γ (s + 1)))
+      (.ofChamber (Nat.zero_le J) (ch c))
+  | .inner j i e => RelayRole.elim (.ofChamber j.2.le (T.e0 e))
+      (.ofChamber j.2 (T.hostOf i (T.e0 e))) (.ofChamber j.2.le (T.e1 e))
   | .middle j e s =>
     let host₀ : Node T := .ofChamber j.2 (T.hostOf (T.ty e) (T.e0 e))
     let host₁ : Node T := .ofChamber j.2 (T.hostOf (T.ty e) (T.e1 e))
     let image₀ : Node T := .ofChamber j.2 (T.π (T.e0 e))
     let image₁ : Node T := .ofChamber j.2 (T.π (T.e1 e))
-    ![![.ofChamber j.2.le (T.e0 e), host₀, image₀, image₁] s, ![host₀, image₀, image₁, host₁] s,
-      .ofChamber j.2.le (T.e1 e)]
-  | .final e => ![.ofChamber le_rfl (T.e0 e), .root, .ofChamber le_rfl (T.e1 e)]
+    RelayRole.elim (![.ofChamber j.2.le (T.e0 e), host₀, image₀, image₁] s)
+      (![host₀, image₀, image₁, host₁] s) (.ofChamber j.2.le (T.e1 e))
+  | .final e => RelayRole.elim (.ofChamber le_rfl (T.e0 e)) .root (.ofChamber le_rfl (T.e1 e))
 
 /-- The relay is a move of the plan: its three parties are different. A step of a route is
 before the first visit of the last chamber, the host of an inner relay is of another type than
@@ -161,27 +163,22 @@ instance : DecidablePred (Occurs R ch : Relay T m A → Prop)
 
 variable {R ch}
 
-private theorem injective_vec3 {α : Type*} {x y z : α} (h1 : x ≠ y) (h2 : x ≠ z) (h3 : y ≠ z) :
-    Function.Injective ![x, y, z] := by
-  intro i j hij
-  fin_cases i <;> fin_cases j <;> simp_all
-
 /-- The three parties of a relay of the plan are different. -/
 theorem party_injective {x : Relay T m A} (hx : x.Occurs R ch) :
     Function.Injective (x.party R ch) := by
   rcases x with ⟨a, c, γ, s⟩ | ⟨j, i, e⟩ | ⟨j, e, s⟩ | e
   · have hs := hx.2
     obtain ⟨-, -, -, h3⟩ := R.exists_edge (ch a) (ch c) γ (s := s) (by omega)
-    exact injective_vec3 (by simpa using h3) (by simpa using R.pn_ne _ _ _ (by omega))
+    exact RelayRole.elim_injective (by simpa using h3) (by simpa using R.pn_ne _ _ _ (by omega))
       (by simpa using R.pn_ne _ _ _ hs)
-  · exact injective_vec3 (Node.ofChamber_ne_of_ne (by omega)) (by simpa using T.e_ne e)
+  · exact RelayRole.elim_injective (Node.ofChamber_ne_of_ne (by omega)) (by simpa using T.e_ne e)
       (Node.ofChamber_ne_of_ne (by omega))
   · have h1 := T.π_ne j.2 e
     have h2 := T.e_ne e
     have h3 {c : T.X j} {c' : T.X (j + 1)} : Node.ofChamber j.2.le c ≠ Node.ofChamber j.2 c' :=
       Node.ofChamber_ne_of_ne (by omega)
-    refine injective_vec3 ?_ ?_ ?_ <;> fin_cases s <;> simp_all [Occurs, h3.symm]
-  · exact injective_vec3 Node.ofChamber_ne_root (by simpa using T.e_ne e)
+    refine RelayRole.elim_injective ?_ ?_ ?_ <;> fin_cases s <;> simp_all [Occurs, h3.symm]
+  · exact RelayRole.elim_injective Node.ofChamber_ne_root (by simpa using T.e_ne e)
       Node.ofChamber_ne_root.symm
 
 variable (m) in

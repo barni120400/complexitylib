@@ -59,7 +59,7 @@ variable {F : Type*} [CommSemiring F] {h b D J r m Uu A : ℕ} {T : Tower h b D 
   | .done => s(.root, .root)
   | .edge j e => s(.ofChamber (Nat.le_of_lt_succ j.2) (T.e0 e),
       .ofChamber (Nat.le_of_lt_succ j.2) (T.e1 e))
-  | .relay x => s(x.party R ch 0, x.party R ch 2)
+  | .relay x => s(x.party R ch .source, x.party R ch .sink)
   | .segment j i ω q => q.map fun f => .ofChamber j.2 ((T.chamberEquiv j.2 i).symm (ω, f))
 
 /-- A step of a route before its end has units. -/
