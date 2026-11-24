@@ -16,7 +16,7 @@ more unit, holding the `1`), the empty string, and the bits of a word. -/
 
 namespace CslibFrontierTests.SeparationUnits
 
-open Cslib.Circuits.Arithmetic.Separation
+open Cslib.Circuits.Arithmetic.Separation.Cut
 
 /-- One bit in units of two bits: a single unit, the bit followed by the `1`. -/
 example : unitCount 2 [true] = 1 := rfl
