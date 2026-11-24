@@ -89,6 +89,12 @@ theorem Circuit.rename_polynomial {σ : Type*} (c : Circuit (arithSignature K) n
     | .const a => .const (f a)
   arity_eq op := by cases op <;> rfl
 
+omit [CommSemiring K] in
+/-- Mapping constants twice is mapping them along the composite. -/
+theorem ArithOp.map_comp {L M : Type*} (f : K → L) (f' : L → M) :
+    (ArithOp.map f').comp (ArithOp.map f) = ArithOp.map (f' ∘ f) :=
+  Signature.Hom.ext fun op => by cases op <;> rfl
+
 /-- Mapping constants along `f` and interpreting them by `constant` means interpreting them by
 `constant ∘ f`. -/
 instance ArithOp.map_preserves {L R : Type*} [Add R] [Mul R] (f : K → L) (constant : L → R) :
@@ -319,6 +325,44 @@ theorem exists_steps (h : ComputedWithin P s) :
       exact Or.inr (Or.inl ⟨a, by rw [hg]; simp [arithInterpretationWith]⟩)
   · rw [hl, Circuit.polynomial_def]
     rfl
+
+/-- A polynomial computed within `s` nodes has a finite set of constants: along any ring
+homomorphism whose range contains them, it is the image of a polynomial computed within `s` nodes.
+The set holds the constants of the gates of a circuit for `P`, and `0`. -/
+theorem exists_finset_lift (h : ComputedWithin P s) :
+    ∃ S : Finset K, ∀ {B : Type*} [CommSemiring B] (ι : B →+* K), (S : Set K) ⊆ Set.range ι →
+      ∃ Q : MvPolynomial σ B, ComputedWithin Q s ∧ MvPolynomial.map ι Q = P := by
+  classical
+  obtain ⟨n, x, c, hs, rfl⟩ := h
+  let cst : ArithOp K → K := fun
+    | .const a => a
+    | _ => 0
+  refine ⟨Finset.univ.image fun k : Fin c.size => cst (c.program.lines k).op, fun {B} _ ι hS => ?_⟩
+  let g : K → B := fun t => if h : t ∈ Set.range ι then h.choose else 0
+  have hg : ∀ k : Fin c.size, ∀ a, (c.program.lines k).op = .const a → ι (g a) = a := by
+    intro k a hk
+    have ha : a ∈ Set.range ι := hS (Finset.mem_coe.2 (Finset.mem_image.2 ⟨k, Finset.mem_univ _,
+      by rw [hk]⟩))
+    simp only [g, ha, ↓reduceDIte]
+    exact ha.choose_spec
+  refine ⟨MvPolynomial.rename x ((c.mapOp (ArithOp.map g)).polynomial 0), ⟨n, x, _, hs, rfl⟩, ?_⟩
+  rw [MvPolynomial.map_rename, ← Circuit.polynomial_mapOp_ringHom, ← Circuit.mapOp_comp,
+    ArithOp.map_comp, Circuit.polynomial_mapOp, Circuit.polynomial_def]
+  congr 1
+  -- the two circuits agree gate by gate, since `ι ∘ g` fixes the constants of `c`
+  have htr : c.program.trace (arithInterpretationWith K (C ∘ (ι ∘ g)))
+      (X : Fin n → MvPolynomial (Fin n) K) = c.program.trace (arithInterpretationWith K C) X := by
+    refine Program.eq_trace_of_forall_gate (fun i => by simp) fun k => ?_
+    rw [Program.trace_gate]
+    generalize hL : c.program.lines k = L
+    obtain ⟨op, ws⟩ := L
+    cases op with
+    | add => rfl
+    | mul => rfl
+    | const a =>
+      have := hg k a (by rw [hL])
+      simp [arithInterpretationWith, this]
+  simp only [Circuit.eval, Function.comp_apply, htr]
 
 end ComputedWithin
 

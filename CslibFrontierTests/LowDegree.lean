@@ -10,15 +10,18 @@ module
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.LowDegProg
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.NoAcc
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Transfer
 import Mathlib.Data.Rat.Init
 import Mathlib.Data.ZMod.Basic
+import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 
 /-! Tests of the low-degree layer:
 
 * the gate list of a circuit (`ComputedWithin.exists_steps`);
 * polynomials along a line;
 * full tries of constants;
-* the headline results `lem_lowdeg` (Lemma K.2) and `thm_noacc` (Theorem K.6). -/
+* the headline results `lem_lowdeg` (Lemma K.2) and `thm_noacc` (Theorem K.6);
+* the transfer of circuits to an algebraically closed field. -/
 
 namespace CslibFrontierTests.LowDegree
 
@@ -70,5 +73,19 @@ example (θ : List Bool → ℤ) {C₀ v₀ : ℕ} (hcut : CutHyp θ (16 * 17) C
   have : Fact (1 < 2) := ⟨by norm_num⟩
   obtain ⟨C, v₁, h⟩ := thm_noacc le_rfl hcut
   exact ⟨C, v₁, fun v hv a ha => h v hv a ha (ZMod 2)⟩
+
+/-- A circuit over `ZMod 2` for a polynomial with integer coefficients gives one of the same size
+over the algebraic closure of `ZMod 2`. -/
+example (q : MvPolynomial (Fin 2) ℤ) {S : ℕ}
+    (h : ComputedWithin (map (Int.castRingHom (ZMod 2)) q) S) :
+    ComputedWithin (map (Int.castRingHom (AlgebraicClosure (ZMod 2))) q) S :=
+  Cslib.Circuits.Arithmetic.Separation.lem_transfer 2 q h
+
+/-- A polynomial computed within `s` nodes lifts along a ring map whose range holds its constants;
+for `ℤ → ℚ` and the variable `X 0`. -/
+example : ∃ S : Finset ℚ, (S : Set ℚ) ⊆ Set.range (Int.castRingHom ℚ) →
+    ∃ Q : MvPolynomial (Fin 1) ℤ, ComputedWithin Q 1 ∧ map (Int.castRingHom ℚ) Q = X 0 := by
+  obtain ⟨S, hS⟩ := (computedWithin_X (K := ℚ) (0 : Fin 1)).exists_finset_lift
+  exact ⟨S, hS (Int.castRingHom ℚ)⟩
 
 end CslibFrontierTests.LowDegree

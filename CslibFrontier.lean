@@ -1268,6 +1268,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Chains
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Series
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinear
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearGadget
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearLowerBound
@@ -8496,6 +8497,7 @@ public import CslibFrontier.Foundations.RingTheory.Polynomial.ValueResultant
 public import CslibFrontier.Foundations.RingTheory.PowerSeries.Constants
 public import CslibFrontier.Foundations.RingTheory.RootsOfUnity.Principal
 public import CslibFrontier.Foundations.RingTheory.RootsOfUnity.SeparatedSums
+public import CslibFrontier.Foundations.RingTheory.Specialization
 public import CslibFrontier.Foundations.RingTheory.Trace.Reproducing
 public import CslibFrontier.Foundations.Syntax.PrefixParser
 public import CslibFrontier.GameTheory.Bimatrix.Basic
