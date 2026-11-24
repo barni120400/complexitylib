@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunSum
+import Mathlib.Tactic.DeriveFintype
 
 /-!
 # The one-hot code of a word, and clauses that allow only codes
@@ -170,7 +171,7 @@ inductive CodeRule (Γ : Type) (N : ℕ) where
   | symbol (p : Fin N) (y y' : Option Γ)
   /-- no letter at a place, and no end mark before -/
   | missing (p : Fin N)
-  deriving DecidableEq
+  deriving DecidableEq, Fintype
 
 /-- `CodeRule` as a sum. -/
 @[expose] def CodeRule.equivSum (Γ : Type) (N : ℕ) :
@@ -183,8 +184,6 @@ inductive CodeRule (Γ : Type) (N : ℕ) where
     | .inr p => .missing p
   left_inv r := by cases r <;> rfl
   right_inv r := by rcases r with ⟨_, _, _⟩ | _ <;> rfl
-
-instance : Fintype (CodeRule Γ N) := Fintype.ofEquiv _ (CodeRule.equivSum Γ N).symm
 
 /-- Their literals. -/
 @[expose] noncomputable def codeLits : CodeRule Γ N → List (RunBit Γ S Q n t M N × Bool)

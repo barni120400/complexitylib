@@ -9,19 +9,21 @@ module
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunCount
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunRename
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunValue
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
 
 /-! Tests of the clause sums of automaton runs under ordinary imports:
 
 * the sizes of the hidden variables and of the clauses for one tape, one input, one step;
 * the code of a one-letter word on three places;
-* renaming the two inputs of an automaton by the swap. -/
+* renaming the two inputs of an automaton by the swap;
+* the value of an automaton on the one-letter input `[true]` as a clause sum. -/
 
 set_option linter.privateModule false
 
 namespace CslibFrontierTests.TapeRunSum
 
-open Cslib.Circuits.Arithmetic.Separation.Tape
+open Cslib.Circuits.Arithmetic Cslib.Circuits.Arithmetic.Separation.Tape
 
 /-- One tape, one input, one step, one place: `1 + 2 + 3 · 2 + 1 = 10` hidden variables. -/
 example : Fintype.card (RunVar Unit 1 1 1) = 10 := by
@@ -52,5 +54,12 @@ example (mu : Letter Unit (Fin 2) Bool → Matrix (Fin 2) (Fin 2) ℤ) (u : Fin 
     runVal (fun a => mu (Letter.congr Unit Bool (Equiv.swap 0 1) a)) 0 1 3
       (fun j => u (Equiv.swap 0 1 j)) = runVal mu 0 1 3 u :=
   runVal_congr _ mu 0 1 3 u
+
+/-- The value of an automaton with one input, one step and two states on the input `[true]` is the
+clause sum of its run clauses, with two code places and four places for the heads. -/
+example (mu : Letter Unit (Fin 1) Bool → Matrix (Fin 2) (Fin 2) ℚ) :
+    domainClauseSum (runLits (Γ := Bool) (S := Unit) (n := 1) (t := 1) (M := 4) (N := 2) 0 1)
+      (runWeights mu) (code 2 fun _ : Fin 1 => [true]) = runVal mu 0 1 1 fun _ => [true] :=
+  runVal_eq_domainClauseSum mu 0 1 _ (by norm_num) (by decide)
 
 end CslibFrontierTests.TapeRunSum

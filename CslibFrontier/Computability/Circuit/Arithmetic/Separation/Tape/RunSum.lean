@@ -12,6 +12,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.ClauseSum
 public import Mathlib.LinearAlgebra.Matrix.Defs
 import Mathlib.Tactic.Ring
+import Mathlib.Tactic.DeriveFintype
 
 /-!
 # The certificates of a run as an assignment on a finite domain
@@ -65,7 +66,7 @@ inductive RunVar (S : Type) (n t M : ℕ) where
   | place (z : Ch S (Fin n)) (τ : Fin (t + 1))
   /-- the content of cell `p` of tape `s` -/
   | content (s : S) (p : Fin M)
-  deriving DecidableEq
+  deriving DecidableEq, Fintype
 
 /-- `RunVar` as a sum. -/
 @[expose] def RunVar.equivSum (S : Type) (n t M : ℕ) :
@@ -82,8 +83,6 @@ inductive RunVar (S : Type) (n t M : ℕ) where
     | .inr (.inr (.inr (s, p))) => .content s p
   left_inv v := by cases v <;> rfl
   right_inv v := by rcases v with _ | _ | ⟨_, _⟩ | ⟨_, _⟩ <;> rfl
-
-instance [Fintype S] : Fintype (RunVar S n t M) := Fintype.ofEquiv _ (RunVar.equivSum S n t M).symm
 
 omit [DecidableEq S] in
 theorem RunVar.card [Fintype S] : Fintype.card (RunVar S n t M) =
@@ -171,7 +170,7 @@ structure RunStep (Γ S Q : Type) (n t : ℕ) where
   src : Q
   /-- the state after the step -/
   dst : Q
-  deriving DecidableEq
+  deriving DecidableEq, Fintype
 
 /-- `RunStep` as a product. -/
 @[expose] def RunStep.equivProd (Γ S Q : Type) (n t : ℕ) :
@@ -180,9 +179,6 @@ structure RunStep (Γ S Q : Type) (n t : ℕ) where
   invFun r := ⟨r.1, r.2.1, r.2.2.1, r.2.2.2⟩
   left_inv _ := rfl
   right_inv _ := rfl
-
-instance [Fintype Γ] [Fintype S] [Fintype Q] : Fintype (RunStep Γ S Q n t) :=
-  Fintype.ofEquiv _ (RunStep.equivProd Γ S Q n t).symm
 
 omit [DecidableEq Γ] [DecidableEq S] [DecidableEq Q] in
 theorem RunStep.card [Fintype Γ] [Fintype S] [Fintype Q] : Fintype.card (RunStep Γ S Q n t) =
@@ -247,6 +243,7 @@ inductive RunRule (Γ S : Type) (n t M : ℕ) where
     rcases r with (_ | _) | _ | ⟨_, _, _, _⟩ | ⟨_, _, _⟩ | ⟨_, _, _, _, _⟩ | ⟨_, _, _, _⟩ |
       ⟨_, _, _, _⟩ | ⟨_, _⟩ <;> rfl
 
+/-- `deriving Fintype` does not see through `Letter`, so the instance comes from `equivSum`. -/
 instance [Fintype Γ] [Fintype S] : Fintype (RunRule Γ S n t M) :=
   Fintype.ofEquiv _ (RunRule.equivSum Γ S n t M).symm
 
