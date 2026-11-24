@@ -7002,6 +7002,7 @@ public import CslibFrontier.DataStructure.WordRAM.Resizable.StateTransition
 public import CslibFrontier.DataStructure.WordRAM.StateTransition
 public import CslibFrontier.Foundations.Algebra.BigOperators.Fin
 public import CslibFrontier.Foundations.Algebra.BigOperators.Selection
+public import CslibFrontier.Foundations.Algebra.BigOperators.WriteSteps
 public import CslibFrontier.Foundations.Algebra.Covering.Basic
 public import CslibFrontier.Foundations.Algebra.Covering.Certificate
 public import CslibFrontier.Foundations.Algebra.DFT
@@ -7797,6 +7798,7 @@ public import CslibFrontier.Foundations.Data.List.Swap
 public import CslibFrontier.Foundations.Data.List.TakeQuantifiers
 public import CslibFrontier.Foundations.Data.List.TwoBitTable
 public import CslibFrontier.Foundations.Data.List.UnaryCode
+public import CslibFrontier.Foundations.Data.List.Weighted
 public import CslibFrontier.Foundations.Data.Matrix.Binary
 public import CslibFrontier.Foundations.Data.Matrix.HamiltonianCycle
 public import CslibFrontier.Foundations.Data.Matrix.HamiltonianCycle.Grid
