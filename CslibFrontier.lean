@@ -1338,6 +1338,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Win
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Words
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Budget
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Eval
@@ -8172,6 +8173,7 @@ public import CslibFrontier.Foundations.Data.MvPolynomial.PowerSum
 public import CslibFrontier.Foundations.Data.MvPolynomial.ReproducingKernel
 public import CslibFrontier.Foundations.Data.MvPolynomial.SchwartzZippel
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinear
+public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinearProd
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinearProjection
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetMultilinearProjectionProd
 public import CslibFrontier.Foundations.Data.MvPolynomial.SetPartitioned
