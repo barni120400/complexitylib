@@ -1289,6 +1289,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Blo
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Codes
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Contract
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Groups
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Initial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Law
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Moves
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Play
