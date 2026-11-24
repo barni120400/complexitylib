@@ -92,7 +92,7 @@ theorem coeff_line (u : σ → F) (p : MvPolynomial σ F) (i : ℕ) :
       simp only [line, aeval_monomial, eval_monomial, Finsupp.prod, mul_pow,
         Finset.prod_mul_distrib, Finset.prod_pow_eq_pow_sum, map_mul, map_prod, map_pow,
             Polynomial.algebraMap_eq]
-      simp [Finsupp.degree, mul_assoc]
+      simp only [Finsupp.degree, mul_assoc]
       rfl
     rw [e, Polynomial.coeff_C_mul_X_pow]
     split_ifs <;> simp
