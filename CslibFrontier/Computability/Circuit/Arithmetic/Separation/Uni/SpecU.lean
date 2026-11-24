@@ -187,11 +187,12 @@ theorem runs_U {A : Type*} [CommRing A] [Fintype M] :
     Runs (dimU (Fintype.card (Sy M K)) (Fintype.card (Bl K)))
       (emU : XU M K → Zc K → List (Sy M K)) (fun _ => (1 : A)) := by
   classical
+  have hne : ∀ p : Ps M K, ∃ z, emPs p z ≠ [] := fun _ => ⟨lsT, by
+    intro heq
+    have hlen := congrArg List.length heq
+    simp [emPs, on, barSet] at hlen⟩
   have h :=
-    ((runs_ps (A := A) (M := M) (K := K)).kstar fun _ => ⟨lsT, by
-      intro heq
-      have := congrArg List.length heq
-      simp [emPs, on, barSet] at this⟩).mul
+    ((runs_ps (A := A) (M := M) (K := K)).kstar hne).mul
       ((runs_fi (A := A) (M := M) (K := K)).mul (runs_cm (A := A) (M := M) (K := K)))
   refine h.congr
     ⟨fun x => (x.passes, x.final, x.cmp), fun y => ⟨y.1, y.2.1, y.2.2⟩,
