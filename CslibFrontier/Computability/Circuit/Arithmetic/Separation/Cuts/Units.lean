@@ -22,6 +22,11 @@ string, and the result is cut into blocks of `ub` bits. This is the padding
 (`Cut.unitsOf_eq_getElem?_toBlocks`), so the string can be recovered from its units
 (`Cut.unitsOf_injective`).
 
+The paper has units of positive width, and so have the bridge to the padding and the recovery of
+the string, which assume `0 < ub`. The definitions are total: for `ub = 0` every string has one
+unit, which is empty, so nothing can be recovered from the units; later modules use this
+convention and exclude `ub = 0` where they need recovery.
+
 A word over an alphabet whose letters are coded by `c` bits each is first turned into a bit
 string (`Cut.bitsOf`), from which it can be recovered as well.
 
@@ -57,7 +62,9 @@ appended. -/
 @[expose] def unitCount (ub : ℕ) (L : List Bool) : ℕ := L.length / ub + 1
 
 /-- The units of a bit string: unit `k` is the `k`-th block of `ub` bits of the string followed
-by a `1` and zeros, and it is absent from `unitCount ub L` on. -/
+by a `1` and zeros, and it is absent from `unitCount ub L` on. For `ub = 0` there is one unit, the
+empty one, whatever the string is; the units determine the string only for `0 < ub`
+(`unitsOf_injective`). -/
 @[expose] def unitsOf (ub : ℕ) (L : List Bool) (k : ℕ) : UnitContent ub :=
   if k < unitCount ub L then some fun b : Fin ub => (L ++ [true]).getD (k * ub + b) false else none
 
