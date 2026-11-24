@@ -8,9 +8,6 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Moves
--- `import all` only to read the unexposed bodies of `Routes.pn` and `Tower.nodeAt`: a route is at
--- its first chamber after no steps (`pn_zero` below), which the public lemmas do not give.
-import all CslibFrontier.Foundations.Combinatorics.CoveringTower.Path
 import Mathlib.Tactic.FinCases
 
 /-!
@@ -65,8 +62,6 @@ variable {F : Type*} [CommSemiring F] {h b D J r m Uu A : ℕ} {T : Tower h b D 
   | .relay x => s(x.party R ch 0, x.party R ch 2)
   | .segment j i ω q => q.map fun f => .ofChamber j.2 ((T.chamberEquiv j.2 i).symm (ω, f))
 
-private theorem pn_zero (c c' γ : T.X 0) : R.pn c c' γ 0 = c := rfl
-
 /-- A step of a route before its end has units. -/
 theorem stepTarget_ne_done {c c' γ : T.X 0} {s : ℕ} (hs : s < R.pl c c' γ) :
     (stepTarget R c c' γ s : Target T m A) ≠ .done := by
@@ -88,13 +83,13 @@ theorem holders_initialTarget {a c : Fin A} {k : ℕ} (hd : initialTarget R ch a
   unfold initialTarget at hd ⊢
   split_ifs at hd ⊢ with hac hs
   · exact absurd rfl hd
-  · simp only [Target.holders, Relay.party, initialHolders, pn_zero]
+  · simp only [Target.holders, Relay.party, initialHolders, Routes.pn_zero]
     rfl
   · have hpos := R.pl_pos (fun hh => hac (ch.injective hh)) (batchChamber ch a k)
     have hle := (R.pl_le (ch a) (ch c) (batchChamber ch a k)).trans (R.length_path _ _ _)
     have h2 := R.pn_pl (ch a) (ch c) (batchChamber ch a k)
     rw [show R.pl (ch a) (ch c) (batchChamber ch a k) = 0 + 1 by omega] at h2
-    rw [holders_stepTarget hpos, h2, pn_zero, initialHolders]
+    rw [holders_stepTarget hpos, h2, Routes.pn_zero, initialHolders]
 
 private theorem map_segment {j : ℕ} (hj : j < J) (i : Fin h) (c : T.X j) :
     (s(T.co i (T.hostOf i c), T.co i c) : Sym2 T.Fl).map (fun f =>

@@ -50,13 +50,6 @@ open Finset Cslib.CoveringTower Cut
 
 variable {F : Type*} [CommSemiring F] {h b D J r m Uu A A' U0 U1 : ℕ} {T : Tower h b D J r}
 
-/-- A sum over all units: the initial units and the new units. -/
-theorem sum_unitId {N M : Type*} [Fintype N] [AddCommMonoid M] (f : UnitId A U0 N U1 → M) :
-    ∑ u, f u = (∑ a, ∑ c, ∑ k, f (.init a c k)) + ∑ ν, ∑ k, f (.new ν k) := by
-  rw [← (proxy_equiv% (UnitId A U0 N U1)).sum_comp, Fintype.sum_sum_type]
-  simp only [Fintype.sum_sigma]
-  rfl
-
 /-- The number of a slot of a law among the slots on the same pair of places. -/
 @[expose] noncomputable def VertexLaws.slotRank (FL : VertexLaws F T) (d : FL.Kind)
     (e : (FL.law d).Slot) : ℕ :=
@@ -192,7 +185,7 @@ private theorem sum_fin_ite_lt_and {N c : ℕ} (hc : c ≤ N) (P : ℕ → Prop)
 theorem load_eq_card (τ : Target T m A) :
     load lhat (initialCounts n) (outcomeOf R FL Pl o) τ =
       ((aliveUnits R FL Pl lhat n o).filter fun u => unitTarget R FL Pl u = τ).card := by
-  rw [aliveUnits, filter_filter, card_filter, sum_unitId, load, loadGiven]
+  rw [aliveUnits, filter_filter, card_filter, UnitId.sum_eq, load, loadGiven]
   congr 1
   · unfold initialLoad
     split_ifs with hv
