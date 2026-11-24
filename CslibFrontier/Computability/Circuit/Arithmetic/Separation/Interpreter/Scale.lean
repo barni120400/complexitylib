@@ -16,8 +16,7 @@ import Mathlib.Algebra.BigOperators.Group.List.Basic
 
 `Interpreter.round` composes one round of the acceleration. From an accelerator `D` at one scale and
 a pre-accelerator `p` at the next, it builds the accelerator `stepF D G p (gt …)` at the next scale;
-`G` is a program for the cut (`Interpreter.CutProg`). `Interpreter.CutHyp.at` specializes Theorem C
-to one scale (`Interpreter.CutAt`).
+`G` is a program for the cut (`Interpreter.CutProg`).
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `NS1.Scale`.
 
@@ -27,9 +26,8 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `NS1.Scale`.
 
 ## Main results
 
-* `Interpreter.CutHyp.at`, `Interpreter.Plain.of_le`, `Interpreter.size_LP`,
-  `Interpreter.size_stepF`.
 * `Interpreter.round`.
+* `Interpreter.size_LP`, `Interpreter.size_stepF`: the sizes of the programs of a round.
 -/
 
 public section
@@ -39,13 +37,6 @@ namespace Cslib.Circuits.Arithmetic.Separation.Interpreter
 open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {R : Type} [CommRing R] [Algebra A R]
-
-theorem CutHyp.at {H C₀ v₀ v α : ℕ} (h : CutHyp θ H C₀ v₀) (hv : v₀ ≤ v)
-    (hl : lg v ^ (C₀ * α) ≤ v) : CutAt θ H v α :=
-  h v hv α hl
-
-theorem Plain.of_le {T T' : ℕ} {z : Tree} (h : Plain θ T z) (hT : T ≤ T') : Plain θ T' z :=
-  ⟨h.1, fun r hr => ⟨(h.2 r hr).1, (h.2 r hr).2.trans hT⟩⟩
 
 /-- A constant: it bounds the sizes of the fixed programs. -/
 @[expose] def cst : ℕ := WF.code.size + UF.code.size + 2000
@@ -119,7 +110,7 @@ theorem round {H u v : ℕ} {K : KT R} {B' : ℕ} {D : Tree} (hD : IsAccT θ H u
     obtain ⟨hp1, hp2⟩ := hp.run z hz hpl
     -- Lemma lem:postpone: the value of p, by the exponent vectors
     obtain ⟨hsum, hze⟩ :=
-        Cslib.Circuits.Arithmetic.Separation.Interpreter.lem_postpone p z hJ hp1
+        lem_postpone p z hJ hp1
             (fun r hr => (hp2 r hr).1) (K.expand B) K.lk
       fun r hr n hn => KT.lookup_expand ((hp2 r hr).2 n hn)
     rw [hsum]

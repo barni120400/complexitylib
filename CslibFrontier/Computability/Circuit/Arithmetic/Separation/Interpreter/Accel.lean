@@ -28,7 +28,7 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `NS1.Accel`.
 ## Main definitions
 
 * `Interpreter.lg`, `Interpreter.Plain`, `Interpreter.pv`, `Interpreter.CutProg`,
-  `Interpreter.CutHyp`.
+  `Interpreter.CutAt`, `Interpreter.CutHyp`.
 * `Interpreter.IsAccT`, `Interpreter.IsPre`, `Interpreter.UF`.
 
 ## Main results
@@ -54,6 +54,10 @@ and without named
 constants. -/
 @[expose] def Plain (θ : List Bool → A) (T : ℕ) (z : Tree) : Prop :=
   Hl θ (Fm.ofTree z.hd) z.tl ∧ ∀ r ∈ evl θ (Fm.ofTree z.hd) z.tl, r.bill = [] ∧ r.cost ≤ T
+
+theorem Plain.of_le {θ : List Bool → A} {T T' : ℕ} {z : Tree} (h : Plain θ T z)
+    (hT : T ≤ T') : Plain θ T' z :=
+  ⟨h.1, fun r hr => ⟨(h.2 r hr).1, (h.2 r hr).2.trans hT⟩⟩
 
 /-- The universal plain sum: the sum of the weights of all accepting runs of the program `z.hd` at
 `z.tl`. -/

@@ -8,9 +8,10 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Scale
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
 public import Mathlib.Algebra.Algebra.Subalgebra.Basic
-import Mathlib.Analysis.SpecificLimits.Normed
+import Cslib.Foundations.Data.Nat.Asymptotics
+import Mathlib.Order.Filter.AtTopBot.Basic
 
 /-!
 # Accelerators and changes of the ring of constants
@@ -159,7 +160,7 @@ end Map
 
 section Logs
 
-theorem lt_two_pow_lg (n : ℕ) : n < 2 ^ lg n := Nat.lt_pow_succ_log_self (by norm_num) n
+theorem lt_two_pow_lg (n : ℕ) : n < 2 ^ lg n := Nat.lt_pow_succ_log_self Nat.one_lt_two n
 
 theorem lg_mono {a b : ℕ} (h : a ≤ b) : lg a ≤ lg b := Nat.succ_le_succ (Nat.log_mono_right h)
 
@@ -175,12 +176,12 @@ theorem lg_pow_le {n k : ℕ} (hk : 1 ≤ k) : lg (n ^ k) ≤ k * lg n := by
 theorem le_lg_pow {n k : ℕ} (hn : n ≠ 0) : k * (lg n - 1) + 1 ≤ lg (n ^ k) := by
   unfold lg
   rw [Nat.add_sub_cancel]
-  refine Nat.succ_le_succ (Nat.le_log_of_pow_le (by norm_num) ?_)
+  refine Nat.succ_le_succ (Nat.le_log_of_pow_le Nat.one_lt_two ?_)
   rw [Nat.mul_comm, pow_mul]
   exact Nat.pow_le_pow_left (Nat.pow_log_le_self 2 hn) k
 
 theorem le_lg_of_two_pow_le {n k : ℕ} (h : 2 ^ k ≤ n) : k + 1 ≤ lg n :=
-  Nat.succ_le_succ (Nat.le_log_of_pow_le (by norm_num) h)
+  Nat.succ_le_succ (Nat.le_log_of_pow_le Nat.one_lt_two h)
 
 theorem two_pow_lg_le {n : ℕ} (hn : n ≠ 0) : 2 ^ (lg n - 1) ≤ n := by
   unfold lg
@@ -189,31 +190,20 @@ theorem two_pow_lg_le {n : ℕ} (hn : n ≠ 0) : 2 ^ (lg n - 1) ≤ n := by
 
 /-- Powers of the logarithm are small. -/
 theorem poly_lg (c k : ℕ) : ∃ n₀, ∀ n, n₀ ≤ n → c * lg n ^ k ≤ n := by
-  have h1 := tendsto_pow_const_div_const_pow_of_one_lt k (show (1 : ℝ) < 2 by norm_num)
-  have h2 : ∀ᶠ L : ℕ in Filter.atTop, (L : ℝ) ^ k / 2 ^ L < 1 / (2 * (c + 1)) :=
-    h1.eventually (gt_mem_nhds (by positivity))
-  obtain ⟨L₀, hL₀⟩ := Filter.eventually_atTop.1 h2
-  refine ⟨2 ^ L₀ + 1, fun n hn => ?_⟩
-  have hp : 1 ≤ 2 ^ L₀ := Nat.one_le_two_pow
-  have hn0 : n ≠ 0 := by omega
-  have hL : L₀ ≤ lg n := (Nat.le_succ _).trans (le_lg_of_two_pow_le (by omega))
-  have h3 := hL₀ (lg n) hL
-  have h4 := two_pow_lg_le hn0
-  have hlg : 1 ≤ lg n := by unfold lg; omega
-  rw [div_lt_div_iff₀ (by positivity) (by positivity)] at h3
-  have h5 : (c : ℝ) * (lg n : ℝ) ^ k ≤ 2 ^ (lg n - 1) := by
-    have e : (2 : ℝ) ^ lg n = 2 * 2 ^ (lg n - 1) := by
-      have : lg n = lg n - 1 + 1 := by omega
-      conv_lhs => rw [this, pow_succ']
-    rw [e] at h3
-    have : (0 : ℝ) ≤ (lg n : ℝ) ^ k := by positivity
-    nlinarith
-  have h6 : c * lg n ^ k ≤ 2 ^ (lg n - 1) := by exact_mod_cast h5
-  exact h6.trans h4
+  obtain ⟨L₀, hL₀⟩ :=
+    Filter.eventually_atTop.1 (Nat.eventually_mul_pow_le_pow (2 * c) k Nat.one_lt_two)
+  refine ⟨2 ^ L₀, fun n hn => ?_⟩
+  have hn0 : n ≠ 0 := by have := Nat.one_le_two_pow (n := L₀); omega
+  have h3 := hL₀ (lg n) ((Nat.le_succ _).trans (le_lg_of_two_pow_le hn))
+  have e : 2 ^ lg n = 2 * 2 ^ (lg n - 1) := by
+    unfold lg
+    rw [Nat.add_sub_cancel, pow_succ']
+  rw [Nat.mul_assoc, e] at h3
+  exact (Nat.le_of_mul_le_mul_left h3 Nat.zero_lt_two).trans (two_pow_lg_le hn0)
 
 end Logs
 
-theorem lg_ge_two {u : ℕ} (hu : 4 ≤ u) : 2 ≤ lg u := le_trans (by norm_num)
+theorem lg_ge_two {u : ℕ} (hu : 4 ≤ u) : 2 ≤ lg u := le_trans (by decide)
     (le_lg_of_two_pow_le (k := 2) (by omega))
 
 /-- There is an accelerator of size `s` at the scale `V = v ^ H` over `R`: a trie of at most `s`

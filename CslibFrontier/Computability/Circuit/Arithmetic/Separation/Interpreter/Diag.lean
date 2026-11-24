@@ -8,14 +8,14 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Scale
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
 import CslibFrontier.Foundations.Data.List.Forall2
 import Mathlib.Tactic.Ring
 
 /-!
 # The diagonal, over a finite ring
 
-`Interpreter.diagF D g` guesses a bit. On `0` it accepts with weight `1`; on `1` it applies `D` to
+`Interpreter.diagF D g` guesses a bit. On `1` it accepts with weight `1`; on `0` it applies `D` to
 the plain instances of its own argument, for the budgets that `g` guesses. Its value is therefore
 `1` plus a weighted sum of the values of `D` (`Interpreter.diagF_ev`). Over a finite ring this is
 the diagonal argument against accelerators at a large scale.

@@ -9,7 +9,6 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postpone
-import Mathlib.Tactic.Ring
 
 /-!
 # The counter of exponents
@@ -92,7 +91,7 @@ theorem val_addc (c : Bool) {x y : List Bool} (h : x.length = y.length) :
       (.ite (.hd (.tl .id)) (addBr true false) (addBr false false))))
   (.quote .nil)
 
-theorem addBr_dt {s c' c : Bool} {a b : Bool} {x y : List Bool} {o : Tree} {k : ℕ}
+private theorem addBr_dt {s c' c : Bool} {a b : Bool} {x y : List Bool} {o : Tree} {k : ℕ}
     (h : Dt θ AD (.cons AD.code (.cons (bit c') (.cons (ofBits x) (ofBits y)))) o k) :
     Dt θ (addBr s c') (.cons AD.code (.cons (bit c) (.cons (ofBits (a :: x)) (ofBits (b :: y)))))
       (.cons (bit s) o) (k + 21) := by
@@ -117,7 +116,7 @@ theorem AD_dt (c : Bool) {x y : List Bool} (h : x.length = y.length) :
   induction x generalizing c y with
   | nil =>
     obtain rfl : y = [] := List.length_eq_zero_iff.1 h.symm
-    exact ⟨_, by norm_num, Dt.ite_false (Dt.hd (Dt.tl (Dt.tl (Dt.id _)))) (Dt.quote _ _)⟩
+    exact ⟨_, by decide, Dt.ite_false (Dt.hd (Dt.tl (Dt.tl (Dt.id _)))) (Dt.quote _ _)⟩
   | cons a x ih =>
     cases y with
     | nil => simp at h
