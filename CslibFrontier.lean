@@ -1253,8 +1253,11 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Guess
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Interp
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Lists
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.LowDegProg
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.NamedValue
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Next
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.NoAcc
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.ParseLoop
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Parts
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Picks

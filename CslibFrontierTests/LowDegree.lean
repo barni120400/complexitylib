@@ -5,13 +5,16 @@ Authors: Anthropic
 -/
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccSize
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.NoAcc
 import Mathlib.Data.Rat.Init
+import Mathlib.Data.ZMod.Defs
 
 /-! Tests of the low-degree layer:
 
 * the gate list of a circuit (`ComputedWithin.exists_steps`);
 * polynomials along a line;
-* full tries of constants. -/
+* full tries of constants;
+* the periodicity of the powers `c ^ 2 ^ j` over a finite ring. -/
 
 namespace CslibFrontierTests.LowDegree
 
@@ -40,5 +43,15 @@ example (u : Fin 1 → ℚ) : ∑ i ∈ Finset.range 2, (line u (X 0 : MvPolynom
 /-- The full trie of depth `1` has the constant `f [true]` at the name `true, false`. -/
 example (f : List Bool → ℚ) : (KT.full 1 f).lk ([true] ++ [false]) = f [true] :=
   KT.lk_full f rfl
+
+/-- Along a line, the coefficient of degree `2` of `X 0 * X 0` is its homogeneous part of degree
+`2` at the point. -/
+example (u : Fin 1 → ℚ) : (line u (X 0 * X 0 : MvPolynomial (Fin 1) ℚ)).coeff 2 =
+    eval u (homogeneousComponent 2 (X 0 * X 0)) :=
+  coeff_line u _ 2
+
+/-- Over `ZMod 2` the powers `c ^ 2 ^ j` take finitely many forms. -/
+example : ∃ (M : ℕ) (red : ℕ → ℕ), (∀ i, red i < M) ∧ ∀ (c : ZMod 2) i, c ^ 2 ^ red i = c ^ 2 ^ i :=
+  thm_noacc_periodic (ZMod 2)
 
 end CslibFrontierTests.LowDegree

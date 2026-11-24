@@ -11,6 +11,7 @@ public import CslibFrontier.Init
 public import Mathlib.Algebra.MvPolynomial.Eval
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 public import Mathlib.Algebra.MvPolynomial.Degrees
+public import Mathlib.RingTheory.MvPolynomial.Homogeneous
 import Mathlib.RingTheory.Polynomial.Basic
 
 /-!
@@ -32,7 +33,7 @@ From the proof of Lemma lem:lowdeg of *VP ≠ VNP over every field* [AnthropicVP
 
 ## Main results
 
-* `MvPolynomial.coeff_zero_line`, `MvPolynomial.eval_one_line`,
+* `MvPolynomial.coeff_line`, `MvPolynomial.coeff_zero_line`, `MvPolynomial.eval_one_line`,
   `MvPolynomial.sum_coeff_line_eq_eval`, `Polynomial.coeff_mul_succ`.
 -/
 
@@ -77,6 +78,25 @@ theorem sum_coeff_line_eq_eval (u : σ → F) (p : MvPolynomial σ F) {d n : ℕ
     simpa [line] using this
   rw [← eval_one_line, Polynomial.eval_eq_sum_range' (lt_of_le_of_lt hdeg hn)]
   simp
+
+/-- The part of degree i is what the point scales by the ith power. -/
+theorem coeff_line (u : σ → F) (p : MvPolynomial σ F) (i : ℕ) :
+    (line u p).coeff i = eval u (homogeneousComponent i p) := by
+  classical
+  induction p using induction_on' with
+  | monomial d a =>
+    rw [homogeneousComponent_of_mem ((mem_homogeneousSubmodule _ _).2
+      (isHomogeneous_monomial a rfl : (monomial d a).IsHomogeneous d.degree))]
+    have e : line u (monomial d a) =
+        Polynomial.C (eval u (monomial d a)) * Polynomial.X ^ d.degree := by
+      simp only [line, aeval_monomial, eval_monomial, Finsupp.prod, mul_pow,
+        Finset.prod_mul_distrib, Finset.prod_pow_eq_pow_sum, map_mul, map_prod, map_pow,
+            Polynomial.algebraMap_eq]
+      simp [Finsupp.degree, mul_assoc]
+      rfl
+    rw [e, Polynomial.coeff_C_mul_X_pow]
+    split_ifs <;> simp
+  | add p q hp hq => simp [map_add, hp, hq]
 
 end MvPolynomial
 
