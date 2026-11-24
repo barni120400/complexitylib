@@ -89,7 +89,7 @@ theorem joinSegments_injective :
       (List.append_cons_inj_of_notMem_prefix (by simp) (by simp)).1 hw'
   exact funext fun s => List.map_inj_left.1 key s (mem_toList.2 (mem_univ s))
 
-theorem length_joinSegments (X : σ → List Γ) :
+private theorem length_joinSegments (X : σ → List Γ) :
     (joinSegments X).length = ∑ s, (X s).length + Fintype.card σ := by
   simp [joinSegments, List.length_flatMap, sum_add_distrib]
 
@@ -200,7 +200,7 @@ def partyWeight (mu : Letter S Unit Γ → Matrix Q Q F) (T : ℕ) (q : Fin (K +
     (fun κ => if (∀ s b, R (some s) b = []) ∧ (∀ s b, C s b = []) ∧ cat (R none) = x κ then 1
       else 0) p
 
-theorem partyWeight_block (κ : Fin K) : partyWeight mu T q x (Fin.castAdd K κ) R C =
+private theorem partyWeight_block (κ : Fin K) : partyWeight mu T q x (Fin.castAdd K κ) R C =
     if ∀ b, R none b = [] then
       blockWeight mu T (q κ.castSucc) (q κ.succ) (blockEmission R C) else 0 :=
   Fin.append_left _ _ κ
@@ -260,7 +260,7 @@ private theorem segmentWeight_eq_prod (h1 : ∀ κ b, X none (Fin.castAdd K κ) 
 /-- If the product of the weights of the parties does not vanish, then the blocks write nothing
 on the input tape, the input parties write only their parts of the input, nothing is written for
 the input parties, and the product is the product of the weights of the blocks. -/
-theorem segmentWeight_ne_zero (h : segmentWeight mu T q x X ≠ 0) :
+private theorem segmentWeight_ne_zero (h : segmentWeight mu T q x X ≠ 0) :
     (∀ κ b, X none (Fin.castAdd K κ) b = []) ∧
     (∀ s κ b, X (some s) (Fin.natAdd K κ) b = []) ∧ (∀ s κ b, X s b (Fin.natAdd K κ) = []) ∧
     (∀ κ, cat (X none (Fin.natAdd K κ)) = x κ) ∧

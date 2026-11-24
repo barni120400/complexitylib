@@ -7,8 +7,8 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: local-only (test driver)
 
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Rows
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Rows
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
 import Mathlib.Data.Fin.VecNotation
 import Mathlib.Data.Fintype.Pi
 import Mathlib.Data.List.ReduceOption
@@ -23,7 +23,7 @@ sees only the public statements.
   blocks without steps.
 * The parts of a word, what a block emits, and the bit string of segments. -/
 
-@[expose] public section
+set_option linter.privateModule false
 
 namespace CslibFrontierTests.SeparationBlocks
 
@@ -33,10 +33,10 @@ open Cslib.Circuits.Arithmetic.Separation.Tape Cslib.Circuits.Arithmetic.Separat
 /-! ### Row data -/
 
 /-- A staircase: the first row uses both columns and the second row the last one. -/
-def stairX : Fin 2 → Fin 2 → List Bool := ![![[true], [false]], ![[], [true]]]
+private def stairX : Fin 2 → Fin 2 → List Bool := ![![[true], [false]], ![[], [true]]]
 
 /-- Its row data. -/
-def stairRows : Fin 2 → RowData 2 := ![⟨false, 0, 1⟩, ⟨false, 1, 1⟩]
+private def stairRows : Fin 2 → RowData 2 := ![⟨false, 0, 1⟩, ⟨false, 1, 1⟩]
 
 /-- The row data are valid and fit the rows, so the matrix has staircase support and they are
 its row data. -/
@@ -53,7 +53,7 @@ example (ρ : Fin 2 → RowData 2) :
   fun h => absurd (validRow_and_ok_iff.1 h).1 (by decide)
 
 /-- An empty second row: its row data repeat the last column of the first row. -/
-def emptyRowX : Fin 2 → Fin 2 → List Bool := ![![[], [true]], ![[], []]]
+private def emptyRowX : Fin 2 → Fin 2 → List Bool := ![![[], [true]], ![[], []]]
 
 example : rowsOf emptyRowX = ![⟨false, 1, 1⟩, ⟨true, 1, 1⟩] :=
   (validRow_and_ok_iff.1 (by decide)).2.symm
@@ -135,11 +135,11 @@ example : cat (parts 2 [1, 2, 3, 4, 5] : Fin 2 → List ℕ) ≠ [1, 2, 3, 4, 5]
 
 /-- What a block emits on a tape `()`: what it writes for the two parties on one side, what it
 reads from them on the other side, and what it reads from the input tape `none`. -/
-def writes : Option Unit → Fin 2 → List Bool
+private def writes : Option Unit → Fin 2 → List Bool
   | none, _ => []
   | some _, b => [b = 0]
 
-def reads : Option Unit → Fin 2 → List Bool
+private def reads : Option Unit → Fin 2 → List Bool
   | none, b => [b = 1, true]
   | some _, _ => [false]
 
@@ -148,7 +148,7 @@ example : blockEmission writes reads (.tp () true) = [false, false] := by decide
 example : blockEmission writes reads (.inp ()) = [false, true, true, true] := by decide
 
 /-- A code of the letters `Bool` and of the separator by two bits. -/
-def code : Option Bool → Cslib.BitString 2
+private def code : Option Bool → Cslib.BitString 2
   | none => ![true, true]
   | some b => ![false, b]
 

@@ -32,9 +32,9 @@ open Cslib.Circuits.Arithmetic.Separation.Cut
 variable {F Q : Type} [Fintype Q] [DecidableEq Q]
 
 /-- A code of one bit for one letter and the separator. -/
-def code : Option Unit → BitString 1 := fun o _ => o.isSome
+private def code : Option Unit → BitString 1 := fun o _ => o.isSome
 
-theorem code_injective : Function.Injective code := fun o o' h => by
+private theorem code_injective : Function.Injective code := fun o o' h => by
   have := congrFun h 0
   cases o <;> cases o' <;> simp_all [code]
 
