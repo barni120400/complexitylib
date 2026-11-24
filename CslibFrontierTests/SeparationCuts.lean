@@ -11,16 +11,16 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
 
 /-! Tests of cuts, as a client that sees only the public statements.
 
-* The program that returns its instance as the only piece is a cut, so `Interpreter.IsCut` is
-  satisfiable, and composing it with itself is a cut again by `Interpreter.IsCut.comp`.
-* The cut that `Interpreter.OneCutAt.exists_isCut` gives is a program for the cut hypothesis
-  `Interpreter.CutProg`, by `Interpreter.IsCut.cutProg`. -/
+* The program that returns its instance as the only piece is a cut, so `Cut.IsCut` is
+  satisfiable, and composing it with itself is a cut again by `Cut.IsCut.comp`.
+* The cut that `Cut.OneCutAt.exists_isCut` gives is a program for the cut hypothesis
+  `Interpreter.CutProg`, by `Cut.IsCut.cutProg`. -/
 
 set_option linter.privateModule false
 
 namespace CslibFrontierTests.SeparationCuts
 
-open Cslib.Circuits.Arithmetic.Separation.Interpreter
+open Cslib.Circuits.Arithmetic.Separation.Interpreter Cslib.Circuits.Arithmetic.Separation.Cut
 
 variable {A : Type} [CommRing A] {θ : List Bool → A}
 
@@ -37,7 +37,7 @@ theorem isCut_single (τ s : ℕ) : IsCut θ τ s τ s 1 3 single.code := by
   · simpa [Tree.toList] using hp
   · simp [wsum, pvProd, Tree.toList]
 
-/-- Twice the same cut: one piece again, in the time of `Interpreter.IsCut.comp`. -/
+/-- Twice the same cut: one piece again, in the time of `Cut.IsCut.comp`. -/
 example (τ s : ℕ) :
     IsCut θ τ s τ s 1 (3 + 1 * (3 + 62 * 1 + 110) + 100) (cutComp single.code single.code).code :=
   (isCut_single τ s).comp (isCut_single τ s)

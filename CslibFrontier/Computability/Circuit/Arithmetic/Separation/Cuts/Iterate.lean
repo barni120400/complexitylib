@@ -14,12 +14,12 @@ import Mathlib.Tactic.Ring
 /-!
 # From one cut to the cut at a scale
 
-The hypothesis `Interpreter.OneCutAt` gives, at a scale `v`, one cut by any factor `2 ≤ k ≤ v ^ 64`:
+The hypothesis `Cut.OneCutAt` gives, at a scale `v`, one cut by any factor `2 ≤ k ≤ v ^ 64`:
 the number of steps goes down by `k`, up to a loss `Λ`. Cutting by `v ^ 63` as long as the steps
 are many, and once more at the end, brings the number of steps down to `v ^ H`
-(`Interpreter.OneCutAt.exists_isCut_iterate`); every cut multiplies the bounds for the pieces, the
+(`Cut.OneCutAt.exists_isCut_iterate`); every cut multiplies the bounds for the pieces, the
 sizes and the time by a loss `X ≥ 8 Λ ^ 2`. When the total loss is at most `v`, the result is the
-cut of the cut hypothesis (`Interpreter.OneCutAt.exists_isCut`).
+cut of the cut hypothesis (`Cut.OneCutAt.exists_isCut`).
 
 The hypothesis is the conclusion of [AnthropicVPVNP2026], Theorem J.3 (one cut), at one scale;
 the results are the induction on the numbers of steps, sizes and pieces in the proof of
@@ -27,26 +27,26 @@ Theorem J.4 (cuts at all scales) (module `NS1.OneCut`).
 
 ## Main definitions
 
-* `Interpreter.OneCutAt`: one cut by any factor at a scale.
+* `Cut.OneCutAt`: one cut by any factor at a scale.
 
 ## Main results
 
-* `Interpreter.OneCutAt.exists_isCut_iterate`: the iterated cuts, with their losses.
-* `Interpreter.OneCutAt.exists_isCut`: the cut to `v ^ H` steps when the total loss is at most
+* `Cut.OneCutAt.exists_isCut_iterate`: the iterated cuts, with their losses.
+* `Cut.OneCutAt.exists_isCut`: the cut to `v ^ H` steps when the total loss is at most
   `v`.
 
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  Theorem J.3 (one cut) for the hypothesis `Interpreter.OneCutAt`, and the proof of Theorem J.4
+  Theorem J.3 (one cut) for the hypothesis `Cut.OneCutAt`, and the proof of Theorem J.4
   (cuts at all scales) for the iteration; module `NS1.OneCut`
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Interpreter
+namespace Cslib.Circuits.Arithmetic.Separation.Cut
 
-open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
+open Interpreter Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {v a₀ α H Λ : ℕ}
 
@@ -322,7 +322,11 @@ theorem exists_isCut (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (hΛ : 2 �
 
 end OneCutAt
 
+end Cslib.Circuits.Arithmetic.Separation.Cut
+
 /-! ### Powers of the logarithm -/
+
+namespace Cslib.Circuits.Arithmetic.Separation.Interpreter
 
 /-- Powers of the logarithm that are at most `v` bound the exponent by the logarithm. -/
 theorem le_lg_of_lg_pow_le {v k : ℕ} (hv : 4 ≤ v) (hk : lg v ^ k ≤ v) : k ≤ lg v :=

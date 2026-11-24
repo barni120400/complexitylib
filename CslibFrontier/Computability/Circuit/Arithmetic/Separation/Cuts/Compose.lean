@@ -16,26 +16,26 @@ import Mathlib.Tactic.Ring
 /-!
 # Cuts, and one cut after another
 
-A *cut* (`Interpreter.IsCut`) is a program that turns an instance of a plain sum into a weighted
+A *cut* (`Cut.IsCut`) is a program that turns an instance of a plain sum into a weighted
 list of lists of smaller instances, the *pieces*, such that the plain sum of the instance is the
-weighted sum of the products of the plain sums of the pieces (`Interpreter.pvProd`). The numbers
+weighted sum of the products of the plain sums of the pieces (`Cut.pvProd`). The numbers
 of steps and the sizes before and after, the number of pieces and the running time are
 parameters.
 
-Running a second cut on every piece of a first one is a cut again (`Interpreter.IsCut.comp`): the
+Running a second cut on every piece of a first one is a cut again (`Cut.IsCut.comp`): the
 numbers of pieces multiply and the sum formulas compose. This is the composition step of the
 proof of [AnthropicVPVNP2026], Theorem J.4 (module `NS1.Compose`).
 
 ## Main definitions
 
-* `Interpreter.pvProd`: the product of the plain sums of a list of instances.
-* `Interpreter.IsCut`: a program that cuts plain sums into pieces.
-* `Interpreter.cutComp`: the program that runs a second cut on every piece of a first one.
+* `Cut.pvProd`: the product of the plain sums of a list of instances.
+* `Cut.IsCut`: a program that cuts plain sums into pieces.
+* `Cut.cutComp`: the program that runs a second cut on every piece of a first one.
 
 ## Main results
 
-* `Interpreter.IsCut.comp`: the composition of two cuts is a cut.
-* `Interpreter.IsCut.cutProg`: a cut to the scale `v ^ H` is a program for the cut hypothesis
+* `Cut.IsCut.comp`: the composition of two cuts is a cut.
+* `Cut.IsCut.cutProg`: a cut to the scale `v ^ H` is a program for the cut hypothesis
   `Interpreter.CutProg`.
 
 ## References
@@ -46,9 +46,9 @@ proof of [AnthropicVPVNP2026], Theorem J.4 (module `NS1.Compose`).
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Interpreter
+namespace Cslib.Circuits.Arithmetic.Separation.Cut
 
-open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
+open Interpreter Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A}
 
@@ -56,9 +56,11 @@ variable {A : Type} [CommRing A] {θ : List Bool → A}
 @[expose] noncomputable def pvProd (θ : List Bool → A) (o : Tree) : A :=
   (o.toList.map (pv θ)).prod
 
-/-- The program `G` cuts plain sums of `τ` steps on instances of size `s` into pieces of `τ'`
-steps on instances of size `s'`, in `t` steps. Its value is a weighted list of lists of pieces,
-and `P` bounds the number of pieces in each of the returned lists, not the number of lists. -/
+/-- The program `G` cuts plain sums into pieces. The parameters of `IsCut θ τ s τ' s' P t G`
+are, in order: the number `τ` of steps and the size `s` of the instances that are cut; the number
+`τ'` of steps and the size `s'` of the pieces; the bound `P` for the number of pieces; the running
+time `t`; and the program `G`. The value of `G` is a weighted list of lists of pieces, and `P`
+bounds the number of pieces in each of the returned lists, not the number of lists. -/
 @[expose] def IsCut (θ : List Bool → A) (τ s τ' s' P t : ℕ) (G : Tree) : Prop :=
   ∀ z, z.size ≤ s → ∃ Q, Does θ (Fm.ofTree G) z Q t ∧
     (∀ q ∈ Q, q.2.toList.length ≤ P ∧ ∀ y ∈ q.2.toList, y.size ≤ s') ∧
@@ -243,4 +245,4 @@ theorem IsCut.comp {τ s τ₁ s₁ P₁ t₁ τ₂ s₂ P₂ t₂ : ℕ} {G₁ 
       ((hR x (hs₁ q hq x hx)).2.2 ((hv₁ hp).1 q hq x hx)).2.symm]
     simp [pvProd, toList]
 
-end Cslib.Circuits.Arithmetic.Separation.Interpreter
+end Cslib.Circuits.Arithmetic.Separation.Cut
