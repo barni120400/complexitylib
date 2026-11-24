@@ -21,9 +21,12 @@ are many, and once more at the end, brings the number of steps down to `v ^ H`
 sizes and the time by a loss `X ≥ 8 Λ ^ 2`. When the total loss is at most `v`, the result is the
 cut of the cut hypothesis (`Cut.OneCutAt.exists_isCut`).
 
-The hypothesis is the conclusion of [AnthropicVPVNP2026], Theorem J.3 (one cut), at one scale;
-the results are the induction on the numbers of steps, sizes and pieces in the proof of
-Theorem J.4 (cuts at all scales) (module `NS1.OneCut`).
+`Cut.OneCutAt` is a hypothesis here, with the loss `Λ` as a parameter and for all numbers of
+steps `τ ≤ v ^ α`. [AnthropicVPVNP2026], Theorem J.3 (one cut) gives the bounds of `Cut.OneCutAt`
+with `Λ = (lg v) ^ C` and only for `τ` with `4 * lg τ ≤ (lg v) ^ 2`; the user of this file must
+check that this logarithmic bound holds for all `τ ≤ v ^ α`. The results are the conditional
+step of the proof of Theorem J.4 (cuts at all scales): the induction on the numbers of steps,
+sizes and pieces, given one cut (module `NS1.OneCut`).
 
 ## Main definitions
 
@@ -38,8 +41,9 @@ Theorem J.4 (cuts at all scales) (module `NS1.OneCut`).
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  Theorem J.3 (one cut) for the hypothesis `Cut.OneCutAt`, and the proof of Theorem J.4
-  (cuts at all scales) for the iteration; module `NS1.OneCut`
+  Theorem J.3 (one cut), whose bounds are the hypothesis `Cut.OneCutAt` in the range where its
+  logarithmic condition holds, and the proof of Theorem J.4 (cuts at all scales) for the
+  iteration; module `NS1.OneCut`
 -/
 
 public section
@@ -50,9 +54,10 @@ open Interpreter Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {v a₀ α H Λ : ℕ}
 
-/-- One cut at the scale `v` ([AnthropicVPVNP2026], Theorem J.3): plain sums of
-`v ^ a₀ ≤ τ ≤ v ^ α` steps can be cut by any factor `2 ≤ k ≤ v ^ 64`, with the loss `Λ`, by a
-program of size at most `v ^ a₀`. -/
+/-- One cut at the scale `v`: plain sums of `v ^ a₀ ≤ τ ≤ v ^ α` steps can be cut by any factor
+`2 ≤ k ≤ v ^ 64`, with the loss `Λ`, by a program of size at most `v ^ a₀`. These are the bounds
+of [AnthropicVPVNP2026], Theorem J.3, which proves them for `Λ = (lg v) ^ C` and for `τ` with
+`4 * lg τ ≤ (lg v) ^ 2`; here they are assumed for all `τ` in the range and for a given `Λ`. -/
 @[expose] def OneCutAt (θ : List Bool → A) (v a₀ α Λ : ℕ) : Prop :=
   ∀ τ s k, v ^ a₀ ≤ τ → τ ≤ v ^ α → s ≤ τ → 2 ≤ k → k ≤ v ^ 64 →
     ∃ G : Tree, G.size ≤ v ^ a₀ ∧ IsCut θ τ s (τ * Λ / k)
@@ -275,8 +280,8 @@ theorem exists_isCut_iterate (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (h
         ring
       omega
 
-/-- **The cut at a scale** ([AnthropicVPVNP2026], Theorem J.4, for one scale): when `α + 1` cuts
-lose at most `v`, plain sums of `v ^ H ≤ τ ≤ v ^ α` steps on instances of size `s ≤ τ / v ^ 48`
+/-- **The cut at a scale, given one cut** (the conditional step of the proof of
+[AnthropicVPVNP2026], Theorem J.4): when `α + 1` cuts lose at most `v`, plain sums of `v ^ H ≤ τ ≤ v ^ α` steps on instances of size `s ≤ τ / v ^ 48`
 are cut into at most `τ * v ^ 2 / v ^ H` pieces of `v ^ H` steps and size `v ^ (H - 32)`, in
 `τ / v ^ 24` steps, by a program of size at most `v ^ H`. -/
 theorem exists_isCut (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (hΛ : 2 ≤ Λ)
