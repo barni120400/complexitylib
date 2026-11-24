@@ -8,17 +8,18 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccSize
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccProg
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccSize
 
 /-!
 # One scale is all scales: low degree is fast
 
-`Interpreter.lem_lowdeg`, Lemma lem:lowdeg of *VP ≠ VNP over every field* [AnthropicVPVNP2026]. Let
-a polynomial `p` in the variables (place, symbol), with `N ≤ 2 ^ m` places, be computed within
-`S ≤ 2 ^ M` nodes (`Arithmetic.ComputedWithin`). Then a program of size `O(M + m + d)` exists, with
-a trie of `O(2 ^ (3 M) + 2 ^ (M + m))` constants. At the code of every short word, its value is the
-sum of the homogeneous parts of `p` of degree at most `d`, within the stated number of steps. All
-its runs stop, and it names only constants, not powers.
+`Interpreter.lem_lowdeg`, Lemma K.2 (Section K.2) of *VP ≠ VNP over every field*
+[AnthropicVPVNP2026]. Let a polynomial `p` in the variables (place, symbol), with `N ≤ 2 ^ m`
+places, be computed within `S ≤ 2 ^ M` nodes (`Arithmetic.ComputedWithin`). Then a program of size
+`O(M + m + d)` exists, with a trie of `O(2 ^ (3 M) + 2 ^ (M + m))` constants. At the code of every
+short word, its value is the sum of the homogeneous parts of `p` of degree at most `d`, within the
+stated number of steps. All its runs stop, and it names only constants, not powers.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Paper.LowDeg`.
 
@@ -35,12 +36,12 @@ open Finset
 open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
 
 open MvPolynomial in
-/-- **Paper: Lemma lem:lowdeg.** "Let a polynomial over R in variables (place, symbol), with n
-places, have a circuit with S gates. A program of size O(log S + log n + d), with O((S+n)³)
-constants, has as value the sum of its parts of degree at most d at the code of the word of every z
-with |z| < n, in (d+|z|+1)(log(S+n+d))^O(1) steps. All its runs halt, and it names only constants,
-not powers." The bound on the height of the trie, O(log S + log n), is the one that Lemma
-lem:circuit needs. -/
+/-- **Paper: Lemma K.2.** Let a polynomial over `R` in the variables (place, symbol), with `n`
+places, be computed within `S` nodes. A program of size `O(log S + log n + d)`, with `O((S + n)³)`
+constants, has as value the sum of its parts of degree at most `d` at the code of the word of every
+`z` with `|z| < n`, in `(d + |z| + 1) (log (S + n + d)) ^ O(1)` steps. All its runs stop, and it
+names only constants, not powers. The bound `O(log S + log n)` on the height of the trie is the one
+that the circuit lemma of Section K needs. -/
 theorem lem_lowdeg : ∃ c : ℕ,
     ∀ (R : Type) [CommRing R] (M m N d S : ℕ) (p : MvPolynomial (Fin N × Option Bool) R),
     ComputedWithin p S → S ≤ 2 ^ M → N ≤ 2 ^ m →

@@ -8,36 +8,31 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Next
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Diag
-public import CslibFrontier.Foundations.FieldTheory.FiniteOfFiniteType
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
+public import Mathlib.RingTheory.FiniteType
+import CslibFrontier.Foundations.FieldTheory.FiniteOfFiniteType
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Diag
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Next
 
 /-!
 # One scale is all scales: no small accelerators
 
-`Interpreter.thm_noacc`, Theorem thm:noacc of *VP ≠ VNP over every field* [AnthropicVPVNP2026].
-Assume Theorem C (`Interpreter.CutHyp`) for a ring `A` of finite type over `ℤ`. Then for all large
+`Interpreter.thm_noacc`, Theorem K.6 (Section K.4) of *VP ≠ VNP over every field*
+[AnthropicVPVNP2026]. Assume Theorem C for a ring `A` of finite type over `ℤ`, given as the
+hypothesis `Interpreter.CutHyp` at the scales `v ^ H` with `H = 16 h`, `h ≥ 17`. Then for all large
 `v` with `(lg v) ^ (C a) ≤ v`, no nontrivial commutative `A`-algebra has an accelerator of size
 `v ^ a` at the scale `v` (`Interpreter.HasAcc`). The proof has four parts:
 
-* reduce to a finite field (`Interpreter.thm_noacc_finite_field`), using
-  `Cslib.finite_of_finiteType_int`;
-* over a finite ring the powers `c ^ 2 ^ j` are periodic (`Interpreter.thm_noacc_periodic`);
-* lift the accelerator to all scales (`Interpreter.thm_noacc_all_scales`, through
-  `Interpreter.prop_next`);
-* contradict the diagonal program (`Interpreter.thm_noacc_diagonal`).
+* reduce to a finite field, using `Cslib.finite_of_finiteType_int`;
+* over a finite ring the powers `c ^ 2 ^ j` are periodic;
+* lift the accelerator to all scales with `Interpreter.prop_next`;
+* contradict the diagonal program `Interpreter.diagF`.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Paper.NoAcc`.
-
-## Main definitions
-
-* `Interpreter.AllScales`: what the iteration keeps at a scale.
 
 ## Main results
 
 * `Interpreter.thm_noacc`.
-* `Interpreter.thm_noacc_finite_field`, `Interpreter.thm_noacc_periodic`,
-  `Interpreter.thm_noacc_diagonal`, `Interpreter.thm_noacc_all_scales`.
 -/
 
 public section
@@ -48,10 +43,11 @@ open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {R : Type} [CommRing R] [Algebra A R]
 
-/-- **Paper: proof of Theorem thm:noacc, the finite field.** "As A is finitely generated, so is the
-ring that its constants generate over A; modulo a maximal ideal this is a finite field E, over which
-it is still an accelerator." -/
-theorem thm_noacc_finite_field [Algebra.FiniteType ℤ A] [Nontrivial R] {H v t : ℕ} {K : KT R}
+/-- **Paper: proof of Theorem K.6, the finite field.** "As A is finitely generated, so is the ring
+that its constants generate over A; modulo a maximal ideal this is a finite field E, over which it
+is still an accelerator." -/
+private theorem thm_noacc_finite_field [Algebra.FiniteType ℤ A] [Nontrivial R] {H v t : ℕ}
+    {K : KT R}
     {B : ℕ} {D : Tree}
     (h : IsAccT θ H v t K B D) : ∃ (E : Type) (_ : Field E) (_ : Algebra A E) (_ : Finite E)
         (K' : KT E),
@@ -80,10 +76,10 @@ theorem thm_noacc_finite_field [Algebra.FiniteType ℤ A] [Nontrivial R] {H v t 
   · rw [KT.nds_map, ← hK', KT.nds_map]
   · rw [KT.ht_map, ← hK', KT.ht_map]
 
-/-- **Paper: proof of Theorem thm:noacc, the number m_E.** "As E is finite, there is m_E such that
-every j ≥ 0 has an r(j) < m_E with c^(2^j) = c^(2^r(j)) for all c ∈ E; this is where finiteness is
-needed." Here M is m_E and red is r. -/
-theorem thm_noacc_periodic (R : Type) [CommRing R] [Finite R] :
+/-- **Paper: proof of Theorem K.6, the number m_E.** "As E is finite, there is m_E such that every j
+≥ 0 has an r(j) < m_E with c^(2^j) = c^(2^r(j)) for all c ∈ E; this is where finiteness is needed."
+Here M is m_E and red is r. -/
+private theorem thm_noacc_periodic (R : Type) [CommRing R] [Finite R] :
     ∃ (M : ℕ) (red : ℕ → ℕ), (∀ i, red i < M) ∧ ∀ (c : R) i, c ^ 2 ^ red i = c ^ 2 ^ i := by
   classical
   let f : ℕ → R → R := fun i c => c ^ 2 ^ i
@@ -106,11 +102,11 @@ theorem thm_noacc_periodic (R : Type) [CommRing R] [Finite R] :
   obtain ⟨M, hM⟩ := hbdd.bddAbove
   refine ⟨M + 1, red, fun i => Nat.lt_succ_of_le (hM ⟨i, rfl⟩), fun c i => congrFun (hred i) c⟩
 
-/-- **Paper: proof of Theorem thm:noacc, the diagonal.** "Let v be large against E and the number of
+/-- **Paper: proof of Theorem K.6, the diagonal.** "Let v be large against E and the number of
 constants": the program P guesses a bit, and for one value accepts with weight 1, for the other
 guesses exponents e, names λ^e and runs D on the instance z_e of P applied to P; so its value V
 satisfies V = 1 + V, "impossible in E". -/
-theorem thm_noacc_diagonal {h : ℕ} (hh : 17 ≤ h)
+private theorem thm_noacc_diagonal {h : ℕ} (hh : 17 ≤ h)
     [Nontrivial R] {v : ℕ} {K : KT R} {B : ℕ} {D : Tree}
     (hD : IsAccT θ (16 * h) v (v ^ (16 * h - 16)) K B D) (hcst : cst ≤ v) (hK : K.nds ≤ v)
         (hDs : D.size ≤ v ^ (4 * h))
@@ -125,8 +121,7 @@ theorem thm_noacc_diagonal {h : ℕ} (hh : 17 ≤ h)
   have hv4 : 2000 ≤ v := by omega
   have hv1 : 1 ≤ v := by omega
   have pu : ∀ a, v ^ (a + 1) = v * v ^ a := pow_succ' v
-  have pbig : ∀ a, 2000 * v ^ a ≤ v ^ (a + 1) := mul_pow_le_pow_succ hv4
-  have ppos : ∀ a, 1 ≤ v ^ a := fun a => Nat.one_le_pow _ _ (by omega)
+  obtain ⟨pbig, ppos⟩ := scale_bounds hv4
   set nB := (K.expand B').nds with hnB
   have hnB1 : nB ≤ K.nds * (2 * X) := (KT.nds_expand B' K).trans (Nat.mul_le_mul_left _ (by omega))
   have hnBX : ∀ c, c * X ^ 2 ≤ 1000 * X ^ 3 → nB * (c * X) ≤ 2 * v ^ 2 := by
@@ -215,7 +210,7 @@ theorem thm_noacc_diagonal {h : ℕ} (hh : 17 ≤ h)
     omega
   have hJ' : ∀ r ∈ l, r.bill.length < 2 ^ J := fun r hr =>
     lt_of_le_of_lt ((bill_le ep r hr).trans (hT r hr)) hJ
-  -- Lemma lem:postpone for the program applied to itself
+  -- the postponement lemma (`lem_postpone`) for the program applied to itself
   have hbill : ∀ r ∈ l, ∀ n ∈ r.bill,
       K.lk n = (K.expand B').lookup n := fun r hr n hn => KT.lookup_expand ((hl r hr).2 n hn)
   obtain ⟨hsum, hze⟩ :=
@@ -259,18 +254,20 @@ theorem thm_noacc_diagonal {h : ℕ} (hh : 17 ≤ h)
 
 /-- What the iteration keeps at a scale u: "programs with the two properties of an accelerator, with
 programs of size at most u^(4h₀), the same constants, and exponent bounds O(lg u)³". -/
-structure AllScales (θ : List Bool → A) (h : ℕ) (u : ℕ) (K : KT R) (B : ℕ) (D : Tree) : Prop where
+private structure AllScales (θ : List Bool → A) (h : ℕ) (u : ℕ) (K : KT R) (B : ℕ)
+    (D : Tree) : Prop where
   acc : IsAccT θ (16 * h) u (u ^ (16 * h - 16)) K B D
   nds : K.nds ≤ u
   size : D.size ≤ u ^ (4 * h)
   ht : K.ht ≤ 100000 * h ^ 3 * lg u ^ 3
   B_le : B ≤ 100000 * h ^ 3 * lg u ^ 3
 
-/-- **Paper: proof of Theorem thm:noacc, all scales.** "Proposition prop:next with α = max(5,a), and
-then again and again with α = 5, gives programs with the two properties of an accelerator at
-arbitrarily large scales v_i, with programs of size at most v_i^(4h₀), with the same constants and
-with exponent bounds O(lg v_i)³." -/
-theorem thm_noacc_all_scales {h : ℕ} (hh : 17 ≤ h) {C₀ v₀ : ℕ} (hcut : CutHyp θ (16 * h) C₀ v₀) :
+/-- **Paper: proof of Theorem K.6, all scales.** "Proposition K.5 with α = max(5,a), and then again
+and again with α = 5, gives programs with the two properties of an accelerator at arbitrarily large
+scales v_i, with programs of size at most v_i^(4h₀), with the same constants and with exponent
+bounds O(lg v_i)³." -/
+private theorem thm_noacc_all_scales {h : ℕ} (hh : 17 ≤ h)
+    {C₀ v₀ : ℕ} (hcut : CutHyp θ (16 * h) C₀ v₀) :
     ∃ C v₁ : ℕ, ∀ (R : Type) [CommRing R] [Algebra A R], ∀ v, v₁ ≤ v → ∀ a, lg v ^ (C * a) ≤ v →
       ∀ (K : KT R) (B : ℕ) (D : Tree),
           IsAccT θ (16 * h) v (v ^ (16 * h - 16)) K B D → K.nds ≤ v ^ a → D.size ≤ v ^ a →
@@ -394,8 +391,10 @@ theorem thm_noacc_all_scales {h : ℕ} (hh : 17 ≤ h) {C₀ v₀ : ℕ} (hcut :
         _ = u ^ 5 := by ring
     exact ⟨u ^ 5, B'', D'', by omega, hu.trans (Nat.le_self_pow (by norm_num) u), hI'⟩
 
-/-- **Paper: Theorem thm:noacc.** "There are C and v₁ such that for all integers a ≥ 0 and v ≥ v₁
-with (lg v)^(Ca) ≤ v no nonzero commutative A-algebra has an accelerator of size v^a at scale v." -/
+/-- **Paper: Theorem K.6.** "There are C and v₁ such that for all integers a ≥ 0 and v ≥ v₁ with (lg
+v)^(Ca) ≤ v no nonzero commutative A-algebra has an accelerator of size v^a at scale v." Here
+Theorem C is the hypothesis `hcut : CutHyp θ (16 * h) C₀ v₀`, at the scales `v ^ H` with `H = 16 h`
+and `h ≥ 17`. -/
 theorem thm_noacc {h : ℕ} (hh : 17 ≤ h)
     [Algebra.FiniteType ℤ A] {C₀ v₀ : ℕ} (hcut : CutHyp θ (16 * h) C₀ v₀) :
     ∃ C v₁ : ℕ, ∀ v, v₁ ≤ v → ∀ a,

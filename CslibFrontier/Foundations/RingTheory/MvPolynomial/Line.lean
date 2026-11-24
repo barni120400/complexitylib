@@ -24,8 +24,11 @@ low degree that value is the sum of its first coefficients along the line
 (`MvPolynomial.sum_coeff_line_eq_eval`). `Polynomial.coeff_mul_succ` splits a positive coefficient
 of a product into the parts that involve a constant coefficient and the rest.
 
-From the proof of Lemma lem:lowdeg of *VP ≠ VNP over every field* [AnthropicVPVNP2026], modules
-`Nc.LowDegree` and `Nc.Acc.Line`.
+Along a line, the coefficient of degree `i` of `p` is the value at the point of its homogeneous part
+of degree `i` (`MvPolynomial.coeff_line`).
+
+From the proof of Lemma K.2 of *VP ≠ VNP over every field* [AnthropicVPVNP2026], modules
+`Nc.LowDegree`, `Nc.Acc.Line` and `Paper.LowDeg` (`line_coeff_eq`).
 
 ## Main definitions
 

@@ -8,27 +8,25 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Scale
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
 /-!
 # One scale is all scales: from one scale to the next
 
-`Interpreter.prop_next`, Proposition prop:next of *VP ≠ VNP over every field* [AnthropicVPVNP2026].
-Under Theorem C (`Interpreter.CutHyp`), an accelerator at a scale `u` with few constants gives one
-at the scale `u ^ α`, with the same constants and a program larger only by lower-order terms. Each
-round (`Interpreter.prop_next_round`) lowers the exponent of the time bound by `8`, using
+`Interpreter.prop_next`, Proposition K.5 (Section K.3) of *VP ≠ VNP over every field*
+[AnthropicVPVNP2026]. Under Theorem C (`Interpreter.CutHyp`), an accelerator at a scale `u` with few
+constants gives one at the scale `u ^ α`, with the same constants and a program larger only by
+lower-order terms. Each round of the proof lowers the exponent of the time bound by `8`, using
 `Interpreter.round`.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Paper.Next`.
 
 ## Main results
 
-* `Interpreter.prop_next_round`, `Interpreter.prop_next`.
-* `Interpreter.cst_bounds`, `Interpreter.pow_bounds`, `Interpreter.mul_pow_le_pow_succ`: arithmetic
-  shared with `Interpreter.NoAcc`.
+* `Interpreter.prop_next`.
 -/
 
 public section
@@ -39,10 +37,12 @@ open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {R : Type} [CommRing R] [Algebra A R]
 
-/-- `c * u ^ a ≤ u ^ (a + 1)` for `c ≤ u`. -/
-theorem mul_pow_le_pow_succ {c u : ℕ} (h : c ≤ u) (a : ℕ) : c * u ^ a ≤ u ^ (a + 1) := by
-  rw [pow_succ']
-  exact Nat.mul_le_mul_right _ h
+/-- Powers of a scale `u ≥ 2000`: each power is at least `2000` times the one before, and all are
+positive. -/
+theorem scale_bounds {u : ℕ} (hu : 2000 ≤ u) :
+    (∀ a, 2000 * u ^ a ≤ u ^ (a + 1)) ∧ ∀ a, 1 ≤ u ^ a :=
+  ⟨fun a => (Nat.mul_le_mul_right _ hu).trans_eq (pow_succ' u a).symm,
+    fun a => Nat.one_le_pow _ _ (by omega)⟩
 
 /-- Powers of a number at least `10`. -/
 theorem pow_bounds {X : ℕ} (hX10 : 10 ≤ X) : 10 * X ^ 2 ≤ X ^ 3 ∧ 10 * X ≤ X ^ 2 :=
@@ -58,10 +58,10 @@ theorem cst_bounds {u : ℕ} (h : cst ≤ u) :
     ∃ sU sW, sU = UF.code.size ∧ sW = WF.code.size ∧ sW + sU + 2000 ≤ u :=
   ⟨_, _, rfl, rfl, h⟩
 
-/-- **Paper: proof of Proposition prop:next, one round.** "One round, from f+8 to f, for f ≥
-α(H−32)+40": from values in v^(f+8) steps to values in v^f steps, with exponent bound max(B_p+J, B);
-the program grows by v^(h₀α+2) + v^(H+1). Here e is the paper's f. -/
-theorem prop_next_round {h : ℕ} (hh : 17 ≤ h) {u α : ℕ} (hα : 5 ≤ α)
+/-- **Paper: proof of Proposition K.5, one round.** "One round, from f+8 to f, for f ≥ α(H−32)+40":
+from values in v^(f+8) steps to values in v^f steps, with exponent bound max(B_p+J, B); the program
+grows by v^(h₀α+2) + v^(H+1). Here e is the paper's f. -/
+private theorem prop_next_round {h : ℕ} (hh : 17 ≤ h) {u α : ℕ} (hα : 5 ≤ α)
     (hC : CutAt θ (16 * h) u (2 * α)) (hcst : cst ≤ u) {K : KT R} {B' : ℕ} {D : Tree}
     (hD : IsAccT θ (16 * h) u (u ^ (16 * h - 16)) K B' D) (hK : K.nds ≤ u ^ (h * α))
         (hDs : D.size ≤ u ^ (h * α))
@@ -97,8 +97,7 @@ theorem prop_next_round {h : ℕ} (hh : 17 ≤ h) {u α : ℕ} (hα : 5 ≤ α)
       _ ≤ u ^ (h * α) * (2 * u) := Nat.mul_le_mul hK (by omega)
       _ = 2 * u ^ (h * α + 1) := by rw [pow_succ]; ring
   have pu : ∀ a, u ^ (a + 1) = u * u ^ a := pow_succ' u
-  have pbig : ∀ a, 2000 * u ^ a ≤ u ^ (a + 1) := mul_pow_le_pow_succ hu4
-  have ppos : ∀ a, 1 ≤ u ^ a := fun a => Nat.one_le_pow _ _ (by omega)
+  obtain ⟨pbig, ppos⟩ := scale_bounds hu4
   -- the cut
   obtain ⟨G, hG⟩ := hC (u ^ (e + 9)) (u ^ (α * (16 * h - 32) + 1)) (Nat.pow_le_pow_right hu1 hH)
     (Nat.pow_le_pow_right hu1 he2) (by
@@ -204,14 +203,15 @@ theorem prop_next_round {h : ℕ} (hh : 17 ≤ h) {u α : ℕ} (hα : 5 ≤ α)
     have s9 : u ^ (h * α) ≤ u ^ (h * α + 1) := Nat.pow_le_pow_right hu1 (Nat.le_succ _)
     omega
 
-/-- **Paper: Proposition prop:next.** "Let v be large, α ≥ 5 an integer and (lg v)^(Cα) ≤ v for a
-suitable constant C, which depends on the fixed power below. A program with the two properties of an
-accelerator at scale v, with Q ≤ v^(h₀α), program size at most v^(h₀α) and with B and the height of
-its trie at most a fixed power of α lg v gives a program with the two properties of an accelerator
-at scale v′ = v^α (without the bounds on height and exponents of Definition def:acc), with the same
-constants, exponent bound B + O(α² lg v) and program size at most v′^(4h₀). Its accepting runs take
-at most v′^(H−17) steps." The two properties are the fields of IsAccT, k is the fixed power, and H =
-16h. -/
+/-- **Paper: Proposition K.5.** Let `v` be large, `α ≥ 5` an integer and `(lg v) ^ (C α) ≤ v` for a
+suitable constant `C`, which depends on the fixed power below. A program with the two properties of
+an accelerator at scale `v`, with `Q ≤ v ^ (h₀ α)`, program size at most `v ^ (h₀ α)` and with `B`
+and the height of its trie at most a fixed power of `α lg v` gives a program with the two properties
+of an accelerator at scale `v′ = v ^ α` (without the bounds on height and exponents of Definition
+K.1), with the same constants, exponent bound `B + O(α² lg v)` and program size at most
+`v′ ^ (4 h₀)`. Its accepting runs take at most `v′ ^ (H − 17)` steps. The two properties are the
+fields of `IsAccT`, `k` is the fixed power, and `H = 16 h`. This paraphrases the statement of the
+paper, which gives the exponent bound as `B + 51 h₀ α² lg v`. -/
 theorem prop_next {h : ℕ} (hh : 17 ≤ h) {C₀ v₀ : ℕ} (hcut : CutHyp θ (16 * h) C₀ v₀) (k : ℕ) :
     ∃ C v₁ : ℕ, ∀ (R : Type) [CommRing R] [Algebra A R], ∀ v, v₁ ≤ v → ∀ α,
         5 ≤ α → lg v ^ (C * α) ≤ v →
@@ -288,7 +288,8 @@ theorem prop_next {h : ℕ} (hh : 17 ≤ h) {C₀ v₀ : ℕ} (hcut : CutHyp θ 
     omega
   have hu1 : 1 ≤ v := by omega
   have pu : ∀ a, v ^ (a + 1) = v * v ^ a := pow_succ' v
-  have pbig : ∀ a, 2000 * v ^ a ≤ v ^ (a + 1) := mul_pow_le_pow_succ hu4
+  have pbig : ∀ a, 2000 * v ^ a ≤ v ^ (a + 1) := fun a =>
+    (Nat.mul_le_mul_right _ hu4).trans_eq (pow_succ' v a).symm
   have hαX : 3 * α + 1 ≤ X := by
     have : (3 * α + 1) * 1 ≤ (3 * α + 1) * (J + 1) := Nat.mul_le_mul_left _ (by omega)
     omega
