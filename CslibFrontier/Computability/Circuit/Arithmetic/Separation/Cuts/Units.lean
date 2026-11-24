@@ -14,37 +14,38 @@ import CslibFrontier.Foundations.Data.List.FixedWidth
 /-!
 # Units of a bit string
 
-The cutting argument of [AnthropicVPVNP2026] (Appendix J; module `Nc.Cut.Units`) writes the
+The cutting argument of [AnthropicVPVNP2026] (Section H.2, where a string `w` is written on
+packets as `w10⋯0`, and Appendix J, which applies it; module `Nc.Cut.Units`) writes the
 strings that parties exchange on *units* of `ub` bits: a `1` and then zeros are appended to the
 string, and the result is cut into blocks of `ub` bits. This is the padding
 `Cslib.BitString.pad10star` followed by `Cslib.BitString.toBlocks`
-(`Separation.unitsOf_eq_getElem?_toBlocks`), so the string can be recovered from its units
-(`Separation.unitsOf_injective`).
+(`Cut.unitsOf_eq_getElem?_toBlocks`), so the string can be recovered from its units
+(`Cut.unitsOf_injective`).
 
 A word over an alphabet whose letters are coded by `c` bits each is first turned into a bit
-string (`Separation.bitsOf`), from which it can be recovered as well.
+string (`Cut.bitsOf`), from which it can be recovered as well.
 
 ## Main definitions
 
-* `Separation.UnitContent`: the content of a unit, absent or `ub` bits.
-* `Separation.unitCount`, `Separation.unitsOf`: the number of units of a bit string, and its
+* `Cut.UnitContent`: the content of a unit, absent or `ub` bits.
+* `Cut.unitCount`, `Cut.unitsOf`: the number of units of a bit string, and its
   units.
-* `Separation.bitsOf`: the bits of a word under a code of fixed width.
+* `Cut.bitsOf`: the bits of a word under a code of fixed width.
 
 ## Main results
 
-* `Separation.unitsOf_injective`: a bit string is determined by its units.
-* `Separation.bitsOf_injective`: a word is determined by its bits.
+* `Cut.unitsOf_injective`: a bit string is determined by its units.
+* `Cut.bitsOf_injective`: a word is determined by its bits.
 
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  Appendix J; module `Nc.Cut.Units`
+  Section H.2 (packets) and Appendix J; module `Nc.Cut.Units`
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation
+namespace Cslib.Circuits.Arithmetic.Separation.Cut
 
 variable {ub : ℕ} {L : List Bool} {k : ℕ}
 
@@ -99,4 +100,4 @@ theorem bitsOf_injective {cb : Γ → BitString c} (hcb : Function.Injective cb)
 
 end Words
 
-end Cslib.Circuits.Arithmetic.Separation
+end Cslib.Circuits.Arithmetic.Separation.Cut
