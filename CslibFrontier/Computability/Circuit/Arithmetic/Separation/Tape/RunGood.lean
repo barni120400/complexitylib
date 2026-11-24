@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -192,12 +192,12 @@ section Backward
 variable {Γ S Q : Type*} [DecidableEq S] {n t M N : ℕ}
 variable {i e : Q} {u : Fin n → List Γ} {o : Fin t → Letter S (Fin n) Γ} {q : Fin (t + 1) → Q}
 
-theorem emit_take_le (o : Fin t → Letter S (Fin n) Γ) (z : Ch S (Fin n)) (τ : ℕ) :
+private theorem emit_take_le (o : Fin t → Letter S (Fin n) Γ) (z : Ch S (Fin n)) (τ : ℕ) :
     (emit ((List.ofFn o).take τ) z).length ≤ (emit (List.ofFn o) z).length := by
   conv_rhs => rw [← List.take_append_drop τ (List.ofFn o), emit_appendR, List.length_append]
   omega
 
-theorem place_lt (hM : N + t < M) (hN : (wordOf (List.ofFn u)).length ≤ N)
+private theorem place_lt (hM : N + t < M) (hN : (wordOf (List.ofFn u)).length ≤ N)
     (hu : ∀ j, emit (List.ofFn o) (.inp j) = u j) (z : Ch S (Fin n)) (τ : ℕ) :
     place0 o z + (emit ((List.ofFn o).take τ) z).length < M := by
   have h1 := emit_take_le o z τ

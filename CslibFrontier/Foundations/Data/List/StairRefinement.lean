@@ -5,7 +5,7 @@ Authors: Anthropic
 -/
 
 module
--- upstream: candidate
+-- upstream: candidate (Mathlib Data/List)
 
 public import CslibFrontier.Init
 import Mathlib.Data.Fin.Basic
@@ -16,28 +16,28 @@ import Mathlib.Logic.Function.Basic
 # Common refinement of two factorisations of a word
 
 Two sequences of words have the same concatenation if and only if there is a matrix of words with
-staircase support (`Tape.Stair`) whose rows concatenate to the first sequence and whose columns
-concatenate to the second (`Tape.IsRef`); moreover the matrix is unique.
+staircase support (`Stair`) whose rows concatenate to the first sequence and whose columns
+concatenate to the second (`IsRef`); moreover the matrix is unique.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Tape.Refine`.
 
 ## Main definitions
 
-* `Tape.cat`: concatenation of a `Fin K`-indexed sequence of words.
-* `Tape.Stair`: staircase-support predicate on a word matrix.
-* `Tape.IsRef`: common refinement witnessing equal concatenations.
-* `Tape.upd`: single-entry matrix update.
+* `List.StairRefinement.cat`: concatenation of a `Fin K`-indexed sequence of words.
+* `List.StairRefinement.Stair`: staircase-support predicate on a word matrix.
+* `List.StairRefinement.IsRef`: common refinement witnessing equal concatenations.
 
 ## Main results
 
-* `Tape.IsRef.cat_eq`: rows and columns of a refinement have the same concatenation.
-* `Tape.IsRef.unique`: uniqueness of the common refinement matrix.
-* `Tape.IsRef.exists`: existence of a common refinement given equal concatenations.
+* `List.StairRefinement.IsRef.cat_eq`: rows and columns of a refinement have the same
+  concatenation.
+* `List.StairRefinement.IsRef.unique`: uniqueness of the common refinement matrix.
+* `List.StairRefinement.IsRef.exists`: existence of a common refinement given equal concatenations.
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Tape
+namespace List.StairRefinement
 
 variable {Γ : Type*} {K : ℕ}
 
@@ -112,35 +112,34 @@ structure IsRef (A B : Fin K → List Γ) (X : Fin K → Fin K → List Γ) : Pr
   /-- Each column `b` concatenates to `B b`. -/
   col : ∀ b, cat (fun a => X a b) = B b
 
-/-- Replace entry `(a, b)` of the word matrix `X` with `l`. -/
-@[expose] def upd (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) :
+private def upd (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) :
     Fin K → Fin K → List Γ :=
   fun a' b' => if a' = a ∧ b' = b then l else X a' b'
 
-theorem upd_row (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) :
+private theorem upd_row (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) :
     upd X a b l a = Function.update (X a) b l := by
   funext b'
   by_cases e : b' = b
   · subst e; simp [upd]
   · simp [upd, e]
 
-theorem upd_row_ne (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) {a' : Fin K}
+private theorem upd_row_ne (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) {a' : Fin K}
     (h : a' ≠ a) : upd X a b l a' = X a' := by
   funext b'; simp [upd, h]
 
-theorem upd_col (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) :
+private theorem upd_col (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) :
     (fun a' => upd X a b l a' b) = Function.update (fun a' => X a' b) a l := by
   funext a'
   by_cases e : a' = a
   · subst e; simp [upd]
   · simp [upd, e]
 
-theorem upd_col_ne (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) {b' : Fin K}
+private theorem upd_col_ne (X : Fin K → Fin K → List Γ) (a b : Fin K) (l : List Γ) {b' : Fin K}
     (h : b' ≠ b) : (fun a' => upd X a b l a' b') = fun a' => X a' b' := by
   funext a'; simp [upd, h]
 
 /-- Peel the first letter from a common refinement. -/
-theorem IsRef.first {A B : Fin K → List Γ} {X : Fin K → Fin K → List Γ} (h : IsRef A B X)
+private theorem IsRef.first {A B : Fin K → List Γ} {X : Fin K → Fin K → List Γ} (h : IsRef A B X)
     {a : Fin K} {c : Γ} {l : List Γ} (h1 : ∀ j < a, A j = []) (h2 : A a = c :: l) :
     ∃ b x m, X a b = c :: x ∧ (∀ j < b, B j = []) ∧ B b = c :: m ∧
       IsRef (Function.update A a l) (Function.update B b m) (upd X a b x) := by
@@ -274,4 +273,4 @@ theorem IsRef.exists {A B : Fin K → List Γ} (h : cat A = cat B) : ∃ X, IsRe
         · simp
       · rw [upd_col_ne _ _ _ _ e, hX.col, Function.update_of_ne e]
 
-end Cslib.Circuits.Arithmetic.Separation.Tape
+end List.StairRefinement

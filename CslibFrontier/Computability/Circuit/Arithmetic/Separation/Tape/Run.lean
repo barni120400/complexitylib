@@ -32,6 +32,8 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
+open Cslib.Automata.Weighted
+
 /-- A letter emitted at one step of an automaton run (`none` is idle). -/
 abbrev Letter (S J Γ : Type*) := Option (Ch S J × Γ)
 

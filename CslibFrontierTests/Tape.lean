@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anthropic, Samuel Schlesinger
 -/
 
+module
+-- upstream: local-only
+
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.ProgRun
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Refine
+import CslibFrontier.Foundations.Data.List.StairRefinement
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunGood
 import CslibFrontier.Foundations.LinearAlgebra.Matrix.ListProd
+import Mathlib.Data.List.ReduceOption
 
 /-! Tests of the weighted automata / tape-channel layer (M1, part 1/3):
 rational series bounds (`RatLe`), multi-channel projection and matched runs (`emit`, `Matched`),
@@ -16,7 +20,9 @@ witness (`exists_good`), and path expansion via `Matrix.list_prod_ofFn_apply`. -
 
 namespace CslibFrontierTests.Tape
 
+open Cslib.Automata.Weighted
 open Cslib.Circuits.Arithmetic.Separation.Tape
+open List.StairRefinement
 
 /-! ### Linear representations and rational series -/
 
@@ -73,8 +79,8 @@ example :
     let u : Fin 1 → List Bool := fun _ => [false]
     Matched o u := by
   refine ⟨fun s => ?_, fun j => ?_⟩
-  · cases s; rfl
-  · fin_cases j; rfl
+  · cases s; simp [emit, proj]
+  · fin_cases j; simp [emit, proj]
 
 /-- Unbalanced tape run fails `Matched` (negative check). -/
 example :
@@ -82,7 +88,7 @@ example :
       (fun _ => []) := by
   rintro ⟨h1, -⟩
   have htp := h1 ()
-  cases htp
+  simp [emit, proj] at htp
 
 /-- Every matched run yields a valid `Good` certificate when `N + t < M`. -/
 example :
@@ -94,8 +100,8 @@ example :
       Good () () (code 2 u) o q P c := by
   refine exists_good (N := 2) (M := 6) (by decide) (by decide) ?_ rfl rfl
   refine ⟨fun s => ?_, fun j => ?_⟩
-  · cases s; rfl
-  · fin_cases j; rfl
+  · cases s; simp [emit, proj]
+  · fin_cases j; simp [emit, proj]
 
 /-- `Matrix.list_prod_ofFn_apply` replaces `Nc.RunGood.prod_ofFn_apply` directly via
 `List.map_ofFn`. -/
