@@ -21,13 +21,13 @@ has an index `i k` of the law, which has a label (its code) of `lam` bits, and a
 whose length `len (i k)` depends on the index. The *string on the side* (`Cut.sideString`)
 consists of the labels and the strings of all blocks, and it determines the indices and the
 strings: the label of a block says how long its string is. The string is written on units
-(`Separation.unitsOf`, the packets of the paper), and its first `U` units are its *code word*
+(`Cut.unitsOf`, the packets of the paper), and its first `U` units are its *code word*
 (`Cut.codeWord`), which still determines the indices and the strings if no string on a side has
 more than `U` units.
 
 ## Main definitions
 
-* `Separation.UnitContent.bits`: the bits of a unit, none if the unit is absent.
+* `Cut.UnitContent.bits`: the bits of a unit, none if the unit is absent.
 * `Cut.sideString`: the string on a side, the labels and the strings of its blocks.
 * `Cut.codeWord`: the first `U` units of the string on a side.
 
@@ -46,14 +46,12 @@ more than `U` units.
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation
+namespace Cslib.Circuits.Arithmetic.Separation.Cut
 
 /-- The bits of a unit: none if the unit is absent. -/
 @[expose] def UnitContent.bits {ub : ℕ} : UnitContent ub → List Bool
   | none => []
   | some w => List.ofFn w
-
-namespace Cut
 
 variable {I : Type*} {lam B : ℕ} {lab : I → BitString lam}
 
@@ -116,6 +114,4 @@ theorem codeWord_injective (hlab : Function.Injective lab) {m U ub : ℕ} (hub :
   · rw [unitsOf_eq_none.2, unitsOf_eq_none.2] <;>
       exact (unitCount_sideString_le hlen hB _ _).trans (not_lt.1 hk)
 
-end Cut
-
-end Cslib.Circuits.Arithmetic.Separation
+end Cslib.Circuits.Arithmetic.Separation.Cut

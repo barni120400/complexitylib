@@ -36,7 +36,7 @@ contribute nothing (`Cut.move_zero`).
 
 ## Main results
 
-* `Separation.UnitContent.bits_injOn`, `Cut.slotBits_eq_iff`: a unit that is not absent is
+* `Cut.UnitContent.bits_injOn`, `Cut.slotBits_eq_iff`: a unit that is not absent is
   determined by its bits, and the bits given at a slot agree in two copies exactly when the units
   do.
 * `Cut.roleTable_congr`, `Cut.roleTable_ne_zero`, `Cut.roleTable_new_ne_none`: the table of a role
@@ -54,7 +54,7 @@ contribute nothing (`Cut.move_zero`).
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation
+namespace Cslib.Circuits.Arithmetic.Separation.Cut
 
 open Finset
 
@@ -75,8 +75,6 @@ theorem bits_injOn : Set.InjOn (bits (ub := ub)) {w | w ≠ none} := by
   · exact congrArg some (List.ofFn_injective e)
 
 end UnitContent
-
-namespace Cut
 
 namespace Moves
 
@@ -381,6 +379,4 @@ theorem move_identity (ht : ∀ e, (ids e).length ≤ t) :
 
 end Identity
 
-end Cut
-
-end Cslib.Circuits.Arithmetic.Separation
+end Cslib.Circuits.Arithmetic.Separation.Cut
