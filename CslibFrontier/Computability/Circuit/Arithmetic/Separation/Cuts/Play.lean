@@ -11,17 +11,18 @@ public import CslibFrontier.Init
 public import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 public import Mathlib.Algebra.Ring.Defs
 public import Mathlib.Data.Fintype.Pi
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Data.Fintype.BigOperators
 
 /-!
 # Positions of the play and one move
 
-The cutting argument of [AnthropicVPVNP2026] (Appendix J; module `Nc.Cut.Play`) rewrites the value
-of a computation as a sum over what is written on *units* that are shared by *parties*. Every unit
-`u` has two ends, at the parties `h u false` and `h u true`, and each end carries a copy of the
-unit. *Contents* `y : A → U → W` give the copy `y a u` of the unit `u` at the party `a`; copies of
-units that have not been seen, or at parties that do not hold them, are *empty* (a fixed `e : W`).
+The cutting argument of [AnthropicVPVNP2026] (Appendices H.2 and J; module `Nc.Cut.Play`) rewrites
+the value of a computation as a sum over what is written on *units* that are shared by *parties*.
+Every unit `u` has two ends, at the parties `h u false` and `h u true`, and each end carries a
+copy of the unit. *Contents* `y : A → U → W` give the copy `y a u` of the unit `u` at the party
+`a`; copies of units that have not been seen, or at parties that do not hold them, are *empty* (a
+fixed `e : W`).
 
 The *value* of a position (`Play.value`) is the sum, over all contents of the units seen so far,
 of a joint weight, restricted to the contents in which the two copies of every *current* unit
@@ -49,7 +50,7 @@ copies agree by a sum, over outcomes, of tables that also read new units.
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  Appendix J; module `Nc.Cut.Play`
+  Appendices H.2 and J; module `Nc.Cut.Play`
 -/
 
 public section
@@ -80,8 +81,8 @@ theorem agree_union [DecidableEq U] {h : U → Bool → A} {S T : Finset U} {y :
     Agree h (S ∪ T) y ↔ Agree h S y ∧ Agree h T y := by
   simp only [Agree, mem_union, or_imp, forall_and]
 
-theorem Agree.mono {h : U → Bool → A} {S T : Finset U} {y : A → U → W} (hy : Agree h T y)
-    (hST : S ⊆ T) : Agree h S y := fun u hu => hy u (hST hu)
+theorem Agree.mono {h : U → Bool → A} {S T : Finset U} {y : A → U → W} (hST : S ⊆ T)
+    (hy : Agree h T y) : Agree h S y := fun u hu => hy u (hST hu)
 
 section Contents
 
@@ -105,6 +106,12 @@ theorem mem_common {e : W} {New : Finset U} {z : U → W} :
     z ∈ common e New ↔ ∀ u ∉ New, z u = e := by
   simp [common]
 
+/-- Without units, the only common contents are empty. -/
+@[simp]
+theorem common_empty (e : W) : common e (∅ : Finset U) = {fun _ => e} := by
+  ext z
+  simp [funext_iff]
+
 end Contents
 
 /-- Write common contents `z` of the units in `New` into the copies of their holders. -/
@@ -122,6 +129,12 @@ theorem extend_of_holds (hu : u ∈ New) (ha : Holds h a u) : extend h New y z a
 
 theorem extend_of_notMem (hu : u ∉ New) : extend h New y z a u = y a u :=
   ite_eq_right fun hh => hu hh.1
+
+/-- Writing no units changes nothing. -/
+@[simp]
+theorem extend_empty (h : U → Bool → A) (y : A → U → W) (z : U → W) : extend h ∅ y z = y := by
+  funext a u
+  simp [extend]
 
 /-- Writing new units does not change whether the copies of other units agree. -/
 theorem agree_extend {S : Finset U} (hd : Disjoint S New) (y : A → U → W) (z : U → W) :

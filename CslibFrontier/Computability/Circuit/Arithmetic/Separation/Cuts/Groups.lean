@@ -8,8 +8,8 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Play
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Data.Fintype.BigOperators
 
 /-!
 # Groups of parties
@@ -24,11 +24,16 @@ computation independent once the contents of the cut units are fixed.
 ## Main definitions
 
 * `Play.cutUnits`: the current units whose holders are in different groups.
+* `Play.groupContents`, `Play.GroupAgree`: the contents of the copies at the parties of a group,
+  and their agreement inside the group and with given contents of the cut units.
 * `Play.groupValue`: the value of a group for given contents of the cut units.
 
 ## Main results
 
 * `Play.value_groups`: the value of a position is a sum of products of values of groups.
+* `Play.ne_empty_of_groupValue_ne_zero`: when the tables of the parties vanish on empty copies of
+  the units they hold, the value of a group vanishes unless the units it shares with other groups
+  are not empty.
 
 ## References
 
@@ -83,13 +88,36 @@ instance (h : U → Bool → A) (grp : A → G) (g : G) (Cur : Finset U) (b : U 
       ∀ u ∈ Cur, ∀ d, grp (h u d) = g → grp (h u !d) ≠ g → y (h u d) u = b u)
     ⟨fun hh => ⟨hh.1, hh.2⟩, fun hh => ⟨hh.1, hh.2⟩⟩
 
-variable [Fintype G] [CommSemiring F]
+variable [CommSemiring F]
 
 /-- The value of the group `g` when the units shared with other groups have the contents `b`. -/
 def groupValue (h : U → Bool → A) (e : W) (Seen Cur : Finset U) (grp : A → G)
     (φ : A → (U → W) → F) (g : G) (b : U → W) : F :=
   ∑ y ∈ groupContents h e Seen grp g,
     if GroupAgree h grp g Cur b y then ∏ a with grp a = g, φ a (y a) else 0
+
+theorem groupValue_eq_sum_filter (h : U → Bool → A) (e : W) (Seen Cur : Finset U) (grp : A → G)
+    (φ : A → (U → W) → F) (g : G) (b : U → W) :
+    groupValue h e Seen Cur grp φ g b =
+      ∑ y ∈ groupContents h e Seen grp g with GroupAgree h grp g Cur b y,
+        ∏ a with grp a = g, φ a (y a) :=
+  (sum_filter _ _).symm
+
+/-- If the tables of the parties vanish unless every seen unit that the party holds is not empty,
+then the value of a group vanishes unless the current units that it shares with other groups are
+not empty. -/
+theorem ne_empty_of_groupValue_ne_zero {h : U → Bool → A} {e : W} {Seen Cur : Finset U}
+    (hCur : Cur ⊆ Seen) {grp : A → G} {φ : A → (U → W) → F} {g : G} {b : U → W}
+    (hφ : ∀ a y, φ a y ≠ 0 → ∀ u ∈ Seen, Holds h a u → y u ≠ e)
+    (hv : groupValue h e Seen Cur grp φ g b ≠ 0) {u : U} (hu : u ∈ Cur) {d : Bool}
+    (hd : grp (h u d) = g) (hd' : grp (h u !d) ≠ g) : b u ≠ e := by
+  rw [groupValue_eq_sum_filter] at hv
+  obtain ⟨y, hy, hne⟩ := exists_ne_zero_of_sum_ne_zero hv
+  rw [← (mem_filter.1 hy).2.outer u hu d hd hd']
+  exact hφ _ _ (fun h0 => hne (prod_eq_zero (mem_filter.2 ⟨mem_univ _, hd⟩) h0)) u (hCur hu)
+    (holds_end h u d)
+
+variable [Fintype G]
 
 /-- **Groups.** The value of a position whose weight is a product of tables of the parties is the
 sum, over the common contents of the cut units, of the product of the values of the groups. -/
