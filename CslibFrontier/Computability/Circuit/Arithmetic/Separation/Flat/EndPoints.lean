@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import Mathlib.Analysis.InnerProductSpace.PiL2
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -34,6 +35,7 @@ less than the `k (k - 1) / 2` wires of length one.
 ## Main results
 
 * `Flat.dist_endPoint`: the two ends of a wire are at distance one.
+* `Flat.dist_half_smul_le`: the distance from half a unit vector to a point.
 * `Flat.exists_norm_eq_sum_dist_endPoint_le`: two hubs for a balanced set of nodes.
 
 ## References
@@ -88,8 +90,9 @@ theorem dist_endPoint {a b : Fin k} (h : a ≠ b) : dist (endPoint a b) (endPoin
   norm_num
   exact norm_unitDiff h
 
-/-- The distance from half a unit vector. -/
-private theorem dist_half_smul_le {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
+/-- The distance from half a unit vector `u` to a point `x` is at most
+`1 / 2 - ⟪u, x⟫ + ‖x‖ ^ 2`. -/
+theorem dist_half_smul_le {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
     {u : V} (hu : ‖u‖ = 1) (x : V) :
     dist ((1 / 2 : ℝ) • u) x ≤ 1 / 2 - inner ℝ u x + ‖x‖ ^ 2 := by
   rw [dist_eq_norm]
@@ -98,14 +101,6 @@ private theorem dist_half_smul_le {V : Type*} [NormedAddCommGroup V] [InnerProdu
       show ‖(1 / 2 : ℝ)‖ = 1 / 2 by norm_num]
     ring
   nlinarith [sq_nonneg (‖(1 / 2 : ℝ) • u - x‖ - 1 / 2), norm_nonneg ((1 / 2 : ℝ) • u - x)]
-
-private theorem sum_ite_mem_const (A : Finset (Fin k)) (y z : ℝ) :
-    ∑ a : Fin k, (if a ∈ A then y else z) = A.card * y + ((k : ℝ) - A.card) * z := by
-  have h (a : Fin k) : (if a ∈ A then y else z) = z + if a ∈ A then y - z else 0 := by
-    split_ifs <;> ring
-  simp only [h, sum_add_distrib, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul,
-    sum_ite_mem, univ_inter]
-  ring
 
 /-- The direction of the hubs for the set `A`: `k - |A|` at the nodes of `A` and `-|A|` at the
 others. -/
