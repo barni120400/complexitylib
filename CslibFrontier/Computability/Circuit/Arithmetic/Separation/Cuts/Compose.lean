@@ -24,7 +24,7 @@ parameters.
 
 Running a second cut on every piece of a first one is a cut again (`Interpreter.IsCut.comp`): the
 numbers of pieces multiply and the sum formulas compose. This is the composition step of the
-cut theorem of [AnthropicVPVNP2026] (module `NS1.Compose`).
+proof of [AnthropicVPVNP2026], Theorem J.4 (module `NS1.Compose`).
 
 ## Main definitions
 
@@ -41,7 +41,7 @@ cut theorem of [AnthropicVPVNP2026] (module `NS1.Compose`).
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  the cut theorem; module `NS1.Compose`
+  Theorem J.4 (cuts at all scales), the composition of cuts in its proof; module `NS1.Compose`
 -/
 
 public section
@@ -56,8 +56,9 @@ variable {A : Type} [CommRing A] {θ : List Bool → A}
 @[expose] noncomputable def pvProd (θ : List Bool → A) (o : Tree) : A :=
   (o.toList.map (pv θ)).prod
 
-/-- The program `G` cuts plain sums of `τ` steps on instances of size `s` into at most `P` pieces
-of `τ'` steps on instances of size `s'`, in `t` steps. -/
+/-- The program `G` cuts plain sums of `τ` steps on instances of size `s` into pieces of `τ'`
+steps on instances of size `s'`, in `t` steps. Its value is a weighted list of lists of pieces,
+and `P` bounds the number of pieces in each of the returned lists, not the number of lists. -/
 @[expose] def IsCut (θ : List Bool → A) (τ s τ' s' P t : ℕ) (G : Tree) : Prop :=
   ∀ z, z.size ≤ s → ∃ Q, Does θ (Fm.ofTree G) z Q t ∧
     (∀ q ∈ Q, q.2.toList.length ≤ P ∧ ∀ y ∈ q.2.toList, y.size ≤ s') ∧
@@ -94,12 +95,12 @@ theorem IsCut.cutProg {H v τ s P t : ℕ} {G : Tree}
 
 /-- One step of the second cut, as a weighted list: the pieces `R x` of the instance `x` are put
 in front of the pieces `σ` found so far. -/
-@[expose] def cutStepW (R : Tree → List (A × Tree)) (x σ : Tree) : List (A × Tree) :=
+private def cutStepW (R : Tree → List (A × Tree)) (x σ : Tree) : List (A × Tree) :=
   (R x).map fun q => (q.1, listT (q.2.toList ++ σ.toList))
 
 /-- Every list in the fold of `cutStepW R` over `xs` consists of the pieces so far and of pieces
 of the elements of `xs`, at most `P` for each element. -/
-theorem mem_foldW_cutStepW {R : Tree → List (A × Tree)} {P : ℕ} {xs : List Tree}
+private theorem mem_foldW_cutStepW {R : Tree → List (A × Tree)} {P : ℕ} {xs : List Tree}
     (hP : ∀ x ∈ xs, ∀ q ∈ R x, q.2.toList.length ≤ P) {σ : Tree} {r : A × Tree}
     (hr : r ∈ foldW (cutStepW R) xs σ) :
     r.2.toList.length ≤ σ.toList.length + xs.length * P ∧
@@ -123,7 +124,7 @@ theorem mem_foldW_cutStepW {R : Tree → List (A × Tree)} {P : ℕ} {xs : List 
 
 /-- The sum formulas compose: if the pieces `R x` of every `x` in `xs` have the plain sum of `x`,
 the fold of `cutStepW R` over `xs` has the product of the plain sums of `xs`. -/
-theorem wsum_foldW_cutStepW {R : Tree → List (A × Tree)} {xs : List Tree}
+private theorem wsum_foldW_cutStepW {R : Tree → List (A × Tree)} {xs : List Tree}
     (hR : ∀ x ∈ xs, wsum (R x) (pvProd θ) = pv θ x) (σ : Tree) :
     wsum (foldW (cutStepW R) xs σ) (pvProd θ) = (xs.map (pv θ)).prod * pvProd θ σ := by
   induction xs generalizing σ with
@@ -141,18 +142,18 @@ theorem wsum_foldW_cutStepW {R : Tree → List (A × Tree)} {xs : List Tree}
 
 /-- One more cut: at (element, list of pieces so far), the pieces of the element are put in front
 of the list. -/
-@[expose] def cutStep (G : Tree) : Fm :=
+private def cutStep (G : Tree) : Fm :=
   lett (.cons (app G (.hd .id)) (.tl .id)) (appF (.hd .id) (.tl .id))
 
 /-- First the cut `G`, then the cut `G'` on every piece. -/
-@[expose] def cutComp (G G' : Tree) : Fm :=
+def cutComp (G G' : Tree) : Fm :=
   lett (app G .id) (foldF (cutStep G') (.quote .nil) .id)
 
 theorem size_cutComp (G G' : Tree) : (cutComp G G').code.size ≤ G.size + 3 * G'.size + 3000 := by
   simp only [cutComp, cutStep, appF, foldF, foldB, lett, app, Fm.code, Tree.size, size_num]
   omega
 
-theorem cutStep_does {G : Tree} {R : Tree → List (A × Tree)} {x : Tree} {t P : ℕ}
+private theorem cutStep_does {G : Tree} {R : Tree → List (A × Tree)} {x : Tree} {t P : ℕ}
     (hD : Does θ (Fm.ofTree G) x (R x) t) (hP : ∀ q ∈ R x, q.2.toList.length ≤ P) (σ : Tree) :
     Does θ (cutStep G) (.cons x σ) (cutStepW R x σ) (t + 62 * P + 70) := by
   have e1 : Does θ (app G (.hd .id)) (.cons x σ) (R x) (2 + t + 2) := by
@@ -181,7 +182,7 @@ theorem cutStep_does {G : Tree} {R : Tree → List (A × Tree)} {x : Tree} {t P 
     exact ⟨_, List.mem_map.2 ⟨q2, hq2, rfl⟩, rfl⟩
   · simp [cutStepW, wsum, Function.comp_def, ← List.map_eq_flatMap]
 
-/-- **Composition of cuts** ([AnthropicVPVNP2026], the cut theorem): running a second cut on
+/-- **Composition of cuts** ([AnthropicVPVNP2026], proof of Theorem J.4): running a second cut on
 every piece of a first one is a cut. The numbers of pieces multiply, and the second cut and the
 concatenation of its pieces are paid once for every piece of the first. -/
 theorem IsCut.comp {τ s τ₁ s₁ P₁ t₁ τ₂ s₂ P₂ t₂ : ℕ} {G₁ G₂ : Tree}

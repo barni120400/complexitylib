@@ -21,8 +21,9 @@ are many, and once more at the end, brings the number of steps down to `v ^ H`
 sizes and the time by a loss `X ≥ 8 Λ ^ 2`. When the total loss is at most `v`, the result is the
 cut of the cut hypothesis (`Interpreter.OneCutAt.exists_isCut`).
 
-This is the induction on the numbers of steps, sizes and pieces in the proof of the cut theorem
-of [AnthropicVPVNP2026] (module `NS1.OneCut`).
+The hypothesis is the conclusion of [AnthropicVPVNP2026], Theorem J.3 (one cut), at one scale;
+the results are the induction on the numbers of steps, sizes and pieces in the proof of
+Theorem J.4 (cuts at all scales) (module `NS1.OneCut`).
 
 ## Main definitions
 
@@ -37,7 +38,8 @@ of [AnthropicVPVNP2026] (module `NS1.OneCut`).
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  the cut theorem; module `NS1.OneCut`
+  Theorem J.3 (one cut) for the hypothesis `Interpreter.OneCutAt`, and the proof of Theorem J.4
+  (cuts at all scales) for the iteration; module `NS1.OneCut`
 -/
 
 public section
@@ -48,8 +50,9 @@ open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {v a₀ α H Λ : ℕ}
 
-/-- One cut at the scale `v`: plain sums of `v ^ a₀ ≤ τ ≤ v ^ α` steps can be cut by any factor
-`2 ≤ k ≤ v ^ 64`, with the loss `Λ`, by a program of size at most `v ^ a₀`. -/
+/-- One cut at the scale `v` ([AnthropicVPVNP2026], Theorem J.3): plain sums of
+`v ^ a₀ ≤ τ ≤ v ^ α` steps can be cut by any factor `2 ≤ k ≤ v ^ 64`, with the loss `Λ`, by a
+program of size at most `v ^ a₀`. -/
 @[expose] def OneCutAt (θ : List Bool → A) (v a₀ α Λ : ℕ) : Prop :=
   ∀ τ s k, v ^ a₀ ≤ τ → τ ≤ v ^ α → s ≤ τ → 2 ≤ k → k ≤ v ^ 64 →
     ∃ G : Tree, G.size ≤ v ^ a₀ ∧ IsCut θ τ s (τ * Λ / k)
@@ -64,7 +67,7 @@ theorem mono {Λ' : ℕ} (h : OneCutAt θ v a₀ α Λ) (hΛ : Λ ≤ Λ') : One
       (Nat.mul_le_mul_left _ hΛ) (Nat.mul_le_mul_left _ hΛ) (Nat.mul_le_mul_left _ hΛ)⟩
 
 /-- One cut by `k`, with the bounds for the sizes and the time multiplied out. -/
-theorem exists_isCut_factor (hc : OneCutAt θ v a₀ α Λ) (hv : 1 ≤ v) {τ s k c : ℕ}
+private theorem exists_isCut_factor (hc : OneCutAt θ v a₀ α Λ) (hv : 1 ≤ v) {τ s k c : ℕ}
     (hτ : v ^ a₀ ≤ τ) (hτα : τ ≤ v ^ α) (hk : 2 ≤ k) (hkv : k ≤ v ^ 64)
     (hs : s * v ^ 48 ≤ c * τ) (hc1 : 1 ≤ c) (hcv : c ≤ v) :
     ∃ (G : Tree) (s' t : ℕ), G.size ≤ v ^ a₀ ∧ IsCut θ τ s (τ * Λ / k) s' (k * Λ) t G ∧
@@ -134,7 +137,7 @@ private theorem exists_isCut_last (hc : OneCutAt θ v a₀ α Λ) (hv : 1 ≤ v)
       _ ≤ 2 * c * (k * v ^ H) := Nat.mul_le_mul_left _ hk1.le
       _ = c * v ^ H * 2 * k := by ring
 
-/-- **Iterated cuts** ([AnthropicVPVNP2026], the cut theorem): cut by `v ^ 63` as long as the
+/-- **Iterated cuts** ([AnthropicVPVNP2026], proof of Theorem J.4): cut by `v ^ 63` as long as the
 steps are many, and at the end once to `v ^ H` steps. After at most `r + 1` cuts, the pieces, the
 time and the sizes have lost at most `X ^ (r + 1)`, for any `X ≥ 8 Λ ^ 2`. -/
 theorem exists_isCut_iterate (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (hΛ : 2 ≤ Λ)
@@ -272,10 +275,10 @@ theorem exists_isCut_iterate (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (h
         ring
       omega
 
-/-- **The cut at a scale** ([AnthropicVPVNP2026], the cut theorem): when `α + 1` cuts lose at
-most `v`, plain sums of `v ^ H ≤ τ ≤ v ^ α` steps on instances of size `s ≤ τ / v ^ 48` are cut
-into at most `τ * v ^ 2 / v ^ H` pieces of `v ^ H` steps and size `v ^ (H - 32)`, in `τ / v ^ 24`
-steps, by a program of size at most `v ^ H`. -/
+/-- **The cut at a scale** ([AnthropicVPVNP2026], Theorem J.4, for one scale): when `α + 1` cuts
+lose at most `v`, plain sums of `v ^ H ≤ τ ≤ v ^ α` steps on instances of size `s ≤ τ / v ^ 48`
+are cut into at most `τ * v ^ 2 / v ^ H` pieces of `v ^ H` steps and size `v ^ (H - 32)`, in
+`τ / v ^ 24` steps, by a program of size at most `v ^ H`. -/
 theorem exists_isCut (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (hΛ : 2 ≤ Λ)
     (hloss : (8 * Λ ^ 2) ^ (α + 1) ≤ v) (hH : a₀ + 4 ≤ H) (hH' : 200 ≤ H) {τ s : ℕ}
     (hτ : v ^ H ≤ τ) (hτα : τ ≤ v ^ α) (hs : s * v ^ 48 ≤ τ) :

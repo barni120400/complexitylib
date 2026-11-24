@@ -7,7 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: local-only (test driver)
 
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
 
 /-! Tests of cuts, as a client that sees only the public statements.
 
@@ -16,7 +16,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Ite
 * The cut that `Interpreter.OneCutAt.exists_isCut` gives is a program for the cut hypothesis
   `Interpreter.CutProg`, by `Interpreter.IsCut.cutProg`. -/
 
-@[expose] public section
+set_option linter.privateModule false
 
 namespace CslibFrontierTests.SeparationCuts
 
