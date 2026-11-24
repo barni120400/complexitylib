@@ -159,7 +159,8 @@ inductive Rule (supp : Finset (List Bool)) where
 /-- `Rule` as a sum. -/
 @[expose] def Rule.equivSum (supp : Finset (List Bool)) : Rule supp ≃
     BaseRule ⊕ ({_u : Unit // [] ∈ prefixes supp} ⊕ (Name supp ⊕ (Name supp ⊕
-      {x : Name supp × Name supp × Bool // x.2.1.1 = x.1.1 ++ [x.2.2]}))) where
+      {x : Name supp × Name supp × Bool // match x with | (p, p', b) => p'.val = p.val ++ [b]})))
+    where
   toFun
     | .base r => .inl r
     | .thetaStart h => .inr (.inl ⟨(), h⟩)
@@ -171,7 +172,7 @@ inductive Rule (supp : Finset (List Bool)) where
     | .inr (.inl u) => .thetaStart u.2
     | .inr (.inr (.inl p)) => .thetaRead p
     | .inr (.inr (.inr (.inl p))) => .thetaNext p
-    | .inr (.inr (.inr (.inr x))) => .thetaBit x.1.1 x.1.2.1 x.1.2.2 x.2
+    | .inr (.inr (.inr (.inr ⟨(p, p', b), h⟩))) => .thetaBit p p' b h
   left_inv r := by cases r <;> rfl
   right_inv r := by rcases r with _ | _ | _ | _ | ⟨⟨_, _, _⟩, _⟩ <;> rfl
 
