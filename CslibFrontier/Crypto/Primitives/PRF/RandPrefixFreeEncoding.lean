@@ -7,7 +7,8 @@ Authors: Samuel Schlesinger
 module
 -- upstream: candidate
 
-public import CslibFrontier.Crypto.Primitives.Hash.Sponge
+public import CslibFrontier.Foundations.Data.BitString.Basic
+public import CslibFrontier.Foundations.Data.BitString.Pad10Star
 import CslibFrontier.Foundations.Data.List.ModifyLast
 public import Cslib.Probability.PMF
 import CslibFrontier.Probability.PMF.Uniform
@@ -221,7 +222,7 @@ private theorem cmacCore_injective {n : ℕ} (hn : 0 < n) : Function.Injective (
   intro m₀ m₁ h
   unfold cmacCore at h
   split_ifs at h with h₀ h₁ h₁
-  · exact BitString.toBlocks_injOn hn h₀.2 h₁.2 (congrArg Prod.snd h)
+  · exact BitString.toBlocks_injOn h₀.2 h₁.2 (congrArg Prod.snd h)
   · simp at h
   · simp at h
   · exact BitString.toBlocks_pad10star_injective hn (congrArg Prod.snd h)
