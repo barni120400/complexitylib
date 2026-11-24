@@ -140,6 +140,13 @@ theorem holds_init {np : N → Bool → Fin (A + A')} {p : Fin (A + A')} {a b : 
       p = Fin.castAdd A' a ∨ p = Fin.castAdd A' b := by
   simp [Play.Holds, holder, eq_comm]
 
+/-- A sum over all units: the initial units and the new units. -/
+theorem sum_eq {M : Type*} [Fintype N] [AddCommMonoid M] (f : UnitId A U0 N U1 → M) :
+    ∑ u, f u = (∑ a, ∑ c, ∑ k, f (.init a c k)) + ∑ ν, ∑ k, f (.new ν k) := by
+  rw [← (proxy_equiv% (UnitId A U0 N U1)).sum_comp, Fintype.sum_sum_type]
+  simp only [Fintype.sum_sigma]
+  rfl
+
 end UnitId
 
 section Units
