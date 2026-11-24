@@ -151,7 +151,7 @@ section Congr
 variable {x : ℕ}
 
 /-- The units seen before the move `x` depend on the outcomes of earlier moves only. -/
-theorem seenAt_congr (h : ∀ ν : M.Channel, (ν.1 : ℕ) < x → o ν = o' ν) :
+private theorem seenAt_congr (h : ∀ ν : M.Channel, (ν.1 : ℕ) < x → o ν = o' ν) :
     seenAt n o x = seenAt n o' x := by
   ext (_ | ⟨ν, k⟩)
   · simp
@@ -179,7 +179,7 @@ open Plan
 variable {P : Plan M U0 U1} {n : Fin A → Fin A → Fin (U0 + 1)} {o o' : M.Channel → Fin U1}
 
 /-- The parties at the two ends of a slot hold the units given at the slot. -/
-theorem holds_given (hP : P.Ok cap) {z : M.Slot} {id : UnitId A U0 M.Channel U1}
+private theorem holds_given (hP : P.Ok cap) {z : M.Slot} {id : UnitId A U0 M.Channel U1}
     (h : id ∈ P.given n o z) (d : Bool) :
     Play.Holds (UnitId.holder M.channelParty) (M.slotParty z d) id := by
   obtain ⟨d₀, hd⟩ := hP.holder_given n o z id h

@@ -27,7 +27,7 @@ more than `U` units.
 
 ## Main definitions
 
-* `Cut.UnitContent.bits`: the bits of a unit, none if the unit is absent.
+* `Cut.UnitContent.bits`: the bits of a unit, the empty list if the unit is absent.
 * `Cut.sideString`: the string on a side, the labels and the strings of its blocks.
 * `Cut.codeWord`: the first `U` units of the string on a side.
 
@@ -48,7 +48,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Cut
 
-/-- The bits of a unit: none if the unit is absent. -/
+/-- The bits of a unit: its `ub` bits, and the empty list if the unit is absent. -/
 @[expose] def UnitContent.bits {ub : ℕ} : UnitContent ub → List Bool
   | none => []
   | some w => List.ofFn w
