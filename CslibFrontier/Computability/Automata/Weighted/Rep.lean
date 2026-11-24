@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -26,18 +26,18 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Tape.Rep`.
 
 ## Main definitions
 
-* `Tape.Series`, `Tape.Series.mul`, `Tape.Series.one`, `Tape.Series.kstar`.
-* `Tape.Rep`, `Tape.Rep.tail`, `Tape.Rep.series`, `Tape.Rep.add`, `Tape.Rep.mul`, `Tape.Rep.star`.
+* `Cslib.Automata.Weighted.Series`, `Series.mul`, `Series.one`, `Series.kstar`.
+* `Cslib.Automata.Weighted.Rep`, `Rep.tail`, `Rep.series`, `Rep.add`, `Rep.mul`, `Rep.star`.
 
 ## Main results
 
-* `Tape.Rep.add_series`, `Tape.Rep.mul_series`, `Tape.Rep.star_series`: closure of linear
+* `Rep.add_series`, `Rep.mul_series`, `Rep.star_series`: closure of linear
   representations under sum, Cauchy product, and Kleene star over non-empty factors.
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Tape
+namespace Cslib.Automata.Weighted
 
 open Finset Matrix
 
@@ -203,4 +203,4 @@ theorem star_series (r : Rep F Ω Q) (o : List Ω) :
 
 end Rep
 
-end Cslib.Circuits.Arithmetic.Separation.Tape
+end Cslib.Automata.Weighted

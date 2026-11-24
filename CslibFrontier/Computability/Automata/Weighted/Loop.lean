@@ -8,30 +8,30 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Hat
+public import CslibFrontier.Computability.Automata.Weighted.Hat
 
 /-!
 # Words and loop bodies on disjoint channels
 
-Single-word indicator series `Tape.Series.word` and weighted finite sums of words
-`Tape.Series.body`, with `Tape.RatLe` dimension bounds and `Tape.hat` evaluations.
+Single-word indicator series `Series.word` and weighted finite sums of words `Series.body`, with
+`RatLe` dimension bounds and `hat` evaluations.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Tape.Loop`.
 
 ## Main definitions
 
-* `Tape.Series.word`: indicator series of one word.
-* `Tape.Series.body`: weighted sum of finitely many words (a loop body).
+* `Cslib.Automata.Weighted.Series.word`: indicator series of one word.
+* `Cslib.Automata.Weighted.Series.body`: weighted sum of finitely many words (a loop body).
 
 ## Main results
 
-* `Tape.RatLe.word`: `Series.word w` has dimension at most `2 * w.length + 1`.
-* `Tape.hat_word`, `Tape.RatLe.body`, `Tape.hat_body`.
+* `RatLe.word`: `Series.word w` has dimension at most `2 * w.length + 1`.
+* `hat_word`, `RatLe.body`, `hat_body`.
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Tape
+namespace Cslib.Automata.Weighted
 
 open Finset
 
@@ -102,4 +102,4 @@ theorem hat_body {κ : Type*} [Fintype κ] (wd : κ → List (Z × Γ)) (c : κ 
 
 end Channel
 
-end Cslib.Circuits.Arithmetic.Separation.Tape
+end Cslib.Automata.Weighted

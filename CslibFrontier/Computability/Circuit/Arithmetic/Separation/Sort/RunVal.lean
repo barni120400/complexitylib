@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Runs
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 
 /-!
 # The value of a program given by its structured runs
@@ -32,7 +33,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
-open Finset
+open Finset Cslib.Automata.Weighted
 
 section Matched
 

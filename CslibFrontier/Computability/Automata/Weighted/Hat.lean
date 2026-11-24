@@ -8,37 +8,37 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Rat
+public import CslibFrontier.Computability.Automata.Weighted.Rat
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Set.Finite.List
 
 /-!
 # Series on several channels
 
-Letters are pairs `(channel, letter)`. `Tape.hat f v` is the sum of the series `f` over all words
-whose projections to the channels are the words `v z`. Products of series become convolutions over
-antidiagonal channel cuts `Tape.anti v`.
+Letters are pairs `(channel, letter)`. `hat f v` is the sum of the series `f` over all words whose
+projections to the channels are the words `v z`. Products of series become convolutions over
+antidiagonal channel cuts `anti v`.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Tape.Hat`.
 
 ## Main definitions
 
-* `Tape.proj`: project a word of channel-letter pairs to each channel.
-* `Tape.fib`: finite set of channel words with prescribed projections.
-* `Tape.hat`: sum of a series over `fib v`.
-* `Tape.anti`: all ways to cut channel words into prefix/suffix pairs.
-* `Tape.Series.ne`: zero out the empty word.
+* `Cslib.Automata.Weighted.proj`: project a word of channel-letter pairs to each channel.
+* `Cslib.Automata.Weighted.fib`: finite set of channel words with prescribed projections.
+* `Cslib.Automata.Weighted.hat`: sum of a series over `fib v`.
+* `Cslib.Automata.Weighted.anti`: all ways to cut channel words into prefix/suffix pairs.
+* `Cslib.Automata.Weighted.Series.ne`: zero out the empty word.
 
 ## Main results
 
-* `Tape.sum_length_proj`: total length of projections equals word length.
-* `Tape.hat_mul`: `hat` turns Cauchy product into convolution over `anti v`.
-* `Tape.hat_kstar`: recursion for `hat (Series.kstar f) v`.
+* `sum_length_proj`: total length of projections equals word length.
+* `hat_mul`: `hat` turns Cauchy product into convolution over `anti v`.
+* `hat_kstar`: recursion for `hat (Series.kstar f) v`.
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Tape
+namespace Cslib.Automata.Weighted
 
 open Finset
 
@@ -210,4 +210,4 @@ theorem hat_kstar [DecidableEq Γ] (f : Series F (Z × Γ)) (v : Z → List Γ) 
 
 end Hat
 
-end Cslib.Circuits.Arithmetic.Separation.Tape
+end Cslib.Automata.Weighted

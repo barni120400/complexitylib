@@ -37,6 +37,8 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
+open Cslib.Automata.Weighted
+
 section Emit
 
 variable {Γ S J : Type*} [DecidableEq S] [DecidableEq J]
@@ -150,7 +152,7 @@ theorem base_succ (u : Fin n → List Γ) (k : Fin n) :
   simp [wordOf]
   omega
 
-theorem ofFn_split (u : Fin n → List Γ) (k : Fin n) :
+private theorem ofFn_split (u : Fin n → List Γ) (k : Fin n) :
     List.ofFn u = (List.ofFn u).take k ++ u k :: (List.ofFn u).drop (k + 1) := by
   have hk : (k : ℕ) < (List.ofFn u).length := by simp
   conv_lhs => rw [← List.take_append_drop k (List.ofFn u), List.drop_eq_getElem_cons hk]
@@ -171,7 +173,7 @@ theorem base_add_lt (u : Fin n → List Γ) (k : Fin n) :
   unfold base
   omega
 
-theorem eq_of_prefix (l m : List Γ) (r : List (Option Γ))
+private theorem eq_of_prefix (l m : List Γ) (r : List (Option Γ))
     (h : ∀ p ≤ m.length, (l.map some ++ none :: r)[p]? = (m.map some ++ [none])[p]?) :
     l = m := by
   induction m generalizing l with

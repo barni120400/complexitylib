@@ -5,7 +5,7 @@ Authors: Anthropic
 -/
 
 module
--- upstream: candidate
+-- upstream: candidate (Mathlib Data/List)
 
 public import CslibFrontier.Init
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
@@ -19,10 +19,10 @@ import Mathlib.Data.List.OfFn
 # Radix sort and the check of neighbours
 
 Records are pairs of a flag (`false`: table entry, `true`: lookup) and a key of `n` letters over
-an arbitrary alphabet `B`. After one stable bucket pass for each letter (`Sort.srt`), records
-with equal keys sit in contiguous blocks preserving their original order (`Sort.srt_eq`). Hence
-every lookup belongs to the table if and only if, after sorting, every lookup has the same key as
-the record immediately preceding it (`Sort.chk_table`).
+an arbitrary alphabet `B`. After one stable bucket pass for each letter (`srt`), records with equal
+keys sit in contiguous blocks preserving their original order (`srt_eq`). Hence every lookup
+belongs to the table if and only if, after sorting, every lookup has the same key as the record
+immediately preceding it (`chk_table`).
 
 This generic multi-letter alphabet formulation is separate from the unsigned binary-word
 imperative radix sort in `CslibFrontier.Algorithms.WordRAM.RadixSort`.
@@ -31,24 +31,24 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Sort.Radix`.
 
 ## Main definitions
 
-* `Sort.Rc`: a record pairing a lookup/entry flag with a `Fin n → B` key.
-* `Sort.pass`: one stable distribution-and-collection pass along key coordinate `j`.
-* `Sort.srt`: iterate `pass` over the first `j` coordinates.
-* `Sort.keys`: all `j`-letter keys over `bs` in radix order.
-* `Sort.chk`, `Sort.headOk`: neighbour equality predicate and leading-entry predicate.
+* `List.RadixSort.Rc`: a record pairing a lookup/entry flag with a `Fin n → B` key.
+* `List.RadixSort.pass`: one stable distribution-and-collection pass along key coordinate `j`.
+* `List.RadixSort.srt`: iterate `pass` over the first `j` coordinates.
+* `List.RadixSort.keys`: all `j`-letter keys over `bs` in radix order.
+* `List.RadixSort.chk`, `List.RadixSort.headOk`: neighbour equality and leading-entry predicates.
 
 ## Main results
 
-* `Sort.srt_eq`: exact bucket-filter expansion of `srt`.
-* `Sort.chk_srt`: neighbour check after `n` passes equals `headOk` on every key group.
-* `Sort.chk_table`: after sorting a table followed by lookups, `chk` holds iff every lookup is in
-  the table.
-* `Sort.length_srt`: `srt` preserves list length.
+* `List.RadixSort.srt_eq`: exact bucket-filter expansion of `srt`.
+* `List.RadixSort.chk_srt`: neighbour check after `n` passes equals `headOk` on every key group.
+* `List.RadixSort.chk_table`: after sorting a table followed by lookups, `chk` holds iff every
+  lookup is in the table.
+* `List.RadixSort.length_srt`: `srt` preserves list length.
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Sort
+namespace List.RadixSort
 
 variable {n : ℕ} {B : Type*} [DecidableEq B]
 
@@ -293,4 +293,4 @@ theorem length_srt {bs : List B} (hbs : ∀ b, b ∈ bs) (hn : bs.Nodup)
     · rw [length_pass hbs hn, ih]
     · exact ih
 
-end Cslib.Circuits.Arithmetic.Separation.Sort
+end List.RadixSort

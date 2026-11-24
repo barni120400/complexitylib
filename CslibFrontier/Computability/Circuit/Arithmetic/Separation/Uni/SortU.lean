@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -41,7 +41,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Finset Cslib.Circuits.Arithmetic.Separation.Tape
+open Finset Cslib.Automata.Weighted Cslib.Circuits.Arithmetic.Separation.Tape
 
 /-- The list tape, read side (`true`). -/
 abbrev lsT {K : Type} : Zc K := .tp .ls true

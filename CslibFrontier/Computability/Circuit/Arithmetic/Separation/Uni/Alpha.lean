@@ -39,6 +39,8 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
+open Cslib.Automata.Weighted
+
 /-- Write an arbitrary word over `κ` on every channel of `zs`, using dimension
 `card κ * (2 * zs.card + 1) + 1`. -/
 theorem Runs.wordstar {F Z Γ κ : Type*} [CommRing F] [Fintype Z] [DecidableEq Z] [Finite Γ]
