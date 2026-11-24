@@ -16,8 +16,9 @@ import Mathlib.Tactic.Positivity
 /-!
 # The ends of the complete network, and two hubs for a balanced set
 
-In the lower bound for the complete network on `k` nodes of [AnthropicVPVNP2026] (the flat case;
-module `Nc.CaseI.Geo` and the estimate in `Paper.Flat`), the wire between the nodes `a ≠ b` has
+In the first lower bound for the complete network on `k` nodes of [AnthropicVPVNP2026]
+(Proposition E.5, in the flat case; module `Nc.CaseI.Geo` and the estimate
+`prop_flat_lower_lengths` of `Paper.Flat`), the wire between the nodes `a ≠ b` has
 two ends, which stand in `ℝ ^ k` at `Flat.endPoint a b = (e_a - e_b) / (2 √2)` and at
 `Flat.endPoint b a`, at distance one (`Flat.dist_endPoint`).
 
@@ -38,7 +39,8 @@ less than the `k (k - 1) / 2` wires of length one.
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  the lower bound in the flat case; modules `Nc.CaseI.Geo` and `Paper.Flat`
+  Proposition E.5 (a first lower bound for the network polynomial), the lengths in its proof;
+  modules `Nc.CaseI.Geo` and `Paper.Flat`
 -/
 
 public section
@@ -138,9 +140,10 @@ private theorem sum_sign_mul_hubDir_sub (A : Finset (Fin k)) :
   simp only [h, sum_ite_mem_const]
   ring
 
-/-- **Two hubs for a balanced set.** For a set `A` of nodes with `k / 3 ≤ |A| ≤ 2 k / 3` there is
-a point `x` of norm `1 / (6 √k)` such that the distances from the ends at the nodes of `A` to `x`
-and from the other ends to `-x` add up to at most `k (k - 1) / 2 - k / 12`. -/
+/-- **Two hubs for a balanced set** ([AnthropicVPVNP2026], proof of Proposition E.5). For a set
+`A` of nodes with `k / 3 ≤ |A| ≤ 2 k / 3` there is a point `x` of norm `1 / (6 √k)` such that the
+distances from the ends at the nodes of `A` to `x` and from the other ends to `-x` add up to at
+most `k (k - 1) / 2 - k / 12`. -/
 theorem exists_norm_eq_sum_dist_endPoint_le (hk : 1 ≤ k) (A : Finset (Fin k))
     (h1 : k ≤ 3 * A.card) (h2 : 3 * A.card ≤ 2 * k) :
     ∃ x : EuclideanSpace ℝ (Fin k), ‖x‖ = 1 / (6 * √k) ∧
