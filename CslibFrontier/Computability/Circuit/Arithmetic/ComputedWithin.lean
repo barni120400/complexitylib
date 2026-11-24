@@ -247,6 +247,77 @@ theorem prod {ι : Type*} (A : Finset ι) {f : ι → MvPolynomial σ K}
       (ih fun j hj => h j (Finset.mem_insert_of_mem hj))).mono (le_of_eq ?_)
     ring
 
+/-- A polynomial computed within `s` nodes is entry `k < s` of a list in which every entry below
+`s` is a variable, a constant, or the sum or product of two earlier entries. The list holds the
+values of the wires of the circuit in program order, inputs first, and `0` after them. -/
+theorem exists_steps (h : ComputedWithin P s) :
+    ∃ l : ℕ → MvPolynomial σ K, (∀ k < s, (∃ i, l k = X i) ∨ (∃ a, l k = C a) ∨
+      (∃ i < k, ∃ j < k, l k = l i + l j) ∨ (∃ i < k, ∃ j < k, l k = l i * l j)) ∧
+      ∃ k < s, l k = P := by
+  classical
+  obtain ⟨n, x, c, hs, rfl⟩ := h
+  set v := c.program.trace (arithInterpretationWith K C) (X : Fin n → MvPolynomial (Fin n) K)
+    with hv
+  let pos : Wire n c.size → ℕ := fun
+    | .input i => i
+    | .gate j => n + j
+  let l : ℕ → MvPolynomial σ K := fun k =>
+    if h : k < n then MvPolynomial.rename x (v (.input ⟨k, h⟩))
+    else if h' : k - n < c.size then MvPolynomial.rename x (v (.gate ⟨k - n, h'⟩)) else 0
+  have hl : ∀ w, l (pos w) = MvPolynomial.rename x (v w) := by
+    intro w
+    cases w with
+    | input i => simp [l, pos, i.2]
+    | gate j =>
+      have h1 : ¬ n + (j : ℕ) < n := by omega
+      have h2 : n + (j : ℕ) - n = j := by omega
+      simp only [l, pos, dite_eq_right h1, h2, j.2, dite_true]
+  have hpos : ∀ w, pos w < n + c.size := by
+    intro w
+    cases w with
+    | input i => exact lt_of_lt_of_le i.2 (Nat.le_add_right _ _)
+    | gate j => exact Nat.add_lt_add_left j.2 n
+  refine ⟨l, fun k hk => ?_, pos (c.outputs 0), (hpos _).trans_le hs, ?_⟩
+  · by_cases hkn : k < n
+    · left
+      exact ⟨x ⟨k, hkn⟩, by simp [l, hkn, v]⟩
+    by_cases hkg : k - n < c.size
+    swap
+    · exact Or.inr (Or.inl ⟨0, by simp [l, hkn, hkg]⟩)
+    set j : Fin c.size := ⟨k - n, hkg⟩
+    have hk : k = pos (.gate j) := by simp only [pos, j]; omega
+    have hlt : ∀ a, pos ((c.program.lines j).wires a) < k := by
+      intro a
+      rw [hk]
+      cases hw : (c.program.lines j).wires a with
+      | input i => simp only [pos]; omega
+      | gate j' =>
+        have := c.program.lt_of_lines_wires_eq_gate j a j' hw
+        simp only [pos]
+        omega
+    have hg : l k = MvPolynomial.rename x (arithInterpretationWith K C (c.program.lines j).op
+        fun a => v ((c.program.lines j).wires a)) := by
+      rw [hk]
+      refine (hl (.gate j)).trans ?_
+      rw [hv, Program.trace_gate]
+    have hval : ∀ a, MvPolynomial.rename x (v ((c.program.lines j).wires a)) =
+        l (pos ((c.program.lines j).wires a)) := fun a => (hl _).symm
+    generalize c.program.lines j = L at hg hval hlt
+    obtain ⟨op, ws⟩ := L
+    cases op with
+    | add =>
+      refine Or.inr (Or.inr (Or.inl ⟨_, hlt 0, _, hlt 1, ?_⟩))
+      rw [hg, ← hval 0, ← hval 1]
+      simp [arithInterpretationWith]
+    | mul =>
+      refine Or.inr (Or.inr (Or.inr ⟨_, hlt 0, _, hlt 1, ?_⟩))
+      rw [hg, ← hval 0, ← hval 1]
+      simp [arithInterpretationWith]
+    | const a =>
+      exact Or.inr (Or.inl ⟨a, by rw [hg]; simp [arithInterpretationWith]⟩)
+  · rw [hl, Circuit.polynomial_def]
+    rfl
+
 end ComputedWithin
 
 /-! ### Affine projections -/
