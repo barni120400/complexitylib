@@ -7,12 +7,14 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: local-only (test driver)
 
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
 import Mathlib.Algebra.Ring.Int.Defs
 
 /-! Tests of the polynomial of the complete network, as a client that sees only the public
 statements: what the two nodes of one wire see; the coefficient at equal and at different strings
-at the two ends of the wire; the same strings at both ends of all wires on three nodes. -/
+at the two ends of the wire; the same strings at both ends of all wires on three nodes; and the
+numbers of the lower bound on four nodes. -/
 
 set_option linter.privateModule false
 
@@ -48,5 +50,19 @@ example {F : Type} [CommSemiring F] (s : Pair 3 → BitString 2) :
     (networkPolynomial F 3 2).coeff (blockMonomial Prod.fst univ
       (BlockChoice.ofProd univ (assemble fun e _ => s e))) = 1 := by
   rw [coeff_networkPolynomial, ite_eq_left fun _ => rfl]
+
+/-- On three nodes, ends of length one with an error `δ` each: the three wires cost `6 (1 + δ)`. -/
+example (δ : ℝ) :
+    ∑ _e : Pair 3, ((1 + δ) + (1 + δ)) =
+      (∑ a : Fin 3, ∑ b : Fin 3, if a = b then 0 else 1) + 6 * δ := by
+  rw [sum_pair_add_add_swap (fun _ _ => 1) δ]
+  norm_num
+
+/-- On four nodes, with `√4 = 2`: an inequality between the three sums forces `lg ≥ 4 ℓ / 3`. -/
+example {ℓ c S1 S2 S3 lg : ℝ} (hℓ : 0 ≤ ℓ) (hc : 0 ≤ c) (hlg : 0 ≤ lg) (hℓc : 100 * c ≤ ℓ)
+    (hw : 6 * (1 - 1 / 600) ≤ c * S1) (hh : c * S2 ≤ 6 - 4 / 12 + 2 * 6 * (1 / 600))
+    (hm : c * S3 ≤ 1 / (3 * √4) + 1 / 600) (h1 : ℓ * S1 ≤ 4 + ℓ * S2 + S3 * lg) :
+    ℓ * (4 * √4) / 6 ≤ lg :=
+  lower_numbers (by norm_num) hℓ hc (by norm_num) (by norm_num) hlg hℓc hw hh hm h1
 
 end CslibFrontierTests.SeparationFlatNetwork
