@@ -89,7 +89,7 @@ end
 /-! ### A tower without edges -/
 
 /-- One chamber on every level, no edges, no types. -/
-def pointTower (r : ℕ) : Tower 0 1 1 0 r where
+private def pointTower (r : ℕ) : Tower 0 1 1 0 r where
   X _ := Unit
   Ed _ := Empty
   V _ _ := Empty
@@ -126,14 +126,14 @@ def pointTower (r : ℕ) : Tower 0 1 1 0 r where
   host_vx _ i := i.elim0
 
 /-- The empty routes of the tower without edges. -/
-def pointRoutes (r m : ℕ) : Routes (pointTower r) m 0 where
+private def pointRoutes (r m : ℕ) : Routes (pointTower r) m 0 where
   rt _ _ := []
   walk _ _ := rfl
   len _ _ := Nat.zero_le _
   use e := e.elim
 
 /-- A law with one role and neither slots nor channels: its identity is `1 = 1`. -/
-def pointLaw (F : Type) [CommSemiring F] : Law F where
+private def pointLaw (F : Type) [CommSemiring F] : Law F where
   Role := Unit
   Slot := Empty
   Channel := Empty
@@ -152,7 +152,7 @@ def pointLaw (F : Type) [CommSemiring F] : Law F where
 
 /-- The laws at the vertices of the tower without edges: there are no pairs of different places,
 so the law without slots serves every load. -/
-def pointLaws (F : Type) [CommSemiring F] (r : ℕ) : VertexLaws F (pointTower r) where
+private def pointLaws (F : Type) [CommSemiring F] (r : ℕ) : VertexLaws F (pointTower r) where
   Kind := Unit
   law _ := pointLaw F
   place _ := Equiv.refl Unit
@@ -173,11 +173,11 @@ def pointLaws (F : Type) [CommSemiring F] (r : ℕ) : VertexLaws F (pointTower r
     simp
 
 /-- The one base party at the one chamber of the level `0`. -/
-def pointBase (r : ℕ) : Fin 1 ↪ (pointTower r).X 0 :=
+private def pointBase (r : ℕ) : Fin 1 ↪ (pointTower r).X 0 :=
   ⟨fun _ => (), fun _ _ _ => Subsingleton.elim _ _⟩
 
 /-- The chamber is at the base party, and the root at the extra party. -/
-def pointPlacement (r : ℕ) : Placement (pointTower r) (pointBase r) 1 where
+private def pointPlacement (r : ℕ) : Placement (pointTower r) (pointBase r) 1 where
   party :=
     { toFun := fun | .root => 1 | .chamber _ _ => 0
       invFun := fun i => if i = 0 then .chamber 0 () else .root
