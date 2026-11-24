@@ -262,9 +262,9 @@ open BitString
 
 variable {r c : ℕ} {O : Type*}
 
-/-- The sponge hash of Construction 7.6 with `k` squeezing outputs: pad10star the message, parse it
-into `r`-bit blocks and run `hashBlocks`. The output is the list `[h₁, …, h_k]`; with
-`out` the first `v` bits of the state, its flattening is `h₁ ‖ ⋯ ‖ h_k`. -/
+/-- The sponge hash of Construction 7.6 with `k` squeezing outputs: pad the message with
+`pad10star`, parse it into `r`-bit blocks and run `hashBlocks`. The output is the list
+`[h₁, …, h_k]`; with `out` the first `v` bits of the state, its flattening is `h₁ ‖ ⋯ ‖ h_k`. -/
 @[expose]
 def hash (P : BitString r × BitString c → BitString r × BitString c)
     (out : BitString r × BitString c → O)
