@@ -48,9 +48,6 @@ paper), are put into one bit string (`Cut.segmentString`), from which they can b
 
 ## Main results
 
-* `List.StairRefinement.cat_add`, `List.StairRefinement.sum_length_cat`,
-  `List.StairRefinement.length_le_cat`: the concatenation of a sequence of words that is split
-  in two, and its length.
 * `Cut.joinSegments_injective`, `Cut.segmentString_injective`: the segments are determined by
   their word with separators, and by their bit string.
 * `Cut.sum_unitCount_le`: the number of units of the bit strings of a party.
@@ -66,29 +63,6 @@ paper), are put into one bit string (`Cut.segmentString`), from which they can b
 -/
 
 public section
-
-namespace List.StairRefinement
-
-variable {Γ : Type*} {K K' : ℕ}
-
-theorem cat_add (X : Fin (K + K') → List Γ) :
-    cat X = cat (fun κ => X (Fin.castAdd K' κ)) ++ cat fun κ => X (Fin.natAdd K κ) := by
-  simp only [cat]
-  rw [List.ofFn_add, List.flatten_append]
-  rfl
-
-theorem sum_length_cat (X : Fin K → List Γ) : ∑ b, (X b).length = (cat X).length := by
-  rw [cat, List.length_flatten, List.map_ofFn, List.sum_ofFn]
-  rfl
-
-theorem length_le_cat (X : Fin K → List Γ) (b : Fin K) : (X b).length ≤ (cat X).length :=
-  (Finset.single_le_sum (fun _ _ => Nat.zero_le _) (Finset.mem_univ b)).trans_eq
-    (sum_length_cat X)
-
-instance (X : Fin K → Fin K → List Γ) : Decidable (Stair X) :=
-  inferInstanceAs (Decidable (∀ a a' b b', X a b ≠ [] → X a' b' ≠ [] → a < a' → b ≤ b'))
-
-end List.StairRefinement
 
 namespace Cslib.Circuits.Arithmetic.Separation.Cut
 

@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Foundations.Data.List.StairRefinement
 public import CslibFrontier.Foundations.Data.List.WordsLe
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 import CslibFrontier.Foundations.Data.List.RowMajor
 import CslibFrontier.Foundations.LinearAlgebra.Matrix.ListProd
 import Mathlib.Algebra.BigOperators.Ring.Finset
@@ -34,8 +35,7 @@ the input.
 
 ## Main results
 
-* `Tape.emit_append`, `Tape.emit_flatten`, `Tape.length_emit_le`: what a concatenation of runs
-  emits, and a bound for the number of letters that a run emits on a channel.
+* `Tape.emit_flatten`: what a concatenation of runs emits.
 * `Cut.sum_length_le_of_blockWeight_ne_zero`, `Cut.blockWeight_ne_zero`: a block of `T` steps
   emits at most `T` letters.
 * `Cut.runVal_blocks`: the value of a run of `K * T` steps as a sum over states and over what
@@ -57,21 +57,12 @@ variable {F Γ S J Q : Type*} [DecidableEq S] [DecidableEq J]
 
 namespace Tape
 
-theorem emit_append (o₁ o₂ : List (Letter S J Γ)) (z : Ch S J) :
-    emit (o₁ ++ o₂) z = emit o₁ z ++ emit o₂ z := by
-  simp [emit, List.reduceOption_append, proj_append]
-
 /-- A concatenation of runs emits the concatenation of what the runs emit. -/
 theorem emit_flatten {K : ℕ} (o : Fin K → List (Letter S J Γ)) (z : Ch S J) :
     emit (List.ofFn o).flatten z = cat fun k => emit (o k) z := by
   induction K with
   | zero => simp [emit, cat]
-  | succ K ih => rw [List.ofFn_succ, List.flatten_cons, emit_append, ih, cat_succ]
-
-/-- A run emits at most one letter per step on a channel. -/
-theorem length_emit_le (o : List (Letter S J Γ)) (z : Ch S J) : (emit o z).length ≤ o.length := by
-  rw [emit, proj, List.length_map]
-  exact (List.length_filter_le _ _).trans (List.reduceOption_length_le o)
+  | succ K ih => rw [List.ofFn_succ, List.flatten_cons, emit_appendR, ih, cat_succ]
 
 end Tape
 

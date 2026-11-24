@@ -30,6 +30,7 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.RunWord`.
 ## Main results
 
 * `Tape.emit_getElem`, `Tape.exists_emit`: relating emitted letters to run step indices.
+* `Tape.length_emit_le`: a run emits at most one letter per step on a channel.
 * `Tape.eq_of_read`: reading `wordOf (List.ofFn u)` at every position of `v` determines `u = v`.
 -/
 
@@ -49,6 +50,11 @@ theorem emit_appendR (o o' : List (Letter S J Γ)) (z : Ch S J) :
   rw [List.reduceOption_append, proj_append]
 
 @[simp] theorem emit_nil (z : Ch S J) : emit ([] : List (Letter S J Γ)) z = [] := rfl
+
+/-- A run emits at most one letter per step on a channel. -/
+theorem length_emit_le (o : List (Letter S J Γ)) (z : Ch S J) : (emit o z).length ≤ o.length := by
+  rw [emit, proj, List.length_map]
+  exact (List.length_filter_le _ _).trans (List.reduceOption_length_le o)
 
 @[simp] theorem emit_none (z : Ch S J) : emit ([none] : List (Letter S J Γ)) z = [] := rfl
 
