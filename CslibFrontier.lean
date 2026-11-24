@@ -1237,11 +1237,16 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Uni
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Walk
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Words
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Budget
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Comp
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Eval
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.EvalThm
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Guess
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Interp
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postpone
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinear
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearGadget
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearLowerBound
