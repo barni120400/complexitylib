@@ -18,7 +18,9 @@ A substitution that replaces every letter by a block of the same positive length
 words as soon as it is injective on letters (`List.flatMap_injective_of_forall_length_eq`): the
 blocks can be read back one after the other. `List.flatMap_singleton_injective` is the case of
 blocks of length one, and `List.length_flatMap_of_forall_length_eq` gives the length of such a
-concatenation.
+concatenation. Two substitutions whose blocks have the same lengths on the letters of a word give
+the same concatenation exactly when they agree on these letters
+(`List.flatMap_eq_flatMap_iff_of_forall_length_eq`).
 -/
 
 public section
@@ -50,3 +52,16 @@ theorem List.flatMap_injective_of_forall_length_eq {α β : Type*} {f : α → L
       simp only [List.flatMap_cons] at h
       obtain ⟨h1, h2⟩ := List.append_inj h ((hlen a).trans (hlen a').symm)
       rw [hf h1, ih h2]
+
+/-- Two substitutions whose blocks have the same lengths on the letters of a word give the same
+word exactly when they agree on its letters. -/
+theorem List.flatMap_eq_flatMap_iff_of_forall_length_eq {α β : Type*} {l : List α}
+    {f g : α → List β} (h : ∀ a ∈ l, (f a).length = (g a).length) :
+    l.flatMap f = l.flatMap g ↔ ∀ a ∈ l, f a = g a := by
+  refine ⟨fun e => ?_, List.flatMap_congr⟩
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    rw [List.flatMap_cons, List.flatMap_cons] at e
+    obtain ⟨e1, e2⟩ := List.append_inj e (h a List.mem_cons_self)
+    exact List.forall_mem_cons.2 ⟨e1, ih (fun b hb => h b (List.mem_cons_of_mem _ hb)) e2⟩
