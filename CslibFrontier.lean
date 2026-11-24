@@ -1427,6 +1427,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Capacity
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Counts
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Holders
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Laws
