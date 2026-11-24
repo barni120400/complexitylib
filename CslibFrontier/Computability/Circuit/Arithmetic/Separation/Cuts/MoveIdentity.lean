@@ -96,7 +96,8 @@ section Slots
 variable {A U0 U1 ub t : ℕ} {N : Type*} {ids : List (UnitId A U0 N U1)}
   {y y' : UnitId A U0 N U1 → UnitContent ub}
 
-private theorem slotBits_congr (h : ∀ id ∈ ids, y id = y' id) : slotBits t ids y = slotBits t ids y' := by
+private theorem slotBits_congr (h : ∀ id ∈ ids, y id = y' id) :
+    slotBits t ids y = slotBits t ids y' := by
   rw [slotBits, slotBits, List.flatMap_congr fun id hid => by rw [h id hid]]
 
 private theorem length_slotBits (h : ∀ id ∈ ids, y id ≠ none) (ht : ids.length ≤ t) :
