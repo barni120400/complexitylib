@@ -7707,6 +7707,7 @@ public import CslibFrontier.Foundations.Data.BitString.MajorityVote
 public import CslibFrontier.Foundations.Data.BitString.MultiplicativeEnumeration
 public import CslibFrontier.Foundations.Data.BitString.Neg
 public import CslibFrontier.Foundations.Data.BitString.OddPairs
+public import CslibFrontier.Foundations.Data.BitString.Pad10Star
 public import CslibFrontier.Foundations.Data.BitString.PadBlocks
 public import CslibFrontier.Foundations.Data.BitString.Parity
 public import CslibFrontier.Foundations.Data.BitString.Parity.Circulant
