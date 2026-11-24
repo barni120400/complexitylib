@@ -51,7 +51,7 @@ open Finset Tape Cslib.Automata.Weighted Interpreter
 
 section General
 
-variable {A : Type} [CommRing A] {M K : Type} [Fintype M] [Fintype K] [DecidableEq K]
+variable {A : Type} [CommRing A] {M K : Type} [Finite M] [Fintype K] [DecidableEq K]
   {P : Mach A M K}
 
 /-- **The tape program of a pointer machine is exact.** If the accepting runs from the input
@@ -66,6 +66,7 @@ theorem val_emX_eq_sum_wts {S₀ : Series A (Zc K × Sy M K)}
       val (tU (Fintype.card (Bl K)) Tm (Nat.size (Tm + 1))) S₀ (fun _ => bits.map .bit) =
         ∑ tr ∈ R, Mach.wts tr := by
   classical
+  have := Fintype.ofFinite M
   have hle (x : XP P) (hx : Mt (emX P) (fun _ => bits.map .bit) x) :
       ∑ s, (emX P x (.tp s true)).length ≤ tU (Fintype.card (Bl K)) Tm (Nat.size (Tm + 1)) := by
     rw [mt_X] at hx
