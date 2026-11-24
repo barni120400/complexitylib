@@ -1405,7 +1405,13 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Wor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Bases
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Group
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Roles
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Script
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Segments
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Transducer
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Units
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccProg
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
