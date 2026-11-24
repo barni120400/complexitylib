@@ -72,10 +72,14 @@ structure CutProg (θ : List Bool → A) (H v τ s : ℕ) (G : Tree) : Prop wher
     (∀ r ∈ evl θ (Fm.ofTree G) z, ∀ y ∈ r.out.toList, Plain θ (v ^ H) y) ∧
     pv θ z = ((evl θ (Fm.ofTree G) z).map fun r => r.th * (r.out.toList.map (pv θ)).prod).sum
 
-/-- **Theorem C (the cut, at all scales)**, as a property of the ring and its constants. -/
+/-- The cut at the scale `v ^ H`, for times up to `v ^ (H * α)`. -/
+@[expose] def CutAt (θ : List Bool → A) (H v α : ℕ) : Prop :=
+  ∀ τ s, v ^ H ≤ τ → τ ≤ v ^ (H * α) → s * v ^ 48 ≤ τ → ∃ G, CutProg θ H v τ s G
+
+/-- **Theorem C (the cut, at all scales)**, as a property of the ring and its constants: the cut
+at every scale `v ≥ v₀` and for every `α` with `lg v ^ (C₀ * α) ≤ v`. -/
 @[expose] def CutHyp (θ : List Bool → A) (H C₀ v₀ : ℕ) : Prop :=
-  ∀ v, v₀ ≤ v → ∀ α τ s, lg v ^ (C₀ * α) ≤ v → v ^ H ≤ τ → τ ≤ v ^ (H * α) → s * v ^ 48 ≤ τ →
-    ∃ G, CutProg θ H v τ s G
+  ∀ v, v₀ ≤ v → ∀ α, lg v ^ (C₀ * α) ≤ v → CutAt θ H v α
 
 /-- The program `D`, with the constants `K` and their powers `2 ^ b`, `b < B`, has the values of
 all universal plain

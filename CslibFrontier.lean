@@ -1238,10 +1238,13 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Wal
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Words
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.ApproxAdd
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Budget
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Comp
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.DSteps
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Deal
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Diag
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Eval
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.EvalThm
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Guess
@@ -1251,6 +1254,8 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Parts
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Picks
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postpone
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postponed
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Scale
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinear

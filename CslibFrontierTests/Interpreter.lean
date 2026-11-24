@@ -8,12 +8,18 @@ import CslibFrontier.Foundations.FieldTheory.FiniteOfFiniteType
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.EvalThm
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Comp
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Parts
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.ApproxAdd
 import Mathlib.Algebra.Field.ZMod
 
-/-! Tests of the first interpreter layer: finiteness of fields of finite type over `ℤ`,
-deterministic evaluation of small formulas, and the interpreter theorem on a named
-multiplication with a one-unit and an exhausted budget; budgets of constants, and the
-compositional rules for weighted values; the program library of lists, tries and terms. -/
+/-! Tests of the interpreter:
+
+* finiteness of fields of finite type over `ℤ`;
+* deterministic evaluation of small formulas, and the interpreter theorem on a named
+  multiplication with a one-unit and an exhausted budget;
+* budgets of constants, and the compositional rules for weighted values;
+* the program library of lists, tries and terms;
+* the counter of exponents, and changes of the ring of constants. -/
 
 namespace CslibFrontierTests.Interpreter
 
@@ -46,8 +52,8 @@ theorem ev_mulName : Ev θ (Fm.mul (.quote .nil)) .nil [⟨2, 1, [[]], .nil⟩] 
   exact Ev.mul (Ev.quote .nil .nil)
 
 /-- With one unit of budget for that name, the interpreter has exactly one run: its weight is the
-weight `1` of the original run, its bill is empty (the interpreter only names no constants), and
-its value is the original value paired with the depleted budget. -/
+weight `1` of the original run, its bill is empty (the interpreter only names no constants), and its
+value is the original value paired with the depleted budget. -/
 example : ∃ l', Ev θ IF (env (Fm.mul (.quote .nil)).code .nil (.leaf [true])) l' ∧
     ∃ r, l' = [r] ∧ r.th = 1 ∧ r.bill = [] ∧ r.out = .cons .nil (Bt.leaf [false]).enc := by
   obtain ⟨l', hl', hr⟩ := interp (H := 2) (ev_mulName θ) _ (Fm.ofTree_code _) (.leaf [true])
@@ -108,5 +114,22 @@ example : (WE.add .one (.nm [])).val θ = 1 + θ [] := by rfl
 
 /-- There are four bit lists of length two. -/
 example : (allBits 2).length = 4 := by decide
+
+/-! ### The counter of exponents and changes of the ring of constants -/
+
+/-- `1 + 1 = 2` with two binary digits, lowest digit first. -/
+example : addc false [true, false] [true, false] = [false, true] := by decide
+
+/-- `3 + 1 = 0` modulo `2 ^ 2`: the last carry is dropped. -/
+example : KT.val (addc false [true, true] [true, false]) = (KT.val [true, true] + 1) % 2 ^ 2 := by
+  decide
+
+/-- Mapping the constants keeps the shape of the trie. -/
+example {R R' : Type} [CommRing R] [CommRing R'] (f : R → R') (K : KT R) :
+    (K.map f).nds = K.nds ∧ (K.map f).ht = K.ht :=
+  ⟨KT.nds_map f K, KT.ht_map f K⟩
+
+/-- Eight has four binary digits. -/
+example : lg 8 = 4 := by decide
 
 end CslibFrontierTests.Interpreter
