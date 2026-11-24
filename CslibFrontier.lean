@@ -1249,9 +1249,13 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.ProgRun
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunCount
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunGood
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunRename
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunSum
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinear
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearGadget
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearLowerBound
