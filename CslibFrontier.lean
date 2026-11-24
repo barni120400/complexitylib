@@ -1458,6 +1458,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Det
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.EvalCompound
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.EvalCore
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.EvalRun
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exact
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.LenU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.PM
