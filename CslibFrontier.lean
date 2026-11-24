@@ -1277,6 +1277,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvatur
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.MidpointTerm
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.WindowMean
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Act
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Avg
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Block
@@ -7877,6 +7878,7 @@ public import CslibFrontier.Foundations.Data.List.EraseDupsBy
 public import CslibFrontier.Foundations.Data.List.Extract
 public import CslibFrontier.Foundations.Data.List.Filter
 public import CslibFrontier.Foundations.Data.List.FilterMap
+public import CslibFrontier.Foundations.Data.List.FixedWidth
 public import CslibFrontier.Foundations.Data.List.FlatMapPositions
 public import CslibFrontier.Foundations.Data.List.FlatMapRange
 public import CslibFrontier.Foundations.Data.List.Flatten
