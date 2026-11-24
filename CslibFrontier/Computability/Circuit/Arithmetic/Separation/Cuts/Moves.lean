@@ -134,6 +134,12 @@ and `o ν + 1` units on the channel `ν`. -/
     List (UnitId A U0 N U1) :=
   (univ : Finset (UnitId A U0 N U1)).toList
 
+/-- The holders of an initial unit are the two base parties of its string. -/
+theorem holds_init {np : N → Bool → Fin (A + A')} {p : Fin (A + A')} {a b : Fin A}
+    {k : Fin U0} : Play.Holds (holder np) p (.init a b k : UnitId A U0 N U1) ↔
+      p = Fin.castAdd A' a ∨ p = Fin.castAdd A' b := by
+  simp [Play.Holds, holder, eq_comm]
+
 end UnitId
 
 section Units

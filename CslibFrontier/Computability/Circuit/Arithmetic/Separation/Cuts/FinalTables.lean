@@ -74,28 +74,6 @@ variable [Fintype Γ] [DecidableEq Γ] [Fintype S] [DecidableEq S] [Fintype Q] [
   {mu : Letter S Unit Γ → Matrix Q Q F} {T : ℕ} {cb : Option Γ → BitString c}
   {q : Fin (K + 1) → Q} {x : Fin K → List Γ} {n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1)}
 
-/-- If the table of a base party at the beginning is not zero, its copies of the initial units
-that it holds are present. -/
-private theorem initialTable_ne_none {N : Type*} [Fintype N] {np : N → Bool → Fin (K + K + A')}
-    {ρ : Option S → RowData (K + K)} {p : Fin (K + K)}
-    {y : UnitId (K + K) U0 N U1 → UnitContent ub}
-    (h : initialTable mu T cb q x ρ (fun a b => n a b) p y ≠ 0) :
-    ∀ id ∈ initialUnits n, Play.Holds (UnitId.holder np) (Fin.castAdd A' p) id → y id ≠ none := by
-  rw [initialTable] at h
-  obtain ⟨R, -, h⟩ := exists_ne_zero_of_sum_ne_zero h
-  obtain ⟨C, -, h⟩ := exists_ne_zero_of_sum_ne_zero h
-  obtain ⟨⟨-, h1, h2⟩, -⟩ := ite_ne_right_iff.1 h
-  rintro (⟨a, b, k⟩ | ⟨ν, k⟩) hid ⟨d, hd⟩
-  · rw [init_mem_initialUnits] at hid
-    cases d
-    · obtain rfl : a = p := Fin.castAdd_injective _ _ hd
-      rw [(h1 b).2, Ne, unitsOf_eq_none, (h1 b).1]
-      exact not_le.2 hid
-    · obtain rfl : b = p := Fin.castAdd_injective _ _ hd
-      rw [(h2 a).2, Ne, unitsOf_eq_none, (h2 a).1]
-      exact not_le.2 hid
-  · exact absurd hid new_notMem_initialUnits
-
 variable {ρ : Option S → Fin (K + K) → RowData (K + K)}
 
 /-- If the table of a party at the beginning is not zero, its copies of the initial units that it

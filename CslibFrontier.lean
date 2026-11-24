@@ -1298,6 +1298,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Pla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Rows
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Start
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Act
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Avg

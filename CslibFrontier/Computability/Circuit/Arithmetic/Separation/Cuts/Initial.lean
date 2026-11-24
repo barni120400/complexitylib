@@ -34,6 +34,13 @@ parties has a value for given contents of the units that it shares with other gr
 * `Cut.finalTable`: the table of a party after the moves of a plan.
 * `Cut.Plan.groupValue`: the value of a group of parties after the moves of a plan.
 
+## Main results
+
+* `Cut.initialTable_congr`: the table of a base party depends on its copies of initial units
+  only.
+* `Cut.initialTable_ne_none`: it vanishes unless the initial units that the party holds are
+  present.
+
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
@@ -118,6 +125,37 @@ of the units that it shares with other groups. -/
     F :=
   Play.groupValue (UnitId.holder M.channelParty) none (Plan.seenAt n o E) (P.cur n o E) grp
     (finalTable P mu T cb q x ρ n o) g b
+
+section Properties
+
+variable {mu T cb} {q : Fin (K + 1) → Q} {x : Fin K → List Γ}
+
+/-- The table of a base party at the beginning depends on its copies of initial units only. -/
+theorem initialTable_congr {ρ : Option S → RowData (K + K)}
+    {n : Fin (K + K) → Fin (K + K) → ℕ} {p : Fin (K + K)}
+    {y y' : UnitId (K + K) U0 N U1 → UnitContent ub}
+    (h : ∀ a b k, y (.init a b k) = y' (.init a b k)) :
+    initialTable mu T cb q x ρ n p y = initialTable mu T cb q x ρ n p y' :=
+  sum_congr rfl fun R _ => sum_congr rfl fun C _ => if_congr (by simp only [InitialOk, h]) rfl rfl
+
+variable [Fintype N]
+
+/-- All initial units held by a base party are present if its table at the beginning is not
+zero. -/
+theorem initialTable_ne_none {np : N → Bool → Fin (K + K + A')}
+    {ρ : Option S → RowData (K + K)} {n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1)}
+    {p : Fin (K + K)} {y : UnitId (K + K) U0 N U1 → UnitContent ub}
+    (h : initialTable mu T cb q x ρ (fun a b => n a b) p y ≠ 0) :
+    ∀ id ∈ initialUnits n,
+      Play.Holds (UnitId.holder np) (Fin.castAdd A' p) id → y id ≠ none := by
+  obtain ⟨R, -, h⟩ := exists_ne_zero_of_sum_ne_zero h
+  obtain ⟨C, -, h⟩ := exists_ne_zero_of_sum_ne_zero h
+  obtain ⟨⟨-, h1, h2⟩, -⟩ := ite_ne_right_iff.1 h
+  rintro (⟨a, b, k⟩ | ⟨ν, k⟩) hid hp <;>
+    grind [UnitId.holds_init, unitsOf_eq_none, Fin.castAdd_inj, init_mem_initialUnits,
+      new_notMem_initialUnits]
+
+end Properties
 
 end Tables
 
