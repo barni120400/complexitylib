@@ -9,7 +9,8 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postpone
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Ring
 
 /-!
 # Guessing the budgets and multiplying by the powers of the constants
@@ -511,16 +512,12 @@ theorem size_gt (ν : ℕ → ℕ) (J B : ℕ) (K : KT R) (pre : List Bool) (N :
     have h2 := ihr (pre ++ [true])
     simp only [List.length_append, List.length_singleton] at h1 h2
     simp only [gt, Fm.code, Tree.size, size_num, KT.expand, KT.nds, KT.ht]
-    have e1 : (J + 1) * (4 * (pre.length + 1 + l.ht + N) + 100) ≤
-        (J + 1) * (4 * (pre.length + (max l.ht r.ht + 1) + N) + 100) := by
+    have mono : ∀ k ≤ max l.ht r.ht, (J + 1) * (4 * (pre.length + 1 + k + N) + 100) ≤
+        (J + 1) * (4 * (pre.length + (max l.ht r.ht + 1) + N) + 100) := fun k hk => by
       apply Nat.mul_le_mul_left
-      have := le_max_left l.ht r.ht
       omega
-    have e2 : (J + 1) * (4 * (pre.length + 1 + r.ht + N) + 100) ≤
-        (J + 1) * (4 * (pre.length + (max l.ht r.ht + 1) + N) + 100) := by
-      apply Nat.mul_le_mul_left
-      have := le_max_right l.ht r.ht
-      omega
+    have e1 := mono l.ht (le_max_left _ _)
+    have e2 := mono r.ht (le_max_right _ _)
     have e3 : 100 ≤ (J + 1) * (4 * (pre.length + (max l.ht r.ht + 1) + N) + 100) := by nlinarith
     have e4 := h1.trans (Nat.mul_le_mul_left _ e1)
     have e5 := h2.trans (Nat.mul_le_mul_left _ e2)

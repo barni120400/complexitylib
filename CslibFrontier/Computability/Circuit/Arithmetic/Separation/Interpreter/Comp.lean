@@ -9,8 +9,10 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
+import CslibFrontier.Foundations.Data.List.Blocks
 import CslibFrontier.Foundations.Data.List.Forall2
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Algebra.BigOperators.Ring.List
+import Mathlib.Tactic.Ring
 
 /-!
 # Weighted functions computed by formulas
@@ -73,7 +75,7 @@ theorem wsum_congr {Q : List (A × Tree)} {φ φ' : Tree → A} (h : ∀ q ∈ Q
 theorem wsum_bindW (Q : List (A × Tree)) (R : Tree → List (A × Tree)) (φ : Tree → A) :
     wsum (bindW Q R) φ = wsum Q fun o => wsum (R o) φ := by
   unfold wsum bindW
-  rw [sum_flatMap_map]
+  rw [List.sum_map_flatMap]
   congr 1
   refine List.map_congr_left fun q _ => ?_
   rw [List.map_map, ← List.sum_map_mul_left]
@@ -175,7 +177,7 @@ theorem cons {R : List (A × Tree)} (hF : Does θ F x Q c)
     · simp only [Run.seq, Run.tick]
       omega
     · simp [Run.tick, a3, b3]
-  · rw [sum_flatMap_map]
+  · rw [List.sum_map_flatMap]
     have h1 : ∀ r : Run A,
         ((l'.map fun s => (r.seq s).tick (.cons r.out s.out)).map fun u => u.th * φ u.out).sum =
         r.th * wsum R fun o => φ (.cons r.out o) := by
@@ -185,7 +187,7 @@ theorem cons {R : List (A × Tree)} (hF : Does θ F x Q c)
       refine List.map_congr_left fun s _ => ?_
       simp only [Function.comp_apply, Run.seq, Run.tick, mul_assoc]
     simp only [h1]
-    rw [e3 fun o => wsum R fun o' => φ (.cons o o'), wsum, wsum, sum_flatMap_map]
+    rw [e3 fun o => wsum R fun o' => φ (.cons o o'), wsum, wsum, List.sum_map_flatMap]
     congr 1
     refine List.map_congr_left fun q _ => ?_
     rw [wsum, List.map_map, ← List.sum_map_mul_left]
@@ -211,7 +213,7 @@ theorem app {p : Tree} {R : Tree → List (A × Tree)} (hF : Does θ F x Q c)
     rw [← a3] at hr
     refine ⟨by rw [h2, a1, b1]; rfl, by omega, (q.1 * r.1, r.2), mem_bindW_of hq hr, ?_⟩
     rw [h3, ← b3]
-  · rw [wsum_bindW, sum_flatMap_map,
+  · rw [wsum_bindW, List.sum_map_flatMap,
       ← wsum_congr
           (φ := fun o =>
               ((Cslib.Circuits.Arithmetic.Separation.Interpreter.evl θ (Fm.ofTree p) o).map fun t =>
@@ -250,23 +252,23 @@ theorem letk {R : Tree → List (A × Tree)} (hF : Does θ F x Q c)
   · rw [wsum_bindW, wsum_bindW]
     simp [wsum, Function.comp_def]
 
+/-- The runs of a formula with the one value `o` (with weight `1`) all have the value `o`. -/
+theorem out_eq {o : Tree} {l : List (Run A)}
+    (e2 : ∀ r ∈ l, r.bill = [] ∧ r.cost ≤ c ∧ ∃ q ∈ [((1 : A), o)], q.2 = r.out) :
+    ∀ r ∈ l, r.out = o := by
+  intro r hr
+  obtain ⟨-, -, q, hq, h⟩ := e2 r hr
+  rw [List.mem_singleton] at hq
+  subst hq
+  exact h.symm
+
 /-- Apply a program that is the value of a formula. -/
 theorem run {p y : Tree} {R : List (A × Tree)} {e : ℕ} (hF : Gives θ F x p c) (hG : Gives θ G x y d)
     (h : Does θ (Fm.ofTree p) y R e) : Does θ (.run F G) x R (c + d + e + 1) := by
   obtain ⟨l, e1, e2, e3⟩ := hF
   obtain ⟨l', f1, f2, f3⟩ := hG
-  have ho : ∀ r ∈ l, r.out = p := by
-    intro r hr
-    obtain ⟨-, -, q, hq, h⟩ := e2 r hr
-    rw [List.mem_singleton] at hq
-    subst hq
-    exact h.symm
-  have ho' : ∀ r ∈ l', r.out = y := by
-    intro r hr
-    obtain ⟨-, -, q, hq, h⟩ := f2 r hr
-    rw [List.mem_singleton] at hq
-    subst hq
-    exact h.symm
+  have ho := out_eq e2
+  have ho' := out_eq f2
   refine ⟨_, Ev.run' e1 f1 fun r hr s hs => by rw [ho r hr, ho' s hs]; exact h.hl, ?_, fun φ => ?_⟩
   · intro u hu
     simp only [List.mem_flatMap, List.mem_map] at hu
@@ -278,14 +280,14 @@ theorem run {p y : Tree} {R : List (A × Tree)} {e : ℕ} (hF : Gives θ F x p c
     refine ⟨by simp [Run.seq, Run.tick, a1, b1, c1], ?_, c3⟩
     simp only [Run.seq, Run.tick]
     omega
-  · rw [sum_flatMap_map]
+  · rw [List.sum_map_flatMap]
     have h1 : ∀ r ∈ l,
         ((l'.flatMap fun s =>
             (Cslib.Circuits.Arithmetic.Separation.Interpreter.evl θ (Fm.ofTree r.out) s.out).map
                 fun t =>
         ((r.seq s).seq t).tick t.out).map fun u => u.th * φ u.out).sum = r.th * wsum R φ := by
       intro r hr
-      rw [sum_flatMap_map]
+      rw [List.sum_map_flatMap]
       have h2 : ∀ s ∈ l',
           (((Cslib.Circuits.Arithmetic.Separation.Interpreter.evl θ (Fm.ofTree r.out) s.out).map
               fun t =>
@@ -307,16 +309,6 @@ theorem run {p y : Tree} {R : List (A × Tree)} {e : ℕ} (hF : Gives θ F x p c
     rw [this]
     simp [wsum]
 
-/-- The runs of a formula with the one value `o` (with weight `1`) all have the value `o`. -/
-theorem out_eq {o : Tree} {l : List (Run A)}
-    (e2 : ∀ r ∈ l, r.bill = [] ∧ r.cost ≤ c ∧ ∃ q ∈ [((1 : A), o)], q.2 = r.out) :
-    ∀ r ∈ l, r.out = o := by
-  intro r hr
-  obtain ⟨-, -, q, hq, h⟩ := e2 r hr
-  rw [List.mem_singleton] at hq
-  subst hq
-  exact h.symm
-
 /-- A branch `K` of an `ite` whose condition has the one value `o`: the branch that `o` selects. -/
 theorem ite_of {K : Fm} {o : Tree} (hF : Gives θ F x o c) (hK : Does θ K x Q d)
     (hev : ∀ {l l' : List (Run A)}, Ev θ F x l → (∀ r ∈ l, r.out = o) → Ev θ K x l' →
@@ -333,7 +325,7 @@ theorem ite_of {K : Fm} {o : Tree} (hF : Gives θ F x o c) (hK : Does θ K x Q d
     refine ⟨by simp [Run.seq, Run.tick, a1, b1], ?_, b3⟩
     simp only [Run.seq, Run.tick]
     omega
-  · rw [sum_flatMap_map]
+  · rw [List.sum_map_flatMap]
     have h1 : ∀ r ∈ l,
         ((l'.map fun s => (r.seq s).tick s.out).map fun u => u.th * φ u.out).sum = r.th *
             wsum Q φ := by

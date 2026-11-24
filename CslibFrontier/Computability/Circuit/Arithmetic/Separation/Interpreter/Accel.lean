@@ -11,7 +11,7 @@ public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
 public import Mathlib.Data.Nat.Log
 import CslibFrontier.Foundations.Data.List.Forall2
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Algebra.BigOperators.Ring.List
 
 /-!
 # Accelerators and the cut

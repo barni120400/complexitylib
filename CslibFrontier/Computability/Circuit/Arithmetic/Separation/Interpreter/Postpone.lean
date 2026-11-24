@@ -10,8 +10,10 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.EvalThm
 public import Mathlib.Algebra.Algebra.Defs
+import CslibFrontier.Foundations.Data.List.Blocks
 import CslibFrontier.Foundations.Data.List.Forall2
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Algebra.BigOperators.Ring.List
+import Mathlib.Tactic.Ring
 
 /-!
 # Postponing the named constants
@@ -167,7 +169,7 @@ theorem part_cons (a c : Bool) (p : List Bool) (b : List (List Bool)) :
   unfold part
   by_cases h : c = a <;> simp [h]
 
-theorem length_part_le (a : Bool) (b : List (List Bool)) : (part a b).length ≤ b.length :=
+private theorem length_part_le (a : Bool) (b : List (List Bool)) : (part a b).length ≤ b.length :=
   List.length_filterMap_le _ _
 
 theorem ok_node (l r : Bt) (b : List (List Bool)) :
@@ -232,12 +234,6 @@ theorem sum_words (J n : ℕ) (c : R) :
     by_cases hn : n < 2 ^ (J + 1)
     · rcases Nat.mod_two_eq_zero_or_one n with h | h <;> simp [h, hn]
     · simp [hn]
-
-theorem sum_flatMap_map {α β : Type*} (l : List α) (f : α → List β) (g : β → R) :
-    ((l.flatMap f).map g).sum = (l.map fun a => ((f a).map g).sum).sum := by
-  induction l with
-  | nil => simp
-  | cons a l ih => simp [List.flatMap_cons, ih]
 
 theorem prod_lookup_node (l r : KT R) (b : List (List Bool)) : (b.map (KT.node l r).lookup).prod =
     if [] ∈ b then 0 else ((part false b).map l.lookup).prod * ((part true b).map r.lookup).prod :=
@@ -310,7 +306,7 @@ theorem sum_budg (J : ℕ) (K : KT R) (b : List (List Bool)) (hb : b.length < 2 
     have h1 := ihl (part false b) (lt_of_le_of_lt (length_part_le _ _) hb)
     have h2 := ihr (part true b) (lt_of_le_of_lt (length_part_le _ _) hb)
     rw [prod_lookup_node, ← h1, ← h2]
-    simp only [KT.budg, sum_flatMap_map, List.map_map, Function.comp_def, ok_node]
+    simp only [KT.budg, List.sum_map_flatMap, List.map_map, Function.comp_def, ok_node]
     by_cases h : [] ∈ b
     · simp [h]
     · simp only [h, not_false_eq_true, true_and, ite_false]
@@ -344,14 +340,14 @@ budgets)). -/
     lett (.cons (.quote AZ.code) (.tl (lett (.cons (.quote IF.code) .id) IF))) AZ
 
 omit [CommRing A] in
-theorem simS_cons (t : Bt) (r : Run A) (l : List (Run A)) :
+private theorem simS_cons (t : Bt) (r : Run A) (l : List (Run A)) :
     simS t (r :: l) =
         ((Bt.decAll r.bill t).map fun t' => (⟨r, t'⟩ : SimRun A)).toList ++ simS t l := by
   simp only [simS, List.filterMap_cons]
   cases Bt.decAll r.bill t <;> rfl
 
 omit [CommRing A] in
-theorem map_simS (t : Bt) (l : List (Run A)) :
+private theorem map_simS (t : Bt) (l : List (Run A)) :
     ((simS t l).flatMap fun q => if q.left.zero then [q] else []).map (fun q => q.run.th) =
       (l.filter fun r => ok t r.bill).map Run.th := by
   induction l with

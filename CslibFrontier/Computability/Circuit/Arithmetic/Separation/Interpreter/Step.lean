@@ -9,8 +9,11 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Guess
+import CslibFrontier.Foundations.Data.List.Blocks
 import CslibFrontier.Foundations.Data.List.Forall2
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Algebra.BigOperators.Ring.List
+import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.Ring
 
 /-!
 # One round of the acceleration
@@ -102,7 +105,7 @@ theorem sumF_app {p : Tree} {le : List (Run A)} {f : Tree → R} :
               sumF κ (Cslib.Circuits.Arithmetic.Separation.Interpreter.evl θ (Fm.ofTree p) o) f :=
                   by
   simp only [sumF]
-  rw [sum_flatMap_map]
+  rw [List.sum_map_flatMap]
   congr 1
   refine List.map_congr_left fun s _ => ?_
   rw [List.map_map, ← List.sum_map_mul_left]
@@ -176,7 +179,7 @@ theorem LP_ev {D : Tree} {T : ℕ} {P : List Bool → Prop} (ys : Tree)
         · exact p2 p hp
     · rw [val_eq_sumF, sumF_delay, toList, List.map_cons, List.prod_cons, ← vr]
       simp only [sumF, mul_one]
-      rw [sum_flatMap_map, List.map_map]
+      rw [List.sum_map_flatMap, List.map_map]
       simp only [List.map_map, Function.comp_def, wt_tick, wt_seq, wt_delay]
       simp only [List.sum_map_mul_left]
       rw [List.sum_map_mul_right]
