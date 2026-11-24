@@ -47,6 +47,8 @@ gates for each input, hence at most a factor five (`ComputedWithin.of_isAffinePr
   closure properties.
 * `Cslib.Circuits.Arithmetic.ComputedWithin.of_isAffineProjection`: affine projections cost at
   most a factor five.
+* `Cslib.Circuits.Arithmetic.ComputedWithin.exists_steps`: the gate list of a circuit, each entry a
+  variable, a constant, or the sum or product of two earlier entries.
 * `Cslib.Circuits.Arithmetic.mem_VP_iff`: `VP` in terms of `ComputedWithin`.
 
 ## References

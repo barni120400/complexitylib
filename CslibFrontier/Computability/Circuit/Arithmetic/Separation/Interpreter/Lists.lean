@@ -34,6 +34,7 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `NS1.Lists`.
   `Interpreter.eqF`, `Interpreter.pickF`.
 * `Interpreter.tget`, `Interpreter.tset`, `Interpreter.getF`, `Interpreter.setF`.
 * `Interpreter.WE`, `Interpreter.WE.val`, `Interpreter.WE.fm`.
+* `Interpreter.allBits`: all bit lists of a given length.
 
 ## Main results
 
@@ -661,5 +662,10 @@ theorem WE.exists_of_adjoin {p₀ : List Bool} (h : θ p₀ = -1)
     exact ⟨.mul (.nm p₀) e, by simp [WE.val, h]⟩
 
 end Weights
+
+/-- All bit lists of a given length. -/
+@[expose] def allBits : ℕ → List (List Bool)
+  | 0 => [[]]
+  | n + 1 => (allBits n).map (true :: ·) ++ (allBits n).map (false :: ·)
 
 end Cslib.Circuits.Arithmetic.Separation.Interpreter

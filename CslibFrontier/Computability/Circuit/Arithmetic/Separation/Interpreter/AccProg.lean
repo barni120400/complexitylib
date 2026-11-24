@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.ParseLoop
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
 
 /-!
 # The program of an accelerator
@@ -43,7 +44,7 @@ variable {A : Type} [CommRing A] {θ : List Bool → A} {R : Type} [CommRing R] 
 @[expose] def pairB : Fm := .ite (.tl .id) (.cons (.cons (.hd (.tl .id)) (.hd (.tl (.tl .id))))
   (.run (.hd .id) (.cons (.hd .id) (.tl (.tl (.tl .id)))))) (.quote .nil)
 
-theorem pairB_gives (l : List Tree) :
+private theorem pairB_gives (l : List Tree) :
     Gives θ pairB (.cons pairB.code (listT l)) (listT (pairL l)) (40 * (l.length + 1)) := by
   induction l using pairL.induct with
   | case1 => exact ((Gives.id _).tl.ite_false (Gives.quote .nil _)).mono (by norm_num)
@@ -75,11 +76,11 @@ theorem pairB_gives (l : List Tree) :
   | 0, l => l
   | m + 1, l => pairsF m (app pairB.code (.cons (.quote pairB.code) l))
 
-theorem length_pairL_le (l : List Tree) : (pairL l).length ≤ l.length := by
+private theorem length_pairL_le (l : List Tree) : (pairL l).length ≤ l.length := by
   rw [length_pairL]
   omega
 
-theorem pairsF_gives (m : ℕ)
+private theorem pairsF_gives (m : ℕ)
     {l : Fm} {x : Tree} {xs : List Tree} {c : ℕ} (hl : Gives θ l x (listT xs) c) :
     Gives θ (pairsF m l) x (listT (pairL^[m] xs)) (c + m * (40 * (xs.length + 1) + 10)) := by
   induction m generalizing l xs c with
@@ -120,10 +121,10 @@ theorem pairsF_gives (m : ℕ)
     (.cons (.quote (listT ([out].map ofBits))) (treeF m)))))
 
 /-- The tree of pairs. -/
-@[expose] def pairTree (m : ℕ) (z : Tree) : Tree :=
+private def pairTree (m : ℕ) (z : Tree) : Tree :=
     (listT (pairL^[m] (wordT lt0 lt1 z ++ [lt2]))).hd
 
-theorem treeF_gives (m : ℕ) (z : Tree) :
+private theorem treeF_gives (m : ℕ) (z : Tree) :
     Gives θ (treeF m) z (pairTree m z) (60 * z.size + m * (40 * (z.size + 2) + 10) + 12) := by
   have h0 := Gives.app (p := (wordB lt0 lt1).code)
       (Gives.cons (Gives.quote (θ := θ) (wordB lt0 lt1).code z)
@@ -164,24 +165,25 @@ theorem wordT_eq (z : Tree) : wordT lt0 lt1 z ++ [lt2] = ((tbits z).map some ++ 
   rfl
 
 /-- The letter at a place of the tree of pairs. -/
-theorem look_pairTree {m : ℕ} {z : Tree} (hz : z.size < 2 ^ m) {p : List Bool} (hp : p.length = m) :
+private theorem look_pairTree {m : ℕ} {z : Tree} (hz : z.size < 2 ^ m)
+    {p : List Bool} (hp : p.length = m) :
     look p (pairTree m z) =
         ((((tbits z).map some ++ [none])[KT.val p.reverse]?).map ltr).getD .nil := by
   rw [pairTree, look_pairs m _ (by rw [List.length_append, length_wordT]; exact hz) p hp, wordT_eq,
     List.getD_eq_getElem?_getD, List.getElem?_map]
 
 /-- The letter with a given code. -/
-@[expose] def decL (c : List Bool) : Option (Option Bool) :=
+private def decL (c : List Bool) : Option (Option Bool) :=
   if c = [true, false] then some (some false) else if c = [true, true] then some (some true)
   else if c = [false, true] then some none else none
 
-theorem decL_lc (o : Option (Option Bool)) : decL (lc ((o.map ltr).getD .nil)) = o := by
+private theorem decL_lc (o : Option (Option Bool)) : decL (lc ((o.map ltr).getD .nil)) = o := by
   rcases o with _ | _ | _ | _ <;> rfl
 
-theorem length_lc (o : Option (Option Bool)) : (lc ((o.map ltr).getD .nil)).length = 2 := by
+private theorem length_lc (o : Option (Option Bool)) : (lc ((o.map ltr).getD .nil)).length = 2 := by
   rcases o with _ | _ | _ | _ <;> rfl
 
-theorem ltr_cases (o : Option (Option Bool)) :
+private theorem ltr_cases (o : Option (Option Bool)) :
     (o.map ltr).getD .nil = .nil ∨ ∃ w : List Bool,
         w.length = 2 ∧ (o.map ltr).getD .nil = ofBits w := by
   rcases o with _ | _ | _ | _
@@ -195,12 +197,12 @@ theorem ltr_cases (o : Option (Option Bool)) :
   fun q => if (w.map some ++ [none])[(q.1 : ℕ)]? = some q.2 then 1 else 0
 
 /-- The weight of a letter at a place. -/
-@[expose] def lamK {N : ℕ} (lam : Fin N × Option Bool → R) (i : ℕ) (o : Option (Option Bool)) : R :=
+private def lamK {N : ℕ} (lam : Fin N × Option Bool → R) (i : ℕ) (o : Option (Option Bool)) : R :=
   match o with
   | none => 0
   | some γ => if h : i < N then lam (⟨i, h⟩, γ) else 0
 
-theorem lamK_ge {N : ℕ} (lam : Fin N × Option Bool → R) {i : ℕ} (h : ¬ i < N)
+private theorem lamK_ge {N : ℕ} (lam : Fin N × Option Bool → R) {i : ℕ} (h : ¬ i < N)
     (o : Option (Option Bool)) :
     lamK lam i o = 0 := by
   cases o with
@@ -208,7 +210,7 @@ theorem lamK_ge {N : ℕ} (lam : Fin N × Option Bool → R) {i : ℕ} (h : ¬ i
   | some γ => exact dite_eq_right h
 
 /-- The constants of an accelerator. -/
-@[expose] def accK (M m N : ℕ) (γ : R) (k : ℕ → ℕ → ℕ → R)
+def accK (M m N : ℕ) (γ : R) (k : ℕ → ℕ → ℕ → R)
     (lam : ℕ → Fin N × Option Bool → R) : KT R :=
   .node (.node
       (KT.full (M + M + M) fun w => k (KT.val (w.take M)) (KT.val ((w.drop M).take M))
@@ -230,7 +232,8 @@ private theorem take_drop_three {α : Type*} {a b c : List α} {la lb : ℕ} (ha
     by rw [List.append_assoc, List.drop_left' ha, List.take_left' hb],
     List.drop_left' (by simp [ha, hb])⟩
 
-theorem accK_k {g l r : List Bool} (hg : g.length = M) (hl : l.length = M) (hr : r.length = M) :
+private theorem accK_k {g l r : List Bool} (hg : g.length = M) (hl : l.length = M)
+    (hr : r.length = M) :
     (accK M m N γ k lam).lk ([false, false] ++ g ++ l ++ r ++ [false]) = k (KT.val g) (KT.val l)
         (KT.val r) ∧
     (accK M m N γ k lam).InB 1 ([false, false] ++ g ++ l ++ r ++ [false]) := by
@@ -244,7 +247,8 @@ theorem accK_k {g l r : List Bool} (hg : g.length = M) (hl : l.length = M) (hr :
     (KT.val (w.drop (M + M)))) h).trans ?_, KT.inB_full _ h⟩
   simp only [e1, e2, e3]
 
-theorem accK_l {g p c : List Bool} (hg : g.length = M) (hp : p.length = m) (hc : c.length = 2) :
+private theorem accK_l {g p c : List Bool} (hg : g.length = M) (hp : p.length = m)
+    (hc : c.length = 2) :
     (accK M m N γ k lam).lk ([false, true] ++ g ++ p ++ c ++ [false]) =
       lamK (lam (KT.val g)) (KT.val p) (decL c) ∧
     (accK M m N γ k lam).InB 1 ([false, true] ++ g ++ p ++ c ++ [false]) := by
@@ -258,7 +262,7 @@ theorem accK_l {g p c : List Bool} (hg : g.length = M) (hp : p.length = m) (hc :
     (decL (w.drop (M + m)))) h).trans ?_, KT.inB_full _ h⟩
   simp only [e1, e2, e3]
 
-theorem accK_c : (accK M m N γ k lam).lk [true, false] = γ ∧
+private theorem accK_c : (accK M m N γ k lam).lk [true, false] = γ ∧
     (accK M m N γ k lam).InB 1 [true, false] :=
   ⟨rfl, ⟨0, zero_lt_one, rfl⟩⟩
 
@@ -301,21 +305,22 @@ theorem accF_kv {M m N d s : ℕ} {p : MvPolynomial (Fin N × Option Bool) R}
     rw [look_pairTree hzm hp]
     exact ltr_cases _
   have ha : ∀ g : List Bool, g.length = M →
-      ((wd m).map fun p =>
+      ((allBits m).map fun p =>
           K.lk ([false, true] ++ g ++ p.reverse ++ lc (look p (pairTree m z)) ++ [false])).sum =
         ∑ i, lam (KT.val g) i * codeB R N (tbits z) i := by
     intro g hg
-    have h1 : ∀ p ∈ wd m,
+    have h1 : ∀ p ∈ allBits m,
         K.lk ([false, true] ++ g ++ p.reverse ++ lc (look p (pairTree m z)) ++ [false]) =
         (fun w => lamK (lam (KT.val g)) (KT.val w) (((tbits z).map some ++ [none])[KT.val w]?))
             p.reverse := by
       intro p hp
-      have hpm := length_of_mem_wd hp
+      have hpm := length_of_mem_allBits hp
       rw [look_pairTree hzm hpm, hK, (accK_l hg (by simpa using hpm) (length_lc _)).1, decL_lc]
     rw [List.map_congr_left h1]
-    refine (sum_wd_reverse m fun w => lamK (lam (KT.val g)) (KT.val w)
+    refine (sum_allBits_reverse m fun w => lamK (lam (KT.val g)) (KT.val w)
       (((tbits z).map some ++ [none])[KT.val w]?)).trans ?_
-    refine (sum_wd m fun i => lamK (lam (KT.val g)) i (((tbits z).map some ++ [none])[i]?)).trans ?_
+    refine (sum_allBits m fun i =>
+        lamK (lam (KT.val g)) i (((tbits z).map some ++ [none])[i]?)).trans ?_
     rw [← Finset.sum_subset (Finset.range_mono hNm), Finset.sum_range, Fintype.sum_prod_type]
     · refine Finset.sum_congr rfl fun i _ => ?_
       rcases Option.eq_none_or_eq_some (((tbits z).map some ++ [none])[(i : ℕ)]?) with hc | ⟨γ, hc⟩

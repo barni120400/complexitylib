@@ -23,7 +23,7 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `NS1.Deal`.
 ## Main definitions
 
 * `Interpreter.RepW`, `Interpreter.assignT`, `Interpreter.assignS`, `Interpreter.assignF`.
-* `Interpreter.allBits`, `Interpreter.bitsB`, `Interpreter.bitsF`.
+* `Interpreter.bitsB`, `Interpreter.bitsF`.
 
 ## Main results
 
@@ -87,11 +87,6 @@ theorem assignF_gives {of wf : Fm} {x o W : Tree} {co cw : ℕ} (ho : Gives θ o
 end Assign
 
 section Bits
-
-/-- All bit lists of a given length. -/
-@[expose] def allBits : ℕ → List (List Bool)
-  | 0 => [[]]
-  | n + 1 => (allBits n).map (true :: ·) ++ (allBits n).map (false :: ·)
 
 /-- Guess a bit list. The argument is (this program, (length in binary, bits so far)). -/
 @[expose] def bitsB : Fm := .ite (app nzB.code (.cons (.quote nzB.code) (.hd (.tl .id))))

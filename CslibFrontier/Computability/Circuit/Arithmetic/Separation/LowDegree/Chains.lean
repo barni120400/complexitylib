@@ -9,7 +9,8 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Foundations.RingTheory.MvPolynomial.Line
-import Mathlib.Tactic.Polynomial.Basic
+import Mathlib.Algebra.Polynomial.AlgebraMap
+import Mathlib.Tactic.Ring
 
 /-!
 # Low degree: the chain constants

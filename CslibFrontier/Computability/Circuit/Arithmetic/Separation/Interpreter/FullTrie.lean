@@ -8,7 +8,7 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Lists
 import Mathlib.Tactic.Ring
 
 /-!
@@ -23,13 +23,13 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Acc.Trie`.
 
 ## Main definitions
 
-* `Interpreter.KT.full`, `Interpreter.wd`, `Interpreter.look`, `Interpreter.pairL`.
+* `Interpreter.KT.full`, `Interpreter.look`, `Interpreter.pairL`.
 
 ## Main results
 
 * `Interpreter.KT.lk_full`, `Interpreter.KT.inB_full`, `Interpreter.KT.nds_full`,
   `Interpreter.KT.ht_full`.
-* `Interpreter.sum_wd`, `Interpreter.look_pairs`.
+* `Interpreter.sum_allBits`, `Interpreter.look_pairs`.
 -/
 
 public section
@@ -91,19 +91,14 @@ theorem ht_full (n : ℕ) (f : List Bool → R) : (full n f).ht = n := by
 
 end KT
 
-/-- All words of a given length. -/
-@[expose] def wd : ℕ → List (List Bool)
-  | 0 => [[]]
-  | m + 1 => (wd m).map (true :: ·) ++ (wd m).map (false :: ·)
-
-theorem length_of_mem_wd {m : ℕ} {w : List Bool} (h : w ∈ wd m) : w.length = m := by
+theorem length_of_mem_allBits {m : ℕ} {w : List Bool} (h : w ∈ allBits m) : w.length = m := by
   induction m generalizing w with
   | zero =>
-    simp only [wd, List.mem_singleton] at h
+    simp only [allBits, List.mem_singleton] at h
     subst h
     rfl
   | succ m ih =>
-    simp only [wd, List.mem_append, List.mem_map] at h
+    simp only [allBits, List.mem_append, List.mem_map] at h
     rcases h with ⟨v, hv, rfl⟩ | ⟨v, hv, rfl⟩ <;> simp [ih hv]
 
 theorem val_lt_of_length {m : ℕ} {w : List Bool} (h : w.length = m) : KT.val w < 2 ^ m := by
@@ -132,17 +127,17 @@ theorem exists_word {m k : ℕ} (h : k < 2 ^ m) : ∃ w : List Bool, w.length = 
       omega
 
 /-- Sums over words. -/
-theorem sum_wd (m : ℕ) (f : ℕ → R) : ((wd m).map fun w => f (KT.val w)).sum =
+theorem sum_allBits (m : ℕ) (f : ℕ → R) : ((allBits m).map fun w => f (KT.val w)).sum =
     ∑ k ∈ Finset.range (2 ^ m), f k := by
   induction m generalizing f with
-  | zero => simp [wd, KT.val]
+  | zero => simp [allBits, KT.val]
   | succ m ih =>
     have h1 := ih fun k => f (1 + 2 * k)
     have h2 := ih fun k => f (2 * k)
-    have e1 : ((wd (m + 1)).map fun w => f (KT.val w)).sum =
-        ((wd m).map fun w => f (1 + 2 * KT.val w)).sum +
-            ((wd m).map fun w => f (2 * KT.val w)).sum := by
-      simp [wd, KT.val, Function.comp_def]
+    have e1 : ((allBits (m + 1)).map fun w => f (KT.val w)).sum =
+        ((allBits m).map fun w => f (1 + 2 * KT.val w)).sum +
+            ((allBits m).map fun w => f (2 * KT.val w)).sum := by
+      simp [allBits, KT.val, Function.comp_def]
     rw [e1, h1, h2, pow_succ, mul_comm]
     clear e1 h1 h2 ih
     induction 2 ^ m with
@@ -156,35 +151,37 @@ theorem sum_wd (m : ℕ) (f : ℕ → R) : ((wd m).map fun w => f (KT.val w)).su
       ring
 
 /-- Sums over reversed words. -/
-theorem sum_wd_reverse (m : ℕ) (f : List Bool → R) :
-    ((wd m).map fun w => f w.reverse).sum = ((wd m).map f).sum := by
-  have h : ∀ (n : ℕ) (f : List Bool → R), ((wd (n + 1)).map f).sum =
-      ((wd n).map fun w => f (w ++ [true])).sum + ((wd n).map fun w => f (w ++ [false])).sum := by
+theorem sum_allBits_reverse (m : ℕ) (f : List Bool → R) :
+    ((allBits m).map fun w => f w.reverse).sum = ((allBits m).map f).sum := by
+  have h : ∀ (n : ℕ) (f : List Bool → R), ((allBits (n + 1)).map f).sum =
+      ((allBits n).map fun w => f (w ++ [true])).sum +
+          ((allBits n).map fun w => f (w ++ [false])).sum := by
     intro n
     induction n with
-    | zero => intro f; simp [wd]
+    | zero => intro f; simp [allBits]
     | succ n ih =>
       intro f
-      have e : ((wd (n + 1 + 1)).map f).sum = ((wd (n + 1)).map fun w => f (true :: w)).sum +
-          ((wd (n + 1)).map fun w => f (false :: w)).sum := by
-        rw [wd]
+      have e : ((allBits (n + 1 + 1)).map f).sum =
+          ((allBits (n + 1)).map fun w => f (true :: w)).sum +
+          ((allBits (n + 1)).map fun w => f (false :: w)).sum := by
+        rw [allBits]
         simp [Function.comp_def]
       rw [e, ih, ih]
-      have e2 : ∀ b : Bool, ((wd (n + 1)).map fun w => f (w ++ [b])).sum =
-          ((wd n).map fun w => f (true :: (w ++ [b]))).sum +
-              ((wd n).map fun w => f (false :: (w ++ [b]))).sum := by
+      have e2 : ∀ b : Bool, ((allBits (n + 1)).map fun w => f (w ++ [b])).sum =
+          ((allBits n).map fun w => f (true :: (w ++ [b]))).sum +
+              ((allBits n).map fun w => f (false :: (w ++ [b]))).sum := by
         intro b
-        simp [wd, Function.comp_def]
+        simp [allBits, Function.comp_def]
       rw [e2, e2]
       ring
   induction m generalizing f with
-  | zero => simp [wd]
+  | zero => simp [allBits]
   | succ m ih =>
     rw [h m f]
-    have e : ((wd (m + 1)).map fun w => f w.reverse).sum =
-        ((wd m).map fun w => f (w.reverse ++ [true])).sum +
-        ((wd m).map fun w => f (w.reverse ++ [false])).sum := by
-      simp [wd, Function.comp_def]
+    have e : ((allBits (m + 1)).map fun w => f w.reverse).sum =
+        ((allBits m).map fun w => f (w.reverse ++ [true])).sum +
+        ((allBits m).map fun w => f (w.reverse ++ [false])).sum := by
+      simp [allBits, Function.comp_def]
     rw [e, ih fun w => f (w ++ [true]), ih fun w => f (w ++ [false])]
 
 /-- Reading along a path. -/

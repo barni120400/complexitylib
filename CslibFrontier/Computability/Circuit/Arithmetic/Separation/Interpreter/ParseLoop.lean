@@ -12,7 +12,6 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.FullTrie
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Series
 import CslibFrontier.Foundations.Data.List.Blocks
-import CslibFrontier.Foundations.Data.List.Forall2
 
 /-!
 # The program that guesses a parse tree
@@ -43,7 +42,7 @@ open Cslib.Circuits.Arithmetic.Separation.Interpreter.Tree
 variable {A : Type} [CommRing A] {θ : List Bool → A} {R : Type} [CommRing R] [Algebra A R]
 
 /-- Concatenation of lists of bits. -/
-theorem appBits_gives {a b : Fm} {x : Tree} {ca cb : ℕ} {v w : List Bool}
+private theorem appBits_gives {a b : Fm} {x : Tree} {ca cb : ℕ} {v w : List Bool}
     (ha : Gives θ a x (ofBits v) ca)
     (hb : Gives θ b x (ofBits w) cb) : Gives θ (appF a b) x (ofBits (v ++ w))
         (ca + cb + v.length * 62 + 41) := by
@@ -57,16 +56,17 @@ theorem appBits_gives {a b : Fm} {x : Tree} {ca cb : ℕ} {v w : List Bool}
   | 0 => .quote .nil
   | M + 1 => .cons (.ite .guess (.quote one) (.quote .nil)) (gwd M)
 
-theorem gwd_does (M : ℕ) (x : Tree) : Does θ (gwd M) x ((wd M).map fun w => (1, ofBits w))
+theorem gwd_does (M : ℕ) (x : Tree) : Does θ (gwd M) x ((allBits M).map fun w => (1, ofBits w))
     (6 * M + 1) := by
   induction M with
   | zero => exact (Gives.quote .nil x).mono (by norm_num)
   | succ M ih =>
     have h := ((Gives.quote (θ := θ) one x).either (Gives.quote .nil x)).cons ih
     have e : (([(1, one)] ++ [(1, Tree.nil)] : List (A × Tree)).flatMap fun q =>
-        ((wd M).map fun w => ((1 : A), ofBits w)).map fun r => (q.1 * r.1, Tree.cons q.2 r.2)) =
-        (wd (M + 1)).map fun w => (1, ofBits w) := by
-      simp [wd, Function.comp_def, ofBits, bit]
+        ((allBits M).map fun w => ((1 : A), ofBits w)).map fun r => (q.1 * r.1, Tree.cons q.2 r.2))
+            =
+        (allBits (M + 1)).map fun w => (1, ofBits w) := by
+      simp [allBits, Function.comp_def, ofBits, bit]
     rw [e] at h
     exact h.mono (by omega)
 
@@ -80,7 +80,7 @@ theorem gwd_does (M : ℕ) (x : Tree) : Does θ (gwd M) x ((wd M).map fun w => (
   | m + 1 => lett stepW (walkF m)
 
 theorem walkF_does (m : ℕ) (T : Tree) (acc : List Bool) : Does θ (walkF m) (.cons T (ofBits acc))
-    ((wd m).map fun p => (1, .cons (look p T) (ofBits (p.reverse ++ acc)))) (12 * m + 1) := by
+    ((allBits m).map fun p => (1, .cons (look p T) (ofBits (p.reverse ++ acc)))) (12 * m + 1) := by
   induction m generalizing T acc with
   | zero => exact (Gives.id _).mono (by norm_num)
   | succ m ih =>
@@ -88,7 +88,7 @@ theorem walkF_does (m : ℕ) (T : Tree) (acc : List Bool) : Does θ (walkF m) (.
       (Gives.cons (Gives.quote one _) (Gives.id _).tl)).either
       (Gives.cons (Gives.id (θ := θ) (.cons T (ofBits acc))).hd.hd
           (Gives.cons (Gives.quote .nil _) (Gives.id _).tl))
-    have h := h0.lett (G := walkF m) (R := fun o => (wd m).map fun p => (1, .cons (look p o.hd)
+    have h := h0.lett (G := walkF m) (R := fun o => (allBits m).map fun p => (1, .cons (look p o.hd)
       (ofBits (p.reverse ++ o.tl.path)))) (d := 12 * m + 1) (by
         intro q hq
         simp only
@@ -118,12 +118,13 @@ theorem walkF_does (m : ℕ) (T : Tree) (acc : List Bool) : Does θ (walkF m) (.
             List.flatMap_nil,
       List.append_nil, List.map_map, Function.comp_def, one_mul, e1, e2] at h
     have e :
-        ((wd (m + 1)).map fun p => ((1 : A), Tree.cons (look p T) (ofBits (p.reverse ++ acc)))) =
-        ((wd m).map fun p =>
+        ((allBits (m + 1)).map fun p =>
+            ((1 : A), Tree.cons (look p T) (ofBits (p.reverse ++ acc)))) =
+        ((allBits m).map fun p =>
             ((1 : A), Tree.cons (look p T.tl) (ofBits (p.reverse ++ true :: acc)))) ++
-        (wd m).map fun p =>
+        (allBits m).map fun p =>
             ((1 : A), Tree.cons (look p T.hd) (ofBits (p.reverse ++ false :: acc))) := by
-      simp [wd, Function.comp_def, look]
+      simp [allBits, Function.comp_def, look]
     rw [e]
     exact h.mono (by omega)
 
@@ -166,7 +167,7 @@ theorem walkF_does (m : ℕ) (T : Tree) (acc : List Bool) : Does θ (walkF m) (.
 @[expose] def loopF (M m : ℕ) : Fm := .ite (.hd (.tl (.tl .id))) (.ite .guess (leafF m) (intF M))
     (.quote .nil)
 
-theorem nameL_gives {self T t : Tree} {b : Tree} {g acc : List Bool} {ws : List (List Bool)}
+private theorem nameL_gives {self T t : Tree} {b : Tree} {g acc : List Bool} {ws : List (List Bool)}
     (ht : t = .nil ∨ ∃ c : List Bool, c.length = 2 ∧ t = ofBits c) :
     Gives θ nameL
         (.cons (.cons self (.cons b (.cons (listT ((g :: ws).map ofBits)) T)))
@@ -206,7 +207,7 @@ theorem nameL_gives {self T t : Tree} {b : Tree} {g acc : List Bool} {ws : List 
   rw [e]
   exact h.mono (by omega)
 
-theorem nameK_gives {self T : Tree} {b : Tree} {g l r : List Bool} {ws : List (List Bool)} :
+private theorem nameK_gives {self T : Tree} {b : Tree} {g l r : List Bool} {ws : List (List Bool)} :
     Gives θ nameK
         (.cons (.cons self (.cons b (.cons (listT ((g :: ws).map ofBits)) T)))
             (.cons (ofBits l) (ofBits r)))
@@ -239,7 +240,8 @@ theorem loopF_kv {M m : ℕ} {T : Tree} {κ : List Bool → R} {S : Set (List Bo
       κ ([false, false] ++ g ++ l ++ r ++ [false]) = k (KT.val g) (KT.val l) (KT.val r) ∧
       [false, false] ++ g ++ l ++ r ++ [false] ∈ S)
     (ha : ∀ g : List Bool, g.length = M →
-      ((wd m).map fun p => κ ([false, true] ++ g ++ p.reverse ++ lc (look p T) ++ [false])).sum =
+      ((allBits m).map fun p =>
+          κ ([false, true] ++ g ++ p.reverse ++ lc (look p T) ++ [false])).sum =
           a (KT.val g))
     (hS : ∀ g p c : List Bool,
         g.length = M → p.length = m → c.length = 2 → [false, true] ++ g ++ p ++ c ++ [false] ∈ S)
@@ -293,7 +295,7 @@ theorem loopF_kv {M m : ℕ} {T : Tree} {κ : List Bool → R} {S : Set (List Bo
             intro q hq
             rw [List.mem_map] at hq
             obtain ⟨p, hp, rfl⟩ := hq
-            have hpm := length_of_mem_wd hp
+            have hpm := length_of_mem_allBits hp
             simp only [tl_cons, hd_cons, path_ofBits]
             have m1 := KV.mul (κ := κ) (S := S)
                 (nameL_gives (θ := θ) (self := (loopF M m).code) (b := num b) (T := T)
@@ -338,8 +340,8 @@ theorem loopF_kv {M m : ℕ} {T : Tree} {κ : List Bool → R} {S : Set (List Bo
               obtain ⟨l, hl, hq⟩ := hq
               rw [List.mem_map] at hq
               obtain ⟨r, hr, rfl⟩ := hq
-              have hlm := length_of_mem_wd hl
-              have hrm := length_of_mem_wd hr
+              have hlm := length_of_mem_allBits hl
+              have hrm := length_of_mem_allBits hr
               simp only [tl_cons, hd_cons, path_ofBits]
               have m1 := KV.mul (κ := κ) (S := S)
                   (nameK_gives (θ := θ) (self := (loopF M m).code) (b := num (b + 1)) (T := T)
@@ -369,15 +371,15 @@ theorem loopF_kv {M m : ℕ} {T : Tree} {κ : List Bool → R} {S : Set (List Bo
           · rw [List.sum_map_flatMap, Wi]
             simp only
                 [List.map_map, Function.comp_def, map_one, one_mul, tl_cons, hd_cons, path_ofBits]
-            rw [← sum_wd M fun l => ∑ r ∈ Finset.range (2 ^ M),
+            rw [← sum_allBits M fun l => ∑ r ∈ Finset.range (2 ^ M),
                 k (KT.val g) l r * W E b (l :: r :: ws.map KT.val)]
             congr 1
             refine List.map_congr_left fun l hl => ?_
-            rw [← sum_wd M fun r => k (KT.val g) (KT.val l) r *
+            rw [← sum_allBits M fun r => k (KT.val g) (KT.val l) r *
                 W E b (KT.val l :: r :: ws.map KT.val)]
             congr 1
             refine List.map_congr_left fun r hr => ?_
-            rw [(hk g l r hg (length_of_mem_wd hl) (length_of_mem_wd hr)).1]
+            rw [(hk g l r hg (length_of_mem_allBits hl) (length_of_mem_allBits hr)).1]
       have h3 := KV.ite_true (H := .quote .nil)
           (Gives.id (θ := θ) x).tl.tl.hd (by rw [hx]; simp [listT]) (KV.either h1 h2)
       refine (h3.mono ?_).congr ?_

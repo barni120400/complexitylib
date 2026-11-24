@@ -40,7 +40,7 @@ public section
 
 namespace MvPolynomial
 
-variable {F : Type*} [CommRing F] {σ : Type*}
+variable {F : Type*} [CommSemiring F] {σ : Type*}
 
 /-- `p` along the line through `0` and `u`: the polynomial `t ↦ p (t • u)`. -/
 @[expose] noncomputable def line (u : σ → F) : MvPolynomial σ F →ₐ[F] Polynomial F :=
@@ -82,7 +82,7 @@ end MvPolynomial
 
 namespace Polynomial
 
-variable {F : Type*} [CommRing F]
+variable {F : Type*} [CommSemiring F]
 
 /-- A positive coefficient of a product: the two terms with a constant coefficient, and the products
 of positive coefficients. -/

@@ -9,7 +9,6 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccProg
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
 
 /-!
 # The size of the program of low degree
@@ -66,7 +65,7 @@ theorem size_app (p : Tree) (e : Fm) : (app p e).code.size = p.size + e.code.siz
 theorem size_lett (e b : Fm) : (lett e b).code.size = b.code.size + e.code.size + 17 := by
   rw [lett, size_run, size_quote]; ring
 
-theorem size_gwd (M : ℕ) : (gwd M).code.size = 50 * M + 3 := by
+private theorem size_gwd (M : ℕ) : (gwd M).code.size = 50 * M + 3 := by
   induction M with
   | zero => simp [gwd, size_quote, Tree.size]
   | succ M ih =>
@@ -74,14 +73,14 @@ theorem size_gwd (M : ℕ) : (gwd M).code.size = 50 * M + 3 := by
     simp only [one, Tree.size]
     ring
 
-theorem size_walkF (m : ℕ) : (walkF m).code.size = (stepW.code.size + 17) * m + 5 := by
+private theorem size_walkF (m : ℕ) : (walkF m).code.size = (stepW.code.size + 17) * m + 5 := by
   induction m with
   | zero => simp [walkF, size_id]
   | succ m ih =>
     rw [walkF, size_lett, ih]
     ring
 
-theorem size_pairsF (m : ℕ) (l : Fm) : (pairsF m l).code.size = l.code.size +
+private theorem size_pairsF (m : ℕ) (l : Fm) : (pairsF m l).code.size = l.code.size +
     (2 * pairB.code.size + 30) * m := by
   induction m generalizing l with
   | zero => simp [pairsF]

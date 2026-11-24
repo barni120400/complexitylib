@@ -8,9 +8,10 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Chains
 public import CslibFrontier.Computability.Circuit.Arithmetic.ComputedWithin
+public import CslibFrontier.Foundations.RingTheory.MvPolynomial.Line
 public import Mathlib.RingTheory.PowerSeries.Basic
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Chains
 
 /-!
 # Low degree is fast: the quadratic equations of the series
@@ -59,8 +60,7 @@ theorem exists_series [Fintype σ] {p : MvPolynomial σ F} {M : ℕ}
             PowerSeries.C (κ g l r) * (ser u (P l) * ser u (P r)) := by
   classical
   obtain ⟨l, hl, k, hk, rfl⟩ := hp.exists_steps
-  obtain ⟨κ, lam, left, right, H⟩ :=
-      Cslib.Circuits.Arithmetic.Separation.LowDegree.lem_lowdeg_chains l hl
+  obtain ⟨κ, lam, left, right, H⟩ := lem_lowdeg_chains l hl
   refine ⟨fun g a b => if h : g < s then ∑ j,
       if (left j).1 = a ∧ (right j).1 = b then κ ⟨g, h⟩ j else 0 else 0,
     fun g => if h : g < s then lam ⟨g, h⟩ else 0, fun g => if g < s then l g else 0, k,
