@@ -20,9 +20,10 @@ import Mathlib.Data.Fintype.BigOperators
 
 The play of the cutting argument of [AnthropicVPVNP2026] (Appendix H.2 and Appendix J; module
 `Nc.G.Defs`) is run by *moves*. A move has a law (`Cut.Law`) and a party for every role of the
-law (`Cut.Moves`). In a move, units are given at every slot of the law (missing units are replaced
-by zeros), and the strings on a channel of the law, a label and the string of the law for every
-bit, are cut into new units.
+law (`Cut.Moves`). In a move, units are given at every slot of the law (a slot given fewer units
+than the move uses reads zeros after them; a move whose given units are not all present
+contributes zero), and the strings on a channel of the law, a label and the string of the law
+for every bit, are cut into new units.
 
 Units have names (`Cut.UnitId`): the *initial* units of the strings between two base parties, and
 the *new* units of the channels of the moves. A *plan* (`Cut.Plan`) says which units are given at
@@ -31,10 +32,12 @@ the outcomes of the earlier moves; an *outcome* gives the number of units of eve
 
 ## Main definitions
 
-* `Cut.Moves`, with `Cut.Moves.Role`, `Cut.Moves.Slot`, `Cut.Moves.Channel` and the parties
-  `Cut.Moves.roleParty`, `Cut.Moves.slotParty`, `Cut.Moves.channelParty`.
-* `Cut.UnitId`, `Cut.UnitId.holder`, `Cut.UnitId.index`, `Cut.UnitId.count`: names of units,
-  their two holders, their number in their string and the number of units of that string.
+* `Cut.Moves`, with `Cut.Moves.Role`, `Cut.Moves.Slot`, `Cut.Moves.Channel`, the roles and
+  parties at the ends `Cut.Moves.slotRole`, `Cut.Moves.channelRole`, `Cut.Moves.roleParty`,
+  `Cut.Moves.slotParty`, `Cut.Moves.channelParty`, and `Cut.Moves.setOutcome`.
+* `Cut.UnitId`, `Cut.UnitId.holder`, `Cut.UnitId.index`, `Cut.UnitId.count`, `Cut.UnitId.list`:
+  names of units, their two holders, their number in their string, the number of units of that
+  string, and all units in a fixed order.
 * `Cut.initialUnits`, `Cut.newUnits`: the units at the beginning, and those made by a move.
 * `Cut.slotBits`, `Cut.ChannelOk`, `Cut.roleTable`: the bits given at a slot, the condition on
   the copies of the new units of a channel, and the table of a role of a move.
@@ -190,7 +193,9 @@ theorem init_notMem_newUnits {x : Fin E} {o : M.Channel → Fin U1} {a b : Fin A
     (.init a b k : UnitId A U0 M.Channel U1) ∉ newUnits M x o := by
   simp [newUnits]
 
-/-- The bits given at a slot: the bits of the units, and zeros up to `t` units. -/
+/-- The bits given at a slot: the bits of the units `ids`, then zeros for the `t - ids.length`
+units that are not given. An absent unit has no bits (`UnitContent.bits none = []`); `roleTable`
+excludes that case. -/
 @[expose] def slotBits (t : ℕ) (ids : List (UnitId A U0 N U1))
     (y : UnitId A U0 N U1 → UnitContent ub) : List Bool :=
   (ids.flatMap fun id => (y id).bits) ++ List.replicate ((t - ids.length) * ub) false
@@ -212,7 +217,8 @@ variable (M)
 move uses `t` units, and `o` is the outcome. The table reads the copies `y` of the units given at
 the slots of the role and of the new units of its channels: for every one of the `t * ub` bits
 there are an index and strings of the law, and the strings on a channel, with the labels of the
-indices, are the string that is cut into the new units of the channel. -/
+indices, are the string that is cut into the new units of the channel. The table is zero if a
+unit given at a slot of the role is absent; otherwise the slots are read through `slotBits`. -/
 @[expose] def roleTable (x : Fin E) (p : (M.law x).Role) (t : ℕ)
     (ids : (M.law x).SlotAt p → List (UnitId A U0 M.Channel U1)) (o : M.Channel → Fin U1)
     (y : UnitId A U0 M.Channel U1 → UnitContent ub) : F :=
@@ -229,7 +235,7 @@ indices, are the string that is cut into the new units of the channel. -/
 end Units
 
 /-- A plan: which units are given at every slot, and the number of units that every move uses
-(slots with fewer units are filled with zeros), as functions of the numbers `n` of units at the
+(slots given fewer units read zeros after them), as functions of the numbers `n` of units at the
 beginning and of the outcomes `o` of the earlier moves; and which outcomes are allowed. -/
 structure Plan {F : Type*} [CommSemiring F] {A A' E : ℕ} (M : Moves F (A + A') E)
     (U0 U1 : ℕ) where

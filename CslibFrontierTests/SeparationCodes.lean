@@ -7,7 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: local-only (test driver)
 
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Codes
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Codes
 import Mathlib.Data.Fin.VecNotation
 
 /-! Tests of strings on a side and their code words, as a client that sees only the public
@@ -15,20 +15,20 @@ statements: the string on a side and its code word for two blocks, the bits of a
 injectivity of code words that are long enough, and a code word that is too short to determine
 the strings. -/
 
-@[expose] public section
+set_option linter.privateModule false
 
 namespace CslibFrontierTests.SeparationCodes
 
 open Cslib.Circuits.Arithmetic.Separation.Cut
 
 /-- Labels of one bit for the indices `Bool`. -/
-def lab : Bool → Cslib.BitString 1 := fun b => ![b]
+private def lab : Bool → Cslib.BitString 1 := fun b => ![b]
 
 /-- The index `true` has strings of two bits, and the index `false` has the empty string. -/
-def len : Bool → ℕ := fun b => if b then 2 else 0
+private def len : Bool → ℕ := fun b => if b then 2 else 0
 
 /-- Two blocks with the indices `true` and `false`. -/
-def idx : Fin 2 → Bool := ![true, false]
+private def idx : Fin 2 → Bool := ![true, false]
 
 /-- The string on the side: the label `1`, the string `11`, the label `0`, the empty string. -/
 example : sideString lab len idx (fun _ _ => true) = [true, true, true, false] := by decide

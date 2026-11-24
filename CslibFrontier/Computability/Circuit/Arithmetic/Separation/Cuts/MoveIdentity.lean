@@ -96,10 +96,10 @@ section Slots
 variable {A U0 U1 ub t : ℕ} {N : Type*} {ids : List (UnitId A U0 N U1)}
   {y y' : UnitId A U0 N U1 → UnitContent ub}
 
-theorem slotBits_congr (h : ∀ id ∈ ids, y id = y' id) : slotBits t ids y = slotBits t ids y' := by
+private theorem slotBits_congr (h : ∀ id ∈ ids, y id = y' id) : slotBits t ids y = slotBits t ids y' := by
   rw [slotBits, slotBits, List.flatMap_congr fun id hid => by rw [h id hid]]
 
-theorem length_slotBits (h : ∀ id ∈ ids, y id ≠ none) (ht : ids.length ≤ t) :
+private theorem length_slotBits (h : ∀ id ∈ ids, y id ≠ none) (ht : ids.length ≤ t) :
     (slotBits t ids y).length = t * ub := by
   rw [slotBits, List.length_append, List.length_replicate,
     List.length_flatMap_of_forall_length_eq fun id hid => UnitContent.length_bits (h id hid),
@@ -167,7 +167,7 @@ theorem roleTable_ne_zero (h : roleTable M x p t ids o y ≠ 0) :
   obtain ⟨g, -, h⟩ := exists_ne_zero_of_sum_ne_zero h
   exact ⟨hy, i, g, ite_ne_right_iff.1 h⟩
 
-theorem ChannelOk.ne_none {N : Type*} {ν : N} {J : ℕ} {str : List Bool}
+private theorem ChannelOk.ne_none {N : Type*} {ν : N} {J : ℕ} {str : List Bool}
     {y : UnitId A U0 N U1 → UnitContent ub} (h : ChannelOk ν J str y) {k : Fin U1}
     (hk : (k : ℕ) ≤ J) : y (.new ν k) ≠ none := by
   rw [h.2 k, Ne, unitsOf_eq_none, h.1]
