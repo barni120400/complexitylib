@@ -7,6 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: candidate
 
+public import CslibFrontier.Init
 public import Mathlib.Analysis.InnerProductSpace.PiL2
 public import Mathlib.Basic.Sign.Defs
 import Mathlib.Analysis.SpecialFunctions.Sqrt
@@ -27,7 +28,6 @@ prices) places the parties at such points; opposite vertices are at distance `�
 
 ## Main results
 
-* `Flat.cubePoint_apply`: its coordinates.
 * `Flat.dist_cubePoint_neg`: opposite vertices of the cube are at distance `√k`.
 
 ## References
@@ -46,11 +46,12 @@ variable {k : ℕ}
 @[expose] def boolSign (b : Bool) : SignType := if b then 1 else -1
 
 /-- The point `u / 2` of `ℝ ^ k` for a sign vector `u`. -/
-@[expose] noncomputable def cubePoint (u : Fin k → SignType) : EuclideanSpace ℝ (Fin k) :=
+noncomputable def cubePoint (u : Fin k → SignType) : EuclideanSpace ℝ (Fin k) :=
   WithLp.toLp 2 fun x => ((u x : SignType) : ℝ) / 2
 
-theorem cubePoint_apply (u : Fin k → SignType) (x : Fin k) :
-    cubePoint u x = ((u x : SignType) : ℝ) / 2 :=
+/-- The coordinates of `u / 2`. -/
+@[simp] theorem cubePoint_apply (u : Fin k → SignType) (x : Fin k) :
+    cubePoint u x = ((u x : SignType) : ℝ) / 2 := by
   rfl
 
 /-- Opposite vertices of the cube are at distance `√k`. -/
@@ -63,6 +64,6 @@ theorem dist_cubePoint_neg (π : Fin k → Bool) :
         1 := by
     rw [cubePoint_apply, cubePoint_apply, Real.dist_eq]
     cases π x <;> norm_num [boolSign]
-  simp [h]
+  simp only [h, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul, mul_one]
 
 end Cslib.Circuits.Arithmetic.Separation.Flat

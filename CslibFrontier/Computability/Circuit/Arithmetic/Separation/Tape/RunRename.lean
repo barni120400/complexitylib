@@ -11,7 +11,7 @@ public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 
 /-!
-# Renaming the inputs of an automaton
+# Renaming the inputs of an automaton, and change of rings
 
 An equivalence `φ : J ≃ J'` of the input names renames the channels (`Tape.Ch.congr`) and the
 letters (`Tape.Letter.congr`). Renaming keeps what a run emits (`Tape.emit_congr`), so the value of
