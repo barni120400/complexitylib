@@ -27,7 +27,7 @@ finitely many constants are then lifted to a subring that has a homomorphism to 
 (`Arithmetic.ComputedWithin.exists_finset_lift`, `Cslib.exists_specialisation`), and the circuit
 is mapped along it. In the approximate case the constants are first cut off to Laurent polynomials
 (`Arithmetic.ApproximatedWithin.exists_laurentPolynomial`), and the lift goes coefficient by
-coefficient (`Cslib.mem_range_mapRingHom_subtype`).
+coefficient (`AddMonoidAlgebra.range_map`).
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Paper.Transfer`.
 
@@ -83,7 +83,8 @@ theorem lem_transfer_approx (p : ℕ) [CharP F p] [CharP KK p] (q : MvPolynomial
   classical
   obtain ⟨A, hA, ⟨ψ⟩⟩ := exists_specialisation g (C.biUnion fun c => c.coeff.support.image c.coeff)
   obtain ⟨L, hL, hm⟩ := hC (AddMonoidAlgebra.mapRingHom ℤ A.subtype) fun c hc => by
-    refine mem_range_mapRingHom_subtype A c fun i => ?_
+    rw [AddMonoidAlgebra.coe_mapRingHom, AddMonoidAlgebra.range_map]
+    refine fun i => ⟨⟨c.coeff i, ?_⟩, rfl⟩
     by_cases hi : c.coeff i = 0
     · rw [hi]
       exact A.zero_mem

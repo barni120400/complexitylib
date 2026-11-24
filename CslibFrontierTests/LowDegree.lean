@@ -81,11 +81,23 @@ example (q : MvPolynomial (Fin 2) ℤ) {S : ℕ}
     ComputedWithin (map (Int.castRingHom (AlgebraicClosure (ZMod 2))) q) S :=
   Cslib.Circuits.Arithmetic.Separation.lem_transfer 2 q h
 
-/-- A polynomial computed within `s` nodes lifts along a ring map whose range holds its constants;
-for `ℤ → ℚ` and the variable `X 0`. -/
-example : ∃ S : Finset ℚ, (S : Set ℚ) ⊆ Set.range (Int.castRingHom ℚ) →
-    ∃ Q : MvPolynomial (Fin 1) ℤ, ComputedWithin Q 1 ∧ map (Int.castRingHom ℚ) Q = X 0 := by
-  obtain ⟨S, hS⟩ := (computedWithin_X (K := ℚ) (0 : Fin 1)).exists_finset_lift
-  exact ⟨S, hS (Int.castRingHom ℚ)⟩
+/-- A polynomial computed within `s` nodes lifts along a ring map whose range holds its
+constants: along the surjective cast `ℤ → ZMod 2`, the variable `X 0` lifts. -/
+example : ∃ Q : MvPolynomial (Fin 1) ℤ, ComputedWithin Q 1 ∧
+    map (Int.castRingHom (ZMod 2)) Q = X 0 := by
+  obtain ⟨S, hS⟩ := (computedWithin_X (K := ZMod 2) (0 : Fin 1)).exists_finset_lift
+  exact hS (Int.castRingHom (ZMod 2)) fun t _ => ZMod.intCast_surjective t
+
+/-- An approximation of `X 0` within one node over `ZMod 2` gives a circuit of one node over the
+algebraic closure with constants in `KK[ε, ε⁻¹]`, whose constant term is `X 0` and which has no
+negative powers of `ε`. -/
+example : ∃ P : MvPolynomial (Fin 1) (LaurentPolynomial (AlgebraicClosure (ZMod 2))),
+    ComputedWithin P 1 ∧ ∀ d : Fin 1 →₀ ℕ, (∀ i : ℤ, i < 0 → (P.coeff d).coeff i = 0) ∧
+      (P.coeff d).coeff 0 =
+        (map (Int.castRingHom (AlgebraicClosure (ZMod 2)))
+          (X 0 : MvPolynomial (Fin 1) ℤ)).coeff d :=
+  Cslib.Circuits.Arithmetic.Separation.lem_transfer_approx (F := ZMod 2) 2 (X 0) (by
+    rw [map_X]
+    exact (computedWithin_X 0).approximatedWithin)
 
 end CslibFrontierTests.LowDegree

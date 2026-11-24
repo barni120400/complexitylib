@@ -17,21 +17,19 @@ import Mathlib.RingTheory.Nullstellensatz
 /-!
 # Specializing finitely many elements to an algebraically closed field
 
-Three facts used to move circuits between fields of the same characteristic:
+Two facts used to move circuits between fields of the same characteristic:
 
 * two fields of the same characteristic have homomorphisms to a common nonzero ring, their tensor
   product over the prime field (`Cslib.exists_common_ring`);
 * Zariski's lemma, in the form of Hilbert's Nullstellensatz: finitely many elements of a nonzero
   ring that contains an algebraically closed field `KK` lie in a subring with a homomorphism to `KK`
-  (`Cslib.exists_specialisation`);
-* a Laurent polynomial whose coefficients lie in a subring comes from a Laurent polynomial over it
-  (`Cslib.mem_range_mapRingHom_subtype`).
+  (`Cslib.exists_specialisation`).
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Rate.Transfer`.
 
 ## Main results
 
-* `Cslib.exists_common_ring`, `Cslib.exists_specialisation`, `Cslib.mem_range_mapRingHom_subtype`.
+* `Cslib.exists_common_ring`, `Cslib.exists_specialisation`.
 -/
 
 public section
@@ -77,17 +75,6 @@ theorem exists_specialisation {KK T : Type*} [Field KK] [IsAlgClosed KK] [CommRi
   refine ⟨φ.range, fun a ha => ⟨X ⟨a, ha⟩, by simp [φ]⟩, ⟨?_⟩⟩
   exact (Ideal.Quotient.lift (RingHom.ker φ) _ hx).comp
       (RingHom.quotientKerEquivRange φ).symm.toRingHom
-
-/-- A Laurent polynomial over T with all coefficients in the subring A comes from a Laurent
-polynomial over A. -/
-theorem mem_range_mapRingHom_subtype {T : Type*} [CommRing T] (A : Subring T)
-    (c : LaurentPolynomial T)
-    (h : ∀ i, c.coeff i ∈ A) : c ∈ Set.range (AddMonoidAlgebra.mapRingHom ℤ A.subtype) := by
-  refine ⟨.ofCoeff (Finsupp.onFinset c.coeff.support (fun i => ⟨c.coeff i, h i⟩) fun i hi => ?_),
-      ?_⟩
-  · exact Finsupp.mem_support_iff.2 fun h0 => hi (Subtype.ext h0)
-  · ext i
-    simp
 
 end Rings
 

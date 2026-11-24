@@ -328,7 +328,8 @@ theorem exists_steps (h : ComputedWithin P s) :
 
 /-- A polynomial computed within `s` nodes has a finite set of constants: along any ring
 homomorphism whose range contains them, it is the image of a polynomial computed within `s` nodes.
-The set holds the constants of the gates of a circuit for `P`, and `0`. -/
+The set holds the constants of the gates of a circuit for `P`, with `0` for the gates
+that are not constants. -/
 theorem exists_finset_lift (h : ComputedWithin P s) :
     ∃ S : Finset K, ∀ {B : Type*} [CommSemiring B] (ι : B →+* K), (S : Set K) ⊆ Set.range ι →
       ∃ Q : MvPolynomial σ B, ComputedWithin Q s ∧ MvPolynomial.map ι Q = P := by
