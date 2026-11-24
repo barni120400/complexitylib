@@ -11,6 +11,7 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Acc
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.LowDegProg
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.NoAcc
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Transfer
+import Mathlib.Algebra.Field.ZMod
 import Mathlib.Data.Rat.Init
 import Mathlib.Data.ZMod.Basic
 import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
