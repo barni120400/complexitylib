@@ -1203,6 +1203,16 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvatur
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.MidpointTerm
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.WindowMean
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Hat
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Loop
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.ProgRun
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Rat
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Refine
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Rep
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunGood
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinear
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearGadget
 public import CslibFrontier.Computability.Circuit.Arithmetic.SetMultilinearLowerBound
