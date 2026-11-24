@@ -1237,6 +1237,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Uni
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Walk
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Words
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Transducer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccProg
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
@@ -1252,6 +1253,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.FullTrie
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Guess
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Interp
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.ListPrograms
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Lists
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.LowDegProg
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
@@ -1265,6 +1267,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postponed
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Scale
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Typed
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Chains
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Series
