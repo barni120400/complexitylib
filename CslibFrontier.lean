@@ -1256,10 +1256,12 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Det
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.LenU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.PM
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Prog
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Rules
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.SortU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.SpecU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.SpecU2
