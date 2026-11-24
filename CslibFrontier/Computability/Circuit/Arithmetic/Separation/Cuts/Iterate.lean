@@ -281,9 +281,10 @@ theorem exists_isCut_iterate (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (h
       omega
 
 /-- **The cut at a scale, given one cut** (the conditional step of the proof of
-[AnthropicVPVNP2026], Theorem J.4): when `α + 1` cuts lose at most `v`, plain sums of `v ^ H ≤ τ ≤ v ^ α` steps on instances of size `s ≤ τ / v ^ 48`
-are cut into at most `τ * v ^ 2 / v ^ H` pieces of `v ^ H` steps and size `v ^ (H - 32)`, in
-`τ / v ^ 24` steps, by a program of size at most `v ^ H`. -/
+[AnthropicVPVNP2026], Theorem J.4): when `α + 1` cuts lose at most `v`, plain sums of
+`v ^ H ≤ τ ≤ v ^ α` steps on instances of size `s ≤ τ / v ^ 48` are cut into at most
+`τ * v ^ 2 / v ^ H` pieces of `v ^ H` steps and size `v ^ (H - 32)`, in `τ / v ^ 24` steps, by a
+program of size at most `v ^ H`. -/
 theorem exists_isCut (hc : OneCutAt θ v a₀ α Λ) (hv : 110 ≤ v) (hΛ : 2 ≤ Λ)
     (hloss : (8 * Λ ^ 2) ^ (α + 1) ≤ v) (hH : a₀ + 4 ≤ H) (hH' : 200 ≤ H) {τ s : ℕ}
     (hτ : v ^ H ≤ τ) (hτα : τ ≤ v ^ α) (hs : s * v ^ 48 ≤ τ) :
