@@ -115,10 +115,10 @@ theorem runs_dr [Finite M] :
       · simp [on, h1, h2]
   · have hc : ∀ b : Bl K, ({lsT, .tp (.bk b) false} : Finset (Zc K)).card = 2 :=
       fun _ => Finset.card_pair (by simp)
-    simp only [hc, List.length_append, Finset.sum_add_distrib, sum_on]
-    simp
-    ring_nf
-    omega
+    simp only [hc, List.length_append, Finset.sum_add_distrib, sum_on, List.length_cons,
+      List.length_nil, zero_add, Finset.card_singleton, mul_one, Fintype.card_bool,
+      Finset.sum_const, Finset.card_univ, smul_eq_mul]
+    exact le_of_eq (by ring)
 
 /-- Channels receiving the block-end separator `bar` during a distribution pass. -/
 @[expose] def barSet : Finset (Zc K) :=
