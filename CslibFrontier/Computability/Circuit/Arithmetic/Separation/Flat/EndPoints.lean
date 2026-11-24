@@ -9,7 +9,8 @@ module
 
 public import CslibFrontier.Init
 public import Mathlib.Analysis.InnerProductSpace.PiL2
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
+import CslibFrontier.Foundations.Algebra.BigOperators.IteMem
+import CslibFrontier.Foundations.Analysis.InnerProductSpace.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -35,7 +36,6 @@ less than the `k (k - 1) / 2` wires of length one.
 ## Main results
 
 * `Flat.dist_endPoint`: the two ends of a wire are at distance one.
-* `Flat.dist_half_smul_le`: the distance from half a unit vector to a point.
 * `Flat.exists_norm_eq_sum_dist_endPoint_le`: two hubs for a balanced set of nodes.
 
 ## References
@@ -90,18 +90,6 @@ theorem dist_endPoint {a b : Fin k} (h : a ≠ b) : dist (endPoint a b) (endPoin
   norm_num
   exact norm_unitDiff h
 
-/-- The distance from half a unit vector `u` to a point `x` is at most
-`1 / 2 - ⟪u, x⟫ + ‖x‖ ^ 2`. -/
-theorem dist_half_smul_le {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
-    {u : V} (hu : ‖u‖ = 1) (x : V) :
-    dist ((1 / 2 : ℝ) • u) x ≤ 1 / 2 - inner ℝ u x + ‖x‖ ^ 2 := by
-  rw [dist_eq_norm]
-  have h1 : ‖(1 / 2 : ℝ) • u - x‖ ^ 2 = 1 / 4 - inner ℝ u x + ‖x‖ ^ 2 := by
-    rw [norm_sub_sq_real, norm_smul, hu, real_inner_smul_left,
-      show ‖(1 / 2 : ℝ)‖ = 1 / 2 by norm_num]
-    ring
-  nlinarith [sq_nonneg (‖(1 / 2 : ℝ) • u - x‖ - 1 / 2), norm_nonneg ((1 / 2 : ℝ) • u - x)]
-
 /-- The direction of the hubs for the set `A`: `k - |A|` at the nodes of `A` and `-|A|` at the
 others. -/
 private noncomputable def hubDir (A : Finset (Fin k)) : EuclideanSpace ℝ (Fin k) :=
@@ -117,7 +105,7 @@ private theorem norm_hubDir_sq (A : Finset (Fin k)) :
     rw [Real.norm_eq_abs, sq_abs, hubDir_apply]
     split_ifs <;> ring
   rw [EuclideanSpace.norm_sq_eq]
-  simp only [h, sum_ite_mem_const]
+  simp only [h, Fintype.sum_ite_mem_const, Fintype.card_fin]
   ring
 
 /-- The gain of the two hubs: the signed sum of the differences of `hubDir A`. -/
@@ -125,14 +113,14 @@ private theorem sum_sign_mul_hubDir_sub (A : Finset (Fin k)) :
     ∑ a, ∑ b, (if a ∈ A then (1 : ℝ) else -1) * (hubDir A a - hubDir A b) =
       2 * (A.card * ((k : ℝ) - A.card) * k) := by
   have h0 : ∑ b, hubDir A b = 0 := by
-    simp only [hubDir_apply, sum_ite_mem_const]
+    simp only [hubDir_apply, Fintype.sum_ite_mem_const, Fintype.card_fin]
     ring
   have h (a : Fin k) : ∑ b, (if a ∈ A then (1 : ℝ) else -1) * (hubDir A a - hubDir A b) =
       if a ∈ A then k * ((k : ℝ) - A.card) else k * A.card := by
     rw [← mul_sum, sum_sub_distrib, h0, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul,
       hubDir_apply]
     split_ifs <;> ring
-  simp only [h, sum_ite_mem_const]
+  simp only [h, Fintype.sum_ite_mem_const, Fintype.card_fin]
   ring
 
 /-- **Two hubs for a balanced set** ([AnthropicVPVNP2026], proof of Proposition E.5). For a set

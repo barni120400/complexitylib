@@ -7287,6 +7287,7 @@ public import CslibFrontier.DataStructure.WordRAM.Resizable.Randomized.StateTran
 public import CslibFrontier.DataStructure.WordRAM.Resizable.StateTransition
 public import CslibFrontier.DataStructure.WordRAM.StateTransition
 public import CslibFrontier.Foundations.Algebra.BigOperators.Fin
+public import CslibFrontier.Foundations.Algebra.BigOperators.IteMem
 public import CslibFrontier.Foundations.Algebra.BigOperators.Selection
 public import CslibFrontier.Foundations.Algebra.Covering.Basic
 public import CslibFrontier.Foundations.Algebra.Covering.Certificate

@@ -9,7 +9,8 @@ module
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 public import Mathlib.Analysis.InnerProductSpace.PiL2
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
+import CslibFrontier.Foundations.Algebra.BigOperators.IteMem
+import CslibFrontier.Foundations.Analysis.InnerProductSpace.Basic
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -20,7 +21,8 @@ import Mathlib.Tactic.Positivity
 In the lower bound for the complete network on `k` nodes with long strings of
 [AnthropicVPVNP2026] (Proposition E.10, in the flat case; module `Nc.CaseI.Hub` and the estimates
 `prop_flat_rate_direction`, `prop_flat_rate_lengths` of `Paper.Rate`), the two ends of the wire
-between the nodes `a < b` stand at `e_a / 2` and at `-e_a / 2`, facet centres of the cube
+between the nodes `a < b` stand both on the `a`-th coordinate axis, at `e_a / 2` for the end at
+`a` and at `-e_a / 2` (not `-e_b / 2`) for the end at `b`: facet centres of the cube
 `[-1/2, 1/2] ^ k`, at distance one (`Flat.cubeEndPoint`, `Flat.dist_cubeEndPoint`).
 
 For a set `A` of nodes with `k / 3 ≤ |A| ≤ 2 k / 3` there is a point `x` of norm `2 / (9 √k)`
@@ -97,12 +99,12 @@ private theorem sum_separated (A : Finset (Fin k)) :
   have h4 (a : Fin k) : (∑ b : Fin k, if a ∈ A then (if b ∈ A then (0 : ℝ) else 1) else 0) =
       if a ∈ A then (k : ℝ) - A.card else 0 := by
     by_cases ha : a ∈ A
-    · simp only [ha, ite_true, sum_ite_mem_const]
+    · simp only [ha, ite_true, Fintype.sum_ite_mem_const, Fintype.card_fin]
       ring
     · simp [ha]
   rw [sum_congr rfl fun e _ => h e, sum_pair_add_swap fun a b => if a ∈ A ∧ b ∉ A then (1 : ℝ)
     else 0]
-  simp only [h3, h4, sum_ite_mem_const]
+  simp only [h3, h4, Fintype.sum_ite_mem_const, Fintype.card_fin]
   ring
 
 /-- The direction of the hubs is long, by the Cauchy–Schwarz inequality. -/

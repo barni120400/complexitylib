@@ -20,20 +20,19 @@ import Mathlib.Tactic.Ring
 # The wires of the complete network
 
 The complete network on `k` nodes of [AnthropicVPVNP2026] (Appendix E; modules `Nc.CaseI.Fkl` and
-`Nc.CaseI.Lower`) has one wire for every pair of nodes `a < b` (`Flat.Pair`). A sum over the
+`Nc.CaseI.Lower`) has one wire for every pair of nodes `low < high` (`Flat.Pair`). A sum over the
 wires of a term for each of the two ends is a sum over the ordered pairs of distinct nodes
 (`Flat.sum_pair_add_swap`), and there are `k (k - 1) / 2` wires (`Flat.sum_pair_one`).
 
 ## Main definitions
 
-* `Flat.Pair`, `Flat.Pair.low`, `Flat.Pair.high`: the pairs of nodes `a < b`, and their two
-  nodes.
+* `Flat.Pair`: a wire, a pair of nodes `low < high`.
+* `Flat.pairEquiv`: wires as pairs of nodes in increasing order.
 
 ## Main results
 
 * `Flat.sum_pair_add_swap`: sums over wires and over ordered pairs of distinct nodes.
 * `Flat.sum_pair_one`: the number of wires.
-* `Flat.sum_ite_mem_const`: a sum of two constants, one on a set of nodes and one outside.
 
 ## References
 
@@ -49,24 +48,32 @@ open Finset
 
 variable {k : ℕ}
 
-/-- The pairs of nodes `a < b`: the wires of the complete network on `k` nodes. -/
-abbrev Pair (k : ℕ) : Type := {e : Fin k × Fin k // e.1 < e.2}
+/-- A wire of the complete network on `k` nodes: a pair of nodes `low < high`. -/
+@[ext]
+structure Pair (k : ℕ) where
+  /-- The smaller node of a wire. -/
+  low : Fin k
+  /-- The larger node of a wire. -/
+  high : Fin k
+  /-- The smaller node precedes the larger node. -/
+  low_lt_high : low < high
+  deriving DecidableEq
 
-/-- The smaller node of a wire. -/
-@[expose] def Pair.low : Pair k → Fin k
-  | ⟨(a, _), _⟩ => a
+/-- Wires as pairs of nodes in increasing order. -/
+@[expose] def pairEquiv (k : ℕ) : Pair k ≃ {e : Fin k × Fin k // e.1 < e.2} where
+  toFun e := ⟨(e.low, e.high), e.low_lt_high⟩
+  invFun := fun ⟨(a, b), h⟩ => ⟨a, b, h⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
 
-/-- The larger node of a wire. -/
-@[expose] def Pair.high : Pair k → Fin k
-  | ⟨(_, b), _⟩ => b
-
-theorem Pair.low_lt_high (e : Pair k) : e.low < e.high := e.2
+instance instFintypePair : Fintype (Pair k) := Fintype.ofEquiv _ (pairEquiv k).symm
 
 /-- A sum over the wires of a term for each end is the sum over the ordered pairs of distinct
 nodes. -/
 theorem sum_pair_add_swap {M : Type*} [AddCommMonoid M] (G : Fin k → Fin k → M) :
     ∑ e : Pair k, (G e.low e.high + G e.high e.low) = ∑ a, ∑ b, if a = b then 0 else G a b := by
-  change ∑ e : Pair k, (G e.1.1 e.1.2 + G e.1.2 e.1.1) = _
+  rw [← (pairEquiv k).symm.sum_comp]
+  change ∑ e : {e : Fin k × Fin k // e.1 < e.2}, (G e.1.1 e.1.2 + G e.1.2 e.1.1) = _
   rw [← Fintype.sum_prod_type' (f := fun a b => if a = b then (0 : M) else G a b),
     sum_add_distrib,
     ← sum_subtype (univ.filter fun e : Fin k × Fin k => e.1 < e.2) (by simp)
@@ -80,15 +87,6 @@ theorem sum_pair_add_swap {M : Type*} [AddCommMonoid M] (G : Fin k → Fin k →
   · simp [h, h.ne, not_lt.2 h.le]
   · simp [h]
   · simp [h, h.ne', not_lt.2 h.le]
-
-/-- A sum over the nodes of one constant on a set and another outside. -/
-theorem sum_ite_mem_const (A : Finset (Fin k)) (y z : ℝ) :
-    ∑ a : Fin k, (if a ∈ A then y else z) = A.card * y + ((k : ℝ) - A.card) * z := by
-  have h (a : Fin k) : (if a ∈ A then y else z) = z + if a ∈ A then y - z else 0 := by
-    split_ifs <;> ring
-  simp only [h, sum_add_distrib, sum_const, card_univ, Fintype.card_fin, nsmul_eq_mul,
-    sum_ite_mem, univ_inter]
-  ring
 
 /-- The complete network on `k` nodes has `k (k - 1) / 2` wires. -/
 theorem sum_pair_one : ∑ _e : Pair k, (1 : ℝ) = k * (k - 1) / 2 := by
