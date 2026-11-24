@@ -1,40 +1,45 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Rep
+public import CslibFrontier.Computability.Automata.Weighted.Rep
 import Mathlib.Data.Fintype.Option
 import Mathlib.Data.Fintype.Sum
+import Mathlib.Data.List.ReduceOption
 
 /-!
 # Rational series of bounded dimension
 
-Closure properties of `Tape.RatLe n f` (series realized by a linear representation of dimension at
-most `n`) and the normal form with a single initial and single final state (`RatLe.normal`).
+Closure properties of `Cslib.Automata.Weighted.RatLe n f` (series realized by a linear
+representation of dimension at most `n`), the normal form with a single initial and single final
+state (`RatLe.normal`), and trailing idle-padding (`Series.idle`, `RatLe.idle`).
 
-From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Tape.Rat`.
+From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Tape.Rat` (with trailing idle
+padding from `Nc.Tape.ProgRun`).
 
 ## Main definitions
 
-* `Tape.RatLe`: bounded-dimension rational series.
-* `Tape.Series.letter`: indicator series of a single letter.
+* `Cslib.Automata.Weighted.RatLe`: bounded-dimension rational series.
+* `Cslib.Automata.Weighted.Series.letter`: indicator series of a single letter.
+* `Cslib.Automata.Weighted.Series.idle`: pad a series with trailing `none` letters.
 
 ## Main results
 
-* `Tape.RatLe.add`, `Tape.RatLe.mul`, `Tape.RatLe.kstar`, `Tape.RatLe.smul`, `Tape.RatLe.sum`.
-* `Tape.RatLe.letter`: single-letter series has dimension at most `2`.
-* `Tape.RatLe.normal`: normal form with one initial and one final state matching on non-empty words.
+* `RatLe.add`, `RatLe.mul`, `RatLe.kstar`, `RatLe.smul`, `RatLe.sum`.
+* `RatLe.letter`: single-letter series has dimension at most `2`.
+* `RatLe.normal`: normal form with one initial and one final state matching on non-empty words.
+* `RatLe.idle`: dimension increases by at most `1` under trailing idle padding.
 -/
 
 public section
 
-namespace Cslib.Circuits.Arithmetic.Separation.Tape
+namespace Cslib.Automata.Weighted
 
 open Finset Matrix
 
@@ -173,4 +178,125 @@ theorem RatLe.normal {n : ℕ} {f : Series F Ω} (hf : RatLe n f) :
     rw [hsink o ho, mul_zero, zero_add, Rep.series, Rep.tail, Matrix.dotProduct_mulVec]
     rfl
 
-end Cslib.Circuits.Arithmetic.Separation.Tape
+section Idle
+
+/-- The words of a series, followed by arbitrarily many idle (`none`) letters. -/
+@[expose] def Series.idle (P : Series F Ω) : Series F (Option Ω) :=
+  Series.mul
+    (fun o => if o.all Option.isSome then P o.reduceOption else 0)
+    (fun o => if o.all Option.isNone then 1 else 0)
+
+theorem RatLe.idle {n : ℕ} {P : Series F Ω} (hP : RatLe n P) :
+    RatLe (n + 1) (Series.idle P) := by
+  refine RatLe.mul ?_ ?_
+  · obtain ⟨Q, _, r, hn, rfl⟩ := hP
+    refine ⟨Q, inferInstance, ⟨r.lam, fun a => a.elim 0 r.mu, r.gam⟩, hn, ?_⟩
+    have key : ∀ o : List (Option Ω),
+        (⟨r.lam, fun a => a.elim 0 r.mu, r.gam⟩ : Rep F (Option Ω) Q).tail o =
+          if o.all Option.isSome then r.tail o.reduceOption else 0 := by
+      intro o
+      induction o with
+      | nil => rfl
+      | cons a o ih =>
+        rw [Rep.tail, ih]
+        cases a with
+        | none => simp
+        | some a =>
+          by_cases h : o.all Option.isSome
+          · simp only [h, ite_true, List.all_cons, Option.isSome_some, Bool.true_and,
+              List.reduceOption_cons_of_some, Option.elim]
+            rfl
+          · simp [h]
+    funext o
+    rw [Rep.series, key]
+    by_cases h : o.all Option.isSome
+    · simp only [h, ite_true]; rfl
+    · simp [h]
+  · refine ⟨Unit, inferInstance, ⟨1, fun a => a.elim 1 fun _ => 0, 1⟩, by simp, ?_⟩
+    have key : ∀ o : List (Option Ω),
+        (⟨1, fun a => a.elim 1 fun _ => 0, 1⟩ : Rep F (Option Ω) Unit).tail o =
+          if o.all Option.isNone then 1 else 0 := by
+      intro o
+      induction o with
+      | nil => rfl
+      | cons a o ih =>
+        rw [Rep.tail, ih]
+        cases a <;> simp
+    funext o
+    rw [Rep.series, key]
+    by_cases h : o.all Option.isNone <;> simp [h]
+
+theorem idle_apply (P : Series F Ω) (w : List Ω) (j : ℕ) :
+    Series.idle P (w.map some ++ List.replicate j none) = P w := by
+  rw [Series.idle, Series.mul, Finset.sum_eq_single w.length]
+  · rw [List.take_left' (by simp), List.drop_left' (by simp)]
+    simp [List.reduceOption]
+  · intro k hk hne
+    rw [mem_range, List.length_append, List.length_map, List.length_replicate] at hk
+    rcases lt_or_gt_of_ne hne with h | h
+    · have hmem : some w[k] ∈ (w.map some ++ List.replicate j none).drop k := by
+        rw [List.drop_append_of_le_length (by simp; omega), List.mem_append, ← List.map_drop]
+        left
+        rw [List.mem_map]
+        refine ⟨w[k], ?_, rfl⟩
+        rw [List.drop_eq_getElem_cons h]
+        exact List.mem_cons_self
+      have hn : ¬ ((w.map some ++ List.replicate j none).drop k).all Option.isNone = true := by
+        intro hall
+        have := List.all_eq_true.1 hall _ hmem
+        simp at this
+      rw [ite_eq_right hn, mul_zero]
+    · have hmem : none ∈ (w.map some ++ List.replicate j none).take k := by
+        rw [List.take_append, List.mem_append]
+        right
+        rw [List.length_map, List.take_replicate, List.mem_replicate]
+        exact ⟨by omega, rfl⟩
+      have hn : ¬ ((w.map some ++ List.replicate j none).take k).all Option.isSome = true := by
+        intro hall
+        have := List.all_eq_true.1 hall _ hmem
+        simp at this
+      rw [ite_eq_right hn, zero_mul]
+  · intro h
+    exfalso
+    apply h
+    rw [mem_range, List.length_append, List.length_map]
+    omega
+
+theorem idle_ne_zero (P : Series F Ω) (o : List (Option Ω)) (h : Series.idle P o ≠ 0) :
+    ∃ (w : List Ω) (j : ℕ), o = w.map some ++ List.replicate j none := by
+  unfold Series.idle Series.mul at h
+  obtain ⟨k, -, hk⟩ := Finset.exists_ne_zero_of_sum_ne_zero h
+  beta_reduce at hk
+  have h1 : (o.take k).all Option.isSome = true := by
+    by_contra hn
+    rw [ite_eq_right hn, zero_mul] at hk
+    exact hk rfl
+  have h2 : (o.drop k).all Option.isNone = true := by
+    by_contra hn
+    rw [ite_eq_right hn, mul_zero] at hk
+    exact hk rfl
+  refine ⟨(o.take k).reduceOption, (o.drop k).length, ?_⟩
+  have e1 : ∀ l : List (Option Ω), l.all Option.isSome = true → l.reduceOption.map some = l := by
+    intro l
+    induction l with
+    | nil => simp
+    | cons a l ih =>
+      intro hl
+      cases a with
+      | none => simp at hl
+      | some a =>
+        simp only [List.all_cons, Option.isSome_some, Bool.true_and] at hl
+        rw [List.reduceOption_cons_of_some, List.map_cons, ih hl]
+  have e2 : ∀ l : List (Option Ω), l.all Option.isNone = true →
+      List.replicate l.length none = l := by
+    intro l hl
+    symm
+    rw [List.eq_replicate_iff]
+    refine ⟨rfl, fun a ha => ?_⟩
+    have := List.all_eq_true.1 hl a ha
+    simpa using this
+  rw [e1 _ h1, e2 _ h2, List.take_append_drop]
+
+end Idle
+
+end Cslib.Automata.Weighted

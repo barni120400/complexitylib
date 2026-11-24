@@ -1097,6 +1097,10 @@ public import CslibFrontier.Computability.Automata.MPDA.WellNested
 public import CslibFrontier.Computability.Automata.MPDA.WellNestedWitness
 public import CslibFrontier.Computability.Automata.MPDA.Witness
 public import CslibFrontier.Computability.Automata.NA.Map
+public import CslibFrontier.Computability.Automata.Weighted.Hat
+public import CslibFrontier.Computability.Automata.Weighted.Loop
+public import CslibFrontier.Computability.Automata.Weighted.Rat
+public import CslibFrontier.Computability.Automata.Weighted.Rep
 public import CslibFrontier.Computability.BlumComplexity.Basic
 public import CslibFrontier.Computability.BlumComplexity.Cancellation
 public import CslibFrontier.Computability.BlumComplexity.Fuel
@@ -1246,12 +1250,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Rad
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.RunVal
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Runs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Words
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Hat
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Loop
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.ProgRun
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Rat
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Refine
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Rep
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunGood
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
@@ -7784,6 +7783,7 @@ public import CslibFrontier.Foundations.Data.List.SortedAssoc.Scan
 public import CslibFrontier.Foundations.Data.List.SortedAssoc.Update
 public import CslibFrontier.Foundations.Data.List.SortedCount
 public import CslibFrontier.Foundations.Data.List.Splits
+public import CslibFrontier.Foundations.Data.List.StairRefinement
 public import CslibFrontier.Foundations.Data.List.SumIndicator
 public import CslibFrontier.Foundations.Data.List.Swap
 public import CslibFrontier.Foundations.Data.List.TakeQuantifiers

@@ -1,14 +1,14 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Loop
+public import CslibFrontier.Computability.Automata.Weighted.Loop
 public import Mathlib.Data.Fintype.Pi
 public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Data.Fintype.Sum
@@ -40,7 +40,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
-open Finset
+open Finset Cslib.Automata.Weighted
 
 /-- Channels: the two sides of each tape `s : S`, and the inputs `j : J`. -/
 inductive Ch (S J : Type*) where
