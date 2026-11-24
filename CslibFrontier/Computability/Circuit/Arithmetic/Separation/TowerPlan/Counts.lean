@@ -42,6 +42,7 @@ attains it.
 ## Main results
 
 * `moveCount_eq`: the number of units of a move is determined by the loads.
+* `VertexMove.kind_eq_of_isPicked`: the kind of law that is used at a vertex is unique.
 * `moveCount_congr`, `load_congr`, `goodOutcome_congr`: the numbers depend on the outcomes of
   earlier moves only.
 
@@ -143,6 +144,15 @@ theorem isPicked_congr
     (hL : ∀ q, L (.segment l.stage l.type l.vertex q) = L' (.segment l.stage l.type l.vertex q)) :
     l.IsPicked L ↔ l.IsPicked L' := by
   simp only [IsPicked, minUnits, Fits, withKind, hL]
+
+/-- The kind of law that is used at a vertex is unique. -/
+theorem kind_eq_of_isPicked {d : FL.Kind} (h1 : l.IsPicked L) (h2 : (l.withKind d).IsPicked L) :
+    l.kind = d := by
+  rcases lt_trichotomy (Fintype.equivFin FL.Kind d) (Fintype.equivFin FL.Kind l.kind)
+    with hlt | heq | hlt
+  · exact absurd h2.1 (h1.2 d hlt)
+  · exact ((Fintype.equivFin FL.Kind).injective heq).symm
+  · exact absurd h1.1 (h2.2 l.kind hlt)
 
 end VertexMove
 
