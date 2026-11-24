@@ -10,7 +10,9 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Comp
 public import Mathlib.Algebra.Ring.Subring.Basic
-import Mathlib.Tactic.ReduceModChar
+import CslibFrontier.Foundations.Data.List.Blocks
+import Mathlib.Algebra.BigOperators.Ring.List
+import Mathlib.Tactic.Ring
 
 /-!
 # Lists, equality and tries as programs
@@ -96,7 +98,7 @@ theorem Does.runW {F G : Fm} {x p : Tree} {Q : List (A × Tree)} {R : Tree → L
         c3⟩
     simp only [Run.seq, Run.tick]
     omega
-  · rw [sum_flatMap_map, wsum_bindW]
+  · rw [List.sum_map_flatMap, wsum_bindW]
     have h1 : ∀ r ∈ l,
         ((l'.flatMap fun s =>
             (Cslib.Circuits.Arithmetic.Separation.Interpreter.evl θ (Fm.ofTree r.out) s.out).map
@@ -104,7 +106,7 @@ theorem Does.runW {F G : Fm} {x p : Tree} {Q : List (A × Tree)} {R : Tree → L
         ((r.seq s).seq t).tick t.out).map fun u => u.th * φ u.out).sum = r.th *
             wsum Q fun o => wsum (R o) φ := by
       intro r hr
-      rw [sum_flatMap_map, ← f3 fun o => wsum (R o) φ, ← List.sum_map_mul_left]
+      rw [List.sum_map_flatMap, ← f3 fun o => wsum (R o) φ, ← List.sum_map_mul_left]
       congr 1
       refine List.map_congr_left fun s hs => ?_
       rw [ho r hr, List.map_map, ← (hG' s hs).evl.2 φ, ← List.sum_map_mul_left,

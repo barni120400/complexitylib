@@ -9,7 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Lists
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Tactic.Linarith
 
 /-!
 # Words of trees, tests and prefixes of lists

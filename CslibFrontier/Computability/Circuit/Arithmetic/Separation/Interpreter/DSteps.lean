@@ -9,7 +9,9 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Deal
-import Mathlib.Tactic.ReduceModChar
+import CslibFrontier.Foundations.Data.List.Blocks
+import Mathlib.Algebra.Order.BigOperators.Group.List
+import Mathlib.Tactic.Ring
 
 /-!
 # The interpreter of steps and templates
@@ -302,7 +304,7 @@ theorem sum_execAll_cons (m : ℕ) (st : DStep) (sts : List DStep) (σ : List Bo
     (Φ : (List Bool → Tree) → A) :
     ((execAll m (st :: sts) σ).map Φ).sum =
         ((st.exec m σ).map fun σ' => ((execAll m sts σ').map Φ).sum).sum := by
-  rw [execAll, sum_flatMap_map]
+  rw [execAll, List.sum_map_flatMap]
 
 theorem execAll_append (m : ℕ) (sts sts' : List DStep) (σ : List Bool → Tree) :
     execAll m (sts ++ sts') σ = (execAll m sts σ).flatMap (execAll m sts') := by

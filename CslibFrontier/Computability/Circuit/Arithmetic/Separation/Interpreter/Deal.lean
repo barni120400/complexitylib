@@ -9,7 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
-import Mathlib.Tactic.ReduceModChar
+import Mathlib.Tactic.Ring
 
 /-!
 # Assignments and guessed bit lists

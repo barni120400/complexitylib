@@ -10,7 +10,9 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.DSteps
 public import Mathlib.Data.Fintype.Pi
-import Mathlib.Tactic.ReduceModChar
+import CslibFrontier.Foundations.Data.List.Blocks
+import Mathlib.Algebra.BigOperators.Group.Finset.Piecewise
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 
 /-!
 # Sums over executions as sums over choices
@@ -78,7 +80,7 @@ theorem sum_funs {α : Type} [Fintype α] [DecidableEq α] [Fintype ι] (opts : 
       Finset.mem_univ, ite_true]
   | cons i s ih =>
     rw [List.nodup_cons] at hs
-    rw [funs, sum_flatMap_map]
+    rw [funs, List.sum_map_flatMap]
     simp only [ih hs.2]
     have h1 : ∀ a,
         (∑ f : ι → α,
@@ -138,7 +140,7 @@ theorem execAll_choices {α St : Type} {m : ℕ} {L : St → List Bool → Tree}
   | nil => simp [execAll, funs]
   | cons i s ih =>
     rw [List.nodup_cons] at hs
-    rw [List.map_cons, sum_execAll_cons, hst i st hσ, List.map_map, funs, sum_flatMap_map]
+    rw [List.map_cons, sum_execAll_cons, hst i st hσ, List.map_map, funs, List.sum_map_flatMap]
     congr 1
     refine List.map_congr_left fun a ha => ?_
     simp only [Function.comp_apply]
