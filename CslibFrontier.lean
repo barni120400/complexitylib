@@ -1414,6 +1414,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Wal
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Words
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubePoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
@@ -8884,6 +8885,7 @@ public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.Price.Basic
 public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.Price.Random
 public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.Spectrum
 public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.Unit
+public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.UnitExponent
 public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.WireExponent
 public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Polynomial
 public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Primal
