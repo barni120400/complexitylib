@@ -1133,6 +1133,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Adjugate
 public import CslibFrontier.Computability.Circuit.Arithmetic.BitBlast
 public import CslibFrontier.Computability.Circuit.Arithmetic.Border
 public import CslibFrontier.Computability.Circuit.Arithmetic.CircuitLowerBound
+public import CslibFrontier.Computability.Circuit.Arithmetic.ClauseSum
 public import CslibFrontier.Computability.Circuit.Arithmetic.ComputedWithin
 public import CslibFrontier.Computability.Circuit.Arithmetic.DepthFive.Asymptotics
 public import CslibFrontier.Computability.Circuit.Arithmetic.DepthFive.CircuitRank
@@ -7967,6 +7968,7 @@ public import CslibFrontier.Foundations.Data.Seq.Computation
 public import CslibFrontier.Foundations.Data.Set.Card
 public import CslibFrontier.Foundations.Data.Set.EqOnUpdate
 public import CslibFrontier.Foundations.Data.Set.SymmDiff
+public import CslibFrontier.Foundations.Data.Sigma.OneHot
 public import CslibFrontier.Foundations.Data.StackTape
 public import CslibFrontier.Foundations.Data.TreeMap.SortedAssoc
 public import CslibFrontier.Foundations.Data.ZMod.Basic
@@ -8454,6 +8456,7 @@ public import CslibFrontier.Foundations.RingTheory.Derivation.Determinant
 public import CslibFrontier.Foundations.RingTheory.Derivation.Wronskian
 public import CslibFrontier.Foundations.RingTheory.GaloisRing
 public import CslibFrontier.Foundations.RingTheory.LaurentSeries
+public import CslibFrontier.Foundations.RingTheory.MvPolynomial.MonomialExtension
 public import CslibFrontier.Foundations.RingTheory.MvPolynomial.PurePower.Basis
 public import CslibFrontier.Foundations.RingTheory.MvPolynomial.PurePower.CharpolyCoeffNorm
 public import CslibFrontier.Foundations.RingTheory.MvPolynomial.PurePower.CoordinateCharacteristicPolynomial
