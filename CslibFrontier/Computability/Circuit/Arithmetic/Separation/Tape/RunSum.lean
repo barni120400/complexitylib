@@ -176,7 +176,7 @@ structure RunStep (Γ S Q : Type) (n t : ℕ) where
 @[expose] def RunStep.equivProd (Γ S Q : Type) (n t : ℕ) :
     RunStep Γ S Q n t ≃ Fin t × Letter S (Fin n) Γ × Q × Q where
   toFun r := (r.time, r.letter, r.src, r.dst)
-  invFun r := ⟨r.1, r.2.1, r.2.2.1, r.2.2.2⟩
+  invFun := fun (time, letter, src, dst) => ⟨time, letter, src, dst⟩
   left_inv _ := rfl
   right_inv _ := rfl
 

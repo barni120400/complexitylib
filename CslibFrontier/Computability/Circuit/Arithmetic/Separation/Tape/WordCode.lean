@@ -50,7 +50,7 @@ variable {Γ : Type} {N : ℕ}
 /-- The one-hot code of a word with an end mark: bit `(p, y)` is set when the letter at place `p` of
 `u` followed by the end mark `none` is `y`. -/
 @[expose] def wordCode [DecidableEq Γ] (N : ℕ) (u : List Γ) (b : Fin N × Option Γ) : Bool :=
-  (u.map some ++ [none])[b.1.1]? = some b.2
+  (u.map some ++ [none])[(b.1 : ℕ)]? = some b.2
 
 /-- At most one letter at each place, and at each place a letter or an end mark before. -/
 structure IsWordCode (x : Fin N × Option Γ → Bool) : Prop where
