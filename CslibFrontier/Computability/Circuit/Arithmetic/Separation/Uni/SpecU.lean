@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -37,7 +37,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Finset Cslib.Circuits.Arithmetic.Separation.Tape
+open Finset Cslib.Automata.Weighted Cslib.Circuits.Arithmetic.Separation.Tape
 
 section Blocks
 
@@ -201,11 +201,11 @@ theorem runs_U {A : Type*} [CommRing A] [Fintype M] :
 
 section Values
 
-theorem mem_barSet_lsT : (lsT : Zc K) ∈ barSet := by simp [barSet]
+private theorem mem_barSet_lsT : (lsT : Zc K) ∈ barSet := by simp [barSet]
 
-theorem mem_barSet_bk (b : Bl K) : (.tp (.bk b) false : Zc K) ∈ barSet := by simp [barSet]
+private theorem mem_barSet_bk (b : Bl K) : (.tp (.bk b) false : Zc K) ∈ barSet := by simp [barSet]
 
-theorem not_barSet {z : Zc K} (h1 : z ≠ lsT) (h2 : ∀ b, z ≠ .tp (.bk b) false) :
+private theorem not_barSet {z : Zc K} (h1 : z ≠ lsT) (h2 : ∀ b, z ≠ .tp (.bk b) false) :
     z ∉ barSet := by
   simp only [barSet, mem_insert, mem_image, mem_univ, true_and, not_or, not_exists]
   exact ⟨h1, fun b e => h2 b e.symm⟩
@@ -320,7 +320,7 @@ theorem emFi_other (l : List (Rk K)) {z : Zc K} (h1 : z ≠ lsT)
   simp [emFi, on, h1, h2]
 
 omit [Fintype K] [DecidableEq K] in
-theorem rk_flatMap (l : List (Rk K)) : (l.flatMap rk : List (Sy M K)) = encW (fOut l) := by
+private theorem rk_flatMap (l : List (Rk K)) : (l.flatMap rk : List (Sy M K)) = encW (fOut l) := by
   rw [encW, fOut, List.flatMap_map]; rfl
 
 omit [Fintype K] in

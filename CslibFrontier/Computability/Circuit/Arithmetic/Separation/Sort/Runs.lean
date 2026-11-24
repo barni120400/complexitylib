@@ -8,7 +8,8 @@ module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
+public import CslibFrontier.Computability.Automata.Weighted.Loop
+import CslibFrontier.Foundations.Data.List.KeyedFlatMap
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 import Mathlib.Data.Finset.Sum
@@ -42,7 +43,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
-open Finset
+open Finset Cslib.Automata.Weighted
 
 section RunsDef
 
@@ -245,39 +246,19 @@ variable {Z Γ : Type*} [DecidableEq Z]
 @[expose] noncomputable def chanWord [Fintype Z] (w : Z → List Γ) : List (Z × Γ) :=
   (univ : Finset Z).toList.flatMap fun z => (w z).map fun a => (z, a)
 
-theorem proj_flatMap {ι : Type*} (l : List ι) (g : ι → List (Z × Γ)) (z : Z) :
+private theorem proj_flatMap {ι : Type*} (l : List ι) (g : ι → List (Z × Γ)) (z : Z) :
     proj (l.flatMap g) z = l.flatMap fun i => proj (g i) z := by
   induction l with
   | nil => rfl
   | cons a l ih => rw [List.flatMap_cons, List.flatMap_cons, proj_append, ih]
 
-theorem proj_map_mk (z z' : Z) (w : List Γ) :
+private theorem proj_map_mk (z z' : Z) (w : List Γ) :
     proj (w.map fun a => (z, a)) z' = if z = z' then w else [] := by
   induction w with
   | nil => simp
   | cons a w ih =>
     rw [List.map_cons, proj_cons, ih]
     split_ifs <;> rfl
-
-theorem flatMap_ite_eq {ι β : Type*} [DecidableEq ι] (l : List ι) (hl : l.Nodup) (i : ι)
-    (hi : i ∈ l) (g : ι → List β) :
-    (l.flatMap fun j => if j = i then g j else []) = g i := by
-  induction l with
-  | nil => simp at hi
-  | cons a l ih =>
-    rw [List.flatMap_cons]
-    rw [List.nodup_cons] at hl
-    by_cases h : a = i
-    · subst h
-      have hnil : (l.flatMap fun j => if j = a then g j else []) = [] := by
-        rw [List.flatMap_eq_nil_iff]
-        intro j hj
-        simp only [ite_eq_right_iff]
-        rintro rfl
-        exact absurd hj hl.1
-      simp [hnil]
-    · simp only [h, ↓reduceIte, List.nil_append]
-      exact ih hl.2 (by simpa [Ne.symm h] using hi)
 
 theorem proj_chanWord [Fintype Z] (w : Z → List Γ) : proj (chanWord w) = w := by
   funext z
@@ -286,7 +267,7 @@ theorem proj_chanWord [Fintype Z] (w : Z → List Γ) : proj (chanWord w) = w :=
       fun i => if i = z then w i else [] := by
     funext i; rw [proj_map_mk]
   rw [hf]
-  exact flatMap_ite_eq _ (Finset.nodup_toList _) z (by simp) w
+  exact List.flatMap_ite_key_eq _ id w (by simpa using Finset.nodup_toList _) (by simp)
 
 omit [DecidableEq Z] in
 theorem length_chanWord [Fintype Z] (w : Z → List Γ) :

@@ -1246,7 +1246,6 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.EvalThm
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Interp
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Radix
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.RunVal
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Runs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Words
@@ -7773,6 +7772,7 @@ public import CslibFrontier.Foundations.Data.List.Palindrome
 public import CslibFrontier.Foundations.Data.List.Perm
 public import CslibFrontier.Foundations.Data.List.Primrec
 public import CslibFrontier.Foundations.Data.List.Product
+public import CslibFrontier.Foundations.Data.List.RadixSort
 public import CslibFrontier.Foundations.Data.List.Range
 public import CslibFrontier.Foundations.Data.List.RowMajor
 public import CslibFrontier.Foundations.Data.List.SelectDistinct

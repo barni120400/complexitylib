@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Runs
+import CslibFrontier.Foundations.Data.List.KeyedFlatMap
 
 /-!
 # Words on several channels, prefix codes, and choices of letters
@@ -34,7 +35,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
-open Finset
+open Finset Cslib.Automata.Weighted
 
 section Codes
 
@@ -68,7 +69,7 @@ theorem flatten_ofFn_single {k : ℕ} (i : Fin k) (w : Fin k → List Γ)
     · simp [e]
     · simp [e, h j e]
   rw [h1]
-  exact flatMap_ite_eq _ (List.nodup_finRange k) i (List.mem_finRange i) w
+  exact List.flatMap_ite_key_eq _ id w (by simpa using List.nodup_finRange k) (List.mem_finRange i)
 
 theorem flatten_ofFn_nil {k : ℕ} (w : Fin k → List Γ) (h : ∀ j, w j = []) :
     (List.ofFn w).flatten = [] := by

@@ -1,14 +1,14 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
 -- upstream: candidate
 
 public import CslibFrontier.Init
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Radix
+public import CslibFrontier.Foundations.Data.List.RadixSort
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.SortU
 
 /-!
@@ -37,8 +37,8 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Finset Cslib.Circuits.Arithmetic.Separation.Tape
-open Cslib.Circuits.Arithmetic.Separation.Sort (Rc chk)
+open Finset Cslib.Automata.Weighted Cslib.Circuits.Arithmetic.Separation.Tape
+open List.RadixSort (Rc chk)
 
 section Pure
 

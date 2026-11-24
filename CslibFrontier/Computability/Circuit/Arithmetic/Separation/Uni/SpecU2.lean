@@ -35,8 +35,8 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Finset Cslib.Circuits.Arithmetic.Separation.Tape
-open Cslib.Circuits.Arithmetic.Separation.Sort (Rc pass srt chk chk_table length_srt)
+open Finset Cslib.Automata.Weighted Cslib.Circuits.Arithmetic.Separation.Tape
+open List.RadixSort (Rc pass srt chk chk_table length_srt)
 
 variable {M K : Type} [Fintype K] [DecidableEq K] {n : ℕ}
 
@@ -93,14 +93,14 @@ theorem dOut_dl (j : ℕ) (hj : j < n) (l : List (Rc n (Bl K))) (b : Bl K) :
   simp only [Function.comp_apply, rot_succ hj]
 
 omit [Fintype K] [DecidableEq K] in
-theorem dIn_inj : Function.Injective (dIn : List (Dr K) → _) := by
+private theorem dIn_inj : Function.Injective (dIn : List (Dr K) → _) := by
   refine List.map_injective_iff.2 ?_
   rintro ⟨f, b, w⟩ ⟨f', b', w'⟩ h
   simp only [Prod.mk.injEq, List.cons.injEq, Option.some.injEq] at h
   rw [h.1, h.2.1, h.2.2]
 
 omit [Fintype K] [DecidableEq K] in
-theorem fIn_inj : Function.Injective (fIn : List (Rk K) → _) := by
+private theorem fIn_inj : Function.Injective (fIn : List (Rk K) → _) := by
   refine List.map_injective_iff.2 ?_
   rintro ⟨f, w⟩ ⟨f', w'⟩ h
   simp only [Prod.mk.injEq, List.cons.injEq, true_and] at h
@@ -123,14 +123,14 @@ theorem toNB_val (w : List (Sy M K)) (h : Sy.bar ∉ w) :
   rw [toNB, List.attachWith_map_subtype_val]
 
 omit [Fintype K] [DecidableEq K] in
-theorem nb_inj : Function.Injective (List.map (Subtype.val : NB M K → Sy M K)) :=
+private theorem nb_inj : Function.Injective (List.map (Subtype.val : NB M K → Sy M K)) :=
   List.map_injective_iff.2 Subtype.val_injective
 
 /-- The canonical sorting pass `j` on record list `l`. -/
 @[expose] def cps (j : ℕ) (hj : j < n) (l : List (Rc n (Bl K))) : Ps M K :=
   (dl j hj l, fun b => toNB (encW (dOut b (dl j hj l))) (bar_encW _))
 
-theorem cOut_cps (j : ℕ) (hj : j < n) (l : List (Rc n (Bl K))) :
+private theorem cOut_cps (j : ℕ) (hj : j < n) (l : List (Rc n (Bl K))) :
     cOut (cps (M := M) j hj l).2 = encW (recs (j + 1) (pass (bsl K) ⟨j, hj⟩ l)) := by
   rw [cOut, List.map_flatMap]
   simp only [cps, toNB_val, dOut_dl]

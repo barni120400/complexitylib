@@ -4,6 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anthropic, Samuel Schlesinger
 -/
 
+module
+-- upstream: local-only
+
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.SpecU2
 
 /-! Tests of the sorting and neighbour-comparison layer (M1, part 2/3):
@@ -12,7 +15,7 @@ witness `XG` (`exists_cmpG`), and `IMU` tape-matching characterization (`imu_tab
 
 namespace CslibFrontierTests.TapeSort
 
-open Cslib.Circuits.Arithmetic.Separation.Sort
+open List.RadixSort
 open Cslib.Circuits.Arithmetic.Separation.Uni
 
 /-! ### Radix sort and neighbour check -/
