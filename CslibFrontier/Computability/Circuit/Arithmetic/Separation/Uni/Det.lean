@@ -132,7 +132,7 @@ theorem nextRule_rule (r : Rule supp) (hr : ¬ IsChosen r) :
     · exact dite_eq_left hp'
     · exact dite_eq_left hp'
 
-theorem rd_eq_none (r : Rule supp) (hr : ¬ IsChosen r) : (rule θ supp r).rd = none := by
+private theorem rd_eq_none (r : Rule supp) (hr : ¬ IsChosen r) : (rule θ supp r).rd = none := by
   cases r with
   | base r =>
     cases r with
@@ -169,7 +169,7 @@ structure WellFormed (σ : Config supp) : Prop where
     (p q s : ℕ) : Config supp :=
   Mach.nxt (P := universalMachine θ supp) σ (r, env σ p q s)
 
-theorem dr_zero (r : Rule supp) : (rule θ supp r).dr 0 = 0 := by
+private theorem dr_zero (r : Rule supp) : (rule θ supp r).dr 0 = 0 := by
   cases r with
   | base r =>
     cases r with

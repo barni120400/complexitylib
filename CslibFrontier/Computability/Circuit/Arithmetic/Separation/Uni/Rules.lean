@@ -27,7 +27,8 @@ the prefixes of the support `supp` of `θ` (`Uni.Name`).
 
 ## Main definitions
 
-* `Uni.RecKind`, `Uni.Mode`, `Uni.prefixes`, `Uni.Name`, `Uni.BaseRule`, `Uni.Rule`.
+* `Uni.RecKind`, `Uni.Mode`, `Uni.prefixes`, `Uni.Name`, `Uni.BaseRule`, `Uni.Rule`,
+  `Uni.Rule.equivSum` (the rules as a sum, for their `Fintype` instance), `Uni.consOrNil`.
 * `Uni.RuleData`, `Uni.RuleData.basic`, `Uni.baseRule`, `Uni.rule`, `Uni.universalMachine`.
 * `Uni.loadReg`: the register that holds the address of the loaded record, by mode.
 
