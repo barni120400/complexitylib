@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -9,6 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Trace
+import CslibFrontier.Foundations.Data.List.Blocks
 import Mathlib.Algebra.BigOperators.Fin
 import Mathlib.Tactic.Ring
 
@@ -38,13 +39,13 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Finset Cslib.Circuits.Arithmetic.Separation.Sort
+open Finset List.RadixSort
 
 private theorem sum_const_map {ι : Type*} (l : List ι) (f : ι → ℕ) (c : ℕ)
     (h : ∀ i ∈ l, f i = c) : (l.map f).sum = l.length * c := by
   rw [List.map_congr_left h, List.map_const', List.sum_replicate, smul_eq_mul]
 
-theorem sum_Tp {K : Type} [Fintype K] (f : Tp K → ℕ) :
+private theorem sum_Tp {K : Type} [Fintype K] (f : Tp K → ℕ) :
     ∑ s, f s =
       (∑ i, f (.rg i)) + f .md + f .cp + f .fr + f .lk + f .ls +
         (∑ b, f (.bk b)) + ∑ k, f (.cm k) := by
@@ -136,7 +137,7 @@ theorem canon_length {M K : Type} [Fintype K] [DecidableEq K] {n : ℕ}
               (Subtype.val : NB M K → Sy M K) =
               encW (dOut b (dl j hj (srt (bsl K) l j))) := toNB_val _ (bar_encW _)
           rw [e, dOut_dl, length_encW_recs (by omega)]
-        rw [Finset.sum_congr rfl fun b _ => h3 b, ← Finset.sum_mul, Sort.sum_filter, hl]
+        rw [Finset.sum_congr rfl fun b _ => h3 b, ← Finset.sum_mul, List.RadixSort.sum_filter, hl]
     · exact h2 p hp
 
 /-- Exact total emitted length on the sorting, bucket, and comparison tapes under `IMU`. -/
@@ -177,17 +178,8 @@ theorem imu_length {M K : Type} [Fintype K] [DecidableEq K] {n : ℕ}
     rw [Finset.sum_congr rfl fun b _ => h5 b, Finset.sum_add_distrib, Finset.sum_const,
       Finset.card_univ, smul_eq_mul]
     congr 1
-    have h6 : ∀ ps : List (Ps M K),
-        ∑ b, (ps.map fun p => ((p.2 b).map (Subtype.val : NB M K → Sy M K)).length).sum =
-          (ps.map fun p =>
-            ∑ b, ((p.2 b).map (Subtype.val : NB M K → Sy M K)).length).sum := by
-      intro ps
-      induction ps with
-      | nil => simp
-      | cons p ps ih =>
-        simp only [List.map_cons, List.sum_cons]
-        rw [Finset.sum_add_distrib, ih]
-    rw [h6, h1, sum_const_map _ _ (l.length * (n + 3)) (fun p hp => (c2 p hp).2), c1]
+    rw [Finset.sum_list_sum_comm, h1,
+      sum_const_map _ _ (l.length * (n + 3)) (fun p hp => (c2 p hp).2), c1]
   have e3 : ∀ k, (emU x (.tp (.cm k) true)).length = l.length * (n + 2) := by
     intro k
     rw [emU_cm_true]

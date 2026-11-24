@@ -4,27 +4,32 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anthropic, Samuel Schlesinger
 -/
 
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
+module
+-- upstream: local-only
+
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.LenU
 
 /-! Tests of the binary-encoding, pointer-machine, and universal-program layer (M1, part 3/3):
-`bin` agreement with `binaryWord` and `binaryValue_succ`/`exists_cut`, concrete pointer machine
-`Mach` with `Closed`, `Seq`/`GV` positive and negative checks, `exists_MX` lifting, `MX.total`
-length evaluation, and `Mach.SumTo`. -/
+`binaryWord` / `binaryValue_succ_carry` / `exists_carry_cut` / `carry_cut_unique`, concrete pointer
+machine `Mach` with `Closed`, `Seq`/`GV` positive and negative checks, `exists_MX` lifting,
+`MX.total` length evaluation, and `Mach.SumTo`. -/
 
 namespace CslibFrontierTests.TapeUni
 
-open Cslib.BitString (binaryValue binaryWord)
+open Cslib.BitString (binaryValue binaryValue_succ_carry binaryWord exists_carry_cut)
 open Cslib.Circuits.Arithmetic.Separation.Uni
 
 /-! ### Big-endian binary words and carry cuts -/
 
-example : bin 4 5 = [false, true, false, true] := by decide
+/-- Check big-endian encoding of `5` in 4 bits. -/
+public theorem binaryWord_4_5 : binaryWord 4 5 = [false, true, false, true] := by decide
 
-example : bin 4 5 = binaryWord 4 5 := bin_eq_binaryWord (by decide)
+example : binaryValue [false, true, true] + 1 = binaryValue [true, false, false] :=
+  (binaryValue_succ_carry [] 2).symm
 
-example : binaryValue [false, true, true] + 1 = binaryValue [true, false, false] := by
-  exact (binaryValue_succ [] 2).symm
+example : ∃ u k, [true, false, true] = u ++ false :: List.replicate k true :=
+  exists_carry_cut (w := [true, false, true]) (by decide)
 
 /-- Maximal all-`true` word `[true, true]` admits no `false :: true^k` decomposition (negative). -/
 example : ¬ ∃ u k, [true, true] = u ++ false :: List.replicate k true := by
@@ -34,7 +39,7 @@ example : ¬ ∃ u k, [true, true] = u ++ false :: List.replicate k true := by
 
 /-! ### Minimal pointer machine with one step `false → true` -/
 
-private def oneStepMach : Mach ℤ Bool Unit where
+private noncomputable def oneStepMach : Mach ℤ Bool Unit where
   Rl := Unit
   src := fun _ => false
   dst := fun _ => true
@@ -49,7 +54,7 @@ private def oneStepMach : Mach ℤ Bool Unit where
   mh := true
   kN := ()
 
-private def oneStep : oneStepMach.Step :=
+private noncomputable def oneStep : oneStepMach.Step :=
   ((), fun i => if i = 8 then 1 else 0)
 
 private theorem init_closed : Mach.Closed (σi oneStepMach []) := by

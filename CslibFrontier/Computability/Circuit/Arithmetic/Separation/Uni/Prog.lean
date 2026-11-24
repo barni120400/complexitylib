@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -42,7 +42,7 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Finset Cslib.Circuits.Arithmetic.Separation.Tape
+open Finset Cslib.Automata.Weighted Cslib.Circuits.Arithmetic.Separation.Tape
 
 /-- A tape-encoded binary word terminated by a semicolon `semi`. -/
 @[expose] def bw {M K : Type} (w : List Bool) : List (Sy M K) := w.map .bit ++ [.semi]
@@ -70,7 +70,7 @@ theorem mem_rgs {K : Type} [DecidableEq K] (b : Bool) (z : Zc K) :
     z ∈ rgs b ↔ ∃ i, z = tp (.rg i) b := by
   simp [rgs, eq_comm]
 
-theorem card_rgs {K : Type} [DecidableEq K] (b : Bool) :
+private theorem card_rgs {K : Type} [DecidableEq K] (b : Bool) :
     (rgs (K := K) b : Finset (Zc K)).card = 5 := by
   rw [rgs, Finset.card_image_of_injective, Finset.card_univ, Fintype.card_fin]
   intro i j h
@@ -235,7 +235,7 @@ variable {A : Type} {M K : Type} (P : Mach A M K)
   | .tp .ls s => if s then [] else [.mark, .dot]
   | _ => []
 
-theorem emSt_eq (x : P.Rl × List (Fin 9 → Bool)) (z : Zc K) :
+private theorem emSt_eq (x : P.Rl × List (Fin 9 → Bool)) (z : Zc K) :
     st0 P x.1 z ++ (x.2.flatMap (fun v => st1 P x.1 v z) ++ st2 z) = emSt P x z := by
   obtain ⟨r, w⟩ := x
   match z with
@@ -262,7 +262,7 @@ theorem emSt_eq (x : P.Rl × List (Fin 9 → Bool)) (z : Zc K) :
   | .tp (.cm k) s => simp [st0, st1, st2, emSt]
   | .inp j => simp [st0, st1, st2, emSt]
 
-theorem st1_ne (r : P.Rl) (v : Fin 9 → Bool) : ∃ z, st1 P r v z ≠ [] :=
+private theorem st1_ne (r : P.Rl) (v : Fin 9 → Bool) : ∃ z, st1 P r v z ≠ [] :=
   ⟨tp .fr true, by simp [st1]⟩
 
 /-- Dimension upper bound for the single-step automaton of `P`. -/
@@ -392,7 +392,7 @@ structure XP {A : Type} {M K : Type} (P : Mach A M K) where
       ((Fintype.card (Sy M K) * 5 + 1 + 3) +
         dimU (Fintype.card (Sy M K)) (Fintype.card (Bl K))))))
 
-theorem emSt_ne {A M K : Type} (P : Mach A M K) (x : P.Rl × List (Fin 9 → Bool)) :
+private theorem emSt_ne {A M K : Type} (P : Mach A M K) (x : P.Rl × List (Fin 9 → Bool)) :
     ∃ z, emSt P x z ≠ [] :=
   ⟨tp .md true, by simp [emSt]⟩
 

@@ -27,6 +27,15 @@ The key lemma `Mach.gv_iff` shows that checking step-by-step causality (`Mach.Se
 to the global check `Mach.GV` (where loads may refer to the full final heap) whenever the initial
 heap is closed (`Mach.Closed`).
 
+## Relation to `Cslib.PointerMachine`
+
+This model is intentionally distinct from `CslibFrontier/Computability/PointerMachine/Defs.lean`
+(`Cslib.PointerMachine`, Tarjan's deterministic PC-indexed instruction model with arbitrary `Layout`
+and total operations). Here `Uni.Mach A M K` is a `CommRing`-weighted nondeterministic rule
+relation over modes `M` and record kinds `K`, with fixed 5-register / 3-field bit-sliced records,
+finite accepting-run weight sums (`Mach.SumTo`), and the global-heap relaxation `Mach.GV` needed by
+the universal weighted-automaton reduction in `[AnthropicVPVNP2026]`.
+
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Uni.PM`.
 
 ## Main definitions

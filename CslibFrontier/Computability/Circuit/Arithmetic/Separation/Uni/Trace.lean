@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -42,7 +42,9 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Cslib.BitString (binaryValue binaryValue_lt_two_pow)
+open Cslib.BitString (binaryValue binaryValue_append binaryValue_binaryWord binaryValue_cons
+  binaryValue_lt_two_pow binaryValue_replicate_false binaryValue_succ_carry binaryWord
+  binaryWord_binaryValue binaryWord_zero carry_cut_unique length_binaryWord)
 
 section Columns
 
@@ -57,15 +59,20 @@ theorem cols_ext {q : ℕ} {c c' : List (Fin (q + 1) → Bool)}
     simp only [hj]
   simpa using h3
 
-/-- Column-major `L`-bit big-endian slices of a `q`-tuple of natural numbers. -/
+/-- Column-major `L`-bit big-endian slices of a `q`-tuple of natural numbers (reduced modulo
+`2 ^ L` so every column has unconditional length `L`). -/
 @[expose] def unb (L : ℕ) {q : ℕ} (a : Fin q → ℕ) : List (Fin q → Bool) :=
-  List.ofFn fun t : Fin L => fun j => (bin L (a j)).get (t.cast (length_bin L (a j)).symm)
+  List.ofFn fun t : Fin L => fun j =>
+    (binaryWord L (a j % 2 ^ L)).get
+      (t.cast (length_binaryWord (Nat.mod_lt _ (by positivity))).symm)
 
 theorem length_unb (L : ℕ) {q : ℕ} (a : Fin q → ℕ) : (unb L a).length = L := by simp [unb]
 
 theorem unb_proj (L : ℕ) {q : ℕ} (a : Fin q → ℕ) (j : Fin q) :
-    (unb L a).map (fun v => v j) = bin L (a j) := by
-  refine List.ext_getElem (by simp [length_unb, length_bin]) fun i h1 h2 => ?_
+    (unb L a).map (fun v => v j) = binaryWord L (a j % 2 ^ L) := by
+  refine List.ext_getElem
+    (by simp [length_unb, length_binaryWord (Nat.mod_lt (a j) (by positivity))])
+    fun i h1 h2 => ?_
   simp [unb]
 
 /-- Re-encoding the decoded big-endian column values recovers the column list. -/
@@ -73,12 +80,11 @@ theorem unb_bv {q : ℕ} (w : List (Fin (q + 1) → Bool)) :
     unb w.length (fun j => binaryValue (w.map fun v => v j)) = w := by
   refine cols_ext fun j => ?_
   rw [unb_proj]
-  have h := bin_binaryValue (w.map fun v => v j)
+  have hlt := binaryValue_lt_two_pow (w.map fun v => v j)
+  rw [List.length_map] at hlt
+  rw [Nat.mod_eq_of_lt hlt]
+  have h := binaryWord_binaryValue (w.map fun v => v j)
   rwa [List.length_map] at h
-
-theorem bin_zero (L : ℕ) : bin L 0 = List.replicate L false := by
-  have h := bin_binaryValue (List.replicate L false)
-  rwa [List.length_replicate, binaryValue_replicate_false] at h
 
 end Columns
 
@@ -160,14 +166,15 @@ theorem kyN_inj {L : ℕ} {ρ ρ' : Rec K} (h : ∀ j, ρ.2 j < 2 ^ L)
   refine Prod.ext h1.1 ?_
   funext j
   have h3 := congrArg (List.map fun v : Fin 4 → Bool => v j) h2
-  rw [unb_proj, unb_proj] at h3
-  rw [← binaryValue_bin (h j), ← binaryValue_bin (h' j), h3]
+  rw [unb_proj, unb_proj, Nat.mod_eq_of_lt (h j), Nat.mod_eq_of_lt (h' j)] at h3
+  have h4 := congrArg binaryValue h3
+  simpa [binaryValue_binaryWord] using h4
 
 theorem length_cn (r : List Bool × List Unit) : (cn1 r).length = (cn r).length := by
   simp [cn, cn1]
 
 theorem bv_cn (r : List Bool × List Unit) : binaryValue (cn1 r) = binaryValue (cn r) + 1 :=
-  binaryValue_succ _ _
+  binaryValue_succ_carry _ _
 
 theorem bv_i1 (l : List Unit) : binaryValue (i1 l) = 1 := by
   rw [i1, binaryValue_append, binaryValue_replicate_false]
@@ -184,10 +191,10 @@ private theorem cols_four_eq_unb {L : ℕ} {w : List (Fin 9 → Bool)} (hl : w.l
     (w.map fun v => ![v i0, v i1, v i2, v i3]) =
       unb L ![binaryValue (cw w i0), binaryValue (cw w i1),
         binaryValue (cw w i2), binaryValue (cw w i3)] := by
-  have key : ∀ i, cw w i = bin L (binaryValue (cw w i)) := fun i => by
-    have h := bin_binaryValue (cw w i)
-    rw [cw, List.length_map, hl] at h
-    exact h.symm
+  have key : ∀ i, cw w i = binaryWord L (binaryValue (cw w i) % 2 ^ L) := fun i => by
+    have hlen : (cw w i).length = L := by simp [cw, hl]
+    have hlt : binaryValue (cw w i) < 2 ^ L := by rw [← hlen]; exact binaryValue_lt_two_pow _
+    rw [Nat.mod_eq_of_lt hlt, ← hlen, binaryWord_binaryValue]
   refine cols_ext fun j => ?_
   rw [unb_proj, List.map_map]
   fin_cases j <;> exact key _
@@ -244,8 +251,7 @@ theorem MX.size_eq : Nat.size (x.steps.length + 1) = x.init.length + 1 := by
   have h1 := hx.vals.2
   have h2 := hx.len_cn.2
   have h3 := binaryValue_lt_two_pow x.finalCounter
-  rw [binaryValue_cons] at h1
-  simp only [↓reduceIte] at h1
+  rw [binaryValue_cons, Bool.toNat_true, one_mul] at h1
   have e : x.finalCounter.length = x.init.length := by omega
   rw [e] at h1 h3
   refine le_antisymm ?_ ?_
@@ -262,7 +268,7 @@ end Facts
 
 /-- The flagged list `(defined records) ++ (loaded records)` passed to the radix sort. -/
 @[expose] def lsN {P : Mach A M K} (L : ℕ) (tr : List P.Step) :
-    List (Sort.Rc (L + 1) (Bl K)) :=
+    List (List.RadixSort.Rc (L + 1) (Bl K)) :=
   ((dfN tr).map (kyN L)).map (fun k => (false, k)) ++
     ((tr.map Mach.ld).map (kyN L)).map fun k => (true, k)
 
@@ -279,7 +285,7 @@ theorem unb_zero (L : ℕ) : unb L ![0, 0, 0, 0] = List.replicate L fun _ : Fin 
   refine cols_ext fun j => ?_
   rw [unb_proj, List.map_replicate]
   have h : (![0, 0, 0, 0] : Fin 4 → ℕ) j = 0 := by fin_cases j <;> rfl
-  rw [h, bin_zero]
+  rw [h, Nat.zero_mod, binaryWord_zero]
 
 theorem block_of {P : Mach A M K} {x : XP P}
     (hx : ∀ s ∈ x.steps, s.2.length = x.init.length + 1) :
@@ -389,7 +395,7 @@ theorem MX.unique [Fintype K] [DecidableEq K] {P : Mach A M K} {x x' : XP P}
     have h1 : x.counter.map cn = x'.counter.map cn := by rw [hx.fr, hx'.fr, e3]
     refine List.map_injective_iff.2 ?_ h1
     rintro ⟨u, k⟩ ⟨u', k'⟩ h
-    obtain ⟨a1, a2⟩ := cut_unique h
+    obtain ⟨a1, a2⟩ := carry_cut_unique h
     exact Prod.ext a1 (unit_list a2)
   have e4r : x.finalRegs = x'.finalRegs := by
     refine cols_ext fun i => ?_

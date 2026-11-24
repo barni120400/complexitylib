@@ -1255,7 +1255,6 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Bin
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.LenU

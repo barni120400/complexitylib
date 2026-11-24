@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Anthropic, PBC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anthropic
+Authors: Anthropic, Samuel Schlesinger
 -/
 
 module
@@ -9,7 +9,7 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Prog
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Bin
+public import CslibFrontier.Foundations.Data.BitString.List.BinaryOrder
 
 /-!
 # Tape contents and matched runs of the universal program
