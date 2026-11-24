@@ -127,11 +127,7 @@ private theorem StoreBound.of_mem_instructionSem {mu : Tape.Letter S Unit Γ →
       exact h.of_mem_packSem (q := r) hr
     · exact absurd hq List.not_mem_nil
   | input part B => exact h.of_mem_packSem hq
-  | agree k k' =>
-    simp only [instructionSem] at hq
-    split_ifs at hq
-    exacts [List.mem_singleton.1 hq ▸ h, absurd hq List.not_mem_nil]
-  | fixed k w =>
+  | agree _ _ | fixed _ _ =>
     simp only [instructionSem] at hq
     split_ifs at hq
     exacts [List.mem_singleton.1 hq ▸ h, absurd hq List.not_mem_nil]
@@ -166,6 +162,15 @@ private theorem compare_gives {pf v : Fm} {x t o : Tree} {ub cv : ℕ} {k : List
     rw [(ht.tget k).1]
     exact (size_ofBits _).trans (by omega)
   omega
+
+/-- A check: the trie is kept if the comparison `C` holds, and the run fails otherwise. -/
+private theorem ite_check_does {P : Prop} [Decidable P] {C G : Fm} {x t : Tree} {c d : ℕ}
+    (e : Gives θ C x (bit (decide P)) c) (hG : Gives θ G x t d) :
+    Does θ (.ite C G .fail) x (if P then [((1 : A), t)] else []) (c + d + 1) := by
+  split_ifs with h
+  · exact (Does.ite_true e (by simp [h, bit, one]) hG).mono (by omega)
+  · rw [show bit (decide P) = .nil by simp [h, bit]] at e
+    exact (Does.ite_false e (Does.fail x)).mono (by omega)
 
 /-- **One instruction.** -/
 private theorem exists_formula_instruction (mu : Tape.Letter S Unit Γ → Matrix Q Q A)
@@ -221,27 +226,17 @@ private theorem exists_formula_instruction (mu : Tape.Letter S Unit Γ → Matri
   | agree k k' =>
     have g := getF_gives (θ := θ) (p := ofBits k') (t := t) hx.hd.tl.tl hx.tl.tl.tl
     rw [path_ofBits, len_ofBits] at g
-    have e := compare_gives ht hx.hd.tl.hd hx.tl.tl.tl g
     have hD : Does θ (fs.getD 2 .fail) x (instructionSem θ mu cb kinds T ub (.agree k k') t)
-        (30 * (k.length + k'.length) + 240 * ub + 140) := by
-      simp only [instructionSem]
-      split_ifs with h
-      · exact (Does.ite_true e (by simp [h, bit, one]) hx.tl.tl.tl).mono (by omega)
-      · rw [show bit (decide (tget k t = tget k' t)) = .nil by simp [h, bit]] at e
-        exact (Does.ite_false e (Does.fail x)).mono (by omega)
+        (30 * (k.length + k'.length) + 240 * ub + 140) :=
+      (ite_check_does (compare_gives ht hx.hd.tl.hd hx.tl.tl.tl g) hx.tl.tl.tl).mono (by omega)
     refine (switchF_does (j := 2) hx.hd.hd rfl hD).mono ?_
     simp only [Instruction.cost]
     exact le_trans (by omega) (Nat.mul_le_mul_right _ (show 400 ≤ K by omega))
   | fixed k w =>
     have gw : Gives θ (.tl (.tl (.hd .id))) x (ofBits w) 4 := hx.hd.tl.tl
-    have e := compare_gives ht hx.hd.tl.hd hx.tl.tl.tl gw
     have hD : Does θ (fs.getD 3 .fail) x (instructionSem θ mu cb kinds T ub (.fixed k w) t)
-        (30 * k.length + 240 * ub + 120) := by
-      simp only [instructionSem]
-      split_ifs with h
-      · exact (Does.ite_true e (by simp [h, bit, one]) hx.tl.tl.tl).mono (by omega)
-      · rw [show bit (decide (tget k t = ofBits w)) = .nil by simp [h, bit]] at e
-        exact (Does.ite_false e (Does.fail x)).mono (by omega)
+        (30 * k.length + 240 * ub + 120) :=
+      (ite_check_does (compare_gives ht hx.hd.tl.hd hx.tl.tl.tl gw) hx.tl.tl.tl).mono (by omega)
     refine (switchF_does (j := 3) hx.hd.hd rfl hD).mono ?_
     simp only [Instruction.cost]
     exact le_trans (by omega) (Nat.mul_le_mul_right _ (show 400 ≤ K by omega))
