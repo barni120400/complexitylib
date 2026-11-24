@@ -200,7 +200,7 @@ def partyWeight (mu : Letter S Unit Γ → Matrix Q Q F) (T : ℕ) (q : Fin (K +
     (fun κ => if (∀ s b, R (some s) b = []) ∧ (∀ s b, C s b = []) ∧ cat (R none) = x κ then 1
       else 0) p
 
-private theorem partyWeight_block (κ : Fin K) : partyWeight mu T q x (Fin.castAdd K κ) R C =
+theorem partyWeight_block (κ : Fin K) : partyWeight mu T q x (Fin.castAdd K κ) R C =
     if ∀ b, R none b = [] then
       blockWeight mu T (q κ.castSucc) (q κ.succ) (blockEmission R C) else 0 :=
   Fin.append_left _ _ κ
