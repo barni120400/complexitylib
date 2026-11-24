@@ -35,11 +35,11 @@ namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
 open Finset
 
-variable {F : Type*} [Field F] {Γ S Q : Type} [DecidableEq Γ] [DecidableEq S] {n t M N : ℕ}
+variable {F : Type*} [CommRing F] {Γ S Q : Type} [DecidableEq Γ] [DecidableEq S] {n t M N : ℕ}
 
 /-- The assignment of the hidden variables made of letters `o`, states `q`, places `P` and
 contents `c`. -/
-@[expose] def RunAssignment.mk (o : Fin t → Letter S (Fin n) Γ) (q : Fin (t + 1) → Q)
+private def RunAssignment.mk (o : Fin t → Letter S (Fin n) Γ) (q : Fin (t + 1) → Q)
     (P : Ch S (Fin n) → Fin (t + 1) → Fin M) (c : S → Fin M → Option Γ) :
     RunAssignment Γ S Q n t M
   | .letter τ => o τ

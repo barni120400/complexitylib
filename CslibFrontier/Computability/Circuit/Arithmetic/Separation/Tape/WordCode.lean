@@ -98,7 +98,7 @@ private theorem wordCode_unique {u : List Γ} {p : Fin N} {y y' : Option Γ}
   rw [wordCode_eq h'] at h1
   exact (Option.some.inj h1).symm
 
-theorem isWordCode_wordCode (u : List Γ) (hu : u.length + 1 ≤ N) : IsWordCode (wordCode N u) := by
+theorem isWordCode_wordCode (u : List Γ) : IsWordCode (wordCode N u) := by
   refine ⟨fun p y y' h h' => wordCode_unique h h', fun p => ?_⟩
   by_cases hp : p.1 ≤ u.length
   · exact Or.inl (exists_wordCode u hp)
@@ -162,7 +162,7 @@ end Code
 
 section Rules
 
-variable {F : Type*} [Field F] {Γ S Q : Type} [Fintype Γ] [DecidableEq Γ] [DecidableEq S]
+variable {F : Type*} [CommSemiring F] {Γ S Q : Type} [Fintype Γ] [DecidableEq Γ] [DecidableEq S]
   [DecidableEq Q] {n t M N : ℕ}
 
 /-- The clauses on the input bits. -/
@@ -197,7 +197,7 @@ inductive CodeRule (Γ : Type) (N : ℕ) where
   | .missing _ => 0
 
 /-- **The clauses on the input bits allow only codes.** -/
-theorem prod_codeLits [Fintype S] [Fintype Q] (x : Fin N × Option Γ → Bool)
+theorem prod_codeLits (x : Fin N × Option Γ → Bool)
     (g : RunAssignment Γ S Q n t M) :
     (∏ r : CodeRule Γ N, if ∀ l ∈ codeLits (S := S) (Q := Q) (n := n) (t := t) (M := M) r,
         Sum.elim x (Pi.oneHot g) l.1 = l.2 then (codeWeights r : F) else 1) =
@@ -252,7 +252,6 @@ theorem domainClauseSum_codeLits [Fintype S] [Fintype Q] {Θ : Type} [Fintype Θ
   · split_ifs <;> simp
   · intro g
     rw [← prod_codeLits (F := F) x g]
-    exact prod_congr rfl fun _ _ => by congr
 
 end Rules
 

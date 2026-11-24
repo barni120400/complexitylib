@@ -85,9 +85,10 @@ private def RunVar.equivSigma (Γ S Q : Type) (n t M : ℕ) :
 
 theorem card_sigma_dom_le
     (hΓ : Fintype.card Γ + 1 ≤ B) (hS : Fintype.card S ≤ B) (hQ : Fintype.card Q ≤ B)
-    (hn : n ≤ B) (ht : t + 1 ≤ B) (hM : M ≤ B) (hB : 1 ≤ B) :
+    (hn : n ≤ B) (ht : t + 1 ≤ B) (hM : M ≤ B) :
     Fintype.card (Σ d : RunVar S n t M, d.Dom Γ Q) ≤ 9 * B ^ 3 := by
-  have hL := card_letter_le (Γ := Γ) (S := S) (n := n) (by omega) hS hn hB
+  have hB : 1 ≤ B := by omega
+  have hL := card_letter_le (Γ := Γ) (S := S) (n := n) (by omega) hS hn (by omega)
   have h : Fintype.card (Σ d : RunVar S n t M, d.Dom Γ Q) =
       t * Fintype.card (Letter S (Fin n) Γ) + ((t + 1) * Fintype.card Q +
         (((2 * Fintype.card S + n) * (t + 1)) * M +
@@ -103,16 +104,17 @@ theorem card_sigma_dom_le
     _ = 9 * B ^ 3 := by ring
 
 theorem RunStep.card_le (hΓ : Fintype.card Γ + 1 ≤ B) (hS : Fintype.card S ≤ B)
-    (hQ : Fintype.card Q ≤ B) (hn : n ≤ B) (ht : t ≤ B) (hB : 1 ≤ B) :
+    (hQ : Fintype.card Q ≤ B) (hn : n ≤ B) (ht : t ≤ B) :
     Fintype.card (RunStep Γ S Q n t) ≤ 4 * B ^ 5 := by
-  have hL := card_letter_le (Γ := Γ) (S := S) (n := n) (by omega) hS hn hB
+  have hL := card_letter_le (Γ := Γ) (S := S) (n := n) (by omega) hS hn (by omega)
   rw [RunStep.card]
   calc _ ≤ B * (4 * B ^ 2 * (B * B)) := by gcongr
     _ = 4 * B ^ 5 := by ring
 
 theorem RunRule.card_le (hΓ : Fintype.card Γ + 1 ≤ B) (hS : Fintype.card S ≤ B) (hn : n ≤ B)
-    (ht : t ≤ B) (hM : M ≤ B) (hB : 1 ≤ B) : Fintype.card (RunRule Γ S n t M) ≤ 25 * B ^ 5 := by
-  have hL := card_letter_le (Γ := Γ) (S := S) (n := n) (by omega) hS hn hB
+    (ht : t ≤ B) (hM : M ≤ B) : Fintype.card (RunRule Γ S n t M) ≤ 25 * B ^ 5 := by
+  have hB : 1 ≤ B := by omega
+  have hL := card_letter_le (Γ := Γ) (S := S) (n := n) (by omega) hS hn (by omega)
   have hΓ' : Fintype.card Γ ≤ B := by omega
   have h (k : ℕ) (hk : k ≤ 5) : B ^ k ≤ B ^ 5 := Nat.pow_le_pow_right hB hk
   have h0 := h 0 (by omega)

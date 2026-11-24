@@ -52,7 +52,8 @@ namespace Cslib.Circuits.Arithmetic.Separation.Tape
 
 open Finset
 
-variable {F : Type*} [Field F] {Γ S Q : Type} [DecidableEq Γ] [DecidableEq S] [DecidableEq Q]
+variable {F : Type*} [CommSemiring F] {Γ S Q : Type} [DecidableEq Γ] [DecidableEq S]
+  [DecidableEq Q]
   {n t M N : ℕ}
 
 /-- The hidden variables of a certificate: a letter for every step, a state for every time, a place
@@ -387,7 +388,7 @@ end Rules
   Sum.elim stepLits (ruleLits i e)
 
 /-- The weights of all clauses: the matrix entry of a step, and `0` for a rule in force. -/
-@[expose] noncomputable def runWeights (mu : Letter S (Fin n) Γ → Matrix Q Q F) :
+@[expose] def runWeights (mu : Letter S (Fin n) Γ → Matrix Q Q F) :
     RunStep Γ S Q n t ⊕ RunRule Γ S n t M → F :=
   Sum.elim (fun r => mu r.letter r.src r.dst) fun r => if r.InForce then 0 else 1
 

@@ -40,7 +40,10 @@ example : wordCode 3 [true] (0, some true) = true ∧ wordCode 3 [true] (1, none
     wordCode 3 [true] (2, none) = false := by
   decide
 
-example : IsWordCode (wordCode 3 [true]) := isWordCode_wordCode [true] (by norm_num)
+example : IsWordCode (wordCode 3 [true]) := isWordCode_wordCode [true]
+
+/-- Also when the word does not fit into the places. -/
+example : IsWordCode (wordCode 1 [true, false]) := isWordCode_wordCode _
 
 example : Finset.card {b | wordCode 3 [true] b = true} = 2 :=
   card_ones_wordCode [true] (by norm_num)
@@ -57,7 +60,7 @@ example (mu : Letter Unit (Fin 2) Bool → Matrix (Fin 2) (Fin 2) ℤ) (u : Fin 
 
 /-- The value of an automaton with one input, one step and two states on the input `[true]` is the
 clause sum of its run clauses, with two code places and four places for the heads. -/
-example (mu : Letter Unit (Fin 1) Bool → Matrix (Fin 2) (Fin 2) ℚ) :
+example (mu : Letter Unit (Fin 1) Bool → Matrix (Fin 2) (Fin 2) ℤ) :
     domainClauseSum (runLits (Γ := Bool) (S := Unit) (n := 1) (t := 1) (M := 4) (N := 2) 0 1)
       (runWeights mu) (code 2 fun _ : Fin 1 => [true]) = runVal mu 0 1 1 fun _ => [true] :=
   runVal_eq_domainClauseSum mu 0 1 _ (by norm_num) (by decide)
