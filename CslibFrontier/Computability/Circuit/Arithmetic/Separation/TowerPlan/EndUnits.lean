@@ -23,16 +23,15 @@ After all moves of the tower plan of [AnthropicVPVNP2026] (proof of Theorem H.2;
 `Nc.Tow.EndA`, `Nc.Tow.EndB`, `Nc.Tow.EndC`), every alive unit whose target is not done has been
 given at a slot, so the alive current units are done (`unitTarget_eq_done_of_mem_cur`). A channel
 of a relay that uses units and whose units are done joins a chamber, the node below the parent on
-it (`Relay.child`), and the parent of that chamber in the tree (`Node.parent`):
-`channelHolders_of_target_eq_done`. The alive units of such channels at a node (`assignedUnits`)
-are at most the units between the chamber and its parent (`card_assignedUnits_le`). The last unit
-of every channel is never moved again (`deadUnits`). Possible outcomes are good
-(`towerPlan_good_of_possible`), and for good outcomes all units of a channel but the last are alive
-(`alive_eq_of_goodOutcome`).
+it (`Relay.child`), and the parent of that chamber in the tree
+(`Cslib.CoveringTower.Tower.Node.parent`): `channelHolders_of_target_eq_done`. The alive units of
+such channels at a node (`assignedUnits`) are at most the units between the chamber and its parent
+(`card_assignedUnits_le`). The last unit of every channel is never moved again (`deadUnits`).
+Possible outcomes are good (`towerPlan_good_of_possible`), and for good outcomes all units of a
+channel but the last are alive (`alive_eq_of_goodOutcome`).
 
 ## Main definitions
 
-* `Node.parent`: the parent of a node in the tree.
 * `Relay.child`: the node below the parent on a channel of a relay.
 * `IsChild`, `assignedUnits`: the channels whose units are between a node and its parent, and
   their alive units.
@@ -65,25 +64,19 @@ variable {F : Type*} [CommSemiring F] {h b D J r m Uu A A' U0 U1 : ℕ} {T : Tow
 
 /-! ### The tree -/
 
-/-- The parent of a node in the tree for the loads `Lf` on the edges: the parent chamber of a
-chamber of a level below `J`, and the root for a chamber of the level `J` and for the root. -/
-@[expose] noncomputable def Node.parent (hh : 0 < h) (Lf : ∀ j, T.Ed j → ℕ) : Node T → Node T
-  | .root => .root
-  | .chamber j c => if hj : (j : ℕ) + 1 ≤ J then .ofChamber hj (parentChamber hh Lf c) else .root
-
 /-- The node below the parent on the channel `β` of a relay: the party at its outer end, the
 source for `false` and the sink for `true`. -/
 @[expose] def Relay.child (R : Routes T m Uu) (ch : Fin A ↪ T.X 0) (x : Relay T m A) (β : Bool) :
-    Node T :=
+    T.Node :=
   x.party R ch (bif β then .sink else .source)
 
 /-- The channel `ν` is a child channel of the node `P`: a channel of a relay whose units are done
 and whose node below the parent is `P`. -/
-@[expose] def IsChild (P : Node T) : MoveChannel R ch FL → Prop
+@[expose] def IsChild (P : T.Node) : MoveChannel R ch FL → Prop
   | ⟨.relay x _, β⟩ => x.target R ch β = .done ∧ x.child R ch β = P
   | ⟨.vertex _, _⟩ => False
 
-instance (P : Node T) : DecidablePred (IsChild P : MoveChannel R ch FL → Prop)
+instance (P : T.Node) : DecidablePred (IsChild P : MoveChannel R ch FL → Prop)
   | ⟨.relay x _, β⟩ => inferInstanceAs (Decidable (x.target R ch β = .done ∧ x.child R ch β = P))
   | ⟨.vertex _, _⟩ => inferInstanceAs (Decidable False)
 
@@ -110,33 +103,33 @@ theorem channelHolders_of_target_eq_done (hh : 0 < h) {x : Relay T m A} (hx : x.
     {β : Bool} (hd : x.target R ch β = .done) (hne : moveCount lhat n o (.relay x hx) ≠ 0) :
     channelHolders (⟨.relay x hx, β⟩ : MoveChannel R ch FL) =
       s(x.child R ch β, (x.child R ch β).parent hh (edgeLoads (load lhat n o))) := by
-  have hpar {j : Fin J} (c : T.X j) : (Node.ofChamber j.2.le c).parent hh
+  have hpar {j : Fin J} (c : T.X j) : (Tower.Node.ofChamber j.2.le c).parent hh
       (edgeLoads (load lhat n o)) =
-        .ofChamber j.2 (parentChamber hh (edgeLoads (load lhat n o)) c) :=
+        .ofChamber j.2 (T.parentChamber hh (edgeLoads (load lhat n o)) c) :=
     dite_eq_left j.2
   rcases x with ⟨a, c, γ, s⟩ | ⟨j, i, e⟩ | ⟨j, e, s⟩ | e
   · exact absurd hd (start_target_ne_done hx β)
-  · obtain rfl : i = chosenType hh (edgeLoads (load lhat n o)) j := by
+  · obtain rfl : i = T.chosenType hh (edgeLoads (load lhat n o)) j := by
       by_contra hi
       apply hne
       rw [moveCount_eq, countOfLoad]
       exact ite_eq_right fun h => hi ((isChosenType_iff hh).1 h)
-    have h1 : T.vx (chosenType hh (edgeLoads (load lhat n o)) j) (T.e0 e) =
-        T.vx (chosenType hh (edgeLoads (load lhat n o)) j) (T.e1 e) :=
+    have h1 : T.vx (T.chosenType hh (edgeLoads (load lhat n o)) j) (T.e0 e) =
+        T.vx (T.chosenType hh (edgeLoads (load lhat n o)) j) (T.e1 e) :=
       (T.nr_vx0 j.2.le _ ⟨e, hx⟩).trans (T.nr_vx1 j.2.le _ ⟨e, hx⟩).symm
     cases β <;> simp [channelHolders, Relay.child, Relay.party, Move.party, Move.law, relayLaw,
-      relayChannelEnd, RelayRole.elim, hpar, parentChamber, Tower.hostOf, h1, Sym2.eq_swap]
-  · have ht : T.ty e = chosenType hh (edgeLoads (load lhat n o)) j := by
+      relayChannelEnd, RelayRole.elim, hpar, Tower.parentChamber, Tower.hostOf, h1, Sym2.eq_swap]
+  · have ht : T.ty e = T.chosenType hh (edgeLoads (load lhat n o)) j := by
       by_contra ht
       have := moveCount_middle_le (lhat := lhat) (n := n) (o := o) hx
       rw [ite_eq_right fun h => ht ((isChosenType_iff hh).1 h)] at this
       omega
     cases β <;> fin_cases s <;> simp only [Relay.target] at hd <;> (try split_ifs at hd) <;>
       simp_all [channelHolders, Relay.child, Relay.party, Move.party, Move.law, relayLaw,
-        relayChannelEnd, RelayRole.elim, parentChamber, Sym2.eq_swap]
-  · have hJ : (Node.ofChamber le_rfl (T.e0 e) : Node T).parent hh (edgeLoads (load lhat n o)) =
-        .root ∧ (Node.ofChamber le_rfl (T.e1 e) : Node T).parent hh
-          (edgeLoads (load lhat n o)) = .root :=
+        relayChannelEnd, RelayRole.elim, Tower.parentChamber, Sym2.eq_swap]
+  · have hJ : (.ofChamber le_rfl (T.e0 e) : T.Node).parent hh (edgeLoads (load lhat n o)) =
+        .root ∧ (.ofChamber le_rfl (T.e1 e) : T.Node).parent hh (edgeLoads (load lhat n o)) =
+          .root :=
       ⟨dite_eq_right (Nat.not_succ_le_self J), dite_eq_right (Nat.not_succ_le_self J)⟩
     cases β <;> simp [channelHolders, Relay.child, Relay.party, Move.party, Move.law, relayLaw,
       relayChannelEnd, RelayRole.elim, hJ, Sym2.eq_swap]
@@ -149,7 +142,7 @@ private theorem sum_done_le_load (j : Fin J) (e : T.Ed j) (β : Bool) :
       R ch β = .done then relayAlive lhat n o (.middle j e s) β else 0) ≤
       edgeLoads (load lhat n o) j e := by
   have hh := (T.ty e).pos
-  set i₀ := chosenType hh (edgeLoads (load lhat n o)) j
+  set i₀ := T.chosenType hh (edgeLoads (load lhat n o)) j
   have hL : load lhat n o (.edge j.castSucc e) = edgeLoads (load lhat n o) j e :=
     (edgeLoads_of_lt _ (by omega) e).symm
   have hI : ∑ i, relayAlive lhat n o (.inner j i e) β ≤
@@ -176,19 +169,19 @@ private theorem sum_done_le_load (j : Fin J) (e : T.Ed j) (β : Bool) :
 
 /-- The done channels of the relays of an edge at the node `P`: at most the units on the edge if an
 end of the edge is `P`, and none otherwise. -/
-private theorem sum_done_le (P : Node T) (j : Fin J) (e : T.Ed j) (β : Bool) :
+private theorem sum_done_le (P : T.Node) (j : Fin J) (e : T.Ed j) (β : Bool) :
     (∑ i, if (Relay.inner j i e : Relay T m A).target R ch β = .done ∧
       (Relay.inner j i e).child R ch β = P then relayAlive lhat n o (.inner j i e) β else 0) +
     ∑ s, (if (Relay.middle j e s : Relay T m A).target R ch β = .done ∧
       (Relay.middle j e s).child R ch β = P then relayAlive lhat n o (.middle j e s) β else 0) ≤
-      if Node.ofChamber j.2.le (bif β then T.e1 e else T.e0 e) = P then
+      if Tower.Node.ofChamber j.2.le (bif β then T.e1 e else T.e0 e) = P then
         edgeLoads (load lhat n o) j e else 0 := by
   have hI (i : Fin h) : (Relay.inner j i e : Relay T m A).child R ch β =
-      Node.ofChamber j.2.le (bif β then T.e1 e else T.e0 e) := by
+      Tower.Node.ofChamber j.2.le (bif β then T.e1 e else T.e0 e) := by
     cases β <;> rfl
   have hM (s : Fin 4) : (Relay.middle j e s : Relay T m A).target R ch β = .done →
       (Relay.middle j e s).child R ch β =
-        Node.ofChamber j.2.le (bif β then T.e1 e else T.e0 e) := by
+        Tower.Node.ofChamber j.2.le (bif β then T.e1 e else T.e0 e) := by
     cases β <;> fin_cases s <;> simp [Relay.target, Relay.child, Relay.party, RelayRole.elim]
   split_ifs with hP
   · refine le_trans (add_le_add (sum_le_sum fun i _ => ?_) (sum_le_sum fun s _ => ?_))
@@ -201,9 +194,9 @@ private theorem sum_done_le (P : Node T) (j : Fin J) (e : T.Ed j) (β : Bool) :
 
 /-- The alive units of the child channels of a node are at most the units between the node and
 its parent. -/
-private theorem sum_isChild_le (P : Node T) :
+private theorem sum_isChild_le (P : T.Node) :
     ∑ ν : MoveChannel R ch FL, (if IsChild P ν then alive lhat n o ν else 0) ≤
-      Node.lift (parentUnits (edgeLoads (load lhat n o))) 0 P := by
+      P.lift (T.parentUnits (edgeLoads (load lhat n o))) 0 := by
   have h1 : ∑ ν : MoveChannel R ch FL, (if IsChild P ν then alive lhat n o ν else 0) =
       ∑ x, ∑ β, if x.target R ch β = .done ∧ x.child R ch β = P then relayAlive lhat n o x β
         else 0 := by
@@ -227,8 +220,8 @@ private theorem sum_isChild_le (P : Node T) :
         relayAlive lhat n o (.inner j i e) β else 0) +
       (∑ e, ∑ s, ∑ β, if (Relay.middle j e s : Relay T m A).target R ch β = .done ∧
         (Relay.middle j e s).child R ch β = P then relayAlive lhat n o (.middle j e s) β else 0) ≤
-      ∑ c : T.X j, if Node.ofChamber j.2.le c = P then
-        parentUnits (edgeLoads (load lhat n o)) j c else 0 := by
+      ∑ c : T.X j, if Tower.Node.ofChamber j.2.le c = P then
+        T.parentUnits (edgeLoads (load lhat n o)) j c else 0 := by
     rw [Tower.sum_ite_incidentSum, sum_comm, ← sum_add_distrib]
     refine sum_le_sum fun e _ => (congrArg₂ (· + ·) sum_comm sum_comm).trans_le ?_
     rw [← sum_add_distrib]
@@ -237,8 +230,8 @@ private theorem sum_isChild_le (P : Node T) :
     rfl
   have hF : ∑ e : T.Ed J, ∑ β, (if (Relay.final e : Relay T m A).target R ch β = .done ∧
       (Relay.final e).child R ch β = P then relayAlive lhat n o (.final e) β else 0) ≤
-      ∑ c : T.X J, if Node.ofChamber le_rfl c = P then
-        parentUnits (edgeLoads (load lhat n o)) J c else 0 := by
+      ∑ c : T.X J, if Tower.Node.ofChamber le_rfl c = P then
+        T.parentUnits (edgeLoads (load lhat n o)) J c else 0 := by
     rw [Tower.sum_ite_incidentSum]
     refine sum_le_sum fun e _ => ?_
     have h (β : Bool) : relayAlive lhat n o (.final e : Relay T m A) β ≤
@@ -249,7 +242,7 @@ private theorem sum_isChild_le (P : Node T) :
     simp only [Fintype.sum_bool, Relay.target, Relay.child, Relay.party, RelayRole.elim, true_and,
       Bool.cond_true, Bool.cond_false]
     split_ifs <;> omega
-  have hA := Node.sum_ofChamber_castSucc (parentUnits (edgeLoads (load lhat n o))) P
+  have hA := Tower.Node.sum_ofChamber_castSucc (T.parentUnits (edgeLoads (load lhat n o))) P
   rw [h1, Relay.sum_eq, hS, zero_add, ← add_assoc, ← sum_add_distrib]
   exact (add_le_add (sum_le_sum fun j _ => hIM j) hF).trans_eq hA
 
@@ -301,9 +294,9 @@ private theorem exists_mem_givenUnits {u : PlanUnit R FL Pl U0 U1}
   · have hh := (T.ty e).pos
     revert e
     refine Fin.lastCases (fun e hτ => relay (x := .final e) trivial trivial hτ) (fun j e hτ => ?_) j
-    have hi : IsChosenType L j.castSucc (chosenType hh (edgeLoads L) j) :=
+    have hi : IsChosenType L j.castSucc (T.chosenType hh (edgeLoads L) j) :=
       (isChosenType_iff hh).2 rfl
-    by_cases ht : T.ty e = chosenType hh (edgeLoads L) j
+    by_cases ht : T.ty e = T.chosenType hh (edgeLoads L) j
     · exact relay (x := .middle j e 0)
         ⟨fun h => absurd h (by decide), fun h => absurd h (by decide)⟩
         (fun _ => ht ▸ hi) (by simp [hτ, Relay.input])
@@ -372,14 +365,14 @@ theorem unitTarget_eq_done_of_mem_cur {u : PlanUnit R FL Pl U0 U1}
 variable (R FL Pl lhat n o) in
 /-- The alive units between the node `P` and its parent: the alive units of the child channels of
 `P`. -/
-noncomputable def assignedUnits (P : Node T) : Finset (PlanUnit R FL Pl U0 U1) :=
+noncomputable def assignedUnits (P : T.Node) : Finset (PlanUnit R FL Pl U0 U1) :=
   (aliveUnits R FL Pl lhat n o).filter fun u =>
     ∃ ν k, u = .new ν k ∧ IsChild P (moveChannelEquiv R FL Pl ν)
 
 /-- The new units between the node `P` and its parent: the alive units of the child channels of
 `P`. -/
 @[simp]
-theorem new_mem_assignedUnits {P : Node T} {ν : (moves R FL Pl).Channel} {k : Fin U1} :
+theorem new_mem_assignedUnits {P : T.Node} {ν : (moves R FL Pl).Channel} {k : Fin U1} :
     (.new ν k : PlanUnit R FL Pl U0 U1) ∈ assignedUnits R FL Pl lhat n o P ↔
       (k : ℕ) < alive lhat (initialCounts n) (outcomeOf R FL Pl o) (moveChannelEquiv R FL Pl ν) ∧
         IsChild P (moveChannelEquiv R FL Pl ν) := by
@@ -389,10 +382,9 @@ theorem new_mem_assignedUnits {P : Node T} {ν : (moves R FL Pl).Channel} {k : F
 /-- **The units between a node and its parent** ([AnthropicVPVNP2026], Theorem H.2(b), p. 46):
 the alive units of the child channels of a node are at most the units between the node and its
 parent. -/
-theorem card_assignedUnits_le (P : Node T) :
+theorem card_assignedUnits_le (P : T.Node) :
     (assignedUnits R FL Pl lhat n o P).card ≤
-      Node.lift (parentUnits (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)))) 0
-        P := by
+      P.lift (T.parentUnits (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)))) 0 := by
   set e := moveChannelEquiv R FL Pl
   set al := alive lhat (initialCounts n) (outcomeOf R FL Pl o)
   calc (assignedUnits R FL Pl lhat n o P).card ≤ ((univ.filter fun ν => IsChild P (e ν)).biUnion

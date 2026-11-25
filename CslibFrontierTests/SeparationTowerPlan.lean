@@ -78,7 +78,7 @@ example : (Relay.final e : Relay T m A).input = .edge (Fin.last J) e := rfl
 example (d : Bool) : (Relay.final e : Relay T m A).target R ch d = .done := rfl
 
 /-- The two ends of an edge of the last stage are different nodes. -/
-example : Node.ofChamber le_rfl (T.e0 e) ≠ Node.ofChamber le_rfl (T.e1 e) := fun he =>
+example : (.ofChamber le_rfl (T.e0 e) : T.Node) ≠ .ofChamber le_rfl (T.e1 e) := fun he =>
   absurd (Relay.party_injective (R := R) (ch := ch) (x := .final e) trivial (a₁ := .source)
     (a₂ := .sink) he)
     (by decide)

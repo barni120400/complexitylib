@@ -73,7 +73,7 @@ private theorem le_lengthBound_mul (hr : 0 < r) (hb : 0 < b) {l : VertexMove FL}
 
 /-- The roles of a move at the node `P` read at most `1 + s` times the units given in the move at
 `P`, if the law of the move has `s` slots. -/
-private theorem sum_roles_le (P : Node T) (mv : Move R ch FL) :
+private theorem sum_roles_le (P : T.Node) (mv : Move R ch FL) :
     ∑ q, (if mv.party q = P then (1 + Fintype.card (mv.law.SlotAt q)) * moveCount lhat n o mv
       else 0) ≤ (1 + Fintype.card mv.law.Slot) * unitsAt lhat n o P mv := by
   rw [unitsAt, mul_sum]
@@ -85,7 +85,7 @@ private theorem sum_roles_le (P : Node T) (mv : Move R ch FL) :
 /-- With good outcomes, the channels of a relay carry at the node `P` at most twice the units
 given in the relay at `P`. -/
 private theorem relay_ends_le (hg : ∀ mv, GoodOutcome lhat n o mv) {x : Relay T m A}
-    (hx : x.Occurs R ch) (P : Node T) :
+    (hx : x.Occurs R ch) (P : T.Node) :
     (∑ c : Bool, ∑ d : Bool, if x.party R ch (relayChannelEnd c d) = P then
       o ⟨.relay x hx, c⟩ else 0) ≤
       2 * ∑ q : RelayRole, if x.party R ch q = P then moveCount lhat n o (.relay x hx)
@@ -99,7 +99,7 @@ private theorem relay_ends_le (hg : ∀ mv, GoodOutcome lhat n o mv) {x : Relay 
 /-- With good outcomes, the channels of a law move carry at the node `P` at most
 `2 |Nr| lengthBound` times the units given in the move at `P`. -/
 private theorem vertex_ends_le (hr : 0 < r) (hb : 0 < b) (hg : ∀ mv, GoodOutcome lhat n o mv)
-    (P : Node T) (l : VertexMove FL) :
+    (P : T.Node) (l : VertexMove FL) :
     (∑ c, ∑ d, if (Move.vertex l : Move R ch FL).party ((FL.law l.kind).channelEnd c d) = P then
       o ⟨.vertex l, c⟩ else 0) ≤
       2 * Fintype.card T.Nr * FL.lengthBound * unitsAt lhat n o P (.vertex l) := by
@@ -143,15 +143,15 @@ variable {R FL Pl lhat n o}
 
 /-- The units that the party of a node holds: the initial units of a base party, and the units
 of the channels at it. -/
-private theorem heldCount_le {ℓf : ℕ} (P : Node T)
-    (hini : ∀ a, Node.ofChamber (Nat.zero_le J) (ch a) = P →
+private theorem heldCount_le {ℓf : ℕ} (P : T.Node)
+    (hini : ∀ a, Tower.Node.ofChamber (Nat.zero_le J) (ch a) = P →
       ∑ c, ((n a c : ℕ) + n c a) ≤ ℓf) :
     heldCount R FL Pl n o (Pl.party P) ≤
-      (if ∃ a, Node.ofChamber (Nat.zero_le J) (ch a) = P then ℓf else 0) +
+      (if ∃ a, Tower.Node.ofChamber (Nat.zero_le J) (ch a) = P then ℓf else 0) +
         channelEndCount R FL Pl (Pl.party P) + ∑ ν, ∑ d,
           if (moves R FL Pl).channelParty ν d = Pl.party P then (o ν : ℕ) else 0 := by
   have hp (a : Fin A) :
-      Pl.party P = Fin.castAdd A' a ↔ Node.ofChamber (Nat.zero_le J) (ch a) = P := by
+      Pl.party P = Fin.castAdd A' a ↔ Tower.Node.ofChamber (Nat.zero_le J) (ch a) = P := by
     rw [← Pl.party_base, Pl.party.injective.eq_iff, eq_comm]
   have hcount (N : ℕ) (hN : N ≤ U0) (Q : Prop) [Decidable Q] :
       ∑ k : Fin U0, (if (k : ℕ) < N ∧ Q then 1 else 0) = if Q then N else 0 := by
@@ -167,7 +167,7 @@ private theorem heldCount_le {ℓf : ℕ} (P : Node T)
     simp only [fun a c => hcount _ (Nat.le_of_lt_succ (n a c).2)]
     split_ifs with hB
     · obtain ⟨a₀, rfl⟩ := hB
-      simp only [Node.ofChamber_inj, ch.injective.eq_iff]
+      simp only [Tower.Node.ofChamber_inj, ch.injective.eq_iff]
       refine le_trans (sum_le_sum fun a _ => sum_le_sum fun c _ =>
         (show _ ≤ (if a = a₀ then (n a c : ℕ) else 0) +
           if c = a₀ then (n a c : ℕ) else 0 by
@@ -200,18 +200,18 @@ last level). -/
 theorem heldCount_add_sum_roleUnits_le (hr : 0 < r) (hb : 0 < b) (hh : 0 < h)
     (hg : ∀ x, (towerPlan R FL Pl lhat U0 U1).Good n o x)
     (hnr : ∀ f : T.Fl, ∃ ν, T.cN ν = f ∨ T.dN ν = f) {Sm : ℕ}
-    (hSm : ∀ d, Fintype.card (FL.law d).Slot ≤ Sm) {ℓf : ℕ} (P : Node T)
-    (hini : ∀ a, Node.ofChamber (Nat.zero_le J) (ch a) = P →
+    (hSm : ∀ d, Fintype.card (FL.law d).Slot ≤ Sm) {ℓf : ℕ} (P : T.Node)
+    (hini : ∀ a, Tower.Node.ofChamber (Nat.zero_le J) (ch a) = P →
       ∑ c, ((n a c : ℕ) + n c a) ≤ ℓf) :
     heldCount R FL Pl n o (Pl.party P) + ∑ ρ, (if (moves R FL Pl).roleParty ρ = Pl.party P then
         roleUnits R FL Pl lhat n o ρ else 0) ≤
-      (if ∃ a, Node.ofChamber (Nat.zero_le J) (ch a) = P then ℓf + 8 * m * lhat else 0) +
+      (if ∃ a, Tower.Node.ofChamber (Nat.zero_le J) (ch a) = P then ℓf + 8 * m * lhat else 0) +
         channelEndCount R FL Pl (Pl.party P) +
         (4 + (2 * Fintype.card T.Nr * FL.lengthBound + 1 + Sm) * Fintype.card FL.Kind) *
-          Node.lift (fun j c =>
-            8 * parentUnits (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))) j c +
-            3 * childUnits hh (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))) j c)
-            (∑ e, edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)) J e) P := by
+          P.lift (fun j c =>
+            8 * T.parentUnits (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))) j c +
+            3 * T.childUnits hh (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))) j c)
+            (∑ e, edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)) J e) := by
   have hg' (mv : Move R ch FL) :
       GoodOutcome lhat (initialCounts n) (outcomeOf R FL Pl o) mv := by
     exact (moveOrder R ch FL).apply_symm_apply mv ▸ hg _
@@ -268,14 +268,14 @@ theorem heldCount_add_sum_roleUnits_le (hr : 0 < r) (hb : 0 < b) (hh : 0 < h)
   have h2 := sum_unitsAt_relay_le hh hg' P
   have h3 := sum_unitsAt_vertex_le hg' hnr P
   set L := edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))
-  set G := Node.lift (fun j c => 8 * parentUnits L j c + 3 * childUnits hh L j c) (∑ e, L J e) P
+  set G := P.lift (fun j c => 8 * T.parentUnits L j c + 3 * T.childUnits hh L j c) (∑ e, L J e)
   set K := 2 * Fintype.card T.Nr * FL.lengthBound + 1 + Sm
   have h4 : K * ∑ l, unitsAt lhat (initialCounts n) (outcomeOf R FL Pl o) P (.vertex l) ≤
       K * Fintype.card FL.Kind * G := calc
-    _ ≤ K * (Fintype.card FL.Kind * Node.lift (parentUnits L) 0 P) := Nat.mul_le_mul_left _ h3
+    _ ≤ K * (Fintype.card FL.Kind * P.lift (T.parentUnits L) 0) := Nat.mul_le_mul_left _ h3
     _ ≤ K * (Fintype.card FL.Kind * G) := by
       gcongr
-      cases P <;> simp [Node.lift, G]
+      cases P <;> simp [Tower.Node.lift, G]
       omega
     _ = _ := by ring
   rw [hch] at h1

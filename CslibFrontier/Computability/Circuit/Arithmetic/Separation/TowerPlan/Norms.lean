@@ -305,14 +305,15 @@ theorem norm_load_le (hr : 0 < r) (hb : 0 < b) (hh : 0 < h) (hbD : b ≤ 2 * D) 
     T.kap (edgeLoads (load lhat n o) (j + 1)) ≤ ρ * T.kap (edgeLoads (load lhat n o) j) +
       √FL.contraction * FL.scale / b * Fintype.card (T.X (j + 1)) := by
   set L := load lhat n o
-  have hi : IsChosenType L j.castSucc (chosenType hh (edgeLoads L) j) := (isChosenType_iff hh).2 rfl
+  have hi : IsChosenType L j.castSucc (T.chosenType hh (edgeLoads L) j) :=
+    (isChosenType_iff hh).2 rfl
   have hn : edgeLoads L j = fun e => L (.edge j.castSucc e) :=
     funext fun e => edgeLoads_of_lt L (by omega) e
   have hn' : edgeLoads L (j + 1) = fun e => L (.edge j.succ e) :=
     funext fun e => edgeLoads_of_lt L (by omega) e
   rw [hn, hn']
   choose _ d₀ _ using fun ω =>
-    VertexMove.exists_fits (FL := FL) L j (chosenType hh (edgeLoads L) j) ω
+    VertexMove.exists_fits (FL := FL) L j (T.chosenType hh (edgeLoads L) j) ω
   refine Tower.kap_le_of_stage j.2 hr hb hbD FL.contraction_nonneg (Nat.cast_nonneg _) hρ hρ1
     hi.mul_sum_le (fun e' he' => load_edge_succ_le hr hb hi he')
     (fun ω => (⟨j, _, ω, d₀ ω⟩ : VertexMove FL).minUnits L) (fun ω => ?_)

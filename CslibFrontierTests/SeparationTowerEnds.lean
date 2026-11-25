@@ -70,14 +70,14 @@ private def unitTower : Tower 1 1 1 1 0 where
 /-- The chamber of the level `0` has the chamber of the level `1` as its parent, and that one
 the root. -/
 example (Lf : ∀ j, unitTower.Ed j → ℕ) :
-    (Node.ofChamber (Nat.zero_le 1) () : Node unitTower).parent Nat.one_pos Lf =
+    (.ofChamber (Nat.zero_le 1) () : unitTower.Node).parent Nat.one_pos Lf =
       .ofChamber le_rfl () ∧
-    (Node.ofChamber le_rfl () : Node unitTower).parent Nat.one_pos Lf = .root :=
+    (.ofChamber le_rfl () : unitTower.Node).parent Nat.one_pos Lf = .root :=
   ⟨rfl, rfl⟩
 
 /-- Without edges, there are no units between the child of the chamber of the level `1` and that
 chamber. -/
-example (Lf : ∀ j, unitTower.Ed j → ℕ) : childUnits Nat.one_pos Lf 1 () = 0 :=
+example (Lf : ∀ j, unitTower.Ed j → ℕ) : unitTower.childUnits Nat.one_pos Lf 1 () = 0 :=
   sum_eq_zero fun _ _ => sum_eq_zero fun e _ => (e : Empty).elim
 
 /-! ### Relays and nodes in an arbitrary tower -/
@@ -119,7 +119,7 @@ example (l : VertexMove FL) (c : (FL.law l.kind).Channel) (ν : (moves R FL Pl).
   simp [Move.target] at this
 
 /-- A new unit between a node and its parent is alive. -/
-example {P : Node T} {ν : (moves R FL Pl).Channel} {k : Fin U1}
+example {P : T.Node} {ν : (moves R FL Pl).Channel} {k : Fin U1}
     (hu : (.new ν k : PlanUnit R FL Pl U0 U1) ∈ assignedUnits R FL Pl lhat n o P) :
     IsAlive R FL Pl lhat n o (.new ν k) := (new_mem_assignedUnits.1 hu).1
 
@@ -134,15 +134,15 @@ it holds and reads. -/
 example (hr : 0 < r) (hb : 0 < b) (hh : 0 < h) (hg : ∀ x, (towerPlan R FL Pl lhat U0 U1).Good n o x)
     (hnr : ∀ f : T.Fl, ∃ ν, T.cN ν = f ∨ T.dN ν = f) {Sm : ℕ}
     (hSm : ∀ d, Fintype.card (FL.law d).Slot ≤ Sm) {ℓf : ℕ} (c : T.X J)
-    (hini : ∀ a, Node.ofChamber (Nat.zero_le J) (ch a) = .ofChamber le_rfl c →
+    (hini : ∀ a, Tower.Node.ofChamber (Nat.zero_le J) (ch a) = .ofChamber le_rfl c →
       ∑ c', ((n a c' : ℕ) + n c' a) ≤ ℓf) :
     heldCount R FL Pl n o (Pl.party (.ofChamber le_rfl c)) ≤
-      (if ∃ a, Node.ofChamber (Nat.zero_le J) (ch a) = .ofChamber le_rfl c then
+      (if ∃ a, Tower.Node.ofChamber (Nat.zero_le J) (ch a) = .ofChamber le_rfl c then
         ℓf + 8 * m * lhat else 0) +
         channelEndCount R FL Pl (Pl.party (.ofChamber le_rfl c)) +
         (4 + (2 * Fintype.card T.Nr * FL.lengthBound + 1 + Sm) * Fintype.card FL.Kind) *
-          (8 * parentUnits (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))) J c +
-            3 * childUnits hh (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)))
+          (8 * T.parentUnits (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o))) J c +
+            3 * T.childUnits hh (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)))
               J c) :=
   le_self_add.trans (heldCount_add_sum_roleUnits_le hr hb hh hg hnr hSm _ hini)
 
