@@ -3278,6 +3278,7 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDra
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Rotation
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.RouteSupports
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SegmentArrangement
+public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SeparatingPairOrder
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SplitLayout
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SplitOrder
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SquareMove
@@ -6468,6 +6469,7 @@ public import CslibFrontier.Crypto.Computational.PseudorandomFunction
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRouting
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRoutingLaw
+public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRoutingPPT
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTableLaw
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTables
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.Hybrid
@@ -6778,6 +6780,7 @@ public import CslibFrontier.Crypto.Primitives.UHF.XorHash.Word
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.Basic
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.Conservation
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.Credit
+public import CslibFrontier.Crypto.Protocols.AnonymousToken.PolyTime
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.RandomTarget
 public import CslibFrontier.Crypto.Protocols.BCS.Basic
 public import CslibFrontier.Crypto.Protocols.BCS.Interactive
