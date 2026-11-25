@@ -10,6 +10,9 @@ module
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.InitialCounts
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.AllRuns
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Generators
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.GroupTime
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Instances
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Numbers
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ProgramSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.TemplateCost
@@ -28,7 +31,10 @@ import Mathlib.Data.Fintype.BigOperators
   with the scripts that its templates give.
 * One cut: the integers have a finite table of generators; the size of a small
   dealing formula; and, under hypotheses, the cut of the dealing program with weaker bounds, the
-  cost of its templates along its runs, and its size at a scale. -/
+  cost of its templates along its runs, and its size at a scale.
+* Numbers: closed examples of the numbers of units, row data and names, of a binary value, of
+  the time of a small dealing program, and of the bounds of one cut at the scale `10000`; under
+  hypotheses, the cut of the dealing program with the numbers of Theorem J.3. -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -268,5 +274,125 @@ example (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) {qn : Q → ℕ}
       (dealBaseSize + 3000) * v ^ 4 :=
   (size_dealProgram_le tab H hmX hc hnl hnub hbT hbub hmm hgp cb bt i e hU0 hU1).trans
     (Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hv 4))
+
+/-! ### Numbers -/
+
+/-- Two base parties with one unit per string and one channel of three units have seven units. -/
+example : Fintype.card (UnitId 2 1 Unit 3) = 7 := by
+  rw [UnitId.card_eq]
+  rfl
+
+/-- Two parties have eight row data. -/
+example : Fintype.card (RowData 2) = 8 := RowData.card_eq 2
+
+/-- With one block, no moves, no steps and no tapes, channels or units, there are `25` names. -/
+example : Fintype.card (Name 1 0 0 Empty Empty Empty) = 25 := by
+  rw [Name.card_eq]
+  simp
+
+/-- The word `[true, false]` is `2`, most significant bit first. -/
+example : BitString.binaryValue [true, false] = 2 := by
+  rw [show [true, false] = [false, true].reverse from rfl, ← KT.val_eq_binaryValue_reverse]
+  rfl
+
+/-- The time bound of the dealing program with one block, one group, codes of one bit, one bit
+per unit, no cut units and the empty argument. -/
+example : dealTime 1 1 1 1 1 0 0 = 26612 := by
+  norm_num [dealTime, stepBound, pieceBound]
+
+/-- The numbers of one cut at the scale `v = m = 10000`, with one block of one step, one group
+of one base party, codes of one bit, an empty instance and `τ = 10000 ^ 320`. -/
+private theorem cutNumbers :
+    CutNumbers 10000 1 (10000 ^ 320) 0 1 1 1 1 0 1 1 10000 0 1 0 0 1 where
+  le_m := le_rfl
+  m_le_v := le_rfl
+  k_pos := one_pos
+  k_le_K := le_rfl
+  KT_le := Nat.one_le_iff_ne_zero.mpr (mul_ne_zero (pow_ne_zero _ (by norm_num)) (by norm_num))
+  ℓ_eq := rfl
+  ub_pos := one_pos
+  ub_le := by norm_num
+  lh_mul_ub_le := by norm_num
+  Lc_lt := by norm_num
+  c_le := by norm_num
+  K_le_X := le_rfl
+  ιb_mul_le := by norm_num
+  ιb_le_X := le_rfl
+  bd_le := by rw [zero_mul, zero_mul]; exact Nat.zero_le _
+  ev_le := by rw [zero_mul, zero_mul]; exact Nat.zero_le _
+  mm_le := by norm_num
+  mm_le_X := le_rfl
+  small := by rw [one_pow, one_mul, ← pow_add]
+
+/-- **The time of the dealing program at the scale `10000`.** -/
+example : dealTime 1 1 1 1 1 (1 * 0) 0 ≤ (0 + 10000 ^ 320 * 1 / 10000 ^ 256) * 10000 ^ 10 :=
+  cutNumbers.dealTime_le
+
+/-- **The size of the pieces at the scale `10000`.** -/
+example : 1 + 1 + (200 * 1 ^ 3 * 1 + 1 * 1 * (4 * 0 + 2) + 0 * (4 * 1)) ≤
+    (0 / 1 + 10000 ^ 320 / 10000 ^ 256) * 10000 ^ 10 :=
+  cutNumbers.size_le
+
+/-- **The time of the pieces at the scale `10000`**, for `κ = 1`. -/
+example : 1 * ((1 + 1) * (1 + 1 + 2) + 1 * 1 + 3 * (0 + 1 * 0) * (1 + 1 + 1) + 10 * 1 ^ 3) ≤
+    10000 ^ 320 * 10000 ^ 10 / 1 :=
+  cutNumbers.time_le (by norm_num)
+
+section OneCut
+
+variable {F : Type} [CommRing F] {Γ S Q : Type} [Fintype Γ] [DecidableEq Γ] [Fintype S]
+  [DecidableEq S] [Fintype Q] [DecidableEq Q] {K A' E U0 U1 D nI pS mm c : ℕ}
+  {M : Moves F (K + K + A') E} {P : Plan M U0 U1}
+  {grp : PlanInput M U0 U1 → Fin (K + K + A') → Fin mm}
+
+/-- **One cut by the dealing program, with the numbers of Theorem J.3.** If GROUP evaluates the
+groups, the numbers of the cut are those of `CutNumbers`, and every choice that passes the checks
+has at most `lh` units at the beginning of every base party and at most `ev` cells and units read
+by the roles of every group, then the dealing program cuts `(τ, s)` into
+`(τ * m ^ 10 / k, (s / k + τ / v ^ 256) * m ^ 10)` with at most `k * m ^ 10` pieces in
+`(s + τ * k / v ^ 256) * m ^ 10` steps. -/
+example {θ : List Bool → F} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
+    {cb : Option Γ → Fin c → Bool} {kinds : List (Σ L : Law F, L.Role)} {qn : Q → ℕ}
+    {tg : M.Role → ℕ} {GROUP : Fm} {κ : ℕ} {bT bub nl nub : List Bool} {hD : 1 < D}
+    {hmm : mm ≤ D} {bt : Bool → Γ} {i e : Q} {hU0 : U0 < D} {hU1 : U1 ≤ D}
+    {v τ s k T ℓ ub lh X Lc m cap bd ιb ev : ℕ} (C : Codes S M U0 U1 D pS)
+    (tab : SlpTab P grp D nI pS) [DecidablePred tab.Valid] [∀ n o x, Decidable (P.Good n o x)]
+    (hK : 0 < K) (H : C.SizeBounds qn tg X Lc) (hkey : Function.Injective (Sum.elim C.key C.dkey))
+    (hGR : EvaluatesGroups θ mu cb kinds qn GROUP κ)
+    (hkind : ∀ r, kinds[tg r]? = some ⟨M.law r.1, r.2⟩) (hP : P.Ok cap)
+    (hT : BitString.binaryValue bT = T) (hub : BitString.binaryValue bub = ub)
+    (hnl : KT.val nl = ℓ) (hnub : KT.val nub = ub) (hℓ : ℓ ≤ T) (hlbT : bT.length ≤ Lc)
+    (hlbub : bub.length ≤ Lc) (hlnl : nl.length ≤ Lc) (hlnub : nub.length ≤ Lc)
+    (hN : CutNumbers v K τ s k T ℓ ub lh X Lc m c ιb bd ev mm) (hκ : κ ≤ m)
+    (hU : ∀ z : Tree, z.size ≤ s → Plain θ τ z →
+      Tape.runVal mu i e (K * T) (fun _ => (tbits z).map bt) = pv θ z)
+    (hval : ∀ z : Tree, z.size ≤ s → Tape.runVal mu i e (K * T) (fun _ => (tbits z).map bt) =
+      ∑ q : Fin (K + 1) → Q, if q 0 = i ∧ q (Fin.last K) = e then
+        ∑ ρ : Option S → Fin (K + K) → RowData (K + K), if ValidRows ρ then
+          ∑ n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1), if tab.Valid n then
+            ∑ o : M.Channel → Fin U1, if ∀ x, P.Good n o x then
+              ∑ b ∈ Play.common (none : UnitContent ub)
+                (Play.cutUnits (UnitId.holder M.channelParty) (grp ⟨n, o⟩) (P.cur n o E)),
+                ∏ g, P.groupValue mu T cb q (parts ℓ ((tbits z).map bt)) ρ n o (grp ⟨n, o⟩) g b
+            else 0 else 0 else 0 else 0)
+    (hbd : ∀ n o, tab.Valid n → (∀ x, P.Good n o x) → ∀ g,
+      #((P.cur n o E).filter (OneIn (UnitId.holder M.channelParty) (grp ⟨n, o⟩) g)) ≤ bd)
+    (hbase : ∀ n o, tab.Valid n → (∀ x, P.Good n o x) → ∀ g,
+      #{p : Fin (K + K) | grp ⟨n, o⟩ (Fin.castAdd A' p) = g} ≤ ιb)
+    (hlh : ∀ n o, tab.Valid n → (∀ x, P.Good n o x) → ∀ p, ∑ b, ((n p b : ℕ) + n b p) ≤ lh)
+    (hev : ∀ n o, tab.Valid n → (∀ x, P.Good n o x) → ∀ g,
+      cellCount n o (grp ⟨n, o⟩) g + roleUnitCount P n o (grp ⟨n, o⟩) g ≤ ev)
+    (hcount : ∀ n o, tab.Valid n → (∀ x, P.Good n o x) → ∀ y, P.count n o y ≤ X)
+    (hgp : GROUP.code.size ≤ X) :
+    IsCut θ τ s (τ * m ^ 10 / k) ((s / k + τ / v ^ 256) * m ^ 10) (k * m ^ 10)
+      ((s + τ * k / v ^ 256) * m ^ 10)
+      (C.dealProgram tab qn tg bT bub nl nub hD hmm GROUP.code cb bt i e hU0 hU1).code :=
+  (isCut_dealProgram_of_evaluatesGroups tab hK H hkey hGR hkind hP hT hub hN.ub_pos hnl hnub hℓ
+    hlbT hlbub hlnl hlnub hU hval hbd hbase hcount hgp fun q x ρ n o g b hx hn ho =>
+      groupTime_le_of_sizeBounds H hT hub hlbT hlbub hP hx (hbase n o hn ho g) hN.ιb_le_X
+        (fun p _ => hlh n o hn ho p) (hev n o hn ho g) b).mono (hN.time_le hκ) hN.size_le
+    (hN.mm_le.trans (Nat.mul_le_mul_left k (Nat.le_self_pow (by norm_num) m))) hN.dealTime_le
+
+end OneCut
 
 end CslibFrontierTests.SeparationDealing

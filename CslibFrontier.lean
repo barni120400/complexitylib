@@ -1421,9 +1421,13 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Choices
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Cut
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Generators
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.GroupTime
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Instances
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.NamedStates
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Numbers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Phases
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ProgramSize
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ProgramTime
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Runs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.StepCost
