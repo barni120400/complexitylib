@@ -1474,6 +1474,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Basic
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Rank
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
@@ -7645,6 +7646,7 @@ public import CslibFrontier.Foundations.Algebra.BigOperators.IteMem
 public import CslibFrontier.Foundations.Algebra.BigOperators.Selection
 public import CslibFrontier.Foundations.Algebra.Covering.Basic
 public import CslibFrontier.Foundations.Algebra.Covering.Certificate
+public import CslibFrontier.Foundations.Algebra.BigOperators.Sym
 public import CslibFrontier.Foundations.Algebra.Covering.Duality
 public import CslibFrontier.Foundations.Algebra.Covering.Gauge
 public import CslibFrontier.Foundations.Algebra.DFT
