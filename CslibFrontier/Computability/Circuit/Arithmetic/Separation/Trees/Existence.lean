@@ -28,7 +28,7 @@ node, is a sum of networks on thin trees (`ThinTrees`), with `Λ = (lg M) ^ C`, 
 The proof is the paper's (pp. 46–48). For the least `n` with `M ≤ |G_n|` the tower
 `SLTower.tower h n`, with routes and with the laws transferred to it and mapped to the algebra,
 satisfies `TowerConstants` with one constant `c` for all `n` and has `|G_n| ≤ c M` (`exists_towers`,
-in `Trees/SLTowers.lean`). The tower plan (`TowerPlan.towerPlan`) on this tower is the plan of the
+in `SLTowers.lean`). The tower plan (`TowerPlan.towerPlan`) on this tower is the plan of the
 theorem, its tree (`treeParent`, `treeUnits`) is the tree, and the bounds of the tower plan and of
 its tree (`TowerTree.lean`, `TreeProgram.lean`) are absorbed in the exponent `C`.
 
