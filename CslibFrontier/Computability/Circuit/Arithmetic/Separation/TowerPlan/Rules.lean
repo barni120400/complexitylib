@@ -49,7 +49,7 @@ private theorem Relay.eq_of_input_eq {L : Target T m A → ℕ} {x x' : Relay T 
   rcases x with ⟨a, c, γ, s⟩ | ⟨j, i, e⟩ | ⟨j, e, s⟩ | e <;>
     rcases x' with ⟨a', c', γ', s'⟩ | ⟨j', i', e'⟩ | ⟨j', e', s'⟩ | e' <;>
     simp only [Relay.input] at he <;> (try split_ifs at he) <;>
-    grind [Relay.Active, Relay.Occurs, IsChosenType, IsLeast.unique, Fin.castSucc_inj,
+    grind [Relay.Active, Relay.Occurs, Tower.IsChosenType, IsLeast.unique, Fin.castSucc_inj,
       Fin.castSucc_ne_last]
 
 private theorem slotRank_inj {d : FL.Kind} {e e' : (FL.law d).Slot}

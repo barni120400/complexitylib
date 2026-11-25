@@ -1468,7 +1468,6 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Rules
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StageBounds
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Tree
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist

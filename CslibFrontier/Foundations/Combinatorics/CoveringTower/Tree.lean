@@ -17,11 +17,11 @@ import Mathlib.Tactic.DeriveFintype
 The proof of Theorem H.2 of [AnthropicVPVNP2026] gathers units in a tree whose nodes
 (`Cslib.CoveringTower.Tower.Node`) are the chambers of all levels of a
 `Cslib.CoveringTower.Tower` and a root. For loads `Lf` on the edges of every level, the chosen
-type of a level is the first type whose edges have the least sum of the squares of their loads;
-the parent of a chamber of the level `j` is the host of its vertex of the chosen type, a chamber
-of the level `j + 1`, and the units between a chamber and its parent are the loads of the edges
-at the chamber. The hosts of a type are injective below the level `J`, so a chamber has at most
-`b` children: at most one at every place.
+type of a level is the first type whose edges have the least sum of the squares of their loads
+(`Cslib.CoveringTower.Tower.IsChosenType`); the parent of a chamber of the level `j` is the host
+of its vertex of the chosen type, a chamber of the level `j + 1`, and the units between a chamber
+and its parent are the loads of the edges at the chamber. The hosts of a type are injective
+below the level `J`, so a chamber has at most `b` children: at most one at every place.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], modules `Nc.Tow.Net` and `Nc.Tow.Tree`.
 
@@ -31,14 +31,19 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], modules `Nc.Tow.Net` an
   tree.
 * `Cslib.CoveringTower.Tower.Node.lift`: a function on the nodes from functions on the chambers
   of every level.
+* `Cslib.CoveringTower.Tower.sqLoad`, `Cslib.CoveringTower.Tower.IsChosenType`: the sum of the
+  squares of the loads of the edges of a type, and the types that are chosen for the loads of the
+  edges of a level.
 * `Cslib.CoveringTower.Tower.chosenType`, `Cslib.CoveringTower.Tower.parentChamber`,
   `Cslib.CoveringTower.Tower.parentUnits`: the chosen type of a level, the parent of a chamber,
   and the units between a chamber and its parent.
 
 ## Main results
 
-* `Cslib.CoveringTower.Tower.isLeast_chosenType`: the chosen type is the first type with the
-  least sum of the squares of the loads of its edges.
+* `Cslib.CoveringTower.Tower.isChosenType_chosenType`,
+  `Cslib.CoveringTower.Tower.isChosenType_iff`: the chosen type is the one type that is chosen.
+* `Cslib.CoveringTower.Tower.IsChosenType.mul_sum_sq_le`: the edges of a chosen type carry at most
+  the average of the sums of the squares of the loads of the types.
 * `Cslib.CoveringTower.Tower.card_children`: a chamber has at most `b` children.
 
 ## References
@@ -98,22 +103,48 @@ theorem lift_ofChamber {α : Type*} (f : ∀ j, T.X j → α) (a : α) (hj : j �
 
 end Node
 
-/-- The sum of the squares of the loads of the edges of the type `i` at the level `j`. -/
-private def sqSum (Lf : ∀ j, T.Ed j → ℕ) (j : ℕ) (i : Fin h) : ℕ :=
-  ∑ e : T.Ed j, if T.ty e = i then Lf j e ^ 2 else 0
+variable (T) in
+/-- The sum of the squares of the loads `l` of the edges of the type `i` of a level. -/
+@[expose] def sqLoad {j : ℕ} (l : T.Ed j → ℕ) (i : Fin h) : ℕ :=
+  ∑ e : T.Ed j, if T.ty e = i then l e ^ 2 else 0
 
-private theorem nonempty_minimizers (hh : 0 < h) (Lf : ∀ j, T.Ed j → ℕ) (j : ℕ) :
-    (univ.filter fun i : Fin h => ∀ i', sqSum Lf j i ≤ sqSum Lf j i').Nonempty := by
-  obtain ⟨i, -, hi⟩ := exists_min_image univ (sqSum Lf j) ⟨⟨0, hh⟩, mem_univ _⟩
+variable (T) in
+/-- The type `i` is chosen for the loads `l` of the edges of a level: it is the first type whose
+edges have the least sum of the squares of their loads. -/
+@[expose] def IsChosenType {j : ℕ} (l : T.Ed j → ℕ) (i : Fin h) : Prop :=
+  IsLeast {i | ∀ i', T.sqLoad l i ≤ T.sqLoad l i'} i
+
+instance {j : ℕ} (l : T.Ed j → ℕ) (i : Fin h) : Decidable (T.IsChosenType l i) :=
+  inferInstanceAs (Decidable ((∀ i', T.sqLoad l i ≤ T.sqLoad l i') ∧
+    ∀ ⦃a⦄, (∀ i', T.sqLoad l a ≤ T.sqLoad l i') → i ≤ a))
+
+/-- The edges of a chosen type have at most the average of the sums of the squares of the loads
+of the edges of each type. -/
+theorem IsChosenType.mul_sum_sq_le {j : ℕ} {l : T.Ed j → ℕ} {i : Fin h}
+    (hi : T.IsChosenType l i) :
+    (h : ℝ) * ∑ e ∈ univ.filter (T.ty · = i), (l e : ℝ) ^ 2 ≤ ∑ e, (l e : ℝ) ^ 2 := by
+  have h1 : h * T.sqLoad l i ≤ ∑ e, l e ^ 2 := calc
+    h * T.sqLoad l i = ∑ _i' : Fin h, T.sqLoad l i := by simp
+    _ ≤ ∑ i', T.sqLoad l i' := sum_le_sum fun i' _ => hi.1 i'
+    _ = _ := by
+      simp only [sqLoad]
+      rw [sum_comm]
+      simp
+  rw [sqLoad, ← sum_filter] at h1
+  exact_mod_cast h1
+
+private theorem nonempty_minimizers (hh : 0 < h) {j : ℕ} (l : T.Ed j → ℕ) :
+    (univ.filter fun i : Fin h => ∀ i', T.sqLoad l i ≤ T.sqLoad l i').Nonempty := by
+  obtain ⟨i, -, hi⟩ := exists_min_image univ (T.sqLoad l) ⟨⟨0, hh⟩, mem_univ _⟩
   exact ⟨i, mem_filter.2 ⟨mem_univ _, fun i' => hi i' (mem_univ _)⟩⟩
 
 variable (T) (hh : 0 < h) (Lf : ∀ j, T.Ed j → ℕ)
 
-/-- The chosen type at the level `j` for the loads `Lf` on the edges: the first type whose edges
-have the least sum of the squares of their loads. -/
+/-- The chosen type at the level `j` for the loads `Lf` on the edges (`IsChosenType`): the first
+type whose edges have the least sum of the squares of their loads. -/
 noncomputable def chosenType (j : ℕ) : Fin h :=
-  (univ.filter fun i : Fin h => ∀ i', sqSum Lf j i ≤ sqSum Lf j i').min'
-    (nonempty_minimizers hh Lf j)
+  (univ.filter fun i : Fin h => ∀ i', T.sqLoad (Lf j) i ≤ T.sqLoad (Lf j) i').min'
+    (nonempty_minimizers hh (Lf j))
 
 /-- The parent of a chamber of the level `j`: the host of its vertex of the chosen type. -/
 @[expose] noncomputable def parentChamber {j : ℕ} (c : T.X j) : T.X (j + 1) :=
@@ -125,12 +156,16 @@ abbrev parentUnits (j : ℕ) (c : T.X j) : ℕ := T.incidentSum (Lf j) c
 
 variable {T}
 
-/-- The chosen type is the first type whose edges have the least sum of the squares of their
-loads. -/
-theorem isLeast_chosenType (j : ℕ) :
-    IsLeast {i | ∀ i', ∑ e : T.Ed j, (if T.ty e = i then Lf j e ^ 2 else 0) ≤
-      ∑ e : T.Ed j, if T.ty e = i' then Lf j e ^ 2 else 0} (T.chosenType hh Lf j) := by
-  exact ⟨(mem_filter.1 (min'_mem _ _)).2, fun i hi => min'_le _ _ (mem_filter.2 ⟨mem_univ _, hi⟩)⟩
+/-- The chosen type is chosen. -/
+theorem isChosenType_chosenType (j : ℕ) : T.IsChosenType (Lf j) (T.chosenType hh Lf j) :=
+  ⟨(mem_filter.1 (min'_mem _ _)).2, fun _ hi => min'_le _ _ (mem_filter.2 ⟨mem_univ _, hi⟩)⟩
+
+variable {Lf} in
+/-- A type is chosen exactly when it is the chosen type. -/
+theorem isChosenType_iff {j : ℕ} {i : Fin h} :
+    T.IsChosenType (Lf j) i ↔ i = T.chosenType hh Lf j :=
+  ⟨fun hi => hi.unique (isChosenType_chosenType hh Lf j),
+    fun hi => hi ▸ isChosenType_chosenType hh Lf j⟩
 
 /-- A chamber of a level `j + 1 ≤ J` has at most `b` children. -/
 theorem card_children {j : ℕ} (hj : j < J) (c' : T.X (j + 1)) :

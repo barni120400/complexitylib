@@ -7,7 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: candidate
 
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Tree
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Counts
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
 import Mathlib.Tactic.FinCases
 
@@ -134,7 +134,7 @@ theorem Relay.of_target_eq_segment {x : Relay T m A} {d : Bool} {j : Fin J} {i :
 
 /-- The end segments of a type that is not chosen carry no units. -/
 private theorem load_segment_eq_zero {j : Fin J} {i : Fin h}
-    (hi : ¬ IsChosenType (load lhat n o) j.castSucc i) (ω : T.V (j + 1) i) (q : Sym2 T.Fl) :
+    (hi : ¬ T.IsChosenType (edgeLoads (load lhat n o) j) i) (ω : T.V (j + 1) i) (q : Sym2 T.Fl) :
     load lhat n o (.segment j i ω q) = 0 := by
   rw [load_eq_relay fun _ _ => by simp [Move.target],
     initialLoad_eq_zero (by simp) (by simp only [Target.time]; omega), zero_add]
@@ -145,7 +145,8 @@ private theorem load_segment_eq_zero {j : Fin J} {i : Fin h}
 /-- A law move at a vertex of a type that is not chosen, or of a kind that is not used, uses no
 units. -/
 theorem moveCount_vertex_eq_zero {l : VertexMove FL}
-    (hl : ¬ IsChosenType (load lhat n o) l.stage.castSucc l.type ∨ ¬ l.IsPicked (load lhat n o)) :
+    (hl : ¬ T.IsChosenType (edgeLoads (load lhat n o) l.stage) l.type ∨
+      ¬ l.IsPicked (load lhat n o)) :
     moveCount lhat n o (.vertex l) = 0 := by
   rcases hl with hl | hl
   · exact Nat.eq_zero_of_le_zero ((moveCount_vertex_le l).trans_eq
@@ -188,25 +189,11 @@ private theorem Relay.of_target_eq_edge_succ {x : Relay T m A} {d : Bool} {j : F
        exact ⟨_, rfl, rfl, eq_of_heq h2⟩)
     | simp_all
 
-/-- The chosen type has at most the average of the squares of the loads. -/
-private theorem IsChosenType.mul_sum_le {L : Target T m A → ℕ} {j : Fin (J + 1)} {i : Fin h}
-    (hi : IsChosenType L j i) :
-    (h : ℝ) * ∑ e ∈ univ.filter (T.ty · = i), (L (.edge j e) : ℝ) ^ 2 ≤
-      ∑ e, (L (.edge j e) : ℝ) ^ 2 := by
-  have h1 : h * sqLoad L j i ≤ ∑ e, L (.edge j e) ^ 2 := calc
-    h * sqLoad L j i = ∑ _i' : Fin h, sqLoad L j i := by simp
-    _ ≤ ∑ i', sqLoad L j i' := sum_le_sum fun i' _ => hi.1 i'
-    _ = _ := by
-      simp only [sqLoad]
-      rw [sum_comm]
-      simp
-  rw [sqLoad, ← sum_filter] at h1
-  exact_mod_cast h1
-
 /-- The edges of the chosen type in the next level carry at most the loads of the edges over
 them: their units are the middle segments. -/
 private theorem load_edge_succ_le (hr : 0 < r) (hb : 0 < b) {j : Fin J} {i : Fin h}
-    (hi : IsChosenType (load lhat n o) j.castSucc i) {e' : T.Ed (j + 1)} (he' : T.ty e' = i) :
+    (hi : T.IsChosenType (edgeLoads (load lhat n o) j) i) {e' : T.Ed (j + 1)}
+    (he' : T.ty e' = i) :
     load lhat n o (.edge j.succ e') ≤
       ∑ e ∈ univ.filter (T.πE · = e'), load lhat n o (.edge j.castSucc e) := by
   have hv : (∑ l, ∑ c, if (Move.vertex l : Move R ch FL).target c = .edge j.succ e' then
@@ -259,7 +246,7 @@ private theorem sum_alive_sq_le (l : VertexMove FL) :
 /-- An edge of the next level at a vertex of the chosen type carries at most the alive units of
 its channel of the law move that is used at the vertex. -/
 private theorem load_edge_vertex_le (hr : 0 < r) (hb : 0 < b) {j : Fin J} {i : Fin h}
-    (hi : IsChosenType (load lhat n o) j.castSucc i) {ω : T.V (j + 1) i} {d : FL.Kind}
+    (hi : T.IsChosenType (edgeLoads (load lhat n o) j) i) {ω : T.V (j + 1) i} {d : FL.Kind}
     (hd : (⟨j, i, ω, d⟩ : VertexMove FL).IsPicked (load lhat n o)) (c : (FL.law d).Channel) :
     load lhat n o (.edge j.succ ((T.nr j.2 i).symm (ω, FL.nearPair d c)).1) ≤
       alive lhat n o ⟨.vertex ⟨j, i, ω, d⟩, c⟩ := by
@@ -305,17 +292,18 @@ theorem norm_load_le (hr : 0 < r) (hb : 0 < b) (hh : 0 < h) (hbD : b ≤ 2 * D) 
     T.kap (edgeLoads (load lhat n o) (j + 1)) ≤ ρ * T.kap (edgeLoads (load lhat n o) j) +
       √FL.contraction * FL.scale / b * Fintype.card (T.X (j + 1)) := by
   set L := load lhat n o
-  have hi : IsChosenType L j.castSucc (T.chosenType hh (edgeLoads L) j) :=
-    (isChosenType_iff hh).2 rfl
+  have hi := Tower.isChosenType_chosenType hh (edgeLoads L) j
   have hn : edgeLoads L j = fun e => L (.edge j.castSucc e) :=
     funext fun e => edgeLoads_of_lt L (by omega) e
   have hn' : edgeLoads L (j + 1) = fun e => L (.edge j.succ e) :=
     funext fun e => edgeLoads_of_lt L (by omega) e
+  have hsel := hi.mul_sum_sq_le
+  rw [hn] at hsel
   rw [hn, hn']
   choose _ d₀ _ using fun ω =>
     VertexMove.exists_fits (FL := FL) L j (T.chosenType hh (edgeLoads L) j) ω
   refine Tower.kap_le_of_stage j.2 hr hb hbD FL.contraction_nonneg (Nat.cast_nonneg _) hρ hρ1
-    hi.mul_sum_le (fun e' he' => load_edge_succ_le hr hb hi he')
+    hsel (fun e' he' => load_edge_succ_le hr hb hi he')
     (fun ω => (⟨j, _, ω, d₀ ω⟩ : VertexMove FL).minUnits L) (fun ω => ?_)
     fun ω => VertexMove.scale_mul_minUnits_le L _ fun q => load_segment_le j _ ω q
   obtain ⟨d, hd⟩ := VertexMove.exists_isPicked L (⟨j, _, ω, d₀ ω⟩ : VertexMove FL)

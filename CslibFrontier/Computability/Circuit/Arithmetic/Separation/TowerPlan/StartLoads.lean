@@ -330,9 +330,10 @@ and none if the type of the edge is not the chosen one. -/
 theorem moveCount_middle_le {j : Fin J} {e : T.Ed j} {s : Fin 4}
     (hx : (Relay.middle j e s).Occurs R ch) :
     moveCount lhat n o (.relay (.middle j e s) hx) ≤
-      if IsChosenType (load lhat n o) j.castSucc (T.ty e) then load lhat n o (.edge j.castSucc e)
+      if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then
+        load lhat n o (.edge j.castSucc e)
       else 0 := by
-  set M := if IsChosenType (load lhat n o) j.castSucc (T.ty e) then
+  set M := if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then
     load lhat n o (.edge j.castSucc e) else 0
   have hA {s : Fin 4} (hs : ∀ hx, moveCount lhat n o (.relay (.middle j e s) hx) ≤ M)
       (d : Bool) : relayAlive lhat n o (.middle j e s) d ≤ M := by
@@ -375,7 +376,8 @@ theorem moveCount_middle_le {j : Fin J} {e : T.Ed j} {s : Fin 4}
 none if the type of the edge is not the chosen one. -/
 theorem relayAlive_middle_le (j : Fin J) (e : T.Ed j) (s : Fin 4) (d : Bool) :
     relayAlive lhat n o (.middle j e s) d ≤
-      if IsChosenType (load lhat n o) j.castSucc (T.ty e) then load lhat n o (.edge j.castSucc e)
+      if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then
+        load lhat n o (.edge j.castSucc e)
       else 0 := by
   by_cases hx : (Relay.middle j e s).Occurs R ch
   · exact (relayAlive_of_occurs hx d).trans_le
