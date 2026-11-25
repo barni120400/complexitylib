@@ -1399,14 +1399,20 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvatur
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.Terms
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.WindowMean
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Blocks
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Codes
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Contract
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.FinalTables
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Groups
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Initial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Law
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.MoveIdentity
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Moves
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Play
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Rows
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Start
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Act
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Avg
@@ -1454,6 +1460,13 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Counts
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Holders
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Laws
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Moves
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Plan
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Relays
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Rules
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Basic
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Rank
@@ -3262,6 +3275,8 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDra
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SquareMove
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Star
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Subdrawing
+public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.ThreePathOrder
+public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.ThreePathRestriction
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.VertexPlacement
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.VertexTransport
 public import CslibFrontier.Computability.Complexity.Problems.Graph.Ports
@@ -3301,6 +3316,7 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSyst
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeDeletionGenus
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeDeletionParity
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeDeletionTransport
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeEndJoin
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Equality
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.FaceCounts
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.FaceDartColors
@@ -6443,6 +6459,7 @@ public import CslibFrontier.Crypto.Computational.Pseudoentropy.WordSeedExtractio
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRouting
+public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRoutingLaw
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTables
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.Hybrid
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.CircuitLowerBound
@@ -7738,6 +7755,8 @@ public import CslibFrontier.Foundations.Analysis.Normed.CoveringNumber
 public import CslibFrontier.Foundations.Analysis.Normed.FiniteNet
 public import CslibFrontier.Foundations.Analysis.Normed.Ring.PowSub
 public import CslibFrontier.Foundations.Analysis.Normed.UnitSphere
+public import CslibFrontier.Foundations.Analysis.ODE.LinearFlow
+public import CslibFrontier.Foundations.Analysis.ODE.LinearLyapunov
 public import CslibFrontier.Foundations.Analysis.RateExponent
 public import CslibFrontier.Foundations.Analysis.ReverseHolder
 public import CslibFrontier.Foundations.Analysis.RootError
@@ -7912,6 +7931,7 @@ public import CslibFrontier.Foundations.Combinatorics.CentralBinomial
 public import CslibFrontier.Foundations.Combinatorics.CompositionMoment
 public import CslibFrontier.Foundations.Combinatorics.CompositionMomentLinear
 public import CslibFrontier.Foundations.Combinatorics.CornerCutting
+public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Chamber
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Defs
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Load
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Path
@@ -8473,6 +8493,7 @@ public import CslibFrontier.Foundations.Data.List.Swap
 public import CslibFrontier.Foundations.Data.List.TakeQuantifiers
 public import CslibFrontier.Foundations.Data.List.TwoBitTable
 public import CslibFrontier.Foundations.Data.List.UnaryCode
+public import CslibFrontier.Foundations.Data.List.WordsLe
 public import CslibFrontier.Foundations.Data.Matrix.Binary
 public import CslibFrontier.Foundations.Data.Matrix.HamiltonianCycle
 public import CslibFrontier.Foundations.Data.Matrix.HamiltonianCycle.Grid
