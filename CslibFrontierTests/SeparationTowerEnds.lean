@@ -125,6 +125,11 @@ example {P : T.Node} {ν : (moves R FL Pl).Channel} {k : Fin U1}
     (hu : (.new ν k : PlanUnit R FL Pl U0 U1) ∈ assignedUnits R FL Pl lhat n o P) :
     IsAlive R FL Pl lhat n o (.new ν k) := (new_mem_assignedUnits.1 hu).1
 
+/-- No initial unit is between a node and its parent. -/
+example {P : T.Node} (a c : Fin A) (k : Fin U0) :
+    (.init a c k : PlanUnit R FL Pl U0 U1) ∉ assignedUnits R FL Pl lhat n o P := by
+  simp
+
 /-- The units that a party ever holds, exactly: the initial units of its strings and, for every
 end of a channel at it, the outcome of the channel and one more unit. -/
 example (p : Fin (A + A')) :

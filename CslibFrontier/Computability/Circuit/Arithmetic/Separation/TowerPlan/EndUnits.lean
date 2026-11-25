@@ -379,6 +379,12 @@ theorem new_mem_assignedUnits {P : T.Node} {ν : (moves R FL Pl).Channel} {k : F
   simp only [assignedUnits, mem_filter, mem_aliveUnits, IsAlive, UnitId.new.injEq]
   exact ⟨fun ⟨h1, _, _, ⟨rfl, rfl⟩, h2⟩ => ⟨h1, h2⟩, fun ⟨h1, h2⟩ => ⟨h1, ν, k, ⟨rfl, rfl⟩, h2⟩⟩
 
+/-- The initial units are not between a node and its parent. -/
+@[simp]
+theorem init_notMem_assignedUnits {P : T.Node} {a c : Fin A} {k : Fin U0} :
+    (.init a c k : PlanUnit R FL Pl U0 U1) ∉ assignedUnits R FL Pl lhat n o P := by
+  simp [assignedUnits]
+
 /-- **The units between a node and its parent** ([AnthropicVPVNP2026], Theorem H.2(b), p. 46):
 the alive units of the child channels of a node are at most the units between the node and its
 parent. -/
