@@ -18,8 +18,8 @@ a client that sees only the public statements.
   chambers and the units between the children of a chamber and the chamber.
 * The node below the parent on a channel of a relay after the last stage.
 * For an arbitrary tower, under the hypotheses of the statements: the units that a node ever
-  holds, the units between a chamber and its parent in the end, and the possible outcomes in the
-  form that `Cut.Plan.value_moves` needs. -/
+  holds, the units between a chamber and its parent in the end, the alive units in the end, and
+  the possible outcomes in the form that `Cut.Plan.value_moves` needs. -/
 
 set_option linter.privateModule false
 
@@ -117,6 +117,11 @@ example (l : VertexMove FL) (c : (FL.law l.kind).Channel) (ν : (moves R FL Pl).
   rw [show unitTarget R FL Pl (.new ν k : PlanUnit R FL Pl U0 U1) =
     (moveChannelEquiv R FL Pl ν).1.target (moveChannelEquiv R FL Pl ν).2 from rfl, hν] at this
   simp [Move.target] at this
+
+/-- A new unit between a node and its parent is alive. -/
+example {P : Node T} {ν : (moves R FL Pl).Channel} {k : Fin U1}
+    (hu : (.new ν k : PlanUnit R FL Pl U0 U1) ∈ assignedUnits R FL Pl lhat n o P) :
+    IsAlive R FL Pl lhat n o (.new ν k) := (new_mem_assignedUnits.1 hu).1
 
 /-- Possible outcomes are good, in the form of the hypothesis of `Cut.Plan.value_moves`. -/
 example {ub : ℕ} (hub : 0 < ub) :

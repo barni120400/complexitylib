@@ -308,7 +308,7 @@ private theorem exists_mem_givenUnits {u : PlanUnit R FL Pl U0 U1}
         ⟨fun h => absurd h (by decide), fun h => absurd h (by decide)⟩
         (fun _ => ht ▸ hi) (by simp [hτ, Relay.input])
     · exact relay (x := .inner j _ e) ht hi hτ
-  · have hy : y.Occurs R ch ∧ y.Active L ∧ y.input = .relay y := by
+  · obtain ⟨hy₁, hy₂, hy₃⟩ : y.Occurs R ch ∧ y.Active L ∧ y.input = .relay y := by
       cases u with
       | init a c k => exact occurs_of_initialTarget_eq_relay hτ L
       | new ν k =>
@@ -318,7 +318,7 @@ private theorem exists_mem_givenUnits {u : PlanUnit R FL Pl U0 U1}
         rcases w with ⟨⟨x, hx⟩ | l, d⟩ <;> intro hτ
         · exact Relay.occurs_of_target_eq_relay hx hτ L
         · cases hτ
-    exact relay hy.1 hy.2.1 (hτ.trans hy.2.2.symm)
+    exact relay hy₁ hy₂ (hτ.trans hy₃.symm)
   · have hq : ¬ q.IsDiag := by
       cases u with
       | init a c k =>
