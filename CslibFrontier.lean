@@ -6470,6 +6470,7 @@ public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.Ch
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRoutingPPT
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTableLaw
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTables
+public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.FiniteChildTable
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.Hybrid
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.CircuitLowerBound
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Coins
@@ -9976,6 +9977,7 @@ public import CslibFrontier.Logics.Propositional.CliqueColoring
 public import CslibFrontier.Logics.Propositional.CuttingPlanes
 public import CslibFrontier.Logics.Propositional.CuttingPlanes.Interpolation
 public import CslibFrontier.Logics.Propositional.CuttingPlanes.Pigeonhole
+public import CslibFrontier.Logics.Propositional.CuttingPlanes.Reification
 public import CslibFrontier.Logics.Propositional.CuttingPlanes.Resolution
 public import CslibFrontier.Logics.Propositional.CuttingPlanes.Separation
 public import CslibFrontier.Logics.Propositional.DNF
@@ -10008,6 +10010,7 @@ public import CslibFrontier.Logics.Propositional.PseudoBoolean.Graph.SubgraphIso
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.Output
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.Print
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.Redundance
+public import CslibFrontier.Logics.Propositional.PseudoBoolean.Reification
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.Rename
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.Text
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.VeriPB
