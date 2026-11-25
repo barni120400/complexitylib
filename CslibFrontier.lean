@@ -1435,6 +1435,8 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Cub
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkTensor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Budget
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Eval
@@ -1472,9 +1474,9 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Rules
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StageBounds
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Basic
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Rank
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
@@ -7644,9 +7646,9 @@ public import CslibFrontier.DataStructure.WordRAM.StateTransition
 public import CslibFrontier.Foundations.Algebra.BigOperators.Fin
 public import CslibFrontier.Foundations.Algebra.BigOperators.IteMem
 public import CslibFrontier.Foundations.Algebra.BigOperators.Selection
+public import CslibFrontier.Foundations.Algebra.BigOperators.Sym
 public import CslibFrontier.Foundations.Algebra.Covering.Basic
 public import CslibFrontier.Foundations.Algebra.Covering.Certificate
-public import CslibFrontier.Foundations.Algebra.BigOperators.Sym
 public import CslibFrontier.Foundations.Algebra.Covering.Duality
 public import CslibFrontier.Foundations.Algebra.Covering.Gauge
 public import CslibFrontier.Foundations.Algebra.DFT
