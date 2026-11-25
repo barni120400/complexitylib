@@ -18,6 +18,10 @@ import Mathlib.Data.Fintype.BigOperators
 * A tower with one chamber on every level and no edges, with routes, laws at its vertices and a
   placement: this shows that `VertexLaws` and `Placement` are inhabited. Its plan has no moves, so
   `towerPlan_ok` applies to it with the bound `0`.
+* A tower with two chambers joined by one edge, and one unit from the base party `0` to the base
+  party `1`: the unit goes over the edge, it is given at the slot of the relay of the edge, the
+  load of the edge and the number of units of the relay are positive, and by the rule
+  `holder_given` of `towerPlan_ok` that slot joins the parties `0` and `1`.
 * `towerPlan_ok` for an arbitrary tower, under its hypotheses: a slot is given at most `cap`
   units. -/
 
@@ -150,13 +154,14 @@ private def pointLaw (F : Type) [CommSemiring F] : Law F where
   identity X := by simp
   connected _ _ _ _ := rfl
 
-/-- The laws at the vertices of the tower without edges: there are no pairs of different places,
-so the law without slots serves every load. -/
-private def pointLaws (F : Type) [CommSemiring F] (r : ℕ) : VertexLaws F (pointTower r) where
+/-- The laws at the vertices of a tower with one place at a vertex and no near pairs: there are
+no pairs of different places, so the law without slots serves every load. -/
+private def unitLaws (F : Type) [CommSemiring F] (T : Tower h b D J r) (eF : T.Fl ≃ Unit)
+    (eN : T.Nr ≃ Empty) : VertexLaws F T where
   Kind := Unit
   law _ := pointLaw F
-  place _ := Equiv.refl Unit
-  nearPair _ := Equiv.refl Empty
+  place _ := eF.symm
+  nearPair _ := eN.symm
   place_channelEnd _ ν := ν.elim
   labelLength_pos _ := le_rfl
   nonempty_index _ := ⟨()⟩
@@ -166,8 +171,8 @@ private def pointLaws (F : Type) [CommSemiring F] (r : ℕ) : VertexLaws F (poin
   contraction_nonneg := le_rfl
   lengthBound := 0
   lengthBound_le := by simp
-  exists_le_card_slot _ _ _ :=
-    ⟨(), fun q hq => absurd (Sym2.ind (fun _ _ => Sym2.mk_isDiag_iff.2 rfl) q) hq⟩
+  exists_le_card_slot _ _ _ := ⟨(), fun q hq => absurd (Sym2.ind (fun x y =>
+    Sym2.mk_isDiag_iff.2 (eF.injective (Subsingleton.elim _ _))) q) hq⟩
   sum_length_sq_le _ _ := by
     have : IsEmpty (pointLaw F).Channel := inferInstanceAs (IsEmpty Empty)
     simp
@@ -194,7 +199,8 @@ private def pointPlacement (r : ℕ) : Placement (pointTower r) (pointBase r) 1 
 /-- The plan of the tower without edges has no moves, and it obeys the rules with the bound
 `0`. -/
 example (hr : 0 < r) :
-    (towerPlan (pointRoutes r m) (pointLaws F r) (pointPlacement r) lhat U0 U1).Ok 0 :=
+    (towerPlan (pointRoutes r m) (unitLaws F _ (Equiv.refl _) (Equiv.refl _)) (pointPlacement r)
+      lhat U0 U1).Ok 0 :=
   towerPlan_ok hr Nat.one_pos fun n o mv => by
     rcases mv with ⟨x, hx⟩ | l
     · rcases x with ⟨a, c, γ, s⟩ | ⟨j, i, e⟩ | ⟨j, e, s⟩ | e
@@ -203,6 +209,149 @@ example (hr : 0 < r) :
       · exact j.elim0
       · exact e.elim
     · exact l.stage.elim0
+
+/-! ### A tower with one edge -/
+
+/-- Two chambers on the one level, joined by an edge of the one type; every chamber is a vertex
+of its own. -/
+@[reducible] private def edgeTower : Tower 1 1 1 0 1 where
+  X _ := Bool
+  Ed _ := Unit
+  V _ _ := Bool
+  Fl := Unit
+  Nr := Empty
+  e0 _ := false
+  e1 _ := true
+  e_ne _ := Bool.false_ne_true
+  ty _ := 0
+  card_ed _ _ i := by obtain rfl := Subsingleton.elim i 0; decide
+  deg _ _ _ _ := (card_le_univ _).trans le_rfl
+  vx _ c := c
+  co _ _ := ()
+  vx_co _ _ := ⟨fun _ _ h => congrArg Prod.fst h, fun p => ⟨p.1, rfl⟩⟩
+  card_fl := rfl
+  cN ν := ν.elim
+  dN ν := ν.elim
+  n_ne ν := ν.elim
+  nr _ _ :=
+    @Equiv.equivOfIsEmpty _ _ ⟨fun e => e.2 (Subsingleton.elim _ _)⟩ ⟨fun p => p.2.elim⟩
+  nr_vx0 _ _ e := absurd (Subsingleton.elim _ _) e.2
+  nr_vx1 _ _ e := absurd (Subsingleton.elim _ _) e.2
+  nr_co _ _ e := absurd (Subsingleton.elim _ _) e.2
+  π c := c
+  πE e := e
+  πV v := v
+  π_ends hj := absurd hj (Nat.not_lt_zero _)
+  π_ty hj := absurd hj (Nat.not_lt_zero _)
+  card_X _ hj := absurd hj (Nat.not_lt_zero _)
+  fibre hj := absurd hj (Nat.not_lt_zero _)
+  π_vx hj := absurd hj (Nat.not_lt_zero _)
+  π_co hj := absurd hj (Nat.not_lt_zero _)
+  host _ v := v
+  host_inj hj := absurd hj (Nat.not_lt_zero _)
+  host_vx hj := absurd hj (Nat.not_lt_zero _)
+
+/-- The route between the two chambers is the edge. -/
+private def edgeRoutes : Routes edgeTower 1 2 where
+  rt c c' := if c = c' then [] else [()]
+  walk c c' := by
+    cases c <;> cases c' <;> first | rfl | exact ⟨Or.inl rfl, rfl⟩ | exact ⟨Or.inr rfl, rfl⟩
+  len c c' := by split <;> simp
+  use e := by cases e; decide
+
+/-- The base parties `0` and `1` at the chambers `false` and `true`. -/
+private def edgeBase : Fin 2 ↪ edgeTower.X 0 := finTwoEquiv.toEmbedding
+
+/-- The chambers at the base parties, and the root at the extra party. -/
+private def edgePlacement : Placement edgeTower edgeBase 1 where
+  party :=
+    { toFun := fun | .root => 2 | .chamber _ c => if c then 1 else 0
+      invFun := fun i => if i = 2 then .root else .chamber 0 (decide (i = 1))
+      left_inv := by
+        rintro (_ | ⟨j, c⟩)
+        · rfl
+        · obtain rfl : j = 0 := Fin.ext (Nat.lt_one_iff.1 j.2)
+          cases c <;> rfl
+      right_inv := by decide }
+  party_base := by decide
+
+/-- One unit from the base party `0` to the base party `1`, and none between other parties. -/
+private def edgeCounts : Fin 2 → Fin 2 → Fin 2 := fun a c => if a < c then 1 else 0
+
+/-- The first step from `false` to `true` arrives. -/
+private theorem not_one_lt_pl (γ : Bool) : ¬ 1 < edgeRoutes.pl false true γ := fun h1 => by
+  obtain ⟨_, -, -, hne⟩ := edgeRoutes.exists_edge false true γ (s := 0) (by omega)
+  have := edgeRoutes.pn_ne false true γ h1
+  rw [edgeRoutes.pn_zero] at hne
+  cases h : edgeRoutes.pn false true γ 1 <;> simp_all
+
+/-- The unit from the party `0` to the party `1` goes over the edge, at the last stage. -/
+private theorem initialTarget_edge (k : ℕ) :
+    initialTarget edgeRoutes edgeBase 0 1 k = .edge (Fin.last 0) () := by
+  have hpl := edgeRoutes.pl_pos Bool.false_ne_true (batchChamber edgeBase 0 k)
+  obtain ⟨e, he, -⟩ := edgeRoutes.exists_edge false true (batchChamber edgeBase 0 k) hpl
+  have h0 : ¬ (0 < 2 * 1 ∧
+      1 < edgeRoutes.pl (edgeBase 0) (edgeBase 1) (batchChamber edgeBase 0 k)) :=
+    fun h => not_one_lt_pl _ h.2
+  simp only [initialTarget, show (0 : Fin 2) ≠ 1 by decide, ↓reduceIte, h0, dite_false,
+    stepTarget]
+  cases e
+  simp only [show edgeBase 0 = false from rfl, show edgeBase 1 = true from rfl, he]
+  rfl
+
+/-- The laws at the vertices of the tower with one edge. -/
+private abbrev edgeLaws (F : Type) [CommSemiring F] : VertexLaws F edgeTower :=
+  unitLaws F edgeTower (Equiv.refl _) (Equiv.refl _)
+
+/-- The relay of the edge, a move of the plan. -/
+private def edgeRelay : Move edgeRoutes edgeBase (edgeLaws F) := .relay (.final ()) trivial
+
+/-- A move of the plan of the tower with one edge uses at most as many units as there are. -/
+private theorem moveCount_le (lhat U0 U1 : ℕ) (n : Fin 2 → Fin 2 → Fin (U0 + 1))
+    (o : (moves edgeRoutes (edgeLaws F) edgePlacement).Channel → Fin U1)
+    (mv : Move edgeRoutes edgeBase (edgeLaws F)) :
+    moveCount lhat (initialCounts n) (outcomeOf _ _ edgePlacement o) mv ≤
+      Fintype.card (PlanUnit edgeRoutes (edgeLaws F) edgePlacement U0 U1) := by
+  rcases mv with ⟨x, hx⟩ | l
+  · rw [moveCount_eq, countOfLoad]
+    split_ifs
+    · exact (load_eq_card _).trans_le (card_le_univ _)
+    · exact Nat.zero_le _
+  · exact l.stage.elim0
+
+variable (o : (moves edgeRoutes (edgeLaws F) edgePlacement).Channel → Fin U1)
+
+/-- The unit from the party `0` to the party `1` is given at the slot of the relay of the
+edge. -/
+private theorem init_mem_givenUnits :
+    UnitId.init 0 1 0 ∈ givenUnits edgeRoutes _ edgePlacement 2 edgeCounts o
+      ⟨edgeRelay (F := F), ()⟩ :=
+  mem_givenUnits_relay.2 ⟨trivial, ⟨by decide, by decide⟩, initialTarget_edge 0⟩
+
+/-- The load of the edge and the number of units of its relay are positive. -/
+example : 0 < load 2 (initialCounts edgeCounts) (outcomeOf _ _ edgePlacement o)
+      (.edge (Fin.last 0) ()) ∧
+    0 < moveCount 2 (initialCounts edgeCounts) (outcomeOf _ _ edgePlacement o) edgeRelay := by
+  have hu := init_mem_givenUnits o
+  refine ⟨?_, (card_pos.2 ⟨_, hu⟩).trans_le (card_givenUnits_le _)⟩
+  rw [load_eq_card]
+  exact card_pos.2 ⟨_, mem_filter.2 ⟨mem_aliveUnits.2 (isAlive_of_mem_givenUnits hu).1,
+    initialTarget_edge 0⟩⟩
+
+/-- The plan obeys the rules, and the unit from the party `0` to the party `1` is given at the
+slot of the relay of the edge: so that slot joins the parties `0` and `1`. -/
+example : s((moves edgeRoutes (edgeLaws F) edgePlacement).slotParty
+      ((moveSlotEquiv _ _ edgePlacement).symm ⟨edgeRelay, ()⟩) false,
+    (moves edgeRoutes (edgeLaws F) edgePlacement).slotParty
+      ((moveSlotEquiv _ _ edgePlacement).symm ⟨edgeRelay, ()⟩) true) = s(0, 1) := by
+  obtain ⟨d, hd⟩ := (towerPlan_ok Nat.one_pos Nat.one_pos
+    (moveCount_le (F := F) 2 1 1)).holder_given edgeCounts (fun _ => 0)
+    ((moveSlotEquiv _ _ edgePlacement).symm ⟨edgeRelay, ()⟩) (.init 0 1 0)
+    (by simpa [towerPlan] using init_mem_givenUnits (F := F) (U1 := 1) (fun _ => 0))
+  have h0 := hd false
+  have h1 := hd true
+  cases d <;> simp only [UnitId.holder, Bool.xor_false, Bool.xor_true, Bool.not_false,
+    Bool.not_true, Bool.cond_false, Bool.cond_true] at h0 h1 <;> rw [← h0, ← h1] <;> decide
 
 /-! ### The rules for an arbitrary tower -/
 
