@@ -7924,6 +7924,7 @@ public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Incident
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Load
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Path
 public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Rank
+public import CslibFrontier.Foundations.Combinatorics.CoveringTower.Tree
 public import CslibFrontier.Foundations.Combinatorics.CubeSplitting
 public import CslibFrontier.Foundations.Combinatorics.DepthReduction
 public import CslibFrontier.Foundations.Combinatorics.Design.ReedSolomon

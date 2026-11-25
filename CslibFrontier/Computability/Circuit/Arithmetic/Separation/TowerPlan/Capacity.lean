@@ -178,12 +178,12 @@ variable (FL) in
 "Bounds", p. 47): the units between the chambers and their parents add up to at most
 `treeUnitBound`. -/
 theorem sum_parentUnits_le (hρ : StageRate FL ρ) (hρ1 : ρ < 1) :
-    ∑ j ∈ range (J + 1), ∑ c, parentUnits (edgeLoads (load lhat n o)) j c ≤
+    ∑ j ∈ range (J + 1), ∑ c, T.parentUnits (edgeLoads (load lhat n o)) j c ≤
       treeUnitBound FL Uu A lhat ρ := by
   have hk := normBound_nonneg (FL := FL) (Uu := Uu) (A := A) (lhat := lhat)
   refine Nat.cast_le.1 (le_trans ?_ (Nat.le_ceil _))
   rw [Nat.cast_sum]
-  calc ∑ j ∈ range (J + 1), ((∑ c, parentUnits (edgeLoads (load lhat n o)) j c : ℕ) : ℝ) ≤
+  calc ∑ j ∈ range (J + 1), ((∑ c, T.parentUnits (edgeLoads (load lhat n o)) j c : ℕ) : ℝ) ≤
       ∑ j ∈ range (J + 1), 2 * √h * normBound FL Uu A lhat * ρ ^ j :=
         sum_le_sum fun j hj => (sum_incidentSum_edgeLoads_le hρ
           (Nat.le_of_lt_succ (mem_range.1 hj))).trans_eq (by ring)
@@ -201,7 +201,7 @@ variable (FL) in
 /-- **The units between a chamber and its parent** ([AnthropicVPVNP2026], Theorem H.2(b), p. 46,
 and its proof, "Bounds", p. 47). -/
 theorem parentUnits_le (hρ : StageRate FL ρ) {j : ℕ} (hj : j ≤ J) (c : T.X j) :
-    parentUnits (edgeLoads (load lhat n o)) j c ≤ edgeUnitBound FL Uu A lhat ρ :=
+    T.parentUnits (edgeLoads (load lhat n o)) j c ≤ edgeUnitBound FL Uu A lhat ρ :=
   Nat.le_floor (incidentSum_le_edgeBound hρ hj c)
 
 /-- **The gain of the tower** ([AnthropicVPVNP2026], Theorem H.2, proof, "Bounds", p. 47): if
