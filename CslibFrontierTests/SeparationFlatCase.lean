@@ -23,7 +23,8 @@ statements.
   string and `0` otherwise; spectral points with given wire exponents at `T_{3,2}` and at the tensor
   of Lemma A.3 for the ends of `T_{2,2}`.
 * Balanced sets of three nodes. A variable is computed with one node, so the tensor of its
-  coefficients on the ends of the network on two nodes is covered by the hub tensors.
+  coefficients on the ends of the network on two nodes is covered by the hub tensors; a circuit for
+  `f_{2,1}` bounds a spectral point at `T_{2,1}` by its values at the hub tensors.
 * Proposition E.5, also for the polynomial on the views as printed in the paper; Theorem E.6, and
   with Definition D.1: over `ℚ`, either the permanent has no circuits of polynomial size or `ℚ` is
   in the contracting case. -/
@@ -125,6 +126,16 @@ example :
       fun S : balancedSets 2 => hubTensor ℚ 1 1 id S ⟨wire01, false⟩ ⟨wire01, true⟩ :=
   coveredBy_hubTensor (computedWithin_X _) le_rfl id (fun _ => ⟨wire01, false⟩)
     fun _ => ⟨wire01, true⟩
+
+/-- A circuit with `s` nodes for `f_{2,1}` bounds every spectral point at `T_{2,1}` by the sum of
+its values at the hub tensors of the balanced sets, with a wire of dimension `s` between the hubs.
+-/
+example {s : ℕ} (hP : ComputedWithin (networkPolynomial ℚ 2 1) s)
+    (F : SpectralPoint ℚ ((Σ _ : Pair 2, Bool) ⊕ Bool)) :
+    F (push Sum.inl (networkTensor ℚ 2 1)) ≤
+      ∑ S : balancedSets 2, F (hubTensor ℚ 1 s Sum.inl S (.inr true) (.inr false)) :=
+  F.le_sum _ _ (networkTensor_coveredBy_hubTensor hP le_rfl Sum.inl (fun _ => .inr true)
+    fun _ => .inr false)
 
 /-- Proposition E.5 for the network polynomial on the views, with its variables as printed. -/
 example {K : Type} [Field K] (hK : FlatCase K) {k : ℕ} (hk : 2 ≤ k) :

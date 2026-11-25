@@ -7822,6 +7822,7 @@ public import CslibFrontier.Foundations.Analysis.MvPolynomial.CriticalValueCutof
 public import CslibFrontier.Foundations.Analysis.Normed.Close
 public import CslibFrontier.Foundations.Analysis.Normed.CoveringNumber
 public import CslibFrontier.Foundations.Analysis.Normed.FiniteNet
+public import CslibFrontier.Foundations.Analysis.Normed.Module.Basic
 public import CslibFrontier.Foundations.Analysis.Normed.Ring.PowSub
 public import CslibFrontier.Foundations.Analysis.Normed.UnitSphere
 public import CslibFrontier.Foundations.Analysis.ODE.LinearFlow
