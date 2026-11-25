@@ -120,7 +120,8 @@ private theorem putUnits_spec (hκ : κ.Injective) (hub : 0 < ub) {v : α → Un
     have h0 := hv 0 (by simp)
     simp only [List.getElem_cons_zero] at h0
     set t₀ := tset (κ a₀) (ofBits (v a₀).bits) t
-    have ht₀ : StoreBound ub t → StoreBound ub t₀ := fun h => h.tset _ _ (UnitContent.length_bits_le _)
+    have ht₀ : StoreBound ub t → StoreBound ub t₀ := fun h =>
+      h.tset _ _ (UnitContent.length_bits_le _)
     have hget (a) : tget (κ a) t₀ = if a = a₀ then ofBits (v a₀).bits else tget (κ a) t := by
       simp only [t₀, tget_tset, hκ.eq_iff]
     rw [List.map_cons, putUnits, ite_eq_right_iff.2 (by simp), padTake_append_true, ← h0]
