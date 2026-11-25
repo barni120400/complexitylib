@@ -155,14 +155,15 @@ theorem length_tbits (z : Tree) : (tbits z).length = z.size := by
   | some true => lt1
   | none => lt2
 
+/-- The brackets of a tree with the letters `t false` and `t true` are the letters of its bits. -/
+theorem wordT_eq_map_tbits (t : Bool → Tree) (z : Tree) :
+    wordT (t false) (t true) z = (tbits z).map t := by
+  induction z with
+  | nil => rfl
+  | cons a b iha ihb => simp only [wordT, tbits, List.map_cons, List.map_append, iha, ihb]
+
 theorem wordT_eq (z : Tree) : wordT lt0 lt1 z ++ [lt2] = ((tbits z).map some ++ [none]).map ltr :=
-    by
-  have h : wordT lt0 lt1 z = ((tbits z).map some).map ltr := by
-    induction z with
-    | nil => rfl
-    | cons a b iha ihb => simp only [wordT, tbits, List.map_cons, List.map_append, iha, ihb]; rfl
-  rw [h, List.map_append]
-  rfl
+  by rw [List.map_append, List.map_map, ← wordT_eq_map_tbits]; rfl
 
 /-- The letter at a place of the tree of pairs. -/
 private theorem look_pairTree {m : ℕ} {z : Tree} (hz : z.size < 2 ^ m)
