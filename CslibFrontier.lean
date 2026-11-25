@@ -1522,6 +1522,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Laws.Existence
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Chains
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Series
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.MainTheorem
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Pieces.Program
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Lengths
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Poincare
