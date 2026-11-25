@@ -20,22 +20,22 @@ import Mathlib.Analysis.Normed.Affine.AddTorsor
 In the flat case, the centres `±½ e_d` of some facets of the cube `[-½, ½] ^ k` have a spectral
 point whose scaled wire exponents are the Euclidean distances up to `ε`, and whose scaled unit
 exponent at these centres is at most `√k + ε` (`Flat.exists_spectralPoint_cube`, Proposition
-prop:cube of [AnthropicVPVNP2026]).
+E.9 of [AnthropicVPVNP2026], p. 36).
 
 The proof moves the centres in `k` steps from a main diagonal of the cube, where the unit exponent
 is at most the distance `√k` of two opposite vertices, by taking pointwise midpoints. Along a
-midpoint the scaled unit exponent is convex up to a small error (Lemma lem:convex): a new party is
+midpoint the scaled unit exponent is convex up to a small error (Lemma E.8, p. 35): a new party is
 placed half at each end by Proposition A.7 (`SpectralPoint.exists_extend_keep`), and the curvature
 bound for prices (Theorem C.1, `isPrice_sq_le_of_mid`) bounds its distance from the midpoint.
 
 ## Main results
 
-* `Flat.exists_spectralPoint_cube`: Proposition prop:cube.
+* `Flat.exists_spectralPoint_cube`: Proposition E.9.
 
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  section "The main theorem", Lemma lem:convex and Proposition prop:cube; module `Paper.Convex`
+  Section E.5, Lemma E.8, p. 35, and Proposition E.9, p. 36; module `Paper.Convex`
 -/
 
 public section
@@ -190,7 +190,7 @@ private theorem unitExponent_convex (w : V → V → ℝ) {ε : ℝ} (hε : 0 < 
   nlinarith [mul_nonneg hδ0.le (by positivity : 0 ≤ 2 * R + 4)]
 
 variable (K) in
-/-- **Lemma lem:convex.** For a finite `V ⊆ ℝⁿ`, maps `a`, `b`, `m` from `I` to `V` with every
+/-- **Lemma E.8.** For a finite `V ⊆ ℝⁿ`, maps `a`, `b`, `m` from `I` to `V` with every
 `m i` the midpoint of `a i` and `b i`, and `ε > 0`, there is `δ > 0` such that for every spectral
 point `F` on `V` and `c ≥ 0` with `|c d_F(x, y) - ‖x - y‖| < δ` on `V`, the scaled unit exponent
 at `m` is at most the mean of those at `a` and at `b`, plus `ε`. -/
@@ -216,7 +216,7 @@ end Midpoints
 
 section Cube
 
-/-- The sign vectors `α_χ` of the proof of Proposition prop:cube at level `j`: the centre `±½ e_d`
+/-- The sign vectors `α_χ` of the proof of Proposition E.9 at level `j`: the centre `±½ e_d`
 (the sign `s`) stays where it is if `d < j`, and otherwise goes to `±½ χ_d (0, …, 0, χ)` with `j`
 zeros. -/
 private def cubeSign {k : ℕ} (j : ℕ) (χ : Fin k → Bool) (d : Fin k) (s : Bool) : Fin k → SignType :=
@@ -276,7 +276,7 @@ private theorem cubePoint_cubeSign_succ {k j : ℕ} (hj : j < k) (χ : Fin k →
   simp only [PiLp.smul_apply, PiLp.add_apply, cubePoint_apply, smul_eq_mul, key, invOf_eq_inv]
   ring
 
-/-- **Proposition prop:cube.** In the flat case, let `V ⊆ ℝᵏ` be finite and `P ⊆ V` a nonempty set
+/-- **Proposition E.9.** In the flat case, let `V ⊆ ℝᵏ` be finite and `P ⊆ V` a nonempty set
 of centres `±½ e_d` of facets of the cube. For every `ε > 0` there are a spectral point `F` on `V`
 and `c ≥ 0` with `|c d_F(x, y) - ‖x - y‖| < ε` on `V` and `c · g(P) ≤ √k + ε`, where `g(P)` is the
 unit exponent at `P`. -/

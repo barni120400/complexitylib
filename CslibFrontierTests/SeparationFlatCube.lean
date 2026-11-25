@@ -16,7 +16,7 @@ import Mathlib.Analysis.SpecialFunctions.Sqrt
 /-! Tests of the cube points and of the unit exponents of a spectral point, as a client: a vertex
 of the square and its distance to the opposite vertex; the support point, whose unit exponents at
 legs on two parties are at most `0`; the unit exponent of a pull-back; an extension of a spectral
-point to a new party that keeps the wire exponents; and Proposition prop:cube on the line. -/
+point to a new party that keeps the wire exponents; and Proposition E.9 on the line. -/
 
 set_option linter.privateModule false
 
@@ -58,7 +58,7 @@ example (F : SpectralPoint ℚ Bool) (C : Cslib.PartyTensor ℚ Bool) (hC : 0 < 
 private noncomputable def centre : EuclideanSpace ℝ (Fin 1) :=
   (1 / 2 : ℝ) • EuclideanSpace.single 0 1
 
-/-- Proposition prop:cube on the line: in the flat case the centre `½ e₀` has a spectral point
+/-- Proposition E.9 on the line: in the flat case the centre `½ e₀` has a spectral point
 whose scaled unit exponent there is at most `1 + ε`. -/
 example {K : Type} [Field K] (hK : Cslib.Circuits.Arithmetic.Separation.TwoCases.FlatCase K)
     {ε : ℝ} (hε : 0 < ε) :
