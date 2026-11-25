@@ -11,6 +11,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.Th
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Tower
 public import Mathlib.Analysis.SpecialFunctions.Log.Base
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Constants
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.TreeProgram
@@ -39,7 +40,6 @@ tower plan and of its tree (`TowerTree.lean`, `TreeProgram.lean`) are absorbed i
 
 ## Main results
 
-* `two_le_lg`: `lg M ≥ 2` for `M ≥ 2`.
 * `exists_thinTrees`: Theorem H.2.
 
 ## References
@@ -54,12 +54,6 @@ public section
 namespace Cslib.Circuits.Arithmetic.Separation.Trees
 
 open Finset Cslib.CoveringTower Cut TowerPlan Interpreter
-
-/-- `lg M = ⌊log₂ M⌋ + 1` is at least `2` for `M ≥ 2`. -/
-theorem two_le_lg {M : ℕ} (hM : 2 ≤ M) : 2 ≤ lg M := by
-  have := Nat.log_pos (b := 2) one_lt_two hM
-  unfold lg
-  omega
 
 /-! ### Numbers -/
 
@@ -154,7 +148,7 @@ private theorem exists_thinTrees_of_tower (Rt : Routes T m Uu)
   obtain ⟨e1, e2, e3, e4⟩ := le_treeExponent c
   have hH := hC.toStageRate
   have hc := hC.one_le
-  have hl := two_le_lg hM
+  have hl : 2 ≤ lg M := le_lg_of_two_pow_le (k := 1) hM
   have hD : 0 < D := by have := hC.two_lt_ratio; omega
   have hAX : A ≤ Fintype.card (T.X 0) := hA.trans hX1
   have hdep := hC.succ_depth_le hX2
@@ -452,13 +446,15 @@ end Tower
 
 /-! ### The towers -/
 
-/-- **The towers of all sizes** (the proof of Theorem H.2 of [AnthropicVPVNP2026], p. 46, "Take
-the least `n ≥ 1` with `M ≤ |G_n|`; so `|G_n| = O(M)`", with Proposition H.1(c), (d), p. 44): for
-laws at the vertices of the tower of `U_h` with `1 + 8 C₁ ≤ h / 4` there is a constant `c` such
-that for every `y ≥ 1` and every ring homomorphism `f` some tower `SLTower.tower h n`, with routes
-and with the laws transferred to it and mapped by `f`, satisfies the conditions `TowerConstants`
-with `c`, the rate `1 / 2` and the gain `(1 / 2) ^ e(h) 2 ^ e(h) = 1`, has between `y` and `c y`
-chambers at the level `0`, and has routes of length at most `c (J + 1) ^ 7`. -/
+/-- **The towers of all sizes** (the proof of Theorem H.2 of [AnthropicVPVNP2026], p. 46: "Take
+the least `n ≥ 1` with `M ≤ |G_n|`, so that `|G_n| = O(M)` by Proposition H.1(c)", with
+Proposition H.1(c), (d), p. 44): for laws at the vertices of the tower of `U_h` with
+`1 + 8 C₁ ≤ h / 4` there is a constant `c` such that for every `y ≥ 1` and every ring
+homomorphism `f` some tower `SLTower.tower h n`, with the laws transferred to it and mapped by `f`,
+satisfies the conditions `TowerConstants` with `c`, the rate `1 / 2` and the gain
+`(1 / 2) ^ e(h) 2 ^ e(h) = 1`, has between `y` and `c y` chambers at the level `0`, and has routes
+of at most `m` steps with `1 ≤ m ≤ c (J + 1) ^ 7` that use every edge at most `2 |X 0| m` times
+in all. -/
 private theorem exists_towers {A₀ : Type*} [CommSemiring A₀] {h : ℕ} [NeZero h] (h3 : 3 ≤ h)
     (FL : VertexLaws A₀ (SLTower.tower h 0 (by omega)))
     (hgain : 1 + 8 * FL.contraction ≤ (h : ℝ) / 4) :
