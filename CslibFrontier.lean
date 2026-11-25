@@ -1451,6 +1451,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Prices.N
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.RunVal
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Runs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.Words
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.LetterSubst
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.ProgRun
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunCount
