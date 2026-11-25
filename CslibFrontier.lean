@@ -1469,6 +1469,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Scale
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Laws.Existence
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Chains
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.LowDegree.Series
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Lengths
@@ -3959,6 +3960,7 @@ public import CslibFrontier.Computability.Complexity.RealAlgebraic.TraceExponent
 public import CslibFrontier.Computability.Complexity.RealAlgebraic.TranslatedCoefficientEvaluation
 public import CslibFrontier.Computability.Complexity.RealAlgebraic.TranslatedPoint
 public import CslibFrontier.Computability.Complexity.RealAlgebraic.UnivariateDerivativeEvaluation
+public import CslibFrontier.Computability.Complexity.RealAlgebraic.WordCoordinateFingerprintLabels
 public import CslibFrontier.Computability.Complexity.Reduction
 public import CslibFrontier.Computability.Complexity.Reduction.Autoreducibility
 public import CslibFrontier.Computability.Complexity.Reduction.BoundedOracle
@@ -6819,6 +6821,7 @@ public import CslibFrontier.Crypto.Primitives.UHF.XorHash
 public import CslibFrontier.Crypto.Primitives.UHF.XorHash.PRF
 public import CslibFrontier.Crypto.Primitives.UHF.XorHash.Reduction
 public import CslibFrontier.Crypto.Primitives.UHF.XorHash.Word
+public import CslibFrontier.Crypto.Protocols.AnonymousToken.ACTMQ
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.Basic
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.Conservation
 public import CslibFrontier.Crypto.Protocols.AnonymousToken.Credit
