@@ -8,9 +8,13 @@ module
 -- upstream: local-only (test driver)
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Permanent
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.AllFields
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Rate
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.MainTheorem
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
+import Mathlib.Algebra.CharP.Basic
+import Mathlib.Algebra.Field.ULift
+import Mathlib.Algebra.Field.ZMod
 
 /-! Tests of the rate in the flat case (Proposition E.10, Theorem E.11) and of the main theorems
 (Theorems L.1, L.2, Corollary L.3), as a client that sees only the public statements.
@@ -21,7 +25,9 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
   all fields in the flat case.
 * From Proposition E.10 to the bound in `log m`, for the sizes `s ≥ 2 ^ m`.
 * Theorems L.1 and L.2 and Corollary L.3 over `ℝ` as stated in the paper, and Corollary L.3 over
-  `ZMod 2` with the Hamiltonian cycle polynomial. -/
+  `ZMod 2` with the Hamiltonian cycle polynomial.
+* Theorem M.3 as stated in the paper; Theorem M.3 for the permanent and Corollary M.4 over the
+  field `ULift.{1} (ZMod 3)` of characteristic `3` in the universe `1`. -/
 
 set_option linter.privateModule false
 
@@ -101,5 +107,35 @@ example : VP ℝ ⊂ VNP ℝ :=
 permanent: over `ZMod 2`, `VP` is a proper subset of `VNP`. -/
 example : VP (ZMod 2) ⊂ VNP (ZMod 2) :=
   GridComplete.VP_ssubset_VNP gridComplete_hcFamily hcFamily_mem_VNP
+
+/-! ### All fields -/
+
+/-- **Theorem M.3 as stated**: there is `c > 0` such that for every `p`, zero or prime, there is
+`m₀` such that over every field of characteristic `p` and for `m ≥ m₀`, circuits for `HC_m`, and
+for `PERM_m` if `p ≠ 2`, have more than `m ^ (c (log m)^{1/3})` nodes. -/
+example : ∃ c : ℝ, 0 < c ∧ ∀ p : ℕ, p = 0 ∨ p.Prime → ∃ m₀ : ℕ,
+    ∀ (F : Type) [Field F] [CharP F p], ∀ m ≥ m₀, ∀ s : ℕ,
+      (ComputedWithin ((hcFamily F).poly m) s →
+        (m : ℝ) ^ (c * Real.logb 2 m ^ (1 / 3 : ℝ)) < s) ∧
+      (p ≠ 2 → ComputedWithin ((permFamily F).poly m) s →
+        (m : ℝ) ^ (c * Real.logb 2 m ^ (1 / 3 : ℝ)) < s) := by
+  refine ⟨1 / 1600 ^ 2, by norm_num, fun p hp => ?_⟩
+  obtain ⟨m₀, h⟩ := size_gt_of_charP p hp
+  refine ⟨m₀, fun F _ _ m hm s => ?_⟩
+  rw [one_div_mul_eq_div]
+  exact h F m hm s
+
+/-- **Theorem M.3 in the universe `1`**: over `ULift.{1} (ZMod 3)`, of characteristic `3 ≠ 2`,
+circuits for the permanent eventually have more than `m ^ ((log m)^{1/3} / 1600²)` nodes. -/
+example : ∃ m₀ : ℕ, ∀ m ≥ m₀, ∀ s : ℕ,
+    ComputedWithin ((permFamily (ULift.{1} (ZMod 3))).poly m) s →
+      (m : ℝ) ^ (Real.logb 2 m ^ (1 / 3 : ℝ) / 1600 ^ 2) < s := by
+  obtain ⟨m₀, h⟩ := size_gt_of_charP.{1} 3 (Or.inr Nat.prime_three)
+  exact ⟨m₀, fun m hm s => (h (ULift.{1} (ZMod 3)) m hm s).2 (by norm_num)⟩
+
+/-- **Corollary M.4 in the universe `1`**: over `ULift.{1} (ZMod 3)`, `VP` is a proper subset of
+`VNP`. -/
+example : VP (ULift.{1} (ZMod 3)) ⊂ VNP (ULift.{1} (ZMod 3)) :=
+  VP_ssubset_VNP _
 
 end CslibFrontierTests.SeparationRate

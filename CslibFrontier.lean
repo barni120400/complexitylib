@@ -1386,6 +1386,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.RelativeRankUpper
 public import CslibFrontier.Computability.Circuit.Arithmetic.Rigidity
 public import CslibFrontier.Computability.Circuit.Arithmetic.RootFormula
 public import CslibFrontier.Computability.Circuit.Arithmetic.SPCircuit
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.AllFields
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.Accelerator
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.LowerBound
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.AtOne
