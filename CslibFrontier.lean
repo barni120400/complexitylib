@@ -8348,6 +8348,7 @@ public import CslibFrontier.Foundations.Data.Finset.BigHalf
 public import CslibFrontier.Foundations.Data.Finset.CollisionInsert
 public import CslibFrontier.Foundations.Data.Finset.CoordinateSelection
 public import CslibFrontier.Foundations.Data.Finset.Density
+public import CslibFrontier.Foundations.Data.Finset.DisjointCard
 public import CslibFrontier.Foundations.Data.Finset.Expect
 public import CslibFrontier.Foundations.Data.Finset.Expect.Chebyshev
 public import CslibFrontier.Foundations.Data.Finset.ExpectPi
@@ -8785,6 +8786,7 @@ public import CslibFrontier.Foundations.GroupTheory.SLTower.Base
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Chain
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Coord
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Diam
+public import CslibFrontier.Foundations.GroupTheory.SLTower.Gen
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Grp
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Inst
 public import CslibFrontier.Foundations.GroupTheory.SLTower.Layer
