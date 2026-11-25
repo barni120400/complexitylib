@@ -1406,6 +1406,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Con
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.FinalTables
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Groups
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Initial
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.InitialCounts
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Law
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.MoveIdentity
@@ -1416,6 +1417,15 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Row
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Start
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.AllRuns
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Choices
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.NamedStates
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Phases
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Runs
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Tables
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Templates
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Theorem
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Act
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Avg
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Block
@@ -8983,6 +8993,7 @@ public import CslibFrontier.Foundations.LinearAlgebra.Tensor.Separate
 public import CslibFrontier.Foundations.LinearAlgebra.TracePower
 public import CslibFrontier.Foundations.LinearAlgebra.UnitarySpectrum
 public import CslibFrontier.Foundations.LinearAlgebra.VariableCopyPlacement
+public import CslibFrontier.Foundations.Logic.Function.FoldlUpdate
 public import CslibFrontier.Foundations.Logic.Function.Iterate
 public import CslibFrontier.Foundations.Logic.Function.UpdateKernel
 public import CslibFrontier.Foundations.MeasureTheory.Constructions.BorelSpace.Order
