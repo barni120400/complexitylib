@@ -120,7 +120,7 @@ theorem load_eq_relay {τ : Target T m A}
   simp [load_eq_sum, hτ]
 
 /-- A load that the relays give through one channel only. -/
-private theorem load_le_relayAlive {τ : Target T m A}
+theorem load_le_relayAlive {τ : Target T m A}
     (hτ : ∀ (l : VertexMove FL) c, (Move.vertex l : Move R ch FL).target c ≠ τ)
     (y : Relay T m A) (dy : Bool) (hy : ∀ x d, x.target R ch d = τ →
       relayAlive lhat n o x d ≠ 0 → x = y ∧ d = dy) :

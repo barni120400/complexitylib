@@ -174,14 +174,12 @@ private theorem relayAlive_middle_le_two (hg : ∀ mv, GoodOutcome lhat n o mv) 
     · refine (moveCount_relay_le _ hx).trans ?_
       rw [← relayAlive_eq_moveCount hg h2 true]
       simp only [Relay.input, show (3 : Fin 4) ≠ 0 by decide, ↓reduceIte]
-      rw [load_eq_relay fun _ _ => by simp [Move.target], initialLoad_eq_zero (by simp)
-        (by simp only [Target.time, Relay.time]; omega), zero_add, ← Fintype.sum_prod_type',
-        Fintype.sum_eq_single (Relay.middle j e 2, true) fun ⟨x, d⟩ hxd =>
-          ite_eq_right fun h => by
-          obtain ⟨rfl, h'⟩ := Relay.of_target_eq_relay_middle h
-          rcases h' with ⟨h'', -⟩ | ⟨h'', -⟩ | ⟨-, rfl⟩
-          exacts [absurd h'' (by decide), absurd h'' (by decide), hxd rfl]]
-      split_ifs <;> simp
+      refine (load_le_relayAlive (fun _ _ => by simp [Move.target]) (.middle j e 2) true
+        fun x d h _ => ?_).trans_eq ?_
+      · obtain ⟨rfl, h' | h' | h'⟩ := Relay.of_target_eq_relay_middle h
+        exacts [absurd h'.1 (by decide), absurd h'.1 (by decide), ⟨h'.2, rfl⟩]
+      · rw [initialLoad_eq_zero (by simp) (by simp only [Target.time, Relay.time]; omega),
+          zero_add]
   · exact (relayAlive_of_not_occurs hx _).trans_le (Nat.zero_le _)
 
 variable (lhat n o) in
