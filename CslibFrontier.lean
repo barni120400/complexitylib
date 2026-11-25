@@ -1451,6 +1451,9 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Run
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunWord
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.Task
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Basic
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Rank
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
