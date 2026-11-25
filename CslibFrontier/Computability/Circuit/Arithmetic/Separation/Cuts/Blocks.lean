@@ -113,7 +113,7 @@ private theorem sum_prod_blockWeight [CommSemiring F] (mu : Letter S J Γ → Ma
   refine sum_congr rfl fun o _ => ?_
   rw [sum_eq_single_of_mem fun k => emit (List.ofFn (o k))]
   · simp
-  · simpa [Fintype.mem_piFinset] using fun k z => length_emit_le (List.ofFn (o k)) z
+  · simpa [Fintype.mem_piFinset] using fun k z => emit_length_le (List.ofFn (o k)) z
   · intro v _ hv
     have hne : ¬∀ k, emit (List.ofFn (o k)) = v k := fun h => hv (funext h).symm
     simp [hne]
