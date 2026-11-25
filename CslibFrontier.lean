@@ -1415,10 +1415,14 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Wor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Accept
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.BaseStep
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.BaseSums
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Bases
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Executions
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Group
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.GroupScript
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.RoleSums
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Roles
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Script
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Segments
