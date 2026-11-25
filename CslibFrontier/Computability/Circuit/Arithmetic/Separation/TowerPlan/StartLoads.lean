@@ -147,13 +147,18 @@ theorem moveCount_relay_le (x : Relay T m A) (hx : x.Occurs R ch) :
   rw [moveCount_eq, countOfLoad]
   split_ifs <;> omega
 
+/-- A bound for the units of a relay, if it is a move of the plan, bounds its channels. -/
+private theorem relayAlive_le_of_moveCount_le {x : Relay T m A} {M : ℕ}
+    (hM : ∀ hx : x.Occurs R ch, moveCount lhat n o (.relay x hx) ≤ M) (d : Bool) :
+    relayAlive lhat n o x d ≤ M := by
+  by_cases hx : x.Occurs R ch
+  · exact (relayAlive_of_occurs hx d).trans_le ((alive_le_moveCount x hx d).trans (hM hx))
+  · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+
 /-- A channel of a relay carries at most the load of the input of the relay. -/
 private theorem relayAlive_le_load (x : Relay T m A) (d : Bool) :
-    relayAlive lhat n o x d ≤ load lhat n o x.input := by
-  by_cases hx : x.Occurs R ch
-  · exact (relayAlive_of_occurs hx d).trans_le
-      ((alive_le_moveCount x hx d).trans (moveCount_relay_le x hx))
-  · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+    relayAlive lhat n o x d ≤ load lhat n o x.input :=
+  relayAlive_le_of_moveCount_le (moveCount_relay_le x) d
 
 /-- The units on a step of a route are done or lie on an edge of the level `0`. -/
 @[simp]
@@ -338,10 +343,8 @@ theorem moveCount_middle_le {j : Fin J} {e : T.Ed j} {s : Fin 4}
   set M := if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then
     load lhat n o (.edge j.castSucc e) else 0
   have hA {s : Fin 4} (hs : ∀ hx, moveCount lhat n o (.relay (.middle j e s) hx) ≤ M)
-      (d : Bool) : relayAlive lhat n o (.middle j e s) d ≤ M := by
-    by_cases hx : (Relay.middle j e s).Occurs R ch
-    · exact (relayAlive_of_occurs hx d).trans_le ((alive_le_moveCount _ hx d).trans (hs hx))
-    · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+      (d : Bool) : relayAlive lhat n o (.middle j e s) d ≤ M :=
+    relayAlive_le_of_moveCount_le hs d
   have hstep {s : Fin 4} (hs : s ≠ 0) (s' : Fin 4) (hs' : ∀ x d, x.target R ch d =
       .relay (.middle j e s) → relayAlive lhat n o x d ≠ 0 → x = .middle j e s' ∧ d = true)
       (hM : relayAlive lhat n o (.middle j e s') true ≤ M) (hx) :
@@ -378,30 +381,25 @@ theorem moveCount_middle_le {j : Fin J} {e : T.Ed j} {s : Fin 4}
 none if the type of the edge is not the chosen one. -/
 theorem relayAlive_middle_le (j : Fin J) (e : T.Ed j) (s : Fin 4) (d : Bool) :
     relayAlive lhat n o (.middle j e s) d ≤
-      if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then
-        load lhat n o (.edge j.castSucc e)
+      if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then edgeLoads (load lhat n o) j e
       else 0 := by
-  by_cases hx : (Relay.middle j e s).Occurs R ch
-  · exact (relayAlive_of_occurs hx d).trans_le
-      ((alive_le_moveCount _ hx d).trans (moveCount_middle_le hx))
-  · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+  rw [edgeLoads_of_lt _ (by omega)]
+  exact relayAlive_le_of_moveCount_le moveCount_middle_le d
 
 /-- The channels of an inner relay carry at most the units on its edge, and none if its type is
 not the chosen one. -/
 theorem relayAlive_inner_le (j : Fin J) (i : Fin h) (e : T.Ed j) (d : Bool) :
     relayAlive lhat n o (.inner j i e) d ≤
-      if T.IsChosenType (edgeLoads (load lhat n o) j) i then load lhat n o (.edge j.castSucc e)
+      if T.IsChosenType (edgeLoads (load lhat n o) j) i then edgeLoads (load lhat n o) j e
       else 0 := by
-  by_cases hx : (Relay.inner j i e).Occurs R ch
-  · exact (relayAlive_of_occurs hx d).trans_le ((alive_le_moveCount _ hx d).trans
-      (moveCount_eq _).le)
-  · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+  rw [edgeLoads_of_lt _ (by omega)]
+  exact relayAlive_le_of_moveCount_le (fun _ => (moveCount_eq _).le) d
 
 /-- The channels of a relay after the last stage carry at most the units on its edge. -/
 theorem relayAlive_final_le (e : T.Ed J) (d : Bool) :
-    relayAlive lhat n o (.final e) d ≤ load lhat n o (.edge (Fin.last J) e) :=
-  (relayAlive_of_occurs (x := .final e) trivial d).trans_le
-    ((alive_le_moveCount _ _ d).trans (moveCount_relay_le _ _))
+    relayAlive lhat n o (.final e) d ≤ edgeLoads (load lhat n o) J e := by
+  rw [edgeLoads_of_lt _ J.lt_succ_self]
+  exact relayAlive_le_of_moveCount_le (moveCount_relay_le _) d
 
 /-! ### The loads after the start -/
 
