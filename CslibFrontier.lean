@@ -1421,6 +1421,9 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Row
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Segments
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Start
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cutting.ComputationPieces
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cutting.OneCut
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cutting.Pieces
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.AllRuns
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Choices
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Cut
