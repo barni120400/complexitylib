@@ -29,8 +29,8 @@ segments that `a` writes and `b` reads, its units are the common contents of the
 the initial units between `a` and `b`, and a string is determined by its units.
 
 `Cut.runVal_eq_sum_value_initial` is the identity of Lemma I.2. The lemma also bounds the number
-of units at a party whose table is not zero; that bound is not stated in this file
-(`Cut.sum_unitCount_le` bounds the units of the strings that one party writes or reads).
+of units at a party whose table is not zero; that bound is
+`Cut.sum_count_le_of_initialTable_ne_zero` (module `Cuts.InitialCounts`).
 
 ## Main results
 
@@ -47,7 +47,8 @@ of units at a party whose table is not zero; that bound is not stated in this fi
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  Lemma I.2 (Section I.3), which Proposition J.2 of Appendix J applies; module `Nc.G.Start`
+  Lemma I.2 (Section I.3, pp. 50–51), which Proposition J.2 of Appendix J applies; modules
+  `Nc.G.Start` and `Paper.Runnet`
 -/
 
 public section

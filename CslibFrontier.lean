@@ -1532,6 +1532,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Rules
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Alpha
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Automaton
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Bounds
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.CmpU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Det
