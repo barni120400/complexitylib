@@ -39,6 +39,8 @@ field (`gridComplete_hcFamily`, `hcFamily_mem_VNP`).
 * `GridComplete.size_gt`: Theorem L.1.
 * `GridComplete.not_computedWithin_pow`: Theorem L.2.
 * `GridComplete.VP_ssubset_VNP`: Corollary L.3.
+* `PolynomialFamily.not_computedWithin_pow_of_rpow_lt`, `PolynomialFamily.not_mem_VP_of_rpow_lt`:
+  the bound of Theorem L.1 excludes circuits of polynomial size, over a field in any universe.
 
 ## References
 
@@ -103,12 +105,19 @@ theorem GridComplete.size_gt {G : PolynomialFamily K} {κ : ℕ} (hG : GridCompl
     Real.rpow_one, mul_div_assoc, Real.rpow_mul zero_le_two,
     Real.rpow_logb two_pos (by norm_num) (by linarith)]
 
-/-- **Paper: Theorem L.2** (no circuits of polynomial size, p. 59), for every family complete for
-grid sums over every field: for every `C` there is `m₀` such that for `m ≥ m₀` no circuit with at
-most `m ^ C` nodes computes `G.poly m`. As in the paper, it follows from Theorem L.1. -/
-theorem GridComplete.not_computedWithin_pow {G : PolynomialFamily K} {κ : ℕ}
-    (hG : GridComplete G κ) (C : ℕ) : ∃ m₀ : ℕ, ∀ m ≥ m₀, ¬ ComputedWithin (G.poly m) (m ^ C) := by
-  obtain ⟨m₀, h⟩ := GridComplete.size_gt hG
+section Universe
+
+universe u
+
+variable {F : Type u} [Field F] {G : PolynomialFamily F} {m₀ : ℕ}
+
+/-- A bound beyond every polynomial: if every circuit for `G.poly m` has more than
+`m ^ ((log m)^{1/3} / 1600²)` nodes for `m ≥ m₀`, then for every `C` there is `m₁` such that no
+circuit with at most `m ^ C` nodes computes `G.poly m` for `m ≥ m₁`. -/
+theorem PolynomialFamily.not_computedWithin_pow_of_rpow_lt
+    (h : ∀ m ≥ m₀, ∀ s, ComputedWithin (G.poly m) s →
+      (m : ℝ) ^ (Real.logb 2 m ^ (1 / 3 : ℝ) / 1600 ^ 2) < s) (C : ℕ) :
+    ∃ m₁ : ℕ, ∀ m ≥ m₁, ¬ ComputedWithin (G.poly m) (m ^ C) := by
   obtain ⟨m₁, h1⟩ := eventually_atTop.1 ((((tendsto_rpow_atTop (by norm_num : (0 : ℝ) < 1 / 3)).comp
     ((Real.tendsto_logb_atTop one_lt_two).comp tendsto_natCast_atTop_atTop)).atTop_div_const
       (by norm_num : (0 : ℝ) < 1600 ^ 2)).eventually_ge_atTop (C : ℝ))
@@ -117,6 +126,26 @@ theorem GridComplete.not_computedWithin_pow {G : PolynomialFamily K} {κ : ℕ}
   rwa [Nat.cast_pow, ← Real.rpow_natCast (m : ℝ) C,
     Real.rpow_lt_rpow_left_iff (by exact_mod_cast (by omega : 1 < m))] at h2
 
+/-- A family whose circuits eventually need more than `m ^ ((log m)^{1/3} / 1600²)` nodes is not
+in `VP`. -/
+theorem PolynomialFamily.not_mem_VP_of_rpow_lt
+    (h : ∀ m ≥ m₀, ∀ s, ComputedWithin (G.poly m) s →
+      (m : ℝ) ^ (Real.logb 2 m ^ (1 / 3 : ℝ) / 1600 ^ 2) < s) : G ∉ VP F := fun hG => by
+  obtain ⟨-, b, ⟨d, hd⟩, hb⟩ := mem_VP_iff.1 hG
+  obtain ⟨m₁, hm₁⟩ := PolynomialFamily.not_computedWithin_pow_of_rpow_lt h d
+  obtain ⟨m, hm, hbm⟩ := ((eventually_ge_atTop m₁).and hd).exists
+  exact hm₁ m hm ((hb m).mono hbm)
+
+end Universe
+
+/-- **Paper: Theorem L.2** (no circuits of polynomial size, p. 59), for every family complete for
+grid sums over every field: for every `C` there is `m₀` such that for `m ≥ m₀` no circuit with at
+most `m ^ C` nodes computes `G.poly m`. As in the paper, it follows from Theorem L.1. -/
+theorem GridComplete.not_computedWithin_pow {G : PolynomialFamily K} {κ : ℕ}
+    (hG : GridComplete G κ) (C : ℕ) : ∃ m₀ : ℕ, ∀ m ≥ m₀, ¬ ComputedWithin (G.poly m) (m ^ C) :=
+  let ⟨_, h⟩ := GridComplete.size_gt hG
+  PolynomialFamily.not_computedWithin_pow_of_rpow_lt h C
+
 /-- **Paper: Corollary L.3** (p. 59; proof p. 60), for every family complete for grid sums: if
 `G` is complete for grid sums and in `VNP`, then `VP` is a proper subset of `VNP`, because `G` is
 not in `VP` by Theorem L.2. The permanent is such a family when `2 ≠ 0`
@@ -124,11 +153,8 @@ not in `VP` by Theorem L.2. The permanent is such a family when `2 ≠ 0`
 over `ℝ`; the Hamiltonian cycle polynomial is one over every field (`gridComplete_hcFamily`,
 `hcFamily_mem_VNP`). -/
 theorem GridComplete.VP_ssubset_VNP {G : PolynomialFamily K} {κ : ℕ} (hG : GridComplete G κ)
-    (hVNP : G ∈ VNP K) : VP K ⊂ VNP K := by
-  refine ⟨VP_subset_VNP, fun h => ?_⟩
-  obtain ⟨-, b, ⟨d, hd⟩, hb⟩ := mem_VP_iff.1 (h hVNP)
-  obtain ⟨m₀, hm₀⟩ := GridComplete.not_computedWithin_pow hG d
-  obtain ⟨m, hm, hbm⟩ := ((eventually_ge_atTop m₀).and hd).exists
-  exact hm₀ m hm ((hb m).mono hbm)
+    (hVNP : G ∈ VNP K) : VP K ⊂ VNP K :=
+  let ⟨_, h⟩ := GridComplete.size_gt hG
+  ⟨VP_subset_VNP, fun hVP => PolynomialFamily.not_mem_VP_of_rpow_lt h (hVP hVNP)⟩
 
 end Cslib.Circuits.Arithmetic
