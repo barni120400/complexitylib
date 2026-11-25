@@ -71,9 +71,10 @@ theorem sum_count_le_of_initialOk (hx : ∀ κ, (x κ).length ≤ T) {cb : Optio
     {y : UnitId (K + K) U0 N U1 → UnitContent ub} (h : InitialOk ub cb ρ n p y R C)
     (hW : partyWeight mu T q x p R C ≠ 0) :
     ∑ b, (n p b + n b p) ≤ 2 * ((T + (K + K) * (Fintype.card S + 1)) * c / ub + (K + K)) := by
+  obtain ⟨-, hR, hC⟩ := h
   have h1 := sum_unitCount_le (ub := ub) (cb := cb) (sum_length_le_of_partyWeight_ne_zero hx hW)
   have h2 := sum_unitCount_le (ub := ub) (cb := cb) (sum_length_read_le_of_partyWeight_ne_zero hW)
-  simp only [fun b => (h.2.1 b).1, fun b => (h.2.2 b).1, Fintype.card_option] at h1 h2
+  simp only [fun b => (hR b).1, fun b => (hC b).1, Fintype.card_option] at h1 h2
   rw [sum_add_distrib]
   omega
 
