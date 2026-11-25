@@ -65,24 +65,6 @@ each of its roles at `P`. -/
 
 /-! ### Relays -/
 
-/-- An inner relay carries at most the units on its edge, and none if its type is not the chosen
-one. -/
-private theorem relayAlive_inner_le' (j : Fin J) (i : Fin h) (e : T.Ed j) (d : Bool) :
-    relayAlive lhat n o (.inner j i e) d ≤
-      if i = T.chosenType hh (edgeLoads (load lhat n o)) j then edgeLoads (load lhat n o) j e
-      else 0 := by
-  rw [edgeLoads_of_lt _ (by omega)]
-  exact (relayAlive_inner_le j i e d).trans_eq (if_congr (Tower.isChosenType_iff hh) rfl rfl)
-
-/-- The relays of the way of an edge carry at most the units on the edge, and none if its type is
-not the chosen one. -/
-private theorem relayAlive_middle_le' (j : Fin J) (e : T.Ed j) (s : Fin 4) (d : Bool) :
-    relayAlive lhat n o (.middle j e s) d ≤
-      if T.ty e = T.chosenType hh (edgeLoads (load lhat n o)) j then edgeLoads (load lhat n o) j e
-      else 0 := by
-  rw [edgeLoads_of_lt _ (by omega)]
-  exact (relayAlive_middle_le j e s d).trans_eq (if_congr (Tower.isChosenType_iff hh) rfl rfl)
-
 /-- The relays carry at most the load of a target on its channels with that target. -/
 private theorem sum_relayAlive_le (τ : Target T m A) :
     ∑ x, ∑ d, (if x.target R ch d = τ then relayAlive lhat n o x d else 0) ≤
@@ -237,12 +219,12 @@ private theorem inner_le (P : T.Node) (j : Fin J) (e : T.Ed j) :
         if Tower.Node.ofChamber j.2 (T.parentChamber hh (edgeLoads (load lhat n o)) (T.e1 e)) = P
           then edgeLoads (load lhat n o) j e else 0) := by
   rw [sum_eq_single (T.chosenType hh (edgeLoads (load lhat n o)) j) (fun i _ hi => ?_) (by simp)]
-  · have h1 := (relayAlive_inner_le' hh (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) j _ e
-      false).trans_eq (ite_eq_left rfl)
+  · have h1 := (relayAlive_inner_le (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) j _ e
+      false).trans_eq (ite_eq_left (Tower.isChosenType_chosenType hh _ j))
     simp only [relayAt, RelayRole.sum_univ, Relay.party, RelayRole.elim, Tower.parentChamber]
     grind
-  · have h1 := (relayAlive_inner_le' hh (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) j i e
-      false).trans_eq (ite_eq_right hi)
+  · have h1 := (relayAlive_inner_le (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) j i e
+      false).trans_eq (ite_eq_right fun h => hi ((Tower.isChosenType_iff hh).1 h))
     simp [relayAt, Nat.eq_zero_of_le_zero h1]
 
 /-- The relays of the way of an edge of the chosen type: at its ends, at the parents of its ends,
@@ -262,14 +244,15 @@ private theorem middle_le (hg : ∀ mv, GoodOutcome lhat n o mv) (P : T.Node) (j
           relayAlive lhat n o (.middle j e 2) false else 0) +
         if Tower.Node.ofChamber j.2 (T.π (T.e1 e)) = P then
           relayAlive lhat n o (.middle j e 2) false else 0) := by
-  have hM (s) := relayAlive_middle_le' hh (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) j e
-    s false
+  have hM (s) := relayAlive_middle_le (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) j e s
+    false
   have h1 := relayAlive_middle_le_two hg j e (s := 1) (by decide)
   have h3 := relayAlive_middle_le_two hg j e (s := 3) (by decide)
   simp only [Fin.sum_univ_four, relayAt, RelayRole.sum_univ, Relay.party, RelayRole.elim,
     Tower.parentChamber, Matrix.cons_val]
-  by_cases ht : T.ty e = T.chosenType hh (edgeLoads (load lhat n o)) j
-  · simp only [ht, ↓reduceIte] at hM ⊢
+  by_cases ht : T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e)
+  · simp only [ht, ↓reduceIte] at hM
+    simp only [(Tower.isChosenType_iff hh).1 ht]
     grind
   · simp only [ht, ↓reduceIte, Nat.le_zero] at hM
     simp [hM]
@@ -300,8 +283,7 @@ private theorem final_le (P : T.Node) (e : T.Ed J) :
       ((if Tower.Node.ofChamber le_rfl (T.e0 e) = P then edgeLoads (load lhat n o) J e else 0) +
         if Tower.Node.ofChamber le_rfl (T.e1 e) = P then edgeLoads (load lhat n o) J e else 0) +
       if Tower.Node.root = P then edgeLoads (load lhat n o) J e else 0 := by
-  have h1 : relayAlive lhat n o (.final e : Relay T m A) false ≤ edgeLoads (load lhat n o) J e :=
-    (relayAlive_final_le e false).trans_eq (edgeLoads_of_lt _ (Nat.lt_succ_self J) e).symm
+  have h1 := relayAlive_final_le (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch) e false
   simp only [relayAt, RelayRole.sum_univ, Relay.party, RelayRole.elim]
   grind
 

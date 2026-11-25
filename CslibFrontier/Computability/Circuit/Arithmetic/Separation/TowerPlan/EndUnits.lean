@@ -142,20 +142,18 @@ private theorem sum_done_le_load (j : Fin J) (e : T.Ed j) (β : Bool) :
       edgeLoads (load lhat n o) j e := by
   have hh := (T.ty e).pos
   set i₀ := T.chosenType hh (edgeLoads (load lhat n o)) j
-  have hL : load lhat n o (.edge j.castSucc e) = edgeLoads (load lhat n o) j e :=
-    (edgeLoads_of_lt _ (by omega) e).symm
   have hI : ∑ i, relayAlive lhat n o (.inner j i e) β ≤
-      if T.ty e = i₀ then 0 else edgeLoads (load lhat n o) j e := by
+      if T.IsChosenType (edgeLoads (load lhat n o) j) (T.ty e) then 0
+      else edgeLoads (load lhat n o) j e := by
     rw [sum_eq_single i₀ (fun i _ hi => Nat.eq_zero_of_le_zero
       ((relayAlive_inner_le j i e β).trans_eq
         (ite_eq_right fun h => hi ((Tower.isChosenType_iff hh).1 h)))) (by simp)]
     split_ifs with ht
     · exact (relayAlive_of_not_occurs (lhat := lhat) (n := n) (o := o)
-        (fun hx : (Relay.inner j i₀ e).Occurs R ch => hx ht) β).le
-    · exact (relayAlive_inner_le j i₀ e β).trans (by split_ifs <;> simp [hL])
-  have hM (s : Fin 4) : relayAlive lhat n o (.middle j e s) β ≤
-      if T.ty e = i₀ then edgeLoads (load lhat n o) j e else 0 :=
-    (relayAlive_middle_le j e s β).trans_eq (if_congr (Tower.isChosenType_iff hh) hL rfl)
+        (fun hx : (Relay.inner j i₀ e).Occurs R ch => hx ((Tower.isChosenType_iff hh).1 ht)) β).le
+    · exact (relayAlive_inner_le j i₀ e β).trans (by split_ifs <;> simp)
+  have hM (s : Fin 4) := relayAlive_middle_le (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch)
+    j e s β
   have h3 : T.π (T.e1 e) = T.hostOf (T.ty e) (T.e1 e) →
       relayAlive lhat n o (.middle j e 3) β = 0 := fun hq =>
     relayAlive_of_not_occurs (fun hx : (Relay.middle j e 3).Occurs R ch => hx.2 rfl hq) β
@@ -233,9 +231,8 @@ private theorem sum_isChild_le (P : T.Node) :
         T.parentUnits (edgeLoads (load lhat n o)) J c else 0 := by
     rw [Tower.sum_ite_incidentSum]
     refine sum_le_sum fun e _ => ?_
-    have h (β : Bool) : relayAlive lhat n o (.final e : Relay T m A) β ≤
-        edgeLoads (load lhat n o) J e :=
-      (relayAlive_final_le e β).trans_eq (edgeLoads_of_lt _ (Nat.lt_succ_self J) e).symm
+    have h (β : Bool) := relayAlive_final_le (lhat := lhat) (n := n) (o := o) (R := R) (ch := ch)
+      e β
     have h0 := h false
     have h1 := h true
     simp only [Fintype.sum_bool, Relay.target, Relay.child, Relay.party, RelayRole.elim, true_and,
