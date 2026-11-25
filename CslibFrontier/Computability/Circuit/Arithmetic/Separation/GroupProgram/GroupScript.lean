@@ -96,6 +96,11 @@ theorem mem_baseParties {grp : Fin (K + K + A') → G} {g : G} {p : Fin (K + K)}
 theorem nodup_baseParties (grp : Fin (K + K + A') → G) (g : G) : (baseParties grp g).Nodup :=
   (List.nodup_finRange _).filter _
 
+theorem baseParties_eq_filter (grp : Fin (K + K + A') → G) (g : G) :
+    baseParties grp g = (List.finRange (K + K)).filter fun p => grp (Fin.castAdd A' p) = g := by
+  unfold baseParties
+  rfl
+
 /-- All roles of all moves, in the order of the moves. -/
 @[expose] noncomputable def allRoles (M : Moves F A E) : List M.Role :=
   (List.finRange E).flatMap fun x => (univ : Finset (M.law x).Role).toList.map (Sigma.mk x)
@@ -116,6 +121,11 @@ theorem pairwise_allRoles (M : Moves F A E) :
 /-- The roles of the group `g`, in the order of the moves. -/
 noncomputable def groupRoles (grp : Fin A → G) (g : G) (M : Moves F A E) : List M.Role :=
   (allRoles M).filter fun r => grp (M.roleParty r) = g
+
+theorem groupRoles_eq_filter (grp : Fin A → G) (g : G) (M : Moves F A E) :
+    groupRoles grp g M = (allRoles M).filter fun r => grp (M.roleParty r) = g := by
+  unfold groupRoles
+  rfl
 
 theorem mem_groupRoles {grp : Fin A → G} {g : G} {M : Moves F A E} {r : M.Role} :
     r ∈ groupRoles grp g M ↔ grp (M.roleParty r) = g := by
