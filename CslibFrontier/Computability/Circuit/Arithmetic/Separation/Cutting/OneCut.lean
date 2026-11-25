@@ -20,6 +20,7 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Numbers
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ProgramSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.BaseChange
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Laws.Existence
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Constants
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Automaton
 
 /-!
@@ -91,9 +92,7 @@ theorem exists_oneCut (hθ : (Function.support θ).Finite) (hgen : ∀ a, ∃ w 
   obtain ⟨Cp, v₁, hP⟩ := hP A Γ S Q mu cb hcb Fintype.card_pos
   -- the evaluator GROUP, for the roles of the relay and the laws
   set laws := ((univ : Finset FL.Kind).toList.map FL.law).map fun L => L.map (algebraMap A A)
-  obtain ⟨kinds, hkinds⟩ : ∃ kinds : List (Σ L : Law A, L.Role), kinds =
-      (relayLaw A :: laws).flatMap fun L => (univ : Finset L.Role).toList.map fun r => ⟨L, r⟩ :=
-    ⟨_, rfl⟩
+  obtain ⟨kinds, hkinds⟩ : ∃ kinds, kinds = lawRoles A laws := ⟨_, rfl⟩
   obtain ⟨ml, hml⟩ : ∃ ml, ml = ((relayLaw A :: laws).map fun L =>
       Fintype.card L.Role + Fintype.card L.Slot + Fintype.card L.Channel).sum := ⟨_, rfl⟩
   obtain ⟨GROUP, κ, hGR⟩ := exists_evaluatesGroups mu cb kinds (fun _ _ _ => hgen _)
@@ -212,9 +211,7 @@ theorem exists_oneCut (hθ : (Function.support θ).Finite) (hgen : ∀ a, ∃ w 
     hml ▸ List.le_sum_of_mem (List.mem_map_of_mem (hlawmem x))
   have hkind (r : pc.moves.Role) :
       ∃ t, kinds[t]? = some (⟨pc.moves.law r.1, r.2⟩ : Σ L : Law A, L.Role) :=
-    List.mem_iff_getElem?.1 (by
-      rw [hkinds]
-      exact List.mem_flatMap.2 ⟨_, hlawmem r.1, List.mem_map.2 ⟨r.2, by simp, rfl⟩⟩)
+    List.mem_iff_getElem?.1 (hkinds ▸ (mk_mem_lawRoles _).2 (List.mem_cons.1 (hlawmem r.1)))
   choose tg htg using hkind
   have htg' (r : pc.moves.Role) : tg r < kinds.length := (List.getElem?_eq_some_iff.1 (htg r)).1
   have hDX : pc.D ≤ X := (Nat.le_succ _).trans (hsmall pc.D_le)

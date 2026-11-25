@@ -14,6 +14,7 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Convexity
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerBound
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
+import CslibFrontier.Foundations.Analysis.Normed.Module.Basic
 import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.BorderCover
 import Mathlib.Analysis.SpecialFunctions.Pow.NthRootLemmas
 
@@ -26,9 +27,10 @@ centres of the cube `[-1/2, 1/2] ^ k` (`Flat.cubeEndPoint`), with two hubs `±x`
 set of nodes (`Flat.exists_norm_eq_sum_dist_cubeEndPoint_le`). The spectral point is that of
 Proposition E.9 (`Flat.exists_spectralPoint_cube`): its scaled wire exponents are the distances up
 to `δ = 1 / (1000 k)`, and its scaled unit exponent at the ends is at most `√k + δ`. The cover of
-the network tensor by the hub tensors (`Flat.coveredBy_hubTensor`) enters through Lemma E.7, the
-lemma on sums with few terms (`PartyTensor.SpectralPoint.apply_le_of_borderCoveredBy`), in which
-the at most `2 ^ k` balanced sets cost only `k` times this unit exponent. So in the flat case, for
+the network tensor by the hub tensors (`Flat.networkTensor_coveredBy_hubTensor`) enters through
+Lemma E.7, the lemma on sums with few terms
+(`PartyTensor.SpectralPoint.apply_le_of_borderCoveredBy`), in which the at most `2 ^ k` balanced
+sets cost only `k` times this unit exponent. So in the flat case, for
 `k ≥ 2` and `ℓ ≥ 100 √k`, every circuit for `f_{k,ℓ}` has at least `2 ^ (ℓ k^{3/2} / 16)` nodes
 (`Flat.networkPolynomial_size_ge_of_sqrt_le`). A circuit for the polynomial in the variables
 printed in the paper (`Flat.networkPolynomialOnViews`) is one for `Flat.networkPolynomial` with
@@ -125,14 +127,14 @@ theorem networkPolynomial_size_ge_of_sqrt_le {K : Type} [Field K] (hK : FlatCase
     refine (F.pull_unitExponent _ _).trans (F.unitExponent_congr_range _ _ ?_)
     ext ⟨y, hy⟩
     simp [place, Subtype.ext_iff]
-  -- Lemma E.7 with the cover of the network tensor by the hub tensors
-  let o₁ (S : Finset (Fin k)) : (Σ _ : Pair k, Bool) ⊕ (Finset (Fin k) × Bool) := .inr (S, true)
-  let o₂ (S : Finset (Fin k)) : (Σ _ : Pair k, Bool) ⊕ (Finset (Fin k) × Bool) := .inr (S, false)
-  have hcov := coveredBy_hubTensor hP hk Sum.inl o₁ o₂
-  rw [← congrArg (networkTensor K k ℓ).withEntry (funext networkTensor_entry)] at hcov
+  -- Lemma E.7 with the cover of the network tensor by the hub tensors, with the hubs `(S, true)`
+  -- and `(S, false)`
+  have hcov := networkTensor_coveredBy_hubTensor hP hk Sum.inl (fun S => .inr (S, true))
+    fun S => .inr (S, false)
   have : Nonempty (balancedSets k) := (balancedSets_nonempty hk).coe_sort
   obtain ⟨A, hA, hmax⟩ := exists_max_image (balancedSets k)
-    (fun S => F' (hubTensor K ℓ s Sum.inl S (o₁ S) (o₂ S))) (balancedSets_nonempty hk)
+    (fun S => F' (hubTensor K ℓ s Sum.inl S (.inr (S, true)) (.inr (S, false))))
+    (balancedSets_nonempty hk)
   have h1 := F'.apply_le_of_borderCoveredBy Sum.inl (push Sum.inl (networkTensor K k ℓ))
     (fun q hq => by
       have : IsEmpty {a // Sum.inl a = q} := ⟨fun a => hq ⟨a.1, a.2⟩⟩
@@ -155,12 +157,14 @@ theorem networkPolynomial_size_ge_of_sqrt_le {K : Type} [Field K] (hK : FlatCase
     refine sum_le_sum fun e _ => ?_
     have h3 : dist (pos (.inl ⟨e, false⟩)) (pos (.inl ⟨e, true⟩)) = 1 := dist_cubeEndPoint e
     linarith [(abs_lt.1 (hF' (.inl ⟨e, false⟩) (.inl ⟨e, true⟩))).1]
-  have hh : c * ∑ a, F'.wireExponent (.inl a) (if a.1.node a.2 ∈ A then o₁ A else o₂ A) ≤
+  have hh : c * ∑ a, F'.wireExponent (.inl a)
+      (if a.1.node a.2 ∈ A then .inr (A, true) else .inr (A, false)) ≤
       (k : ℝ) * (k - 1) / 2 - 4 / 81 * k + 2 * ((k : ℝ) * (k - 1) / 2) * δ := by
-    have h3 (a : Σ _ : Pair k, Bool) :
-        c * F'.wireExponent (.inl a) (if a.1.node a.2 ∈ A then o₁ A else o₂ A) ≤
+    have h3 (a : Σ _ : Pair k, Bool) : c * F'.wireExponent (.inl a)
+        (if a.1.node a.2 ∈ A then .inr (A, true) else .inr (A, false)) ≤
           dist (pos (.inl a)) (if a.1.node a.2 ∈ A then x A else -x A) + δ := by
-      have h4 := (abs_lt.1 (hF' (.inl a) (if a.1.node a.2 ∈ A then o₁ A else o₂ A))).2
+      have h4 := (abs_lt.1 (hF' (.inl a)
+        (if a.1.node a.2 ∈ A then .inr (A, true) else .inr (A, false)))).2
       split_ifs at h4 ⊢ <;> exact (sub_lt_iff_lt_add'.1 h4).le
     have hN : (Fintype.card (Pair k) : ℝ) = k * (k - 1) / 2 := by simpa using sum_pair_one (k := k)
     rw [mul_sum, Fintype.sum_sigma]
@@ -176,13 +180,12 @@ theorem networkPolynomial_size_ge_of_sqrt_le {K : Type} [Field K] (hK : FlatCase
       _ ≤ _ := by
           rw [sum_add_distrib, sum_const, card_univ, nsmul_eq_mul, hN]
           linarith
-  have hm : c * F'.wireExponent (o₁ A) (o₂ A) ≤ 4 / (9 * √k) + δ := by
-    have h3 : dist (pos (o₁ A)) (pos (o₂ A)) = 4 / (9 * √k) := by
+  have hm : c * F'.wireExponent (.inr (A, true)) (.inr (A, false)) ≤ 4 / (9 * √k) + δ := by
+    have h3 : dist (pos (.inr (A, true))) (pos (.inr (A, false))) = 4 / (9 * √k) := by
       change dist (x A) (-x A) = _
-      rw [dist_eq_norm, sub_neg_eq_add, ← two_smul ℝ, norm_smul, hxn]
-      norm_num
+      rw [dist_self_neg, hxn]
       ring
-    linarith [(abs_lt.1 (hF' (o₁ A) (o₂ A))).2]
+    linarith [(abs_lt.1 (hF' (.inr (A, true)) (.inr (A, false)))).2]
   have key := rate_numbers (by exact_mod_cast (by omega : 1 ≤ k)) hℓ hc rfl hδ
     (Real.logb_nonneg one_lt_two (by exact_mod_cast hs)) hw hh hm hg' h2
   rwa [show (3 / 2 : ℝ) = 1 + 1 / 2 by norm_num, Real.rpow_add' (Nat.cast_nonneg k) (by norm_num),

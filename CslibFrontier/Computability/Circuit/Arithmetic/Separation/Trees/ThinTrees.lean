@@ -30,8 +30,7 @@ and their parents that a program computes, the dead units, and the bounds of the
 * (a) the depth is at most `Λ = lg M ^ C`, the given nodes are of stage `0`, every node but the
   root has its parent in the next stage and at most `b` children, and the root at most `C`;
 * (b) at most `M ^ C` dead units; every other unit in the end joins a node and its parent, and
-  their number is at most `units` (`card_filter_holds_le` and `card_cutUnits_le` bound those at a
-  node and in all);
+  their number is at most `units` (`card_filter_holds_le` bounds those at a node);
 * (c) the value, the tests of the relays and the laws of the list, no law move at a node of the
   stage `0`, and the layers of the law moves at a node against the units that it ever holds;
 * (d) a straight-line program with `(M N) ^ C` steps over the numbers below `(M N) ^ C`
@@ -49,8 +48,8 @@ The units from a node to itself are allowed here; they stay at their node, which
 
 ## Main results
 
-* `Trees.ThinTrees.card_filter_holds_le`, `Trees.ThinTrees.card_cutUnits_le`: Theorem H.2(b) for
-  the units at a node, its children included, and for all units.
+* `Trees.ThinTrees.card_filter_holds_le`: Theorem H.2(b) for the units at a node, its children
+  included.
 
 ## References
 
@@ -67,9 +66,9 @@ open Finset Cut Interpreter TowerPlan
 
 variable {R : Type*} [CommSemiring R] {A A' E U0 U1 : ℕ}
 
-/-- A straight-line program with `steps` gates over the letters `Fin K`, whose inputs `x` are the
-numbers `x.1` of initial units and the outcomes `x.2` of a plan `P`, and which computes the
-parents `parent`, the units `units` between the parties and their parents, the current units
+/-- A straight-line program with `steps` gates over the letters `Fin K`, whose inputs are the pairs
+`(n, o)` of the numbers `n` of initial units and the outcomes `o` of a plan `P`, and which computes
+the parents `parent`, the units `units` between the parties and their parents, the current units
 after all moves, the units given at the slots, the numbers of units of the moves and the good
 outcomes (Theorem H.2(d), (e)). A property is computed by its indicator. -/
 structure TreeProgram {M : Moves R (A + A') E} (P : Plan M U0 U1)
@@ -85,15 +84,16 @@ structure TreeProgram {M : Moves R (A + A') E} (P : Plan M U0 U1)
   computed : Set ((Fin A → Fin A → Fin (U0 + 1)) × (M.Channel → Fin U1) → ℕ)
   slpN : SlpN input steps computed
   /-- Every input is a number of initial units or an outcome. -/
-  input_eq : ∀ i, (∃ a c, ∀ x, (input i x : ℕ) = x.1 a c) ∨ ∃ ν, ∀ x, (input i x : ℕ) = x.2 ν
-  initial_mem : ∀ a c, (fun x => (x.1 a c : ℕ)) ∈ computed
-  outcome_mem : ∀ ν, (fun x => (x.2 ν : ℕ)) ∈ computed
-  parent_mem : ∀ p q, {x | parent x.1 x.2 p = q}.indicator 1 ∈ computed
-  units_mem : ∀ p, (fun x => units x.1 x.2 p) ∈ computed
-  cur_mem : ∀ u, {x | u ∈ P.cur x.1 x.2 E}.indicator 1 ∈ computed
-  given_mem : ∀ z u, {x | u ∈ P.given x.1 x.2 z}.indicator 1 ∈ computed
-  count_mem : ∀ y, (fun x => P.count x.1 x.2 y) ∈ computed
-  good_mem : ∀ y, {x | P.Good x.1 x.2 y}.indicator 1 ∈ computed
+  input_eq : ∀ i, (∃ a c, ∀ n o, (input i (n, o) : ℕ) = n a c) ∨
+    ∃ ν, ∀ n o, (input i (n, o) : ℕ) = o ν
+  initial_mem : ∀ a c, (fun (n, _) => (n a c : ℕ)) ∈ computed
+  outcome_mem : ∀ ν, (fun (_, o) => (o ν : ℕ)) ∈ computed
+  parent_mem : ∀ p q, {(n, o) : _ × _ | parent n o p = q}.indicator 1 ∈ computed
+  units_mem : ∀ p, (fun (n, o) => units n o p) ∈ computed
+  cur_mem : ∀ u, {(n, o) : _ × _ | u ∈ P.cur n o E}.indicator 1 ∈ computed
+  given_mem : ∀ z u, {(n, o) : _ × _ | u ∈ P.given n o z}.indicator 1 ∈ computed
+  count_mem : ∀ y, (fun (n, o) => P.count n o y) ∈ computed
+  good_mem : ∀ y, {(n, o) : _ × _ | P.Good n o y}.indicator 1 ∈ computed
 
 /-- **Thin trees** (Theorem H.2 of [AnthropicVPVNP2026], pp. 45–46) for networks on `A` given
 nodes, with at most `N` units at a node, units of `ℓ` bits and at most `M` nodes: moves of the
@@ -257,22 +257,6 @@ theorem card_filter_holds_le (hn : ∀ a, ∑ c, ((n a c : ℕ) + n c a) ≤ N)
       (Play.Holds (UnitId.holder TT.moves.channelParty) p)).card : ℝ) ≤
     (lg M ^ C : ℕ) * (M : ℝ) ^ (1 - γ) * (N + (M : ℝ) ^ 2) :=
   (Nat.cast_le.2 (TT.card_filter_holds_le_units hn hg p)).trans (TT.units_add_sum_le n o p)
-
-/-- **All units** (Theorem H.2(b) of [AnthropicVPVNP2026], p. 46): the units in the end that are
-not dead and join two parties are at most `Λ M (N + M ^ 2)`. -/
-theorem card_cutUnits_le (hn : ∀ a, ∑ c, ((n a c : ℕ) + n c a) ≤ N)
-    (hg : ∀ x, TT.plan.Good n o x) :
-    (Play.cutUnits (UnitId.holder TT.moves.channelParty) id
-      (TT.plan.cur n o TT.E \ TT.dead o)).card ≤ lg M ^ C * M * (N + M ^ 2) := by
-  set S := Play.cutUnits (UnitId.holder TT.moves.channelParty) id (TT.plan.cur n o TT.E \ TT.dead o)
-  have hsub : S ⊆ (univ.filter (· ≠ TT.root)).biUnion fun q => S.filter fun u =>
-      s(UnitId.holder TT.moves.channelParty u false,
-        UnitId.holder TT.moves.channelParty u true) = s(q, TT.parent n o q) := fun u hu => by
-    obtain ⟨q, hq, he⟩ := TT.exists_parent n hn o hg u hu
-    exact mem_biUnion.2 ⟨q, mem_filter.2 ⟨mem_univ _, hq⟩, mem_filter.2 ⟨hu, he⟩⟩
-  refine (card_le_card hsub).trans (card_biUnion_le.trans ?_)
-  refine (sum_le_sum fun q hq => TT.card_between_le n hn o hg q (mem_filter.1 hq).2).trans ?_
-  exact (sum_le_sum_of_subset (filter_subset _ _)).trans (TT.sum_units_le n o)
 
 end ThinTrees
 

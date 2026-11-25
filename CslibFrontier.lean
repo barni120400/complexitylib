@@ -1568,6 +1568,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.Existence
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.SLTowers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.ThinTrees
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.TowerTree
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.TreeProgram
@@ -7896,6 +7897,7 @@ public import CslibFrontier.Foundations.Analysis.MvPolynomial.CriticalValueCutof
 public import CslibFrontier.Foundations.Analysis.Normed.Close
 public import CslibFrontier.Foundations.Analysis.Normed.CoveringNumber
 public import CslibFrontier.Foundations.Analysis.Normed.FiniteNet
+public import CslibFrontier.Foundations.Analysis.Normed.Module.Basic
 public import CslibFrontier.Foundations.Analysis.Normed.Ring.PowSub
 public import CslibFrontier.Foundations.Analysis.Normed.UnitSphere
 public import CslibFrontier.Foundations.Analysis.ODE.LinearFlow

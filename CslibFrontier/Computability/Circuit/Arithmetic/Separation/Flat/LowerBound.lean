@@ -15,6 +15,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
+import CslibFrontier.Foundations.Analysis.Normed.Module.Basic
 import CslibFrontier.Foundations.LinearAlgebra.Tensor.Party.Hubs
 
 /-!
@@ -26,7 +27,8 @@ computed by a circuit with at most `s` nodes. By Lemma E.4 (`Flat.exists_balance
 Lemma A.3 (`PartyTensor.push_le_prod_wire_hubs`), the tensor on the ends of the wires of the
 coefficients of `P` at the views of the nodes is covered by the tensors `Flat.hubTensor` of the
 balanced sets, with a wire of dimension `s` between the hubs (`Flat.coveredBy_hubTensor`). For
-`P = f_{k,ℓ}` this tensor is `T_{k,ℓ}` (`Flat.networkTensor`).
+`P = f_{k,ℓ}` this tensor is `T_{k,ℓ}` (`Flat.networkTensor`), which is then covered by the hub
+tensors (`Flat.networkTensor_coveredBy_hubTensor`).
 
 In the flat case (`TwoCases.FlatCase`) the ends and two hubs for every balanced set, placed in
 `ℝ ^ k` as in `Flat.exists_norm_eq_sum_dist_endPoint_le`, have their distances close to the wire
@@ -41,6 +43,7 @@ no circuits of polynomial size (`Flat.not_computedWithin_permFamily`).
 
 * `Flat.coveredBy_hubTensor`: the tensor of a polynomial with a small circuit is covered by the
   hub tensors of the balanced sets.
+* `Flat.networkTensor_coveredBy_hubTensor`: so is `T_{k,ℓ}` when `f_{k,ℓ}` has a small circuit.
 * `Flat.networkPolynomial_size_ge`: Proposition E.5.
 * `Flat.not_computedWithin_permFamily`: Theorem E.6.
 
@@ -112,6 +115,18 @@ theorem coveredBy_hubTensor {K : Type} [CommSemiring K] {I : Type} [Fintype I] [
     exact congrArg (· * _) (congrArg prod (funext fun a =>
       congrArg (wire K · _ _) (Fintype.card_fin _)))
 
+/-- **A small circuit for `f_{k,ℓ}` routes `T_{k,ℓ}` through two hubs** ([AnthropicVPVNP2026],
+proof of Proposition E.5, p. 34): if a circuit with at most `s` nodes computes `f_{k,ℓ}`, `k ≥ 2`,
+then `T_{k,ℓ}` with the ends at the parties `π` is covered by the tensors `hubTensor` of the
+balanced sets `S`, with the hubs `o₁ S` and `o₂ S` and a wire of dimension `s` between them. -/
+theorem networkTensor_coveredBy_hubTensor {K : Type} [CommSemiring K] {I : Type} [Fintype I]
+    [DecidableEq I] {ℓ s : ℕ} (hP : ComputedWithin (networkPolynomial K k ℓ) s) (hk : 2 ≤ k)
+    (π : (Σ _ : Pair k, Bool) → I) (o₁ o₂ : Finset (Fin k) → I) :
+    (push π (networkTensor K k ℓ)).CoveredBy
+      fun S : balancedSets k => hubTensor K ℓ s π S (o₁ S) (o₂ S) := by
+  have h := coveredBy_hubTensor hP hk π o₁ o₂
+  rwa [← congrArg (networkTensor K k ℓ).withEntry (funext networkTensor_entry)] at h
+
 /-! ### Proposition E.5 -/
 
 /-- If `2 ^ a` is at most a sum of `2 ^ f S` over a nonempty set of at most `2 ^ k` indices, then
@@ -165,18 +180,14 @@ theorem networkPolynomial_size_ge {K : Type} [Field K] (hK : FlatCase K) (hk : 2
   obtain ⟨ℓ₀, hℓ₀⟩ := exists_nat_ge (100 * c)
   refine ⟨ℓ₀, fun ℓ hℓ s hP => ?_⟩
   have hs : 1 ≤ s := hP.pos
-  -- the network tensor is covered by the hub tensors, so `F` at it is at most `2 ^ k` times `F`
-  -- at one of them
-  let o₁ (S : Finset (Fin k)) : (Σ _ : Pair k, Bool) ⊕ (Finset (Fin k) × Bool) := .inr (S, true)
-  let o₂ (S : Finset (Fin k)) : (Σ _ : Pair k, Bool) ⊕ (Finset (Fin k) × Bool) := .inr (S, false)
-  have hcov : (push Sum.inl (networkTensor K k ℓ)).CoveredBy
-      fun S : balancedSets k => hubTensor K ℓ s Sum.inl S (o₁ S) (o₂ S) := by
-    have h := coveredBy_hubTensor hP hk Sum.inl o₁ o₂
-    rwa [← congrArg (networkTensor K k ℓ).withEntry (funext networkTensor_entry)] at h
-  have h1 : F (push Sum.inl (networkTensor K k ℓ)) ≤
-      ∑ S : balancedSets k, F (hubTensor K ℓ s Sum.inl S (o₁ S) (o₂ S)) := F.le_sum _ _ hcov
+  -- the network tensor is covered by the hub tensors, with the hubs `(S, true)` and `(S, false)`,
+  -- so `F` at it is at most `2 ^ k` times `F` at one of them
+  have h1 : F (push Sum.inl (networkTensor K k ℓ)) ≤ ∑ S : balancedSets k,
+      F (hubTensor K ℓ s Sum.inl S (.inr (S, true)) (.inr (S, false))) :=
+    F.le_sum _ _ (networkTensor_coveredBy_hubTensor hP hk Sum.inl (fun S => .inr (S, true))
+      fun S => .inr (S, false))
   rw [apply_push_networkTensor, sum_coe_sort (balancedSets k)
-    fun S => F (hubTensor K ℓ s Sum.inl S (o₁ S) (o₂ S))] at h1
+    fun S => F (hubTensor K ℓ s Sum.inl S (.inr (S, true)) (.inr (S, false)))] at h1
   simp only [apply_hubTensor F hs] at h1
   obtain ⟨A, hA, h2⟩ := exists_le_add_of_two_rpow_le_sum (balancedSets_nonempty hk)
     (card_balancedSets_le k) h1
@@ -191,15 +202,17 @@ theorem networkPolynomial_size_ge {K : Type} [Field K] (hK : FlatCase K) (hk : 2
       dist_endPoint e.low_lt_high.ne
     simp only [id, h4] at h3
     linarith
-  have hh : c * ∑ a, F.wireExponent (Sum.inl a) (if a.1.node a.2 ∈ A then o₁ A else o₂ A) ≤
+  have hh : c * ∑ a, F.wireExponent (Sum.inl a)
+      (if a.1.node a.2 ∈ A then .inr (A, true) else .inr (A, false)) ≤
       (k : ℝ) * (k - 1) / 2 - k / 12 + 2 * ((k : ℝ) * (k - 1) / 2) * δ := by
-    have h3 (a : Σ _ : Pair k, Bool) :
-        c * F.wireExponent (Sum.inl a) (if a.1.node a.2 ∈ A then o₁ A else o₂ A) ≤
+    have h3 (a : Σ _ : Pair k, Bool) : c * F.wireExponent (Sum.inl a)
+        (if a.1.node a.2 ∈ A then .inr (A, true) else .inr (A, false)) ≤
           dist (endPoint (a.1.node a.2) (a.1.node !a.2))
             (if a.1.node a.2 ∈ A then x A else -x A) + δ := by
-      have h4 := (abs_lt.1 (hF (Sum.inl a) (if a.1.node a.2 ∈ A then o₁ A else o₂ A))).1
+      have h4 := (abs_lt.1 (hF (Sum.inl a)
+        (if a.1.node a.2 ∈ A then .inr (A, true) else .inr (A, false)))).1
       split_ifs at h4 ⊢ <;>
-        simp only [id, place, o₁, o₂, Sum.elim_inl, Sum.elim_inr, ite_true, Bool.false_eq_true,
+        simp only [id, place, Sum.elim_inl, Sum.elim_inr, ite_true, Bool.false_eq_true,
           ite_false] at h4 <;> linarith
     rw [mul_sum]
     calc _ ≤ _ := sum_le_sum fun a _ => h3 a
@@ -210,12 +223,11 @@ theorem networkPolynomial_size_ge {K : Type} [Field K] (hK : FlatCase K) (hk : 2
       _ = _ := sum_pair_add_add_swap (fun a b => dist (endPoint a b)
           (if a ∈ A then x A else -x A)) δ
       _ ≤ _ := by linarith
-  have hm : c * F.wireExponent (o₁ A) (o₂ A) ≤ 1 / (3 * √k) + δ := by
-    have h3 := (abs_lt.1 (hF (o₁ A) (o₂ A))).1
-    have h4 : dist (place (o₁ A)) (place (o₂ A)) = 1 / (3 * √k) := by
+  have hm : c * F.wireExponent (.inr (A, true)) (.inr (A, false)) ≤ 1 / (3 * √k) + δ := by
+    have h3 := (abs_lt.1 (hF (.inr (A, true)) (.inr (A, false)))).1
+    have h4 : dist (place (.inr (A, true))) (place (.inr (A, false))) = 1 / (3 * √k) := by
       change dist (x A) (-x A) = _
-      rw [dist_eq_norm, sub_neg_eq_add, ← two_smul ℝ, norm_smul, hxn]
-      norm_num
+      rw [dist_self_neg, hxn]
       ring
     simp only [id, h4] at h3
     linarith
