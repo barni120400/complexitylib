@@ -1436,7 +1436,6 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.End
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkTensor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Budget
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Eval
