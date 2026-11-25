@@ -1437,6 +1437,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Bal
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubePoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerBound
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
