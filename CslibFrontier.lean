@@ -7561,6 +7561,7 @@ public import CslibFrontier.DataStructure.WordRAM.Resizable.StateTransition
 public import CslibFrontier.DataStructure.WordRAM.StateTransition
 public import CslibFrontier.Foundations.Algebra.BigOperators.Fin
 public import CslibFrontier.Foundations.Algebra.BigOperators.IteMem
+public import CslibFrontier.Foundations.Algebra.BigOperators.PiFinset
 public import CslibFrontier.Foundations.Algebra.BigOperators.Selection
 public import CslibFrontier.Foundations.Algebra.BigOperators.WriteSteps
 public import CslibFrontier.Foundations.Algebra.Covering.Basic
@@ -8378,6 +8379,7 @@ public import CslibFrontier.Foundations.Data.List.Lookup
 public import CslibFrontier.Foundations.Data.List.MaskSelect
 public import CslibFrontier.Foundations.Data.List.MergeSort
 public import CslibFrontier.Foundations.Data.List.ModifyLast
+public import CslibFrontier.Foundations.Data.List.NodupFlatMap
 public import CslibFrontier.Foundations.Data.List.OfFn
 public import CslibFrontier.Foundations.Data.List.OfFnGetD
 public import CslibFrontier.Foundations.Data.List.OfFnPad
