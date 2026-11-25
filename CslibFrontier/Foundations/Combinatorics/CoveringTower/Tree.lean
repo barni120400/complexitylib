@@ -254,9 +254,6 @@ namespace Node
 /-- The stage of a node: the level of a chamber, and `J + 1` at the root. -/
 @[expose] def stage : T.Node → ℕ := lift (fun j _ => j) (J + 1)
 
-@[simp]
-theorem stage_ofChamber (hj : j ≤ J) (c : T.X j) : (ofChamber hj c).stage = j := rfl
-
 theorem stage_le (P : T.Node) : P.stage ≤ J + 1 := by
   cases P with
   | root => exact le_rfl
@@ -318,7 +315,7 @@ private theorem filter_parent_eq_ofChamber_zero (c : T.X 0) :
       ∅ :=
   filter_false_of_mem fun Q _ ⟨hQ, hp⟩ => by
     have := (stage_parent hh Lf hQ).symm.trans (congrArg stage hp)
-    simp at this
+    simp [stage, lift, ofChamber] at this
 
 /-- A node other than the root has at most `b` children. -/
 theorem card_children_le {P : T.Node} (hP : P ≠ root) :
