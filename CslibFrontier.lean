@@ -1426,6 +1426,8 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupPro
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Roles
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Script
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Segments
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Theorem
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Time
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Transducer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Units
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.AccProg
