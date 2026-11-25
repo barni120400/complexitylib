@@ -10,7 +10,6 @@ module
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Given
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Plan
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
-import Mathlib.Order.Interval.Finset.Fin
 
 /-!
 # The tower plan: the units that a node ever holds
@@ -153,18 +152,9 @@ private theorem heldCount_le {ℓf : ℕ} (P : T.Node)
   have hp (a : Fin A) :
       Pl.party P = Fin.castAdd A' a ↔ Tower.Node.ofChamber (Nat.zero_le J) (ch a) = P := by
     rw [← Pl.party_base, Pl.party.injective.eq_iff, eq_comm]
-  have hcount (N : ℕ) (hN : N ≤ U0) (Q : Prop) [Decidable Q] :
-      ∑ k : Fin U0, (if (k : ℕ) < N ∧ Q then 1 else 0) = if Q then N else 0 := by
-    by_cases hQ : Q <;> simp [hQ, Fin.card_filter_val_lt, hN]
-  have hs : heldCount R FL Pl n o (Pl.party P) = ∑ u, if u ∈ Plan.seenAt n o
-      (Fintype.card (Move R ch FL)) ∧ Play.Holds (UnitId.holder (moves R FL Pl).channelParty)
-        (Pl.party P) u then 1 else 0 := by
-    simp only [ite_and]
-    rw [sum_ite_mem, univ_inter, heldCount, card_filter]
-  rw [hs, UnitId.sum_eq, add_assoc]
-  gcongr ?_ + ?_
-  · simp only [Plan.init_mem_seenAt, UnitId.holds_init, hp]
-    simp only [fun a c => hcount _ (Nat.le_of_lt_succ (n a c).2)]
+  rw [heldCount, Plan.card_filter_holds_seenAt, filter_true_of_mem fun ν _ => ν.1.isLt, add_assoc]
+  refine add_le_add ?_ (le_of_eq ?_)
+  · simp only [hp]
     split_ifs with hB
     · obtain ⟨a₀, rfl⟩ := hB
       simp only [Tower.Node.ofChamber_inj, ch.injective.eq_iff]
@@ -176,19 +166,8 @@ private theorem heldCount_le {ℓf : ℕ} (P : T.Node)
     · exact (sum_eq_zero fun a _ => sum_eq_zero fun c _ => ite_eq_right fun h =>
         hB (h.elim (fun h => ⟨a, h⟩) fun h => ⟨c, h⟩)).le
   · rw [channelEndCount, ← sum_add_distrib]
-    refine sum_le_sum fun ν _ => ?_
-    have hk : ∑ k : Fin U1, (if k ≤ o ν then 1 else 0) = (o ν : ℕ) + 1 := by
-      rw [sum_boole, Nat.cast_id, ← Fin.card_Iic]
-      congr 1
-      ext
-      simp
-    by_cases H : ∃ d, (moves R FL Pl).channelParty ν d = Pl.party P
-    · simp only [Plan.new_mem_seenAt, Play.Holds, UnitId.holder, ν.1.isLt, true_and, H, and_true,
-        hk, Fintype.sum_bool]
-      obtain ⟨d, hd⟩ := H
-      cases d <;> simp only [hd] <;> split_ifs <;> omega
-    · simp only [Plan.new_mem_seenAt, Play.Holds, UnitId.holder, H, and_false]
-      simp
+    exact sum_congr rfl fun ν _ => (sum_congr rfl fun d _ => by split_ifs <;> omega).trans
+      sum_add_distrib
 
 /-- **The units that a node ever holds** ([AnthropicVPVNP2026], Theorem H.2(e), p. 46): for
 good outcomes, if every place is an end of a near pair, every law has at most `Sm` slots and a

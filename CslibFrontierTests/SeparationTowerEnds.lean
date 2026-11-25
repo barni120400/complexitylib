@@ -7,6 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: local-only (test driver)
 
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Capacity
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.EndUnits
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.EverHeld
@@ -17,9 +18,10 @@ a client that sees only the public statements.
 * A tower with one type, one chamber on every one of two levels and no edges: the parents of its
   chambers and the units between the children of a chamber and the chamber.
 * The node below the parent on a channel of a relay after the last stage.
-* For an arbitrary tower, under the hypotheses of the statements: the units that a node ever
-  holds, the units between a chamber and its parent in the end, the alive units in the end, and
-  the possible outcomes in the form that `Cut.Plan.value_moves` needs. -/
+* For an arbitrary tower, under the hypotheses of the statements: the units that a party ever
+  holds, exactly, and those that a node ever holds, the units between a chamber and its parent in
+  the end, the alive units in the end, and the possible outcomes in the form that
+  `Cut.Plan.value_moves` needs. -/
 
 set_option linter.privateModule false
 
@@ -122,6 +124,15 @@ example (l : VertexMove FL) (c : (FL.law l.kind).Channel) (ν : (moves R FL Pl).
 example {P : T.Node} {ν : (moves R FL Pl).Channel} {k : Fin U1}
     (hu : (.new ν k : PlanUnit R FL Pl U0 U1) ∈ assignedUnits R FL Pl lhat n o P) :
     IsAlive R FL Pl lhat n o (.new ν k) := (new_mem_assignedUnits.1 hu).1
+
+/-- The units that a party ever holds, exactly: the initial units of its strings and, for every
+end of a channel at it, the outcome of the channel and one more unit. -/
+example (p : Fin (A + A')) :
+    heldCount R FL Pl n o p =
+      (∑ a, ∑ b, if p = Fin.castAdd A' a ∨ p = Fin.castAdd A' b then (n a b : ℕ) else 0) +
+        ∑ ν with (ν.1 : ℕ) < Fintype.card (Move R ch FL),
+          ∑ d, if (moves R FL Pl).channelParty ν d = p then (o ν : ℕ) + 1 else 0 :=
+  Plan.card_filter_holds_seenAt _ p
 
 /-- Possible outcomes are good, in the form of the hypothesis of `Cut.Plan.value_moves`. -/
 example {ub : ℕ} (hub : 0 < ub) :
