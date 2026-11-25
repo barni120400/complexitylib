@@ -19,9 +19,10 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 * Over `ℚ`, by Theorem D.2 and Theorem G.2: the flat case holds, or the one-state automaton with
   weight `1` and the one-bit code of its symbols has pieces of its computation (Proposition J.2);
   the flat case holds, or there are a ring, a table of generators and the cut hypothesis
-  (Theorem J.4).
-* For thin trees: the bounds of a piece for the cut by `2`, and the program of the pieces accepts
-  the numbers of initial units `0`.
+  (Theorem J.4), with both properties of the table.
+* For thin trees: the bounds of a piece for the cut by `2`, and the program of the pieces: its
+  length, that it accepts the numbers of initial units `0`, and that it accepts only numbers within
+  the load.
 * For the pieces of a computation: the number of units with one holder in a piece, as a
   quotient. -/
 
@@ -57,13 +58,14 @@ example : FlatCase ℚ ∨ ∃ (A : Subring ℚ) (laws : List (Cut.Law A)) (b G 
   exact ⟨A, _, _, _, a, e, he, hP A Unit Unit Unit _ unitCode unitCode_injective one_pos⟩
 
 /-- **Theorem J.4 over `ℚ`**: the flat case holds, or there are a finitely generated subring `A`
-of `ℚ`, a table `θ` of its generators and `h ≥ 17` with the cut hypothesis at the scales `v ^ H`,
-`H = 16 h`. -/
+of `ℚ`, a table `θ` of finite support whose formulas give every element of `A`, and `h ≥ 17` with
+the cut hypothesis at the scales `v ^ H`, `H = 16 h`. -/
 example : FlatCase ℚ ∨ ∃ (A : Subring ℚ) (θ : List Bool → A) (h C₀ v₀ : ℕ),
-    Algebra.FiniteType ℤ A ∧ 17 ≤ h ∧ CutHyp θ (16 * h) C₀ v₀ := by
+    Algebra.FiniteType ℤ A ∧ (Function.support θ).Finite ∧ (∀ a, ∃ w : WE, w.val θ = a) ∧
+      17 ≤ h ∧ CutHyp θ (16 * h) C₀ v₀ := by
   refine (flatCase_or_contractingCase ℚ).imp_right fun hK => ?_
-  obtain ⟨A, hA, θ, h, C₀, v₀, -, -, hh, hcut⟩ := Cutting.exists_cutHyp hK
-  exact ⟨A, θ, h, C₀, v₀, hA, hh, hcut⟩
+  obtain ⟨A, hA, θ, h, C₀, v₀, hfin, hgen, hh, hcut⟩ := Cutting.exists_cutHyp hK
+  exact ⟨A, θ, h, C₀, v₀, hA, hfin, hgen, hh, hcut⟩
 
 /-! ### Thin trees under hypotheses -/
 
@@ -86,14 +88,16 @@ example (TT : ThinTrees laws (K + K) N ℓ M b G C γ) (hK : 0 < K) (hM : 0 < M)
   have := TT.card_base_piece_le (n := n) (o := o) two_pos (by omega) hM g
   omega
 
-/-- **The program of the pieces** accepts the numbers of initial units `0`. -/
+/-- **The program of the pieces** has at most `Y ^ 15` steps, accepts the numbers of initial units
+`0`, and accepts only numbers with at most `N` units at every base party. -/
 example (TT : ThinTrees laws (K + K) N ℓ M b G C γ) {k Y : ℕ} (hk : 0 < k) (hY : 6 ≤ Y)
     (hMN : (M * N) ^ C ≤ Y) (hN : N ≤ Y) (hdepth : TT.depth ≤ Y)
     (hin : (K + K) * (K + K) + Fintype.card TT.moves.Channel ≤ Y) :
     ∃ (nI pS : ℕ) (tab : Dealing.SlpTab TT.plan (fun x => TT.piece hk x.counts x.outcomes)
-      (Y ^ 4) nI pS), pS ≤ Y ^ 15 ∧ tab.Valid fun _ _ => 0 := by
+      (Y ^ 4) nI pS), pS ≤ Y ^ 15 ∧ tab.Valid (fun _ _ => 0) ∧
+        ∀ n, tab.Valid n → ∀ p, ∑ a, ((n p a : ℕ) + n a p) ≤ N := by
   obtain ⟨nI, pS, tab, hpS, hvalid⟩ := TT.exists_slpTab hk hY hMN hN hdepth hin
-  exact ⟨nI, pS, tab, hpS, (hvalid _).2 fun p => by simp⟩
+  exact ⟨nI, pS, tab, hpS, (hvalid _).2 fun p => by simp, fun n hn => (hvalid n).1 hn⟩
 
 end ThinTrees
 
