@@ -1416,7 +1416,9 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Cub
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Bases
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Executions
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Group
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.GroupScript
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Roles
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Script
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Segments
