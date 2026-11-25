@@ -13,7 +13,6 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Window
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Avg
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Curvature.Curvature
 import CslibFrontier.Foundations.GroupTheory.SLTower.Gen
-import CslibFrontier.Foundations.Geometry.CAT0.Basic
 
 /-!
 # A Poincaré inequality on unitriangular groups: Theorem F.6

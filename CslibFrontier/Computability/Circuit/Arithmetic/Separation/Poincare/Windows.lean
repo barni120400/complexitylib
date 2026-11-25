@@ -9,7 +9,6 @@ module
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Lengths
-import CslibFrontier.Foundations.Geometry.CAT0.Toolkit
 import Mathlib.Algebra.Order.Chebyshev
 
 /-!
