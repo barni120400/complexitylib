@@ -289,6 +289,7 @@ public import CslibFrontier.Algorithms.Lean.Yates
 public import CslibFrontier.Algorithms.Lean.ZFunction.Basic
 public import CslibFrontier.Algorithms.Lean.ZFunction.Search
 public import CslibFrontier.Algorithms.LinearAlgebra.BareissElimination
+public import CslibFrontier.Algorithms.LinearAlgebra.LDLCertificate
 public import CslibFrontier.Algorithms.Matching.Edmonds
 public import CslibFrontier.Algorithms.Matching.MVV
 public import CslibFrontier.Algorithms.Matching.Tutte
@@ -3281,6 +3282,8 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDra
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.SquareMove
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Star
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Subdrawing
+public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.ThreePathOrder
+public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.ThreePathRestriction
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.VertexPlacement
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.VertexTransport
 public import CslibFrontier.Computability.Complexity.Problems.Graph.Ports
@@ -3320,6 +3323,7 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSyst
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeDeletionGenus
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeDeletionParity
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeDeletionTransport
+public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.EdgeEndJoin
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Equality
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.FaceCounts
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.FaceDartColors
@@ -6462,6 +6466,8 @@ public import CslibFrontier.Crypto.Computational.Pseudoentropy.WordSeedExtractio
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRouting
+public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildRoutingLaw
+public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTableLaw
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.ChildTables
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.Hybrid
 public import CslibFrontier.Crypto.Computational.PseudorandomFunction.CircuitLowerBound
@@ -7757,6 +7763,8 @@ public import CslibFrontier.Foundations.Analysis.Normed.CoveringNumber
 public import CslibFrontier.Foundations.Analysis.Normed.FiniteNet
 public import CslibFrontier.Foundations.Analysis.Normed.Ring.PowSub
 public import CslibFrontier.Foundations.Analysis.Normed.UnitSphere
+public import CslibFrontier.Foundations.Analysis.ODE.LinearFlow
+public import CslibFrontier.Foundations.Analysis.ODE.LinearLyapunov
 public import CslibFrontier.Foundations.Analysis.RateExponent
 public import CslibFrontier.Foundations.Analysis.ReverseHolder
 public import CslibFrontier.Foundations.Analysis.RootError
