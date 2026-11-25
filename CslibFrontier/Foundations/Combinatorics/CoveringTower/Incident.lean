@@ -31,6 +31,8 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], modules `Nc.Tow.Load4`,
 ## Main results
 
 * `Cslib.CoveringTower.Tower.sum_incidentSum`: the sums at all chambers are twice the load.
+* `Cslib.CoveringTower.Tower.sum_ite_incidentSum`: the sums at the chambers with a property, by
+  the edges and their ends.
 * `Cslib.CoveringTower.Tower.incidentSum_le`, `Cslib.CoveringTower.Tower.sum_incidentSum_le`:
   the bounds by the norm of the load.
 * `Cslib.CoveringTower.Tower.two_mul_card_Ed`, `Cslib.CoveringTower.Tower.card_X_zero`: the
@@ -65,6 +67,18 @@ theorem sum_incidentSum (n : T.Ed j → ℕ) : ∑ c, T.incidentSum n c = 2 * �
   rw [← sum_filter, sum_const, smul_eq_mul,
     show univ.filter (fun c => T.e0 e = c ∨ T.e1 e = c) = {T.e0 e, T.e1 e} by ext; simp [eq_comm],
     card_pair (T.e_ne e), mul_comm]
+
+/-- The sums at the chambers with a property, by the edges: every edge counts once for each of
+its ends with the property. -/
+theorem sum_ite_incidentSum (p : T.X j → Prop) [DecidablePred p] (n : T.Ed j → ℕ) :
+    ∑ c, (if p c then T.incidentSum n c else 0) =
+      ∑ e, ((if p (T.e0 e) then n e else 0) + if p (T.e1 e) then n e else 0) := by
+  simp only [incidentSum, sum_filter, ite_sum_zero, ← ite_and]
+  rw [sum_comm]
+  refine sum_congr rfl fun e _ => ?_
+  have hne := T.e_ne e
+  rw [Fintype.sum_eq_add _ _ hne fun c hc => by grind]
+  simp [hne]
 
 /-- The edges of all types at a chamber of a level `j ≤ J`. -/
 private theorem card_incident_le (hj : j ≤ J) (c : T.X j) :

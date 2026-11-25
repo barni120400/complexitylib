@@ -29,6 +29,8 @@ chamber and its parent are the loads of the edges at the chamber.
 ## Main results
 
 * `edgeLoads_of_lt`, `Node.lift_ofChamber`: the values of `edgeLoads` and `Node.lift`.
+* `Node.sum_ofChamber_castSucc`, `Node.sum_ofChamber_succ`: `Node.lift` by the chambers of the
+  levels below `J` and of the level `J`, and of the level `0` and of the levels above it.
 * `isChosenType_iff`: the chosen type of a stage is `chosenType` of the loads of its edges.
 * `card_children`: a chamber has at most `b` children.
 
@@ -109,5 +111,30 @@ root. -/
 theorem Node.lift_ofChamber {α : Type*} (f : ∀ j, T.X j → α) (a : α) {j : ℕ} (hj : j ≤ J)
     (c : T.X j) : Node.lift f a (.ofChamber hj c) = f j c :=
   rfl
+
+/-- The values of `g` at the chambers of all levels that are the node `P`. -/
+private theorem Node.sum_chamber_ite (g : ∀ j, T.X j → ℕ) (P : Node T) :
+    ∑ j : Fin (J + 1), ∑ c : T.X j, (if Node.chamber j c = P then g j c else 0) =
+      Node.lift g 0 P := by
+  cases P with
+  | root => simp [Node.lift]
+  | chamber k c =>
+    rw [Fintype.sum_eq_single k fun j hj => sum_eq_zero fun c' _ => by simp [hj]]
+    simp [Node.lift]
+
+/-- The values of `g` at the chambers of the levels below `J` and of the level `J` that are the
+node `P`. -/
+theorem Node.sum_ofChamber_castSucc (g : ∀ j, T.X j → ℕ) (P : Node T) :
+    (∑ j : Fin J, ∑ c : T.X j, if Node.ofChamber j.2.le c = P then g j c else 0) +
+      ∑ c : T.X J, (if Node.ofChamber le_rfl c = P then g J c else 0) = Node.lift g 0 P :=
+  (Fin.sum_univ_castSucc _).symm.trans (Node.sum_chamber_ite g P)
+
+/-- The values of `g` at the chambers of the level `0` and of the levels above it that are the
+node `P`. -/
+theorem Node.sum_ofChamber_succ (g : ∀ j, T.X j → ℕ) (P : Node T) :
+    (∑ c : T.X 0, if Node.ofChamber (Nat.zero_le J) c = P then g 0 c else 0) +
+      ∑ j : Fin J, ∑ c : T.X (j + 1), (if Node.ofChamber j.2 c = P then g (j + 1) c else 0) =
+      Node.lift g 0 P :=
+  (Fin.sum_univ_succ _).symm.trans (Node.sum_chamber_ite g P)
 
 end Cslib.Circuits.Arithmetic.Separation.TowerPlan

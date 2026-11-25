@@ -42,6 +42,8 @@ most `Uu` times, which bounds the loads after the start (`load_start_le`).
 * `Relay.of_target_eq_relay_middle`: the channels that give units to the way of an edge.
 * `batchSize_le`, `moveCount_start_le`: the batches and the relays of their routes.
 * `moveCount_middle_le`, `relayAlive_middle_le`: the relays of the way of an edge.
+* `relayAlive_inner_le`, `relayAlive_final_le`: the inner relays of an edge, and the relays after
+  the last stage.
 * `load_start_le`: the loads after the start.
 
 ## References
@@ -381,6 +383,23 @@ theorem relayAlive_middle_le (j : Fin J) (e : T.Ed j) (s : Fin 4) (d : Bool) :
   · exact (relayAlive_of_occurs hx d).trans_le
       ((alive_le_moveCount _ hx d).trans (moveCount_middle_le hx))
   · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+
+/-- The channels of an inner relay carry at most the units on its edge, and none if its type is
+not the chosen one. -/
+theorem relayAlive_inner_le (j : Fin J) (i : Fin h) (e : T.Ed j) (d : Bool) :
+    relayAlive lhat n o (.inner j i e) d ≤
+      if IsChosenType (load lhat n o) j.castSucc i then load lhat n o (.edge j.castSucc e)
+      else 0 := by
+  by_cases hx : (Relay.inner j i e).Occurs R ch
+  · exact (relayAlive_of_occurs hx d).trans_le ((alive_le_moveCount _ hx d).trans
+      (moveCount_eq _).le)
+  · exact (relayAlive_of_not_occurs hx d).trans_le (Nat.zero_le _)
+
+/-- The channels of a relay after the last stage carry at most the units on its edge. -/
+theorem relayAlive_final_le (e : T.Ed J) (d : Bool) :
+    relayAlive lhat n o (.final e) d ≤ load lhat n o (.edge (Fin.last J) e) :=
+  (relayAlive_of_occurs (x := .final e) trivial d).trans_le
+    ((alive_le_moveCount _ _ d).trans (moveCount_relay_le _ _))
 
 /-! ### The loads after the start -/
 
