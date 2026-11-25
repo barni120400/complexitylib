@@ -1471,6 +1471,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Net
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkTensor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Rate
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Accept
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.BaseStep
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.BaseSums
