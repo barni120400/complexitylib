@@ -580,7 +580,7 @@ private theorem edgeProgramBound : ProgramBound edgeRoutes edgeBase (edgeLaws F)
 
 /-- The bounds for the units of the plan of the tower with one edge, for `Y = 1100` and `TM = 0`:
 at most `9 · 2 ^ 5` slots and `1092` units. -/
-private theorem edgeUnitBound : UnitBound edgeRoutes (edgeLaws F) edgePlacement 1 1 1100 0 where
+private theorem edgePlanUnitBound : UnitBound edgeRoutes (edgeLaws F) edgePlacement 1 1 1100 0 where
   card_slot_le := (card_moveSlot_le two_pos edgeSize Nat.one_pos).trans (by norm_num)
   card_unit_le := (card_planUnit edgePlacement).trans_le (edge_numUnits_le.trans (by norm_num))
   padding_le := by norm_num
@@ -603,7 +603,7 @@ example {Inp : Type} {N p c : ℕ} {inp : Fin N → Inp → Fin (1100 ^ 4)} {H :
   obtain ⟨H2, s2, u2, f2⟩ := tree_stage hY edgeProgramBound Nat.one_pos
     (fun x τ => loadGiven_le_numUnits ((InputBound.ofPlan nI oI).initial_le x)
       ((InputBound.ofPlan nI oI).outcome_le x) _ τ) s1 f1.load f1.toChoicesIn
-  obtain ⟨H3, s3, u3, f3⟩ := units_stage hY edgeProgramBound edgeUnitBound s2 (f1.mono u2)
+  obtain ⟨H3, s3, u3, f3⟩ := units_stage hY edgeProgramBound edgePlanUnitBound s2 (f1.mono u2)
   exact ⟨H3, s3, ⟨fun P P' => u3 (f2.parent P P'), fun P => u3 (f2.parentUnits P)⟩, f3⟩
 
 /-! ### The rules and the units for an arbitrary tower -/
