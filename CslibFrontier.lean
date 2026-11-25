@@ -1514,6 +1514,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPla
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Transfer
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.Existence
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.ThinTrees
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.TowerTree
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.TreeProgram
