@@ -7,7 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: candidate
 
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Tree
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Counts
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Norms
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
 import Mathlib.Tactic.LinearCombination
