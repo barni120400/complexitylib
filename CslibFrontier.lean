@@ -1434,6 +1434,9 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.EvalThm
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Interp
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Lengths
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Poincare
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Windows
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Prices.BitLaw
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Prices.Cross
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Prices.Law
