@@ -19,8 +19,9 @@ statements.
 * Lemma E.3: the network polynomial on two nodes with one bit is an affine projection of the
   Hamiltonian cycle polynomial, so circuits for that family give circuits for it; and a circuit
   for a permanent gives one with five times as many nodes.
-* The tensor `T_{2,1}`: its entry is `1` where both ends of the wire hold the same string and `0`
-  otherwise; the support point is `1` at it and at the tensor of Lemma A.3 for its two ends.
+* The tensor `T_{k,ℓ}`: the entry of `T_{2,1}` is `1` where both ends of the wire hold the same
+  string and `0` otherwise; spectral points with given wire exponents at `T_{3,2}` and at the tensor
+  of Lemma A.3 for the ends of `T_{2,2}`.
 * Balanced sets of three nodes. A variable is computed with one node, so the tensor of its
   coefficients on the ends of the network on two nodes is covered by the hub tensors.
 * Proposition E.5, also for the polynomial on the views as printed in the paper; Theorem E.6, and
@@ -77,18 +78,38 @@ example : (networkTensor ℤ 2 1).entry differentEnds = 0 := by
   intro h
   exact absurd (congrArg (BitString.equivFin 1) (h wire01)) (by simp [differentEnds])
 
-/-- The support point has wire exponents `0`, so it is `1` at `T_{2,1}` with its ends as parties.
--/
-example : SpectralPoint.support ℚ (Σ _ : Pair 2, Bool) (push id (networkTensor ℚ 2 1)) = 1 := by
-  rw [apply_push_networkTensor]
-  simp [SpectralPoint.wireExponent_support]
+/-- The wire of the network on two nodes is its only wire. -/
+private theorem eq_wire01 (e : Pair 2) : e = wire01 := by
+  have := e.low_lt_high
+  ext <;> simp [wire01] <;> omega
 
-/-- The support point is `1` at the tensor of Lemma A.3 for the ends of `T_{2,1}`, the set `{0}`,
-the hubs `o₁ = ⟨wire01, false⟩` and `o₂ = ⟨wire01, true⟩`, and a wire of dimension `3`. -/
-example : SpectralPoint.support ℚ (Σ _ : Pair 2, Bool)
-    (hubTensor ℚ 1 3 id {0} ⟨wire01, false⟩ ⟨wire01, true⟩) = 1 := by
-  rw [apply_hubTensor _ (by norm_num : 1 ≤ 3)]
-  simp [SpectralPoint.wireExponent_support]
+/-- A spectral point whose wire exponent between the two ends of every wire of the network on three
+nodes is `1 / 3` is `2 ^ (2 · 3 · (1 / 3)) = 4` at `T_{3,2}`. -/
+example (F : SpectralPoint ℚ (Σ _ : Pair 3, Bool))
+    (hF : ∀ e : Pair 3, F.wireExponent ⟨e, false⟩ ⟨e, true⟩ = 1 / 3) :
+    F (push id (networkTensor ℚ 3 2)) = 4 := by
+  rw [apply_push_networkTensor]
+  simp only [id, hF]
+  rw [← sum_div, sum_pair_one]
+  norm_num
+
+/-- The tensor of Lemma A.3 for the ends of `T_{2,2}`, the set `{0}`, the hubs `o₁` and `o₂` and a
+wire of dimension `4` between them: the end at the node `0` goes to `o₁` and the end at the node
+`1` to `o₂`. A spectral point with the wire exponents `1 / 4` and `3 / 4` from these ends to their
+hubs and `1 / 2` between the hubs is `2 ^ (2 (1 / 4 + 3 / 4) + (1 / 2) log₂ 4) = 8` at it. -/
+example (F : SpectralPoint ℚ ((Σ _ : Pair 2, Bool) ⊕ Bool))
+    (h₁ : F.wireExponent (.inl ⟨wire01, false⟩) (.inr true) = 1 / 4)
+    (h₂ : F.wireExponent (.inl ⟨wire01, true⟩) (.inr false) = 3 / 4)
+    (h : F.wireExponent (.inr true) (.inr false) = 1 / 2) :
+    F (hubTensor ℚ 2 4 Sum.inl {0} (.inr true) (.inr false)) = 8 := by
+  rw [apply_hubTensor _ (by norm_num : 1 ≤ 4), Fintype.sum_sigma,
+    Fintype.sum_eq_single wire01 fun e he => absurd (eq_wire01 e) he, Fintype.sum_bool]
+  have hl : wire01.low = 0 := rfl
+  have hh : wire01.high = 1 := rfl
+  simp only [Pair.node, Bool.cond_true, Bool.cond_false, hl, hh, mem_singleton, ite_true,
+    Fin.one_eq_zero_iff, OfNat.ofNat_ne_one, ite_false, h₁, h₂, h, Nat.cast_ofNat]
+  rw [show (4 : ℝ) = 2 ^ 2 by norm_num, Real.logb_pow, Real.logb_self_eq_one one_lt_two]
+  norm_num
 
 /-- A set of one of three nodes is balanced, the empty set is not. -/
 example : {0} ∈ balancedSets 3 ∧ ∅ ∉ balancedSets 3 := by simp
