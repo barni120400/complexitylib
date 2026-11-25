@@ -87,7 +87,7 @@ theorem exists_treeProgram (hh : 0 < h) (hb : 0 < b) (lhat : ℕ) {K Y : ℕ} (h
     fun y => f3.good (moveOrder R ch FL y)⟩⟩
   · obtain ⟨q, rfl⟩ := e.surjective i
     rcases q with ⟨a, c⟩ | ν
-    exacts [.inl ⟨a, c, fun x => by simp only [hinp]⟩, .inr ⟨ν, fun x => by simp only [hinp]⟩]
+    exacts [.inl ⟨a, c, fun _ _ => by simp only [hinp]⟩, .inr ⟨ν, fun _ _ => by simp only [hinp]⟩]
   · simpa [outcomeOf] using hi3.outcome (moveChannelEquiv R FL Pl ν)
   · convert u3 (f2.parent (Pl.party.symm p) (Pl.party.symm q)) using 3
     simp only [treeParent, ← Equiv.eq_symm_apply]
