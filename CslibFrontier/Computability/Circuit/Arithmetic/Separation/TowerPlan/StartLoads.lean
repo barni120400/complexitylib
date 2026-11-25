@@ -390,7 +390,7 @@ theorem relayAlive_middle_le (j : Fin J) (e : T.Ed j) (s : Fin 4) (d : Bool) :
 not the chosen one. -/
 theorem relayAlive_inner_le (j : Fin J) (i : Fin h) (e : T.Ed j) (d : Bool) :
     relayAlive lhat n o (.inner j i e) d ≤
-      if IsChosenType (load lhat n o) j.castSucc i then load lhat n o (.edge j.castSucc e)
+      if T.IsChosenType (edgeLoads (load lhat n o) j) i then load lhat n o (.edge j.castSucc e)
       else 0 := by
   by_cases hx : (Relay.inner j i e).Occurs R ch
   · exact (relayAlive_of_occurs hx d).trans_le ((alive_le_moveCount _ hx d).trans

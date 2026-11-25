@@ -9,7 +9,6 @@ module
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Holders
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Plan
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Tree
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Norms
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
@@ -113,7 +112,7 @@ theorem channelHolders_of_target_eq_done (hh : 0 < h) {x : Relay T m A} (hx : x.
       by_contra hi
       apply hne
       rw [moveCount_eq, countOfLoad]
-      exact ite_eq_right fun h => hi ((isChosenType_iff hh).1 h)
+      exact ite_eq_right fun h => hi ((Tower.isChosenType_iff hh).1 h)
     have h1 : T.vx (T.chosenType hh (edgeLoads (load lhat n o)) j) (T.e0 e) =
         T.vx (T.chosenType hh (edgeLoads (load lhat n o)) j) (T.e1 e) :=
       (T.nr_vx0 j.2.le _ ⟨e, hx⟩).trans (T.nr_vx1 j.2.le _ ⟨e, hx⟩).symm
@@ -122,7 +121,7 @@ theorem channelHolders_of_target_eq_done (hh : 0 < h) {x : Relay T m A} (hx : x.
   · have ht : T.ty e = T.chosenType hh (edgeLoads (load lhat n o)) j := by
       by_contra ht
       have := moveCount_middle_le (lhat := lhat) (n := n) (o := o) hx
-      rw [ite_eq_right fun h => ht ((isChosenType_iff hh).1 h)] at this
+      rw [ite_eq_right fun h => ht ((Tower.isChosenType_iff hh).1 h)] at this
       omega
     cases β <;> fin_cases s <;> simp only [Relay.target] at hd <;> (try split_ifs at hd) <;>
       simp_all [channelHolders, Relay.child, Relay.party, Move.party, Move.law, relayLaw,
@@ -149,14 +148,14 @@ private theorem sum_done_le_load (j : Fin J) (e : T.Ed j) (β : Bool) :
       if T.ty e = i₀ then 0 else edgeLoads (load lhat n o) j e := by
     rw [sum_eq_single i₀ (fun i _ hi => Nat.eq_zero_of_le_zero
       ((relayAlive_inner_le j i e β).trans_eq
-        (ite_eq_right fun h => hi ((isChosenType_iff hh).1 h)))) (by simp)]
+        (ite_eq_right fun h => hi ((Tower.isChosenType_iff hh).1 h)))) (by simp)]
     split_ifs with ht
     · exact (relayAlive_of_not_occurs (lhat := lhat) (n := n) (o := o)
         (fun hx : (Relay.inner j i₀ e).Occurs R ch => hx ht) β).le
     · exact (relayAlive_inner_le j i₀ e β).trans (by split_ifs <;> simp [hL])
   have hM (s : Fin 4) : relayAlive lhat n o (.middle j e s) β ≤
       if T.ty e = i₀ then edgeLoads (load lhat n o) j e else 0 :=
-    (relayAlive_middle_le j e s β).trans_eq (if_congr (isChosenType_iff hh) hL rfl)
+    (relayAlive_middle_le j e s β).trans_eq (if_congr (Tower.isChosenType_iff hh) hL rfl)
   have h3 : T.π (T.e1 e) = T.hostOf (T.ty e) (T.e1 e) →
       relayAlive lhat n o (.middle j e 3) β = 0 := fun hq =>
     relayAlive_of_not_occurs (fun hx : (Relay.middle j e 3).Occurs R ch => hx.2 rfl hq) β
@@ -294,8 +293,7 @@ private theorem exists_mem_givenUnits {u : PlanUnit R FL Pl U0 U1}
   · have hh := (T.ty e).pos
     revert e
     refine Fin.lastCases (fun e hτ => relay (x := .final e) trivial trivial hτ) (fun j e hτ => ?_) j
-    have hi : IsChosenType L j.castSucc (T.chosenType hh (edgeLoads L) j) :=
-      (isChosenType_iff hh).2 rfl
+    have hi := Tower.isChosenType_chosenType hh (edgeLoads L) j
     by_cases ht : T.ty e = T.chosenType hh (edgeLoads L) j
     · exact relay (x := .middle j e 0)
         ⟨fun h => absurd h (by decide), fun h => absurd h (by decide)⟩

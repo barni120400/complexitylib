@@ -7,7 +7,7 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: candidate
 
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Tree
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Counts
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Holders
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Norms
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.StartLoads
@@ -72,7 +72,7 @@ private theorem relayAlive_inner_le' (j : Fin J) (i : Fin h) (e : T.Ed j) (d : B
       if i = T.chosenType hh (edgeLoads (load lhat n o)) j then edgeLoads (load lhat n o) j e
       else 0 := by
   rw [edgeLoads_of_lt _ (by omega)]
-  exact (relayAlive_inner_le j i e d).trans_eq (if_congr (isChosenType_iff hh) rfl rfl)
+  exact (relayAlive_inner_le j i e d).trans_eq (if_congr (Tower.isChosenType_iff hh) rfl rfl)
 
 /-- The relays of the way of an edge carry at most the units on the edge, and none if its type is
 not the chosen one. -/
@@ -81,7 +81,7 @@ private theorem relayAlive_middle_le' (j : Fin J) (e : T.Ed j) (s : Fin 4) (d : 
       if T.ty e = T.chosenType hh (edgeLoads (load lhat n o)) j then edgeLoads (load lhat n o) j e
       else 0 := by
   rw [edgeLoads_of_lt _ (by omega)]
-  exact (relayAlive_middle_le j e s d).trans_eq (if_congr (isChosenType_iff hh) rfl rfl)
+  exact (relayAlive_middle_le j e s d).trans_eq (if_congr (Tower.isChosenType_iff hh) rfl rfl)
 
 /-- The relays carry at most the load of a target on its channels with that target. -/
 private theorem sum_relayAlive_le (τ : Target T m A) :
@@ -422,7 +422,7 @@ theorem sum_unitsAt_vertex_le (hg : ∀ mv, GoodOutcome lhat n o mv)
       Fintype.card FL.Kind * P.lift (T.parentUnits (edgeLoads (load lhat n o))) 0 := by
   set V := P.lift (T.parentUnits (edgeLoads (load lhat n o))) 0
   have h1 (l : VertexMove FL) : unitsAt lhat n o P (.vertex l) ≤
-      if IsChosenType (load lhat n o) l.stage.castSucc l.type then
+      if T.IsChosenType (edgeLoads (load lhat n o) l.stage) l.type then
         ∑ p, if (Move.vertex l : Move R ch FL).party p = P then V else 0 else 0 := by
     split_ifs with hi
     · refine sum_le_sum fun p _ => ?_
@@ -441,15 +441,15 @@ theorem sum_unitsAt_vertex_le (hg : ∀ mv, GoodOutcome lhat n o mv)
       if Tower.Node.ofChamber j.2 ((T.chamberEquiv j.2 i).symm y) = P then V else 0).trans
       ((T.chamberEquiv j.2 i).symm.sum_comp fun c =>
         if Tower.Node.ofChamber j.2 c = P then V else 0)
-  have h3 (j : Fin J) : ∑ i, ∑ ω, ∑ d, (if IsChosenType (load lhat n o) j.castSucc i then
+  have h3 (j : Fin J) : ∑ i, ∑ ω, ∑ d, (if T.IsChosenType (edgeLoads (load lhat n o) j) i then
       ∑ p : (FL.law d).Role, (if Tower.Node.ofChamber j.2 ((T.chamberEquiv j.2 i).symm
         (ω, FL.place d p)) = P then V else 0) else 0) ≤
       Fintype.card FL.Kind *
         ∑ c : T.X (j + 1), if Tower.Node.ofChamber j.2 c = P then V else 0 := calc
-    _ = ∑ i, if IsChosenType (load lhat n o) j.castSucc i then Fintype.card FL.Kind *
+    _ = ∑ i, if T.IsChosenType (edgeLoads (load lhat n o) j) i then Fintype.card FL.Kind *
         ∑ c : T.X (j + 1), (if Tower.Node.ofChamber j.2 c = P then V else 0) else 0 :=
       sum_congr rfl fun i _ => by
-        by_cases hi : IsChosenType (load lhat n o) j.castSucc i
+        by_cases hi : T.IsChosenType (edgeLoads (load lhat n o) j) i
         · simp only [hi, ↓reduceIte]
           rw [sum_comm]
           simp [h2]
