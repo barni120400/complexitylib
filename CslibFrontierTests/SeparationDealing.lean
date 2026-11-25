@@ -9,7 +9,10 @@ module
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.InitialCounts
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.AllRuns
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Generators
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ProgramSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.TemplateCost
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Theorem
 import Mathlib.Data.Fintype.BigOperators
 
@@ -22,7 +25,10 @@ import Mathlib.Data.Fintype.BigOperators
   `CslibFrontierTests.SeparationGroupTheorem`): the size of the script of the group of both
   parties, for concrete arguments.
 * Under hypotheses: the sum over the choices, and the sum over all runs of the dealing program
-  with the scripts that its templates give. -/
+  with the scripts that its templates give.
+* One cut: the integers have a finite table of generators; the size of a small
+  dealing formula; and, under hypotheses, the cut of the dealing program with weaker bounds, the
+  cost of its templates along its runs, and its size at a scale. -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -173,5 +179,94 @@ example (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) [DecidablePred t
     (fun κ => wordsEnc (((x κ).map (letterCode cb)).reverse)) qn hU0 hU1 hK i e
   exact ⟨st, fun q ρ n o b g => expand_scriptTm (hf q ρ n o b) (fun _ => rfl) tg bT bub g,
     hs ℤ fun _ => 1⟩
+
+/-! ### One cut, its costs and its size -/
+
+/-- The integers have a finite table of named generators in which every integer is the value of a
+formula. -/
+example : ∃ θ : List Bool → ℤ, (Function.support θ).Finite ∧ ∀ a, ∃ w : WE, w.val θ = a :=
+  WE.exists_table ℤ
+
+/-- The dealing formula with one name of one bit, the bits `nl = [true]`, and no steps or
+templates is at most `23` larger than the empty one. -/
+example : (dealFormula .nil .nil [[true]] [true] [] [] [] []).code.size ≤ dealBaseSize + 23 :=
+  (size_dealFormula_le _ _ _ _ _ _ _ _).trans
+    (by simp [Tree.ofBits, Tree.bit, Tree.one, listT, Tree.size])
+
+/-- **One cut, with weaker bounds.** Under the hypotheses of the dealing theorem, the dealing
+program also cuts into pieces of size at most `s' + 1`, with at most `mm + 1` pieces, in time
+`2 * t`. -/
+example [DecidableEq Γ] {θ : List Bool → F} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
+    (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) [DecidablePred tab.Valid]
+    [∀ n o x, Decidable (P.Good n o x)] {qn : Q → ℕ} {tg : M.Role → ℕ}
+    {bT bub nl nub : List Bool} {hD : 1 < D} {hmm : mm ≤ D} {gp : Tree}
+    {cb : Option Γ → Fin c → Bool} {bt : Bool → Γ} {i e : Q} {hU0 : U0 < D} {hU1 : U1 ≤ D}
+    {τ s τ' s' t T ℓ : ℕ} (hK : 0 < K) (hnl : KT.val nl = ℓ) (hnub : KT.val nub = ub)
+    (hU : ∀ z : Tree, z.size ≤ s → Plain θ τ z →
+      Tape.runVal mu i e (K * T) (fun _ => (tbits z).map bt) = pv θ z)
+    (hval : ∀ z : Tree, z.size ≤ s → Tape.runVal mu i e (K * T) (fun _ => (tbits z).map bt) =
+      ∑ q : Fin (K + 1) → Q, if q 0 = i ∧ q (Fin.last K) = e then
+        ∑ ρ : Option S → Fin (K + K) → RowData (K + K), if ValidRows ρ then
+          ∑ n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1), if tab.Valid n then
+            ∑ o : M.Channel → Fin U1, if ∀ x, P.Good n o x then
+              ∑ b ∈ Play.common (none : UnitContent ub)
+                (Play.cutUnits (UnitId.holder M.channelParty) (grp ⟨n, o⟩) (P.cur n o E)),
+                ∏ g, P.groupValue mu T cb q (parts ℓ ((tbits z).map bt)) ρ n o (grp ⟨n, o⟩) g b
+            else 0 else 0 else 0 else 0)
+    (hdoes : ∀ z : Tree, z.size ≤ s → ∃ Qs : List (F × Tree),
+      Does θ (C.dealProgram tab qn tg bT bub nl nub hD hmm gp cb bt i e hU0 hU1) z Qs t ∧
+      (∀ q ∈ Qs, ∃ σ ∈ execAll ub (C.dealSteps tab qn i e hU0 hU1 ++ C.contentSteps)
+        (Function.extend C.name (initialState (partTree cb (parts ℓ ((tbits z).map bt))))
+          fun _ => .nil),
+        q.2 = listT (((List.finRange mm).map (C.pieceTm tab tg bT bub hD hmm gp)).map
+          fun t => t.expand σ)) ∧
+      wsum Qs (pvProd θ) = ((execAll ub (C.dealSteps tab qn i e hU0 hU1 ++ C.contentSteps)
+        (Function.extend C.name (initialState (partTree cb (parts ℓ ((tbits z).map bt))))
+          fun _ => .nil)).map fun σ => (((List.finRange mm).map
+            (C.pieceTm tab tg bT bub hD hmm gp)).map fun t => pv θ (t.expand σ)).prod).sum)
+    (hpc : ∀ z : Tree, z.size ≤ s → ∀ (q : Fin (K + 1) → Q)
+      (ρ : Option S → Fin (K + K) → RowData (K + K)) (n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1))
+      (o : M.Channel → Fin U1) (b : UnitId (K + K) U0 M.Channel U1 → UnitContent ub) (g : Fin mm),
+      ValidRows ρ → tab.Valid n → (∀ x, P.Good n o x) →
+      (∀ u, b u ≠ none ↔ u ∈ Play.cutUnits (UnitId.holder M.channelParty) (grp ⟨n, o⟩)
+        (P.cur n o E)) →
+      let y := Tree.cons gp (scriptEnc bT bub (groupScript qn cb P q (parts ℓ ((tbits z).map bt))
+        ρ n o (grp ⟨n, o⟩) g C.key C.dkey tg b))
+      y.size ≤ s' ∧ Plain θ τ' y ∧
+        pv θ y = P.groupValue mu T cb q (parts ℓ ((tbits z).map bt)) ρ n o (grp ⟨n, o⟩) g b) :
+    IsCut θ τ s τ' (s' + 1) (mm + 1) (2 * t)
+      (C.dealProgram tab qn tg bT bub nl nub hD hmm gp cb bt i e hU0 hU1).code :=
+  (isCut_dealProgram C tab hK hnl hnub hU hval hdoes hpc).mono le_rfl (by omega) (by omega)
+    (by omega)
+
+/-- **The templates along the runs.** At every state after all steps of the dealing program,
+filling the template of every piece costs at most `pieceBound Lc X`. -/
+example (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) [DecidablePred tab.Valid]
+    [∀ n o x, Decidable (P.Good n o x)] (hK : 0 < K) {pt : Fin K → Tree} {qn : Q → ℕ} {i e : Q}
+    {hU0 : U0 < D} {hU1 : U1 ≤ D} {hD : 1 < D} {hmm : mm ≤ D} {Lc X : ℕ}
+    (hnm : ∀ y, (C.name y).length ≤ Lc) (hdc : ∀ d, (C.digit d).length ≤ Lc)
+    (hS : Fintype.card (Option S) ≤ X) (hK2 : K + K ≤ X)
+    (hId : Fintype.card (UnitId (K + K) U0 M.Channel U1) ≤ X)
+    (hSl : ∀ r : M.Role, Fintype.card ((M.law r.1).SlotAt r.2) ≤ X)
+    (hCn : ∀ r : M.Role, Fintype.card ((M.law r.1).ChannelAt r.2) ≤ X) (hXU0 : U0 + 1 ≤ X)
+    (hR : Fintype.card M.Role ≤ X) (tg : M.Role → ℕ) (bT bub : List Bool) (gp : Tree)
+    {σ : List Bool → Tree} (hσ : σ ∈ execAll ub (C.dealSteps tab qn i e hU0 hU1 ++ C.contentSteps)
+      (Function.extend C.name (initialState pt) fun _ => .nil)) (g : Fin mm) :
+    (C.pieceTm tab tg bT bub hD hmm gp g).cost σ ≤ pieceBound Lc X := by
+  obtain ⟨q, ρ, n, o, b, st, -, -, -, -, -, hst, rfl⟩ := mem_execAll_allSteps C tab hK hσ
+  exact cost_pieceTm_le hst hnm hdc hS hK2 hId hSl hCn hXU0 hR tg bT bub hmm gp g
+
+/-- **The size of the dealing program at a scale.** If `X * Lc ≤ v`, the dealing program has size
+at most `(dealBaseSize + 3000) * v ^ 4`. -/
+example (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) {qn : Q → ℕ} {tg : M.Role → ℕ}
+    {X Lc v : ℕ} (H : C.SizeBounds qn tg X Lc) (hv : X * Lc ≤ v) (hmX : mm ≤ X) (hc : c ≤ X)
+    {nl nub bT bub : List Bool} (hnl : nl.length ≤ Lc) (hnub : nub.length ≤ Lc)
+    (hbT : bT.length ≤ Lc) (hbub : bub.length ≤ Lc) (hD : 1 < D) (hmm : mm ≤ D) {gp : Tree}
+    (hgp : gp.size ≤ X) (cb : Option Γ → Fin c → Bool) (bt : Bool → Γ) (i e : Q)
+    (hU0 : U0 < D) (hU1 : U1 ≤ D) :
+    (C.dealProgram tab qn tg bT bub nl nub hD hmm gp cb bt i e hU0 hU1).code.size ≤
+      (dealBaseSize + 3000) * v ^ 4 :=
+  (size_dealProgram_le tab H hmX hc hnl hnub hbT hbub hmm hgp cb bt i e hU0 hU1).trans
+    (Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hv 4))
 
 end CslibFrontierTests.SeparationDealing

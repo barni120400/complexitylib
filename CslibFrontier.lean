@@ -1419,11 +1419,17 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Sta
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Units
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.AllRuns
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Choices
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Cut
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Generators
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.NamedStates
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Phases
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ProgramSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Runs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.StepCost
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.StepSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Tables
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.TemplateCost
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Templates
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Theorem
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Act
