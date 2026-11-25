@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.GroupScript
 public import CslibFrontier.Foundations.Data.BitString.List.Binary
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.MoveIdentity
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.PlayMoves
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Executions
 import CslibFrontier.Foundations.Data.List.Blocks
@@ -242,8 +243,8 @@ private theorem cost_endInstructions (hk : ∀ c, (key c).length ≤ Lc)
     (b : UnitId (K + K) U0 M.Channel U1 → UnitContent ub) :
     ((endInstructions P n o grp g key b).map fun i => i.cost T ub + 1).sum ≤
       cellCount n o grp g * (2 * (ub + Lc + 1)) := by
-  have hb (u : UnitId (K + K) U0 M.Channel U1) : (b u).bits.length ≤ ub := by
-    cases b u <;> simp [UnitContent.bits]
+  have hb (u : UnitId (K + K) U0 M.Channel U1) : (b u).bits.length ≤ ub :=
+    (b u).length_bits_le
   refine (List.sum_map_filterMap_le (D := fun u =>
     if grp (UnitId.holder M.channelParty u false) = g ∨
       grp (UnitId.holder M.channelParty u true) = g then 2 * (ub + Lc + 1) else 0)
