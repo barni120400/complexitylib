@@ -9,9 +9,9 @@ module
 
 public import CslibFrontier.Computability.Circuit.Arithmetic.ComputedWithin
 public import CslibFrontier.Computability.Circuit.Arithmetic.Determinant
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.BalancedProducts
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkTensor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Basic
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.BalancedProducts
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
@@ -37,14 +37,8 @@ at `T_{k,ℓ}` and at the hub tensors (`Flat.lower_numbers`) gives Proposition E
 (`Flat.computedWithin_networkPolynomial`) this gives Theorem E.6: when `2 ≠ 0`, the permanent has
 no circuits of polynomial size (`Flat.not_computedWithin_permFamily`).
 
-## Main definitions
-
-* `Flat.balancedSets`: the balanced sets of nodes.
-
 ## Main results
 
-* `Flat.card_balancedSets_le`, `Flat.balancedSets_nonempty`: there are at most `2 ^ k` balanced
-  sets, and at least one if `k ≥ 2`.
 * `Flat.coveredBy_hubTensor`: the tensor of a polynomial with a small circuit is covered by the
   hub tensors of the balanced sets.
 * `Flat.networkPolynomial_size_ge`: Proposition E.5.
@@ -63,26 +57,6 @@ namespace Cslib.Circuits.Arithmetic.Separation.Flat
 open Finset MvPolynomial Cslib.PartyTensor Cslib.Circuits.Arithmetic.Separation.TwoCases
 
 variable {k : ℕ}
-
-/-! ### Balanced sets -/
-
-/-- The balanced sets of nodes: the sets `S` of nodes with `k ≤ 3 |S| ≤ 2 k`. -/
-def balancedSets (k : ℕ) : Finset (Finset (Fin k)) := {S | k ≤ 3 * #S ∧ 3 * #S ≤ 2 * k}
-
-/-- The balanced sets are those with `k ≤ 3 |S| ≤ 2 k`. -/
-@[simp] theorem mem_balancedSets {S : Finset (Fin k)} :
-    S ∈ balancedSets k ↔ k ≤ 3 * #S ∧ 3 * #S ≤ 2 * k := by
-  simp [balancedSets]
-
-/-- There are at most `2 ^ k` balanced sets. -/
-theorem card_balancedSets_le (k : ℕ) : #(balancedSets k) ≤ 2 ^ k :=
-  (card_filter_le _ _).trans_eq (by simp)
-
-/-- There is a balanced set of `k ≥ 2` nodes. -/
-theorem balancedSets_nonempty (hk : 2 ≤ k) : (balancedSets k).Nonempty := by
-  obtain ⟨S, -, hS⟩ := exists_subset_card_eq (s := (univ : Finset (Fin k))) (n := k / 2)
-    (by simp only [card_univ, Fintype.card_fin]; omega)
-  exact ⟨S, mem_balancedSets.2 (by omega)⟩
 
 /-! ### The tensor of a small circuit -/
 
