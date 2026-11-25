@@ -1460,12 +1460,15 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Uni
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Walk
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Window
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flag.Words
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.BalancedProducts
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubeEndPoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.CubePoints
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.EndPoints
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerBound
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.LowerNumbers
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkPolynomial
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkProjection
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.NetworkTensor
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Flat.Pairs
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Accept
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.BaseStep
