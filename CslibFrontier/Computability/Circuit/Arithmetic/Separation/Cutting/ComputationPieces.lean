@@ -332,7 +332,7 @@ theorem exists_computationPieces {A₀ : Type*} [CommSemiring A₀] {h : ℕ} [N
     ((by omega : 6 ≤ v).trans (Nat.le_self_pow (by omega) v)) hMNY (hloadv.trans (vp (by omega)))
     hdepth hin
   -- the bounds of the pieces, with `Λ = lg v ^ (W + C₀ + 15 * bY)`
-  have hL2 : 2 ≤ lg v := two_le_lg (by omega)
+  have hL2 : 2 ≤ lg v := lg_ge_two (by omega)
   have hlgK : lg (K + K) ^ C₀ ≤ Ee * lg v ^ C₀ := by
     rw [hEe', ← mul_pow]
     exact Nat.pow_le_pow_left ((lg_mono hMv).trans (lg_pow_le (by omega))) C₀
