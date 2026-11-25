@@ -364,6 +364,7 @@ public import CslibFrontier.Computability.Machines.Turing.MultiTape.BlockComputa
 public import CslibFrontier.Foundations.Data.Code.BallVolume
 public import CslibFrontier.Computability.PCP.ConstraintGraph
 public import CslibFrontier.Crypto.Primitives.PRG.NisanWigderson.Design
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Constants
 public import CslibFrontier.Computability.Circuit.Frontier.TensorNetwork.ScheduleCount
 public import CslibFrontier.Foundations.Probability.InvarianceSums
 public import CslibFrontier.Computability.PCP.TwoProverGame.CHSH
