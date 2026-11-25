@@ -1450,6 +1450,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpre
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postpone
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Step
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Laws.Existence
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Lengths
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Poincare
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Windows
