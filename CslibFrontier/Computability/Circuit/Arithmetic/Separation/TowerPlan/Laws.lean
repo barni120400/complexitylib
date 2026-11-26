@@ -185,10 +185,8 @@ of a near pair. -/
 theorem exists_channelEnd (hnr : ∀ f : T.Fl, ∃ ν, T.cN ν = f ∨ T.dN ν = f)
     (d : FL.Kind) (p : (FL.law d).Role) : ∃ ν b, (FL.law d).channelEnd ν b = p := by
   obtain ⟨ν, hν⟩ := hnr (FL.place d p)
-  have h1 := FL.place_channelEnd d ((FL.nearPair d).symm ν)
-  rw [Equiv.apply_symm_apply] at h1
   have h2 : FL.place d p ∈ s(T.cN ν, T.dN ν) := by rcases hν with hν | hν <;> simp [hν]
-  rw [← h1, Sym2.mem_iff] at h2
+  rw [← Equiv.apply_symm_apply (FL.nearPair d) ν, ← FL.place_channelEnd, Sym2.mem_iff] at h2
   rcases h2 with h2 | h2
   exacts [⟨_, false, (FL.place d).injective h2.symm⟩,
     ⟨_, true, (FL.place d).injective h2.symm⟩]

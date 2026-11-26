@@ -17,28 +17,26 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Program
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.TemplateCost
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Theorem
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Automaton
 import Mathlib.Data.Fintype.BigOperators
 
 /-! Tests of the dealing program, as a client that sees only the public statements.
 
 * Closed examples: the flags of a row as a tree, row data valid after a given party, a unit with
-  one holder in a group, a value of the trie of a function, and the dealing program with no steps
-  and no templates.
+  one holder in a group and one with both, a value of the trie of a function, and the dealing
+  program with no steps and no templates.
 * For the plan of two parties with one move with the equality law (the fixtures of
   `CslibFrontierTests.SeparationGroupTheorem`): the size of the script of the group of both
   parties, for concrete arguments.
-* Under hypotheses: the sum over the choices, and the sum over all runs of the dealing program
-  with the scripts that its templates give.
-* One cut: the integers have a finite table of generators; the size of a small
-  dealing formula; and, under hypotheses, the cut of the dealing program with weaker bounds, the
-  cost of its templates along its runs, and its size at a scale.
+* Under hypotheses: the sum over all runs of the dealing program with the scripts that its
+  templates give.
+* The units of a base party whose table at the beginning is not zero: for the parts of an input
+  (under hypotheses), and for two base parties with too many units (closed).
+* One cut: the integers have a finite table of generators; and, under hypotheses, the cut of the
+  dealing program with weaker bounds, the cost of its templates along its runs, and its size at a
+  scale.
 * Numbers: closed examples of the numbers of units, row data and names, of a binary value, of
   the time of a small dealing program, and of the bounds of one cut at the scale `10000`; under
-  hypotheses, the cut of the dealing program with the numbers of Theorem J.3.
-* What the dealing program is applied to: the units of a base party whose table at the beginning
-  is not zero, for the parts of an input (under hypotheses) and for two base parties with too
-  many units (closed); and the universal automaton on the empty instance (closed). -/
+  hypotheses, the cut of the dealing program with the numbers of Theorem J.3. -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -64,6 +62,10 @@ example : RowValidAfter 1 (⟨false, 1, 3⟩ : RowData 4) ∧
 
 /-- The unit `()` with the holders `false` and `true` has one holder in the group `true`. -/
 example : OneIn (fun (_ : Unit) (d : Bool) => d) id true () := by decide
+
+/-- A unit whose two holders are both in the group `()` does not have exactly one holder in it. -/
+example : ¬OneIn (fun (_ : Unit) (_ : Bool) => ()) id () () := by
+  rw [oneIn_iff, not_not]
 
 /-- The trie of the bits `bit b` at the paths `[b]` has `bit true` at `[true]`. -/
 example : tget [true] (trieOf (fun b : Bool => [b]) Tree.bit) = Tree.bit true :=
@@ -148,16 +150,6 @@ variable {F : Type} [CommRing F] {Γ S Q : Type} [Fintype Γ] [Fintype S] [Decid
   [Fintype Q] [DecidableEq Q] {K A' E U0 U1 D nI pS mm ub c : ℕ} {M : Moves F (K + K + A') E}
   {P : Plan M U0 U1} {grp : PlanInput M U0 U1 → Fin (K + K + A') → Fin mm}
 
-/-- **The choices.** The phases of picks deal the states between the blocks, the row data, the
-numbers of units and the outcomes. -/
-example (C : Codes S M U0 U1 D pS) (hK : 0 < K) (pt : Fin K → Tree) (qn : Q → ℕ) (i e : Q)
-    (hU0 : U0 < D) (hU1 : U1 ≤ D) {m : ℕ} (Φ : (List Bool → Tree) → ℤ) :
-    ((execAll m (C.choiceSteps qn i e hU0 hU1) (Function.extend C.name (initialState pt)
-      fun _ => .nil)).map Φ).sum = ∑ q : Fin (K + 1) → Q, if q 0 = i ∧ q (Fin.last K) = e then
-        ∑ ρ, ∑ n, ∑ o, Φ (Function.extend C.name (C.chosenState pt qn hU0 hU1 q ρ n o)
-          fun _ => .nil) else 0 :=
-  sum_execAll_choiceSteps C hK pt qn i e hU0 hU1 Φ
-
 /-- **The runs of the dealing program, with their scripts.** For the parts of the codes of the
 letters of `x`, there are states with the values of the end such that the sum over the runs of the
 dealing program is the sum over the choices that pass the checks and over the contents of the cut
@@ -190,18 +182,37 @@ example (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) [DecidablePred t
   exact ⟨st, fun q ρ n o b g => expand_scriptTm (hf q ρ n o b) (fun _ => rfl) tg bT bub g,
     hs ℤ fun _ => 1⟩
 
+/-! ### The units of a base party at the beginning -/
+
+/-- **The units of a base party at the beginning** (Lemma I.2, its last bound), as the
+proposition on pieces uses it: for the parts of `ℓ ≤ T` letters of the input and numbers of units
+below `U0 + 1`, a base party whose table at the beginning is not zero holds at most
+`2 * ((T + (K + K) * (|S| + 1)) * c / ub + (K + K))` units. -/
+example [DecidableEq Γ] {N : Type} {T ℓ : ℕ} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
+    {cb : Option Γ → Fin c → Bool} (hℓ : ℓ ≤ T) (u : Unit → List Γ) (q : Fin (K + 1) → Q)
+    (ρ : Option S → RowData (K + K)) (n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1))
+    (p : Fin (K + K)) (y : UnitId (K + K) U0 N U1 → UnitContent ub)
+    (h : initialTable mu T cb q (parts ℓ (u ())) ρ (fun a b => n a b) p y ≠ 0) :
+    ∑ b, ((n p b : ℕ) + n b p) ≤ 2 * ((T + (K + K) * (Fintype.card S + 1)) * c / ub + (K + K)) :=
+  sum_count_le_of_initialTable_ne_zero (fun _ => (length_parts_le _ _ _).trans hℓ) h
+
+/-- With one block of one step, one tape, and codes and units of one bit, a base party whose
+table at the beginning is not zero holds at most `2 * ((1 + 2 * 2) * 1 / 1 + 2) = 14` units. So
+the table of a base party with four units to and from each of the two base parties is zero. -/
+example (mu : Tape.Letter Unit Unit Unit → Matrix Unit Unit ℤ) (cb : Option Unit → Fin 1 → Bool)
+    (q : Fin (1 + 1) → Unit) (ρ : Option Unit → RowData (1 + 1)) (p : Fin (1 + 1))
+    (y : UnitId (1 + 1) 4 Empty 0 → UnitContent 1) :
+    initialTable mu 1 cb q (fun _ => []) ρ (fun _ _ => 4) p y = 0 := by
+  by_contra h
+  have := sum_count_le_of_initialTable_ne_zero (fun _ => Nat.zero_le 1) h
+  simp at this
+
 /-! ### One cut, its costs and its size -/
 
 /-- The integers have a finite table of named generators in which every integer is the value of a
 formula. -/
 example : ∃ θ : List Bool → ℤ, (Function.support θ).Finite ∧ ∀ a, ∃ w : WE, w.val θ = a :=
   WE.exists_table ℤ
-
-/-- The dealing formula with one name of one bit, the bits `nl = [true]`, and no steps or
-templates is at most `23` larger than the empty one. -/
-example : (dealFormula .nil .nil [[true]] [true] [] [] [] []).code.size ≤ dealBaseSize + 23 :=
-  (size_dealFormula_le _ _ _ _ _ _ _ _).trans
-    (by simp [Tree.ofBits, Tree.bit, Tree.one, listT, Tree.size])
 
 /-- **One cut, with weaker bounds.** Under the hypotheses of the dealing theorem, the dealing
 program also cuts into pieces of size at most `s' + 1`, with at most `mm + 1` pieces, in time
@@ -289,8 +300,8 @@ example : Fintype.card (UnitId 2 1 Unit 3) = 7 := by
 /-- Two parties have eight row data. -/
 example : Fintype.card (RowData 2) = 8 := RowData.card_eq 2
 
-/-- With one block, no moves, no steps and no tapes, channels or units, there are `25` names. -/
-example : Fintype.card (Name 1 0 0 Empty Empty Empty) = 25 := by
+/-- With one block, one move, one step, and one tape, channel and unit, there are `39` names. -/
+example : Fintype.card (Name 1 1 1 Unit Unit Unit) = 39 := by
   rw [Name.card_eq]
   simp
 
@@ -299,47 +310,58 @@ example : BitString.binaryValue [true, false] = 2 := by
   rw [show [true, false] = [false, true].reverse from rfl, ← KT.val_eq_binaryValue_reverse]
   rfl
 
-/-- The time bound of the dealing program with one block, one group, codes of one bit, one bit
-per unit, no cut units and the empty argument. -/
-example : dealTime 1 1 1 1 1 0 0 = 26612 := by
+/-- The time bound of the dealing program with codes of two bits, numbers at most `3`, one block,
+two groups, units of four bits, one cut unit and an argument of size `5`. -/
+example : dealTime 2 3 1 2 4 1 5 = 355586 := by
   norm_num [dealTime, stepBound, pieceBound]
 
-/-- The numbers of one cut at the scale `v = m = 10000`, with one block of one step, one group
-of one base party, codes of one bit, an empty instance and `τ = 10000 ^ 320`. -/
+/-- The numbers of one cut at the scale `v = m = 10000`: an instance of size `5` and time
+`τ = 10000 ^ 321`, cut by `2` into two blocks of three steps with parts of three letters, units of
+two bits, three units at the beginning of a base party, codes of four bits and letters of one bit,
+`X = 2`, and two groups, each with one base party, one unit with one holder in it and five cells
+and units read by its roles. -/
 private theorem cutNumbers :
-    CutNumbers 10000 1 (10000 ^ 320) 0 1 1 1 1 0 1 1 10000 0 1 0 0 1 where
+    CutNumbers 10000 2 (10000 ^ 321) 5 2 3 3 2 3 2 4 10000 1 1 1 5 2 where
   le_m := le_rfl
   m_le_v := le_rfl
-  k_pos := one_pos
+  k_pos := by norm_num
   k_le_K := le_rfl
-  KT_le := Nat.one_le_iff_ne_zero.mpr (mul_ne_zero (pow_ne_zero _ (by norm_num)) (by norm_num))
-  ℓ_eq := rfl
-  ub_pos := one_pos
+  KT_le := le_trans (b := 1 * 10000) (by norm_num)
+    (Nat.mul_le_mul_right _ (one_le_pow₀ (by norm_num)))
+  ℓ_eq := by norm_num
+  ub_pos := by norm_num
   ub_le := by norm_num
   lh_mul_ub_le := by norm_num
   Lc_lt := by norm_num
   c_le := by norm_num
   K_le_X := le_rfl
   ιb_mul_le := by norm_num
-  ιb_le_X := le_rfl
-  bd_le := by rw [zero_mul, zero_mul]; exact Nat.zero_le _
-  ev_le := by rw [zero_mul, zero_mul]; exact Nat.zero_le _
+  ιb_le_X := by norm_num
+  bd_le := by
+    rw [show 321 = 21 + 300 from rfl, pow_add]
+    generalize 10000 ^ 300 = a
+    exact le_trans (b := 10000 ^ 21 * a) (Nat.mul_le_mul_right _ (by norm_num))
+      (Nat.le_mul_of_pos_right _ (by positivity))
+  ev_le := le_trans (b := 1 * 10000 ^ 2) (by norm_num)
+    (Nat.mul_le_mul_right _ (one_le_pow₀ (by norm_num)))
   mm_le := by norm_num
   mm_le_X := le_rfl
-  small := by rw [one_pow, one_mul, ← pow_add]
+  small := by
+    rw [show 321 = 21 + 300 from rfl, pow_add]
+    exact Nat.mul_le_mul_right _ (by norm_num)
 
-/-- **The time of the dealing program at the scale `10000`.** -/
-example : dealTime 1 1 1 1 1 (1 * 0) 0 ≤ (0 + 10000 ^ 320 * 1 / 10000 ^ 256) * 10000 ^ 10 :=
+/-- **The time of the dealing program at the scale `10000`**, with at most `2 * 1` cut units. -/
+example : dealTime 4 2 2 2 2 (2 * 1) 5 ≤ (5 + 10000 ^ 321 * 2 / 10000 ^ 256) * 10000 ^ 10 :=
   cutNumbers.dealTime_le
 
 /-- **The size of the pieces at the scale `10000`.** -/
-example : 1 + 1 + (200 * 1 ^ 3 * 1 + 1 * 1 * (4 * 0 + 2) + 0 * (4 * 1)) ≤
-    (0 / 1 + 10000 ^ 320 / 10000 ^ 256) * 10000 ^ 10 :=
+example : 2 + 1 + (200 * 2 ^ 3 * 4 + 1 * 3 * (4 * 1 + 2) + 1 * (4 * 2)) ≤
+    (5 / 2 + 10000 ^ 321 / 10000 ^ 256) * 10000 ^ 10 :=
   cutNumbers.size_le
 
-/-- **The time of the pieces at the scale `10000`**, for `κ = 1`. -/
-example : 1 * ((1 + 1) * (1 + 1 + 2) + 1 * 1 + 3 * (0 + 1 * 0) * (1 + 1 + 1) + 10 * 1 ^ 3) ≤
-    10000 ^ 320 * 10000 ^ 10 / 1 :=
+/-- **The time of the pieces at the scale `10000`**, for `κ = 3`. -/
+example : 3 * ((4 + 1) * (3 + 2 + 2) + 1 * 3 + 3 * (5 + 1 * 3) * (2 + 4 + 1) + 10 * 2 ^ 3) ≤
+    10000 ^ 321 * 10000 ^ 10 / 2 :=
   cutNumbers.time_le (by norm_num)
 
 section OneCut
@@ -398,49 +420,5 @@ example {θ : List Bool → F} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
     (hN.mm_le.trans (Nat.mul_le_mul_left k (Nat.le_self_pow (by norm_num) m))) hN.dealTime_le
 
 end OneCut
-
-/-! ### Runs as networks and the universal automaton -/
-
-/-- **The units of a base party at the beginning** (Lemma I.2, its last bound), as the
-proposition on pieces uses it: for the parts of `ℓ ≤ T` letters of the input and numbers of units
-below `U0 + 1`, a base party whose table at the beginning is not zero holds at most
-`2 * ((T + (K + K) * (|S| + 1)) * c / ub + (K + K))` units. -/
-example [DecidableEq Γ] {N : Type} {T ℓ : ℕ} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
-    {cb : Option Γ → Fin c → Bool} (hℓ : ℓ ≤ T) (u : Unit → List Γ) (q : Fin (K + 1) → Q)
-    (ρ : Option S → RowData (K + K)) (n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1))
-    (p : Fin (K + K)) (y : UnitId (K + K) U0 N U1 → UnitContent ub)
-    (h : initialTable mu T cb q (parts ℓ (u ())) ρ (fun a b => n a b) p y ≠ 0) :
-    ∑ b, ((n p b : ℕ) + n b p) ≤ 2 * ((T + (K + K) * (Fintype.card S + 1)) * c / ub + (K + K)) :=
-  sum_count_le_of_initialTable_ne_zero (fun _ => (length_parts_le _ _ _).trans hℓ) h
-
-/-- With one block of one step, one tape, and codes and units of one bit, a base party whose
-table at the beginning is not zero holds at most `2 * ((1 + 2 * 2) * 1 / 1 + 2) = 14` units. So
-the table of a base party with four units to and from each of the two base parties is zero. -/
-example (mu : Tape.Letter Unit Unit Unit → Matrix Unit Unit ℤ) (cb : Option Unit → Fin 1 → Bool)
-    (q : Fin (1 + 1) → Unit) (ρ : Option Unit → RowData (1 + 1)) (p : Fin (1 + 1))
-    (y : UnitId (1 + 1) 4 Empty 0 → UnitContent 1) :
-    initialTable mu 1 cb q (fun _ => []) ρ (fun _ _ => 4) p y = 0 := by
-  by_contra h
-  have := sum_count_le_of_initialTable_ne_zero (fun _ => Nat.zero_le 1) h
-  simp at this
-
-/-- **The universal automaton on the empty instance.** Over `ℤ`, with no named generator of
-nonzero weight, the empty instance `nil` (the program `nil` at the argument `nil`: one run of one
-step, of weight `1`) is `1`-plain, and the universal automaton has the value `1` on its word
-`[bt false]` in `C * (1 + 1) * lg (1 + 1) ^ 2 = 8 * C` steps or more. -/
-example : ∃ (S Γ Q : Type) (_ : Fintype S) (_ : DecidableEq S) (_ : Fintype Γ)
-    (_ : DecidableEq Γ) (_ : Fintype Q) (_ : DecidableEq Q)
-    (mu : Tape.Letter S Unit Γ → Matrix Q Q ℤ) (i e : Q) (bt : Bool → Γ) (C : ℕ),
-      ∀ t, 8 * C ≤ t → Tape.runVal mu i e t (fun _ => [bt false]) = 1 := by
-  obtain ⟨S, Γ, Q, iS, dS, iΓ, dΓ, iQ, dQ, mu, i, e, bt, C, -, hU⟩ :=
-    Uni.exists_universal_automaton (fun _ => (0 : ℤ)) (by simp)
-  have hev : Ev (fun _ => (0 : ℤ)) (Fm.ofTree .nil) .nil [.det 1 .nil] := by
-    rw [Fm.ofTree]
-    exact Ev.quote _ _
-  refine ⟨S, Γ, Q, iS, dS, iΓ, dΓ, iQ, dQ, mu, i, e, bt, C, fun t ht => ?_⟩
-  have hlg : lg (1 + 1) = 2 := congrArg (· + 1) (Nat.log_eq_one_iff'.2 ⟨le_rfl, by norm_num⟩)
-  have := hU 1 .nil t ⟨hev.hl, by simp [hev.evl, Run.det]⟩
-    (by rw [show Tree.size .nil = 1 from rfl, hlg]; omega)
-  simpa [tbits, pv, hev.evl, pval, Run.det] using this
 
 end CslibFrontierTests.SeparationDealing

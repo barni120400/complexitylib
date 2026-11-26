@@ -124,7 +124,7 @@ roles of laws and the numbers `qn` of the states: at the script of a group, with
 `κ` times `groupTime` steps and is the value of the group, if units have bits, the plan is
 `cap`-bounded, the input parts have at most `bT` letters, the row data of the rows that are not
 empty are ordered, and `kinds` lists the roles. -/
-@[expose] def EvaluatesGroups (θ : List Bool → F) (mu : Tape.Letter S Unit Γ → Matrix Q Q F)
+def EvaluatesGroups (θ : List Bool → F) (mu : Tape.Letter S Unit Γ → Matrix Q Q F)
     (cb : Option Γ → Fin c → Bool) (kinds : List (Σ L : Cut.Law F, L.Role)) (qn : Q → ℕ)
     (GROUP : Fm) (κ : ℕ) : Prop :=
   ∀ {A' K E U0 U1 cap : ℕ} {G : Type} [DecidableEq G] {M : Moves F (K + K + A') E}

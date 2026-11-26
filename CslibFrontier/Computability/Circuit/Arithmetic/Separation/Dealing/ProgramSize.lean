@@ -19,9 +19,8 @@ The dealing program of [AnthropicVPVNP2026] (`Codes.dealProgram`) has size at mo
 `(dealBaseSize + 3000) * (X * Lc) ^ 4` (`size_dealProgram_le`), where `dealBaseSize` is the size
 of the dealing formula with empty letters, names, binary numbers, steps and templates, `X` bounds
 the numbers of the dealing program and `Lc` the lengths of its codes (`Codes.SizeBounds`). The
-formula has size linear in the sizes of its letters, names, steps and templates
-(`size_dealFormula_le`); its steps have size `O(X ^ 4 * Lc)` in all (`size_listT_dealSteps_le`),
-and its templates `O(X ^ 3 * Lc)` each.
+formula has size linear in the sizes of its letters, names, steps and templates; its steps have
+size `O(X ^ 4 * Lc)` in all (`size_listT_dealSteps_le`), and its templates `O(X ^ 3 * Lc)` each.
 
 ## Main definitions
 
@@ -30,7 +29,6 @@ and its templates `O(X ^ 3 * Lc)` each.
 
 ## Main results
 
-* `size_dealFormula_le`: the size of the dealing formula.
 * `size_dealProgram_le`: the size of the dealing program.
 
 ## References
@@ -48,12 +46,12 @@ open Function Finset Interpreter Interpreter.Tree Cut GroupProgram
 
 /-- The size of the dealing formula whose letters are the empty tree and whose names, binary
 numbers, steps and templates are empty. -/
-@[expose] def dealBaseSize : ℕ := (dealFormula .nil .nil [] [] [] [] [] []).code.size
+def dealBaseSize : ℕ := (dealFormula .nil .nil [] [] [] [] [] []).code.size
 
 /-- **The size of the dealing formula**: at most `dealBaseSize`, plus `4` times the size of the
 bits `nub`, the size of the bits `nl`, twice the sizes of the letters, and the sizes of the lists
 of the names, the steps and the templates. -/
-theorem size_dealFormula_le (t0 t1 : Tree) (names : List (List Bool)) (nl nub : List Bool)
+private theorem size_dealFormula_le (t0 t1 : Tree) (names : List (List Bool)) (nl nub : List Bool)
     (sts sts' : List DStep) (ts : List Tm) :
     (dealFormula t0 t1 names nl nub sts sts' ts).code.size ≤
       dealBaseSize + 4 * (ofBits nub).size + (ofBits nl).size + 2 * t0.size + 2 * t1.size +

@@ -28,8 +28,7 @@ of the scripts read (`sum_execAll_dealSteps`).
 ## Main definitions
 
 * `RowValidAfter`: row data that are valid after a given last party of the row before.
-* `inputName`, `readOutName`: the names that the inputs of the straight-line program read, and
-  the names that the read-outs write.
+* `inputName`: the names that the inputs of the straight-line program read.
 * `Codes.rowCheckStep`, `Codes.gateStep`, `Codes.readOutStep`: the deterministic steps.
 * `Codes.rowCheckSteps`, `Codes.gateSteps`, `Codes.readOutSteps`, `Codes.checkSteps`,
   `Codes.dealSteps`: the phases of the dealing program up to its checks.
@@ -72,7 +71,7 @@ as a digit. -/
 
 /-- The names that the read-outs write: the numbers of units of the moves, the conditions, and
 whether the units are cut. -/
-@[expose] def readOutName :
+private def readOutName :
     Fin E ⊕ Option (Fin E) ⊕ UnitId (K + K) U0 M.Channel U1 → PlanName S M U0 U1 pS
   | .inl x => .count x
   | .inr (.inl c) => .condition c
