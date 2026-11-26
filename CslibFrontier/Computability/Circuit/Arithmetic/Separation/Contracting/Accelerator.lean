@@ -35,11 +35,10 @@ clause sum `Φ` of the code of the word (`Tape.runVal_eq_domainClauseSum`), made
 with the input bits as variables (`clauseSum_withInputs`). As a monomial extension it has degree
 at most `n`, and at the indicator assignment of a word it takes the value of that word, since no
 other code lies below the code of a word (`MvPolynomial.eval_indicator_monomialExtension`,
-`Tape.eq_wordCode`). It
-has at most `1600 B ^ 9` literals, so it is an affine projection of `G.poly m`
-(`GridComplete.isAffineProjection_clauseSum`, Corollary E.2). The letters other than the two of
-the words of instances are set to `0` (`Tape.letterSubst`), and Lemma K.2 (`lem_lowdeg`) with
-`d = n` turns the circuit into the accelerator.
+`Tape.eq_wordCode`). It has at most `1600 B ^ 9` literals, so it is an affine projection of
+`G.poly m` (`GridComplete.isAffineProjection_clauseSum`, Corollary E.2). The letters other than the
+two of the words of instances are set to `0` (`Tape.letterSubst`), and Lemma K.2 (`lem_lowdeg`)
+with `d = n` turns the circuit into the accelerator.
 
 ## Main results
 
