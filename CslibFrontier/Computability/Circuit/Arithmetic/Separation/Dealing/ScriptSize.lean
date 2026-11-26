@@ -105,23 +105,20 @@ private theorem size_baseBody_le (hK : K + K ≤ X) (hU0 : U0 ≤ X) (hS : Finty
     rw [size_num]
     have : rowFlag (ρ s p) b ≤ 2 := by unfold rowFlag; split_ifs <;> omega
     omega
-  have hkeys (f : Fin (K + K) → List (List Bool)) (hf : ∀ b, (f b).length ≤ U0 ∧
-      ∀ k ∈ f b, k.length ≤ Lc) : (keysEnc (List.ofFn f)).size ≤ X * (X * (4 * Lc + 2) + 2) + 1 :=
+  have hkeys (m : Fin (K + K) → Fin (U0 + 1)) (f : Fin (K + K) → Fin U0 → List Bool)
+      (hf : ∀ b k, (f b k).length ≤ Lc) :
+      (keysEnc (List.ofFn fun b => (indicesBelow (m b)).map (f b))).size ≤
+        X * (X * (4 * Lc + 2) + 2) + 1 :=
     size_keysEnc_le (by simpa using hK) fun ks hks => by
       obtain ⟨b, rfl⟩ := List.mem_ofFn.1 hks
-      exact ⟨(hf b).1.trans hU0, (hf b).2⟩
+      refine ⟨by simpa using (Nat.lt_succ_iff.1 (m b).2).trans hU0, fun k hk' => ?_⟩
+      obtain ⟨_, -, rfl⟩ := List.mem_map.1 hk'
+      exact hf _ _
   have h1 : (keysEnc (baseBody ρ n key dkey p).writeKeys).size ≤
-      X * (X * (4 * Lc + 2) + 2) + 1 := by
-    refine hkeys _ fun b => ⟨by simpa using Nat.lt_succ_iff.1 (n p b).2, fun k hk' => ?_⟩
-    obtain ⟨_, -, rfl⟩ := List.mem_map.1 hk'
-    exact hk _
+      X * (X * (4 * Lc + 2) + 2) + 1 := hkeys (n p) _ fun _ _ => hk _
   have h2 : (keysEnc (baseBody ρ n key dkey p).readKeys).size ≤
-      X * (X * (4 * Lc + 2) + 2) + 1 := by
-    refine hkeys _ fun b => ⟨by simpa using Nat.lt_succ_iff.1 (n b p).2, fun k hk' => ?_⟩
-    obtain ⟨_, -, rfl⟩ := List.mem_map.1 hk'
-    split_ifs
-    · exact hd _
-    · exact hk _
+      X * (X * (4 * Lc + 2) + 2) + 1 :=
+    hkeys (fun b => n b p) _ fun b _ => by split_ifs; exacts [hd _, hk _]
   have e1 : X * (X * (4 * Lc + 2) + 2) = X * X * (4 * Lc + 2) + 2 * X := by ring
   have e2 : X * (X * 6 + 1 + 1) = X * X * 6 + 2 * X := by ring
   have e3 : X * X * (8 * Lc + 10) = X * X * 6 + 2 * (X * X * (4 * Lc + 2)) := by ring
