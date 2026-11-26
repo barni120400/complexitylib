@@ -21,8 +21,10 @@ import Mathlib.Data.Fintype.BigOperators
 * For the plan of two parties with one move with the equality law (the fixtures of
   `CslibFrontierTests.SeparationGroupTheorem`): the size of the script of the group of both
   parties, for concrete arguments.
-* Under hypotheses: the sum over the choices, and the sum over all runs of the dealing program
-  with the scripts that its templates give. -/
+* Under hypotheses: the sum over all runs of the dealing program with the scripts that its
+  templates give.
+* The units of a base party whose table at the beginning is not zero: for the parts of an input
+  (under hypotheses), and for two base parties with too many units (closed). -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -132,16 +134,6 @@ variable {F : Type} [CommRing F] {Γ S Q : Type} [Fintype Γ] [Fintype S] [Decid
   [Fintype Q] [DecidableEq Q] {K A' E U0 U1 D nI pS mm ub c : ℕ} {M : Moves F (K + K + A') E}
   {P : Plan M U0 U1} {grp : PlanInput M U0 U1 → Fin (K + K + A') → Fin mm}
 
-/-- **The choices.** The phases of picks deal the states between the blocks, the row data, the
-numbers of units and the outcomes. -/
-example (C : Codes S M U0 U1 D pS) (hK : 0 < K) (pt : Fin K → Tree) (qn : Q → ℕ) (i e : Q)
-    (hU0 : U0 < D) (hU1 : U1 ≤ D) {m : ℕ} (Φ : (List Bool → Tree) → ℤ) :
-    ((execAll m (C.choiceSteps qn i e hU0 hU1) (Function.extend C.name (initialState pt)
-      fun _ => .nil)).map Φ).sum = ∑ q : Fin (K + 1) → Q, if q 0 = i ∧ q (Fin.last K) = e then
-        ∑ ρ, ∑ n, ∑ o, Φ (Function.extend C.name (C.chosenState pt qn hU0 hU1 q ρ n o)
-          fun _ => .nil) else 0 :=
-  sum_execAll_choiceSteps C hK pt qn i e hU0 hU1 Φ
-
 /-- **The runs of the dealing program, with their scripts.** For the parts of the codes of the
 letters of `x`, there are states with the values of the end such that the sum over the runs of the
 dealing program is the sum over the choices that pass the checks and over the contents of the cut
@@ -173,5 +165,30 @@ example (C : Codes S M U0 U1 D pS) (tab : SlpTab P grp D nI pS) [DecidablePred t
     (fun κ => wordsEnc (((x κ).map (letterCode cb)).reverse)) qn hU0 hU1 hK i e
   exact ⟨st, fun q ρ n o b g => expand_scriptTm (hf q ρ n o b) (fun _ => rfl) tg bT bub g,
     hs ℤ fun _ => 1⟩
+
+/-! ### The units of a base party at the beginning -/
+
+/-- **The units of a base party at the beginning** (Lemma I.2, its last bound), as the
+proposition on pieces uses it: for the parts of `ℓ ≤ T` letters of the input and numbers of units
+below `U0 + 1`, a base party whose table at the beginning is not zero holds at most
+`2 * ((T + (K + K) * (|S| + 1)) * c / ub + (K + K))` units. -/
+example [DecidableEq Γ] {N : Type} {T ℓ : ℕ} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
+    {cb : Option Γ → Fin c → Bool} (hℓ : ℓ ≤ T) (u : Unit → List Γ) (q : Fin (K + 1) → Q)
+    (ρ : Option S → RowData (K + K)) (n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1))
+    (p : Fin (K + K)) (y : UnitId (K + K) U0 N U1 → UnitContent ub)
+    (h : initialTable mu T cb q (parts ℓ (u ())) ρ (fun a b => n a b) p y ≠ 0) :
+    ∑ b, ((n p b : ℕ) + n b p) ≤ 2 * ((T + (K + K) * (Fintype.card S + 1)) * c / ub + (K + K)) :=
+  sum_count_le_of_initialTable_ne_zero (fun _ => (length_parts_le _ _ _).trans hℓ) h
+
+/-- With one block of one step, one tape, and codes and units of one bit, a base party whose
+table at the beginning is not zero holds at most `2 * ((1 + 2 * 2) * 1 / 1 + 2) = 14` units. So
+the table of a base party with four units to and from each of the two base parties is zero. -/
+example (mu : Tape.Letter Unit Unit Unit → Matrix Unit Unit ℤ) (cb : Option Unit → Fin 1 → Bool)
+    (q : Fin (1 + 1) → Unit) (ρ : Option Unit → RowData (1 + 1)) (p : Fin (1 + 1))
+    (y : UnitId (1 + 1) 4 Empty 0 → UnitContent 1) :
+    initialTable mu 1 cb q (fun _ => []) ρ (fun _ _ => 4) p y = 0 := by
+  by_contra h
+  have := sum_count_le_of_initialTable_ne_zero (fun _ => Nat.zero_le 1) h
+  simp at this
 
 end CslibFrontierTests.SeparationDealing
