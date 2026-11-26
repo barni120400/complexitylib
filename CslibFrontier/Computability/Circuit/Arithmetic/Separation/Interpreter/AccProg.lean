@@ -139,17 +139,6 @@ private theorem treeF_gives (m : ℕ) (z : Tree) :
   rw [e]
   omega
 
-/-- The brackets of a tree, in preorder: 0 = empty, 1 = a node. -/
-@[expose] def tbits : Tree → List Bool
-  | .nil => [false]
-  | .cons a b => true :: (tbits a ++ tbits b)
-
-theorem length_tbits (z : Tree) : (tbits z).length = z.size := by
-  induction z with
-  | nil => rfl
-  | cons a b iha ihb =>
-    simp only [tbits, List.length_cons, List.length_append, iha, ihb, Tree.size]
-
 /-- The letter as a tree. -/
 @[expose] def ltr : Option Bool → Tree
   | some false => lt0
