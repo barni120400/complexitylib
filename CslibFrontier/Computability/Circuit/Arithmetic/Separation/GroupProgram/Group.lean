@@ -36,7 +36,6 @@ cost is linear in the costs of the instructions (`exists_formula_scriptSem`).
 
 ## Main results
 
-* `scriptSem_nil`, `scriptSem_cons`: the equations of `scriptSem`.
 * `exists_formula_scriptSem`: one formula computes the semantics of every valid script.
 
 ## References
