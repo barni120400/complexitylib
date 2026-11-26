@@ -9,6 +9,7 @@ module
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.Accelerator
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.LowerBound
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 
 /-! Tests of the circuit lemma (Lemma K.3) and the lower bound in the contracting case
