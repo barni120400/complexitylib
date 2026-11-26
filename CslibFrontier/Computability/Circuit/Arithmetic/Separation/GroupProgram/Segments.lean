@@ -38,7 +38,6 @@ the other, as a weighted list in which every cut has the weight `1`.
 
 ## Main results
 
-* `cuts_eq`: the equation of `cuts`.
 * `length_le_of_mem_cutTapes`: the number of strings of a cut.
 * `exists_formula_cutTapes`: one formula makes the cuts of a list of tapes.
 
