@@ -132,8 +132,7 @@ theorem eval_sampleBoundedIndex_sentinel (bound : ℕ) :
   have hmin (i : Fin (dyadicSize bound)) : bound = min bound i.val ↔ bound ≤ i.val := by omega
   simp only [PMF.map_apply, tsum_fintype, PMF.uniformOfFintype_apply, Fintype.card_fin, hmin]
   rw [← Finset.sum_filter]
-  simp only [Finset.sum_const, nsmul_eq_mul, hcard]
-  simp [intervalFailure, div_eq_mul_inv]
+  simp [intervalFailure, div_eq_mul_inv, hcard]
 
 /-- The retry law, including the remaining failure event. All unused draws are integrated out. -/
 theorem eval_sampleUniformInterval_succ (bound attempts : ℕ) :
@@ -183,22 +182,17 @@ private theorem retry_some (bound value : ℕ) (next : PMF (Option ℕ)) :
       (if i = bound then μ bound * next (some value) else 0) +
         (if i = value ∧ value < bound then μ value else 0) := by
     rcases lt_trichotomy i bound with hi | rfl | hi
-    · by_cases hiv : i = value
-      · subst i
-        simp [hi, hi.ne]
-      · simp [hi, hi.ne, hiv, Ne.symm hiv]
+    · rcases eq_or_ne i value with rfl | hiv
+      · simp [hi, hi.ne]
+      · simp [hi, hi.ne, hiv, hiv.symm]
     · simp [show ¬(i = value ∧ value < i) by omega]
     · rw [show μ i = 0 from capped_eq_zero hi]
       simp [hi.ne', show ¬(i = value ∧ value < bound) by omega]
   change (∑' i, μ i * (if i < bound then PMF.pure (some i) else next) (some value)) = _
   simp_rw [hterm]
   rw [tsum_add]
-  simp only [tsum_ite_eq]
-  rw [show μ bound = (intervalFailure bound : ℝ≥0∞) from eval_sampleBoundedIndex_sentinel bound]
-  by_cases hv : value < bound
-  · simp only [hv, and_true, ↓reduceIte, tsum_ite_eq]
-    rw [show μ value = (dyadicSize bound : ℝ≥0∞)⁻¹ from eval_sampleBoundedIndex_lt _ _ hv]
-  · simp [hv]
+  by_cases hv : value < bound <;>
+    simp [hv, μ, eval_sampleBoundedIndex_sentinel, eval_sampleBoundedIndex_lt]
 
 /-- The exact exhaustion probability after a finite number of attempts. -/
 theorem eval_sampleUniformInterval_none (bound attempts : ℕ) :
@@ -220,10 +214,8 @@ theorem eval_sampleUniformInterval_some (bound attempts value : ℕ) :
   | succ attempts ih =>
     rw [eval_sampleUniformInterval_succ, retry_some, ih]
     by_cases hv : value < bound
-    · simp only [hv, ↓reduceIte, div_eq_mul_inv]
-      rw [Finset.sum_range_succ']
-      simp only [pow_zero, pow_succ']
-      rw [← Finset.mul_sum]
+    · simp only [hv, ↓reduceIte, div_eq_mul_inv, Finset.sum_range_succ', pow_zero, pow_succ',
+        ← Finset.mul_sum]
       ring
     · simp [hv]
 
@@ -275,8 +267,7 @@ theorem le_eval_sampleUniformInterval_some {bound : ℕ} (hbound : 0 < bound) (a
       ProbComp.eval (sampleUniformInterval bound attempts) (some value) := by
   rw [ENNReal.ofReal_le_iff_le_toReal (PMF.apply_ne_top _ _),
     eval_sampleUniformInterval_some_toReal hbound, ite_eq_left hvalue]
-  have hhalf : (intervalFailure bound : ℝ) ≤ 1 / 2 := by
-    exact_mod_cast intervalFailure_le_half hbound
+  have hhalf : (intervalFailure bound : ℝ) ≤ 1 / 2 := mod_cast intervalFailure_le_half hbound
   gcongr
 
 /-! ### Early stopping -/
@@ -339,14 +330,8 @@ private theorem expectedCost_sampleList (width : ℕ) :
   | zero => simp [BitString.sampleList]
   | succ k ih =>
     rw [BitString.sampleList, OracleComp.expectedCost_bind, hu]
-    have htail : ∀ b : Bool,
-        OracleComp.expectedCost ProbComp.unifOracle (fun _ => 1)
-          (BitString.sampleList k >>= fun xs => pure (b :: xs)) = k := by
-      intro b
-      rw [OracleComp.expectedCost_bind, ih]
-      simp
-    simp_rw [htail]
-    rw [ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul, Nat.cast_succ, add_comm]
+    simp only [OracleComp.expectedCost_bind, OracleComp.expectedCost_pure, add_zero,
+      ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul, ih, Nat.cast_succ, add_comm]
 
 /-- **Expected fair-bit cost of early stopping.** Whatever the attempt budget,
 `sampleUniformIntervalRetry bound attempts` draws at most `2 * bound.size` fair bits in
@@ -362,8 +347,7 @@ theorem expectedCost_sampleUniformIntervalRetry_le (bound attempts : ℕ) :
   rcases Nat.eq_zero_or_pos bound with rfl | hbound
   · simp [OracleComp.expectedCost_retry, hcost]
   have hset : {o : Option ℕ | ¬o.isSome = true} = {none} := by
-    ext o
-    cases o <;> simp
+    ext (_ | _) <;> simp
   have hfail : (ProbComp.eval (sampleUniformIntervalAttempt bound)).toOuterMeasure
       {o : Option ℕ | ¬o.isSome = true} ≤ 2⁻¹ := by
     rw [hset, PMF.toOuterMeasure_apply_singleton, eval_sampleUniformIntervalAttempt]
@@ -400,8 +384,7 @@ theorem sampleUniformInterval_conditional {bound attempts value : ℕ}
     (ProbComp.eval (sampleUniformInterval bound attempts) (some value)).toReal /
       (((ProbComp.eval (sampleUniformInterval bound attempts)).map Option.isSome) true).toReal =
         (1 : ℝ) / bound := by
-  have hp : (intervalFailure bound : ℝ) ≤ 1 / 2 := by
-    exact_mod_cast intervalFailure_le_half hbound
+  have hp : (intervalFailure bound : ℝ) ≤ 1 / 2 := mod_cast intervalFailure_le_half hbound
   have hpow : (intervalFailure bound : ℝ) ^ attempts < 1 :=
     pow_lt_one₀ (NNReal.coe_nonneg _) (by linarith) hattempts.ne'
   have hden : 1 - (intervalFailure bound : ℝ) ^ attempts ≠ 0 := by linarith
@@ -456,9 +439,7 @@ private theorem optional_map_density {α β : Type} (μ : PMF (Option α)) (ν :
     Option.some.injEq]
   simp_rw [h]
   rw [PMF.map_apply, ← ENNReal.tsum_mul_left]
-  apply tsum_congr
-  intro a
-  split_ifs <;> simp
+  exact tsum_congr fun a => by split_ifs <;> simp
 
 /-- Gather successful coordinates, preserving the entire failure event. -/
 def collectBox (values : List (Option ℤ)) : Option (List ℤ) :=
@@ -522,15 +503,12 @@ private theorem gather_iid_apply (μ : PMF (Option ℤ)) {n : ℕ} (f : Fin n �
       ∏ i, μ (some (f i)) := by
   classical
   rw [PMF.map_apply, tsum_eq_single (fun i => some (f i))]
-  · have hcollect : collectBox (List.ofFn (fun i => some (f i))) = some (List.ofFn f) := by
-      rw [collectBox_eq_some, List.map_ofFn]
-      rfl
-    rw [ite_eq_left hcollect.symm, PMF.iid_apply]
+  · simp [eq_comm (a := some (List.ofFn f)), collectBox_eq_some, List.map_ofFn,
+      Function.comp_def, PMF.iid_apply]
   · intro g hg
-    refine ite_eq_right fun h => hg ?_
-    have heq := (collectBox_eq_some _ _).mp h.symm
-    rw [List.map_ofFn] at heq
-    exact List.ofFn_injective heq
+    rw [ite_eq_right]
+    simpa [eq_comm (a := some (List.ofFn f)), collectBox_eq_some, List.map_ofFn,
+      List.ofFn_injective.eq_iff, Function.comp_def] using hg
 
 private theorem gather_off_length (μ : PMF (Option ℤ)) (n : ℕ) (out : List ℤ)
     (hlen : out.length ≠ n) :
@@ -577,15 +555,10 @@ theorem eval_sampleIntegerBox_some (radius dimension attempts : ℕ) (out : List
   by_cases hlen : out.length = dimension
   · subst dimension
     have h := gather_iid_apply μ out.get
-    simp only [List.ofFn_get] at h
-    rw [h]
-    simp_rw [hdensity]
-    rw [Finset.prod_mul_distrib]
-    simp only [Finset.prod_const, Finset.card_univ, Fintype.card_fin]
     have href := iid_list_apply ν out.get
-    simp only [List.ofFn_get] at href
-    rw [← href]
-    rfl
+    simp only [List.ofFn_get] at h href
+    rw [h, integerBoxLaw, href]
+    simp [hdensity, Finset.prod_mul_distrib]
   · rw [gather_off_length μ dimension out hlen]
     change 0 = _ * ((PMF.iid ν dimension).map List.ofFn) out
     rw [iid_off_length ν dimension out hlen, mul_zero]
@@ -603,17 +576,12 @@ than discarded by conditioning. -/
 theorem eval_sampleIntegerBox_none (radius dimension attempts : ℕ) :
     (ProbComp.eval (sampleIntegerBox radius dimension attempts) none).toReal =
       1 - (1 - (intervalFailure (2 * radius + 1) : ℝ) ^ attempts) ^ dimension := by
-  let μ := ProbComp.eval (sampleIntegerBox radius dimension attempts)
-  have h := μ.tsum_coe
+  have h := (ProbComp.eval (sampleIntegerBox radius dimension attempts)).tsum_coe
   rw [tsum_option_eq] at h
-  simp_rw [show ∀ out, μ (some out) =
-      (intervalSuccess (2 * radius + 1) attempts : ℝ≥0∞) ^ dimension *
-        integerBoxLaw radius dimension out from
-          eval_sampleIntegerBox_some radius dimension attempts]
-    at h
+  simp_rw [eval_sampleIntegerBox_some] at h
   rw [ENNReal.tsum_mul_left, (integerBoxLaw radius dimension).tsum_coe, mul_one] at h
   have hreal := congrArg ENNReal.toReal h
-  rw [ENNReal.toReal_add (μ.apply_ne_top _) (ENNReal.pow_ne_top ENNReal.coe_ne_top),
+  rw [ENNReal.toReal_add (PMF.apply_ne_top _ _) (ENNReal.pow_ne_top ENNReal.coe_ne_top),
     ENNReal.toReal_one, ENNReal.toReal_pow, ENNReal.coe_toReal, intervalSuccess_coe] at hreal
   linarith
 
@@ -625,9 +593,8 @@ theorem eval_sampleIntegerBox_none_le (radius dimension attempts : ℕ) :
   rw [eval_sampleIntegerBox_none]
   have hp0 : (0 : ℝ) ≤ (intervalFailure (2 * radius + 1) : ℝ) ^ attempts :=
     pow_nonneg (NNReal.coe_nonneg _) _
-  have hp1 : (intervalFailure (2 * radius + 1) : ℝ) ^ attempts ≤ 1 := by
-    apply pow_le_one₀ (NNReal.coe_nonneg _)
-    exact_mod_cast intervalFailure_le_one (2 * radius + 1)
+  have hp1 : (intervalFailure (2 * radius + 1) : ℝ) ^ attempts ≤ 1 :=
+    pow_le_one₀ (NNReal.coe_nonneg _) (mod_cast intervalFailure_le_one (2 * radius + 1))
   have hbern := one_add_mul_le_pow (show (-2 : ℝ) ≤
     -(intervalFailure (2 * radius + 1) : ℝ) ^ attempts by linarith) dimension
   calc
@@ -646,18 +613,15 @@ theorem sampleIntegerBox_conditional (radius dimension attempts : ℕ) (hattempt
     (ProbComp.eval (sampleIntegerBox radius dimension attempts) (some out)).toReal /
       (((ProbComp.eval (sampleIntegerBox radius dimension attempts)).map Option.isSome)
         true).toReal = (integerBoxLaw radius dimension out).toReal := by
-  have hp : (intervalFailure (2 * radius + 1) : ℝ) ≤ 1 / 2 := by
-    exact_mod_cast intervalFailure_le_half (by omega : 0 < 2 * radius + 1)
+  have hp : (intervalFailure (2 * radius + 1) : ℝ) ≤ 1 / 2 :=
+    mod_cast intervalFailure_le_half (Nat.succ_pos _)
   have hpow := pow_lt_one₀ (NNReal.coe_nonneg _) (by linarith : _ < (1 : ℝ)) hattempts.ne'
   have hpositive : 0 < (intervalSuccess (2 * radius + 1) attempts : ℝ) := by
     rw [intervalSuccess_coe]
     linarith
   rw [option_success_toReal, eval_sampleIntegerBox_none, eval_sampleIntegerBox_some,
-    ENNReal.toReal_mul, ENNReal.toReal_pow, ENNReal.coe_toReal]
-  rw [← intervalSuccess_coe]
-  have hcancel : 1 - (1 - (intervalSuccess (2 * radius + 1) attempts : ℝ) ^ dimension) =
-      (intervalSuccess (2 * radius + 1) attempts : ℝ) ^ dimension := by ring
-  rw [hcancel]
+    ENNReal.toReal_mul, ENNReal.toReal_pow, ENNReal.coe_toReal, ← intervalSuccess_coe,
+    sub_sub_cancel]
   exact mul_div_cancel_left₀ _ (pow_pos hpositive _).ne'
 
 private theorem optional_test {α : Type} (μ : PMF (Option α)) (ν : PMF α)
@@ -755,14 +719,12 @@ theorem integerBoxLaw_support {radius dimension : ℕ} {out : List ℤ}
     (h : out ∈ (integerBoxLaw radius dimension).support) :
     out.length = dimension ∧ ∀ z ∈ out, -(radius : ℤ) ≤ z ∧ z ≤ radius := by
   obtain ⟨v, hv, rfl⟩ := (PMF.mem_support_map_iff _ _ _).mp h
-  refine ⟨List.length_ofFn, ?_⟩
-  intro z hz
+  refine ⟨List.length_ofFn, fun z hz => ?_⟩
   obtain ⟨i, rfl⟩ := List.mem_ofFn.mp hz
-  have hi := (PMF.mem_support_iid_iff _ _).mp hv i
-  obtain ⟨value, _, hvalue⟩ := (PMF.mem_support_map_iff _ _ _).mp hi
-  rw [← hvalue]
+  obtain ⟨value, _, hvalue⟩ := (PMF.mem_support_map_iff _ _ _).mp
+    ((PMF.mem_support_iid_iff _ _).mp hv i)
   have hlt := value.isLt
-  constructor <;> omega
+  exact ⟨by omega, by omega⟩
 
 /-- Every successful bounded sample lies in the intended integer box with the exact dimension. -/
 theorem sampleIntegerBox_support {radius dimension attempts : ℕ} {out : List ℤ}

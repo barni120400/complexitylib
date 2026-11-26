@@ -9,7 +9,6 @@ module
 
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.EvalCompound
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.OfTree
 import Mathlib.Algebra.Order.Group.Unbundled.Int
 import Mathlib.Tactic.Linarith
 
@@ -20,8 +19,8 @@ The remaining constructs are `run`, which evaluates two subformulas and then the
 first as a program at the value of the second, and `theta`, which reads the value of its
 subformula as a name and multiplies by the constant with this name. The induction on the
 evaluation (`Interpreter.Ev`) then shows that the machine evaluates every code correctly
-(`Uni.EvalsTo.of_ev`); the case of each construct is found from the code by the equations of
-`Interpreter.Fm.ofTree`.
+(`Uni.EvalsTo.of_ev`); the case of each construct is found from the code by unfolding
+`Interpreter.Fm.ofTree` and splitting on the opcode.
 
 ## Main results
 

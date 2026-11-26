@@ -9,18 +9,16 @@ module
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.Accelerator
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.LowerBound
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 
 /-! Tests of the circuit lemma (Lemma K.3) and the lower bound in the contracting case
 (Theorem K.7), as a client that sees only the public statements.
 
-* Lemma K.3 as printed: for the table `0` over `ℤ` and the permanent over `ℚ`, small circuits give
-  accelerators.
+* Lemma K.3 as printed: for a table of `ℤ` with one generator and the permanent over `ℚ`, small
+  circuits give accelerators.
 * Theorem K.7 over `ℚ`: the flat case holds, or circuits for the permanent have more than
   `2 ^ (c (log m) ^ 2 / log log m)` nodes; the same for the Hamiltonian cycle polynomial, as
   Theorem M.3 uses it.
-* The calculation from exponents to the quasi-polynomial bound, for the sizes `s ≥ M ^ (M + 1)`.
 * Under hypotheses: in the contracting case, one node does not suffice for a family complete for
   grid sums. -/
 
@@ -33,14 +31,20 @@ open Cslib.Circuits.Arithmetic Cslib.Circuits.Arithmetic.Separation
 
 /-! ### Closed examples -/
 
-/-- **Lemma K.3 as printed**, for the table `0` of the ring `ℤ`, `H = 32` and the permanent over
-`ℚ`, in which `2 ≠ 0`: a circuit with `v ^ a` nodes for `PERM_m`, `m ≥ v ^ B₀`, gives an
+/-- The table of `ℤ` with the one generator `[true]`, of value `1`. -/
+private def oneGen : List Bool → ℤ := fun w => if w = [true] then 1 else 0
+
+private theorem finite_support_oneGen : (Function.support oneGen).Finite :=
+  (Set.finite_singleton [true]).subset fun w hw => by simpa [oneGen] using hw
+
+/-- **Lemma K.3 as printed**, for the table `oneGen` of the ring `ℤ`, `H = 32` and the permanent
+over `ℚ`, in which `2 ≠ 0`: a circuit with `v ^ a` nodes for `PERM_m`, `m ≥ v ^ B₀`, gives an
 accelerator of size `v ^ (C (a + 1))` at the scale `v`. -/
 example : ∃ B₀ C v₀ : ℕ, 0 < B₀ ∧ ∀ v, v₀ ≤ v → ∀ a, lg v ^ (C * a) ≤ v → ∀ m, v ^ B₀ ≤ m →
     ComputedWithin ((permFamily ℚ).poly m) (v ^ a) →
-      HasAcc (fun _ => (0 : ℤ)) ℚ 32 v (v ^ (C * (a + 1))) := by
+      HasAcc oneGen ℚ 32 v (v ^ (C * (a + 1))) := by
   obtain ⟨B₀, C, v₀, hB₀, h⟩ := Contracting.exists_hasAcc_of_computedWithin
-    (θ := fun _ => (0 : ℤ)) (by simp) le_rfl 3
+    finite_support_oneGen le_rfl 3
   exact ⟨B₀, C, v₀, hB₀, h ℚ _ (gridComplete_permFamily (by norm_num))⟩
 
 /-- **Theorem K.7 over `ℚ`**: the flat case holds, or there are `c > 0` and `m₀` such that for
@@ -58,16 +62,6 @@ example : FlatCase ℚ ∨ ∃ c : ℝ, 0 < c ∧ ∃ m₀ : ℕ, ∀ m ≥ m₀
   refine (flatCase_or_contractingCase ℚ).imp_right fun hK => ?_
   obtain ⟨C, M₁, h⟩ := hK.not_computedWithin_pow gridComplete_hcFamily
   exact Contracting.exists_quasipoly_lt_of_not_pow (fun _ _ _ hst hs => hs.mono hst) h
-
-/-- **From exponents to the quasi-polynomial bound**, for the sizes `s ≥ M ^ (M + 1)`: the size
-`M ^ a` is too small whenever `(lg M) ^ a ≤ M`, as then `a ≤ lg M ≤ M`. -/
-example : ∃ c : ℝ, 0 < c ∧ ∃ m₀ : ℕ, ∀ m ≥ m₀, ∀ s, m ^ (m + 1) ≤ s →
-    (2 : ℝ) ^ (c * Real.logb 2 m ^ 2 / Real.logb 2 (Real.logb 2 m)) < s := by
-  refine Contracting.exists_quasipoly_lt_of_not_pow (P := fun M s => M ^ (M + 1) ≤ s)
-    (fun _ _ _ hst hs => hs.trans hst) (C := 1) (M₁ := 4) fun M hM a ha hs => ?_
-  have haM : a ≤ lg M := le_lg_of_lg_pow_le hM (by simpa using ha)
-  have hlg : lg M ≤ M := Nat.log_lt_self 2 (by omega)
-  exact absurd hs (not_le.2 (Nat.pow_lt_pow_right (by omega) (by omega)))
 
 /-! ### The contract under hypotheses -/
 

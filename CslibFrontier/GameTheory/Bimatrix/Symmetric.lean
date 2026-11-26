@@ -101,10 +101,9 @@ theorem ofSymmetric_B (A : Matrix M M ℝ) : (ofSymmetric A).B = Aᵀ := by rfl
 theorem isSymmetric_ofSymmetric (A : Matrix M M ℝ) : (ofSymmetric A).IsSymmetric := by rfl
 
 theorem IsSymmetric.swap_eq {G : BimatrixGame M M} (hG : G.IsSymmetric) : G.swap = G := by
-  cases G
-  dsimp only [IsSymmetric] at hG
-  subst hG
-  simp only [swap_mk, transpose_transpose]
+  rcases G with ⟨A, B⟩
+  obtain rfl : B = Aᵀ := hG
+  simp [swap_mk]
 
 /-- Embedding of `G : BimatrixGame M M` as a two-player `CostGame Bool (fun _ => M)` on the shared
 strategy type `M`, where `false` is the row player and `true` is the column player. -/
@@ -186,26 +185,15 @@ private def boolPairEquiv (α : Type*) : (Bool → α) ≃ α × α where
 
 private theorem deviationCost_toSymmCostGame_false {x : M → ℝ} (hx : ∑ i : M, x i = 1) (i : M) :
     G.toSymmCostGame.deviationCost (fun _ => x) false i = -(G.A *ᵥ x) i := by
-  rw [CostGame.deviationCost_def, ← (boolPairEquiv M).symm.sum_comp]
-  have hterm : ∀ p : M × M,
-      productWeight (fun _ : Bool => x) ((boolPairEquiv M).symm p) *
-          G.toSymmCostGame.cost false (update ((boolPairEquiv M).symm p) false i) =
-        x p.1 * (-(G.A i p.2 * x p.2)) := by
-    intro p
-    rw [productWeight_def, Fintype.prod_bool]
-    dsimp only [boolPairEquiv, Equiv.coe_fn_symm_mk, toSymmCostGame]
-    have hf : update (fun b => cond b p.2 p.1) false i false = i := by rw [update_self]
-    have ht : update (fun b => cond b p.2 p.1) false i true = p.2 := by
-      rw [update_of_ne (by decide : true ≠ false)]
-      rfl
-    rw [hf, ht]
-    simp only [Bool.cond_true, Bool.cond_false]
+  have hterm (a b : M) : productWeight (fun _ : Bool => x) ((boolPairEquiv M).symm (a, b)) *
+      G.toSymmCostGame.cost false (update ((boolPairEquiv M).symm (a, b)) false i) =
+      x a * -(G.A i b * x b) := by
+    simp only [productWeight_def, Fintype.prod_bool, boolPairEquiv, Equiv.coe_fn_symm_mk,
+      toSymmCostGame, update_self, ne_eq, Bool.true_eq_false, not_false_eq_true, update_of_ne,
+      Bool.cond_true, Bool.cond_false]
     ring
-  simp_rw [hterm]
-  rw [Fintype.sum_prod_type]
-  simp_rw [← mul_sum]
-  rw [← sum_mul, hx, one_mul, Finset.sum_neg_distrib]
-  rfl
+  rw [CostGame.deviationCost_def, ← (boolPairEquiv M).symm.sum_comp, Fintype.sum_prod_type]
+  simp only [hterm, mul_neg, sum_neg_distrib, ← mul_sum, ← sum_mul, hx, one_mul, mulVec, dotProduct]
 
 private theorem expectedCost_toSymmCostGame_false {x : M → ℝ} (hx : ∑ i : M, x i = 1) :
     G.toSymmCostGame.expectedCost (fun _ => x) false = -G.payoff₁ x x := by
@@ -319,12 +307,8 @@ private theorem isNash_inv_sum_smul {M N : Type*} [Fintype M] [Fintype N] {G : B
     (hopt₁ : ∀ i : M, 0 < x i → ∀ i' : M, (G.A *ᵥ y) i' ≤ (G.A *ᵥ y) i)
     (hopt₂ : ∀ j : N, 0 < y j → ∀ j' : N, (x ᵥ* G.B) j' ≤ (x ᵥ* G.B) j) :
     G.IsNash ((∑ i : M, x i)⁻¹ • x) ((∑ j : N, y j)⁻¹ • y) := by
-  have hx_ne : x ≠ 0 := by
-    intro h0
-    simp only [h0, Pi.zero_apply, sum_const_zero, lt_self_iff_false] at hsx_pos
-  have hy_ne : y ≠ 0 := by
-    intro h0
-    simp only [h0, Pi.zero_apply, sum_const_zero, lt_self_iff_false] at hsy_pos
+  have hx_ne : x ≠ 0 := fun h0 => hsx_pos.ne' (by simp [h0])
+  have hy_ne : y ≠ 0 := fun h0 => hsy_pos.ne' (by simp [h0])
   refine isNash_iff.2
     ⟨isBestResponse₁_iff.2 ⟨isMixedStrategy_inv_sum_smul hx_nn hx_ne, fun i hi =>
       isPureBestResponse₁_iff.2 fun i' => ?_⟩,
@@ -410,15 +394,11 @@ theorem isSymmetricNash_symmReduction_of_isNash {G : BimatrixGame M N}
   set β : ℝ := v / (u + v)
   have hα : 0 < α := div_pos hu huv
   have hβ : 0 < β := div_pos hv huv
-  have hαβ : α + β = 1 := by
-    dsimp only [α, β]
-    rw [← add_div, div_self huv.ne']
+  have hαβ : α + β = 1 := by rw [← add_div, div_self huv.ne']
   set z : M ⊕ N → ℝ := Sum.elim (α • x) (β • y)
   have hz_mix : IsMixedStrategy z := by
-    refine isMixedStrategy_iff.2 ⟨fun k => ?_, ?_⟩
-    · cases k with
-      | inl i => exact mul_nonneg hα.le (hx.nonneg i)
-      | inr j => exact mul_nonneg hβ.le (hy.nonneg j)
+    refine isMixedStrategy_iff.2 ⟨Sum.rec (fun i => mul_nonneg hα.le (hx.nonneg i))
+      (fun j => mul_nonneg hβ.le (hy.nonneg j)), ?_⟩
     · rw [Fintype.sum_sum_type]
       simp only [z, Sum.elim_inl, Sum.elim_inr, Pi.smul_apply, smul_eq_mul, ← mul_sum,
         hx.sum_eq_one, hy.sum_eq_one, mul_one, hαβ]
