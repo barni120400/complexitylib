@@ -32,7 +32,6 @@ the length of the keys and `ub` (`putCost`).
 
 * `padTake`: the first `ub` bits of a string, filled up with zeros.
 * `putUnits`, `putStrings`: write the units of one string and of several strings.
-* `putAll`: write given contents at keys.
 * `StoreBound`: every entry of a trie is a list of at most `ub` bits.
 
 ## Main results
@@ -69,11 +68,6 @@ before the string. -/
   | [], r, t => if r = [] then [t] else []
   | k :: ks, r, t =>
     if r = [] then [] else putUnits ub ks (r.drop ub) (tset k (ofBits (padTake ub r)) t)
-
-/-- Write the contents `u 0, u 1, …` at the keys. -/
-@[expose] def putAll : List (List Bool) → (ℕ → List Bool) → Tree → Tree
-  | [], _, t => t
-  | k :: ks, u, t => putAll ks (fun i => u (i + 1)) (tset k (ofBits (u 0)) t)
 
 /-- Write the strings `strs` at the lists of keys `kss`, one after the other; a missing string is
 empty. -/
