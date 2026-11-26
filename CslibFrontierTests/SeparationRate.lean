@@ -16,8 +16,9 @@ import Mathlib.Algebra.CharP.Basic
 import Mathlib.Algebra.Field.ULift
 import Mathlib.Algebra.Field.ZMod
 
-/-! Tests of the rate in the flat case (Proposition E.10, Theorem E.11) and of the main theorems
-(Theorems L.1, L.2, Corollary L.3), as a client that sees only the public statements.
+/-! Tests of the rate in the flat case (Proposition E.10, Theorem E.11), of the main theorems
+(Theorems L.1, L.2, Corollary L.3) and of their form over all fields (Theorem M.3, Corollary M.4),
+as a client that sees only the public statements.
 
 * Proposition E.10 over `ℚ` at `k = 4` and `ℓ = 200 = 100 √4`: `ℚ` is in the contracting case, or
   circuits for `f_{4,200}` have at least `2 ^ 100` nodes.

@@ -55,10 +55,11 @@ private theorem exists_isAlgClosed_charP (p : ℕ) (hp : p = 0 ∨ p.Prime) :
   · have := Fact.mk hp
     exact ⟨AlgebraicClosure (ZMod p), inferInstance, inferInstance, inferInstance⟩
 
-/-- **Paper: Theorem M.3** (lower bound over all fields, p. 61), with `c = 1 / 1600²`. For every
-`p`, zero or prime, there is `m₀` such that over every field of characteristic `p` and for every
-`m ≥ m₀`, every circuit for the Hamiltonian cycle polynomial `HC_m`, and every circuit for the
-permanent `PERM_m` if `p ≠ 2`, has more than `m ^ ((log m)^{1/3} / 1600²)` nodes. -/
+/-- **Lower bound over all fields** (Theorem M.3 of [AnthropicVPVNP2026], p. 61), with
+`c = 1 / 1600²`. For every `p`, zero or prime, there is `m₀` such that over every field of
+characteristic `p` and for every `m ≥ m₀`, every circuit for the Hamiltonian cycle polynomial
+`HC_m`, and every circuit for the permanent `PERM_m` if `p ≠ 2`, has more than
+`m ^ ((log m)^{1/3} / 1600²)` nodes. -/
 theorem size_gt_of_charP (p : ℕ) (hp : p = 0 ∨ p.Prime) : ∃ m₀ : ℕ,
     ∀ (F : Type u) [Field F] [CharP F p], ∀ m ≥ m₀, ∀ s : ℕ,
       (ComputedWithin ((hcFamily F).poly m) s →
@@ -83,8 +84,9 @@ theorem size_gt_of_charP (p : ℕ) (hp : p = 0 ∨ p.Prime) : ∃ m₀ : ℕ,
       (by rwa [map_permanent_genericMatrix])
     rwa [map_permanent_genericMatrix] at h
 
-/-- **Paper: Corollary M.4** (p. 62). Over every field, `VP` is a proper subset of `VNP`: the
-Hamiltonian cycle polynomials are in `VNP` (`hcFamily_mem_VNP`) and, by Theorem M.3, not in `VP`. -/
+/-- **VP ≠ VNP over every field** (Corollary M.4 of [AnthropicVPVNP2026], p. 62). Over every field,
+`VP` is a proper subset of `VNP`: the Hamiltonian cycle polynomials are in `VNP`
+(`hcFamily_mem_VNP`) and, by Theorem M.3, not in `VP`. -/
 theorem VP_ssubset_VNP (F : Type u) [Field F] : VP F ⊂ VNP F := by
   obtain ⟨p, _⟩ := CharP.exists F
   obtain ⟨m₀, h⟩ := size_gt_of_charP.{u} p (CharP.char_is_prime_or_zero F p).symm
