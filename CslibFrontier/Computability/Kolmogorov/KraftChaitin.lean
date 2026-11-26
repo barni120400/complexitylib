@@ -89,26 +89,9 @@ theorem PrefixDisjoint.ne {u v : List Bool} (h : PrefixDisjoint u v) : u ≠ v :
 
 /-- If `u` is prefix-disjoint with `y` and `x` extends `u`, then `x` is prefix-disjoint with `y`. -/
 theorem PrefixDisjoint.of_prefix_left {u x y : List Bool} (huy : PrefixDisjoint u y)
-    (hux : u <+: x) : PrefixDisjoint x y := by
-  constructor
-  · intro hxy
-    exact huy.1 (hux.trans hxy)
-  · intro hyx
-    rcases hux with ⟨su, rfl⟩
-    rcases hyx with ⟨sy, hsy⟩
-    have htu : (u ++ su).take u.length = u := by simp
-    have hty : (u ++ su).take y.length = y := by rw [← hsy]; simp
-    rcases le_total u.length y.length with hle | hle
-    · apply huy.1
-      calc u = (u ++ su).take u.length := htu.symm
-        _ = ((u ++ su).take y.length).take u.length := by rw [List.take_take, min_eq_left hle]
-        _ = y.take u.length := by rw [hty]
-        _ <+: y := List.take_prefix _ _
-    · apply huy.2
-      calc y = (u ++ su).take y.length := hty.symm
-        _ = ((u ++ su).take u.length).take y.length := by rw [List.take_take, min_eq_left hle]
-        _ = u.take y.length := by rw [htu]
-        _ <+: u := List.take_prefix _ _
+    (hux : u <+: x) : PrefixDisjoint x y :=
+  ⟨fun hxy => huy.1 (by trans x <;> assumption), fun hyx =>
+    (List.prefix_or_prefix_of_prefix hux hyx).elim huy.1 huy.2⟩
 
 theorem prefixDisjoint_append_false_true (u : List Bool) :
     PrefixDisjoint (u ++ [false]) (u ++ [true]) := by
@@ -357,7 +340,8 @@ private theorem weight_splitFrom (u : List Bool) (d : ℕ) :
       ring
     linarith
 
-private theorem primrec_list_replicate_bool :
+/-- `List.replicate` on `Bool` is primitive recursive. -/
+theorem primrec_list_replicate_bool :
     Primrec₂ (fun (n : ℕ) (b : Bool) => List.replicate n b) :=
   Primrec₂.mk <| (Primrec.list_map (Primrec.list_range.comp Primrec.fst)
     (Primrec.snd.comp Primrec.fst).to₂).of_eq fun ⟨n, b⟩ => by simp [List.map_const']
@@ -520,46 +504,7 @@ private theorem primrec₂_splitAtLen :
   induction avail with
   | nil => rfl
   | cons u rest ih =>
-    have hrec : ∀ L : List (List Bool),
-        List.recOn (motive := fun _ => List (List Bool) × Option (List Bool))
-          L ([], Option.none)
-          (fun b l IH => if b.length = lb.2 then
-              (l ++ (splitFrom b (lb.1 - b.length)).2, some (splitFrom b (lb.1 - b.length)).1)
-            else (b :: IH.1, IH.2)) = splitAtLen lb.1 lb.2 L := by
-      intro L
-      induction L with
-      | nil => rfl
-      | cons u' rest' ih' =>
-        have hstep' : List.recOn (motive := fun _ => List (List Bool) × Option (List Bool))
-            (u' :: rest') ([], Option.none)
-            (fun b l IH => if b.length = lb.2 then
-                (l ++ (splitFrom b (lb.1 - b.length)).2, some (splitFrom b (lb.1 - b.length)).1)
-              else (b :: IH.1, IH.2)) =
-            if u'.length = lb.2 then
-              (rest' ++ (splitFrom u' (lb.1 - u'.length)).2,
-                some (splitFrom u' (lb.1 - u'.length)).1)
-            else
-              (u' :: (List.recOn (motive := fun _ => List (List Bool) × Option (List Bool))
-                  rest' ([], Option.none)
-                  (fun b l IH => if b.length = lb.2 then
-                      (l ++ (splitFrom b (lb.1 - b.length)).2,
-                        some (splitFrom b (lb.1 - b.length)).1)
-                    else (b :: IH.1, IH.2))).1,
-                (List.recOn (motive := fun _ => List (List Bool) × Option (List Bool))
-                  rest' ([], Option.none)
-                  (fun b l IH => if b.length = lb.2 then
-                      (l ++ (splitFrom b (lb.1 - b.length)).2,
-                        some (splitFrom b (lb.1 - b.length)).1)
-                    else (b :: IH.1, IH.2))).2) := rfl
-        rw [hstep', ih']
-        rfl
-    exact hrec (u :: rest)
-
-private theorem pairwise_prefixDisjoint_append {L₁ L₂ : List (List Bool)}
-    (h₁ : L₁.Pairwise PrefixDisjoint) (h₂ : L₂.Pairwise PrefixDisjoint)
-    (h₁₂ : ∀ x ∈ L₁, ∀ y ∈ L₂, PrefixDisjoint x y) :
-    (L₁ ++ L₂).Pairwise PrefixDisjoint :=
-  List.pairwise_append.mpr ⟨h₁, h₂, h₁₂⟩
+    rw [splitAtLen, ← ih]
 
 private theorem splitAtLen_spec {ℓ b : ℕ} {avail : List (List Bool)}
     (hpair : avail.Pairwise PrefixDisjoint)
@@ -598,8 +543,8 @@ private theorem splitAtLen_spec {ℓ b : ℕ} {avail : List (List Bool)}
           · exact (hp_u_rest v hv).of_prefix_left (prefix_of_mem_splitFrom_snd hx')
         rw [List.pairwise_cons]
         refine ⟨fun v hv => ?_,
-          pairwise_prefixDisjoint_append hp_rest (List.pairwise_cons.mp hp_res).2
-            fun v hv w hw => (hp_split_rest w (List.mem_cons_of_mem _ hw) v hv).symm⟩
+          List.pairwise_append.mpr ⟨hp_rest, (List.pairwise_cons.mp hp_res).2,
+            fun v hv w hw => (hp_split_rest w (List.mem_cons_of_mem _ hw) v hv).symm⟩⟩
         rcases List.mem_append.mp hv with hv_rest | hv_res
         · exact hp_split_rest res.1 List.mem_cons_self v hv_rest
         · exact (List.pairwise_cons.mp hp_res).1 v hv_res
@@ -647,13 +592,7 @@ private theorem splitAtLen_spec {ℓ b : ℕ} {avail : List (List Bool)}
         obtain ⟨w, hw, hwx⟩ := hext x hx
         exact ((List.pairwise_cons.mp hpair).1 w hw).symm.of_prefix_left hwx |>.symm
       refine ⟨code, hcode, hlen, ?_, ?_, ?_, ?_, ?_⟩
-      · rw [List.pairwise_cons]
-        refine ⟨fun x hx => ?_, ?_⟩
-        · rcases List.mem_cons.mp hx with rfl | hx'
-          · exact (hp_u code List.mem_cons_self).symm
-          · exact (List.pairwise_cons.mp hp').1 x hx'
-        · rw [List.pairwise_cons]
-          exact ⟨fun x hx => hp_u x (List.mem_cons_of_mem _ hx), (List.pairwise_cons.mp hp').2⟩
+      · exact (List.pairwise_cons.mpr ⟨hp_u, hp'⟩).perm (.swap _ _ _) PrefixDisjoint.symm
       · simp only [List.map_cons, List.nodup_cons]
         refine ⟨fun h => ?_, hn'⟩
         obtain ⟨x, hx, hxu⟩ := List.mem_map.mp h
@@ -665,20 +604,14 @@ private theorem splitAtLen_spec {ℓ b : ℕ} {avail : List (List Bool)}
       · simp only [listWeight_cons] at hw' ⊢
         linarith
       · intro x hx
-        rcases List.mem_cons.mp hx with rfl | hx'
-        · obtain ⟨w, hw, hwc⟩ := hext _ List.mem_cons_self
-          exact ⟨w, List.mem_cons_of_mem u hw, hwc⟩
-        · rcases List.mem_cons.mp hx' with hxu | hx''
-          · subst hxu
-            exact ⟨x, List.mem_cons_self, List.prefix_rfl⟩
-          · obtain ⟨w, hw, hwx⟩ := hext x (List.mem_cons_of_mem _ hx'')
-            exact ⟨w, List.mem_cons_of_mem u hw, hwx⟩
+        by_cases hxu : x = u
+        · exact ⟨u, List.mem_cons_self, hxu ▸ List.prefix_rfl⟩
+        · obtain ⟨w, hw, hwx⟩ := hext x (by simpa [hxu] using hx)
+          exact ⟨w, List.mem_cons_of_mem u hw, hwx⟩
       · intro x hx
         rcases List.mem_cons.mp hx with rfl | hx'
         · exact Or.inl List.mem_cons_self
-        · rcases hmem' x hx' with hx_rest | hbounds
-          · exact Or.inl (List.mem_cons_of_mem u hx_rest)
-          · exact Or.inr hbounds
+        · exact (hmem' x hx').imp_left (List.mem_cons_of_mem u)
 
 private theorem two_pow_sum_range_lt (m : ℕ) : ∑ k ∈ Finset.range m, 2 ^ k < 2 ^ m := by
   induction m with
@@ -782,7 +715,8 @@ private theorem exists_length_le_of_inv_pow_le_listWeight {avail : List (List Bo
     | Option.none => (avail, Option.none)
     | some b => splitAtLen ℓ b avail
 
-private theorem primrec₂_kcStep : Primrec₂ kcStep := by
+/-- One online step of the Kraft–Chaitin allocator is primitive recursive. -/
+theorem primrec₂_kcStep : Primrec₂ kcStep := by
   have hsome : Primrec₂ fun (avail : List (List Bool)) (ℓ : ℕ) =>
       match bestLenLe? ℓ avail with
       | Option.none => (avail, Option.none)
@@ -844,7 +778,7 @@ private theorem kcStep_some_spec {avail allocs : List (List Bool)} {ℓ : ℕ}
       · exact ((List.pairwise_cons.mp hpair').1 v hv).symm
       · obtain ⟨u, hu, huv⟩ := hext v (List.mem_cons_of_mem _ hv)
         exact (hpair_cross u hu z hz').of_prefix_left huv
-    exact pairwise_prefixDisjoint_append ha_pair hc_pair hcross'
+    exact List.pairwise_append.mpr ⟨ha_pair, hc_pair, hcross'⟩
   · simp only [listWeight_cons]
     linarith
 
@@ -974,7 +908,20 @@ private theorem reqPrefix_eq_listWeight_allocs {reqs : ℕ → Option ℕ}
           subst hi_eq
           exact ⟨code, hcode_n, hlen, by rw [hallocs_succ]; exact List.mem_cons_self⟩
 
-private theorem kcCode_prefixDisjoint_of_ne {reqs : ℕ → Option ℕ}
+/-- Every request `reqs i = some ℓ` in a stream with partial dyadic Kraft sums at most `1` is
+allocated a codeword `kcCode reqs i = some w` of exact length `ℓ`. -/
+theorem exists_kcCode_eq_some_of_sum_le_one {reqs : ℕ → Option ℕ}
+    (hbound : ∀ n : ℕ, ∑ i ∈ Finset.range n,
+      (match reqs i with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ) ≤ 1)
+    {i ℓ : ℕ} (hi : reqs i = some ℓ) :
+    ∃ w, kcCode reqs i = some w ∧ w.length = ℓ := by
+  obtain ⟨w, hw, hlen, _⟩ :=
+    (reqPrefix_eq_listWeight_allocs hbound (i + 1)).2.2 i (Nat.lt_succ_self i) ℓ hi
+  exact ⟨w, hw, hlen⟩
+
+/-- Distinct steps of `kcCode` produce prefix-disjoint codewords whenever partial dyadic Kraft
+sums stay at most `1`. -/
+theorem kcCode_prefixDisjoint_of_ne {reqs : ℕ → Option ℕ}
     (hbound : ∀ n : ℕ, ∑ i ∈ Finset.range n,
       (match reqs i with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ) ≤ 1)
     {i j : ℕ} (hne : i ≠ j) {p q : List Bool}
@@ -1002,7 +949,8 @@ private theorem kcCode_prefixDisjoint_of_ne {reqs : ℕ → Option ℕ}
 
 namespace DescriptionMethod
 
-private def kcStreamEval {α : Type*} (req : ℕ → Option (ℕ × α)) (p : List Bool) : ℕ → Option α
+/-- Bounded-step evaluator searching the online Kraft–Chaitin code stream `req` for program `p`. -/
+@[expose] def kcStreamEval {α : Type*} (req : ℕ → Option (ℕ × α)) (p : List Bool) : ℕ → Option α
   | 0 => Option.none
   | t + 1 =>
     match kcStreamEval req p t with
@@ -1011,7 +959,7 @@ private def kcStreamEval {α : Type*} (req : ℕ → Option (ℕ × α)) (p : Li
       if kcCode (fun i => (req i).map Prod.fst) t = some p then (req t).map Prod.snd
       else Option.none
 
-private theorem kcStreamEval_mono {α : Type*} (req : ℕ → Option (ℕ × α)) (p : List Bool) :
+theorem kcStreamEval_mono {α : Type*} (req : ℕ → Option (ℕ × α)) (p : List Bool) :
     ∀ {m n : ℕ} {x : α}, m ≤ n → kcStreamEval req p m = some x → kcStreamEval req p n = some x := by
   intro m n x hmn hm
   induction hmn with
@@ -1019,7 +967,7 @@ private theorem kcStreamEval_mono {α : Type*} (req : ℕ → Option (ℕ × α)
   | step _ ih =>
     simp only [kcStreamEval, ih]
 
-private theorem mem_kcStreamEval_iff {α : Type*} (req : ℕ → Option (ℕ × α))
+theorem mem_kcStreamEval_iff {α : Type*} (req : ℕ → Option (ℕ × α))
     (hbound : ∀ n : ℕ, ∑ i ∈ Finset.range n,
       (match (req i).map Prod.fst with
       | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ) ≤ 1)
@@ -1046,26 +994,90 @@ private theorem mem_kcStreamEval_iff {α : Type*} (req : ℕ → Option (ℕ × 
         · exact absurd (kcCode_prefixDisjoint_of_ne hbound (by omega) hcode hjcode)
             (PrefixDisjoint.irrefl p)
     | none =>
-      by_cases hkc : kcCode (fun i => (req i).map Prod.fst) t = some p
-      · simp only [hkc, ↓reduceIte]
-        constructor
-        · intro hx
+      refine ⟨fun hx => ?_, fun ⟨i, hit, hcode, hval⟩ => ?_⟩
+      · by_cases hkc : kcCode (fun i => (req i).map Prod.fst) t = some p
+        · simp only [hkc, ↓reduceIte] at hx
           exact ⟨t, Nat.lt_succ_self t, hkc, hx⟩
-        · rintro ⟨i, hit, hcode, hval⟩
-          rcases Nat.lt_succ_iff_lt_or_eq.mp hit with hilt | rfl
-          · have : kcStreamEval req p t = some x := ih.mpr ⟨i, hilt, hcode, hval⟩
-            rw [h] at this
-            simp at this
-          · exact hval
-      · simp only [hkc, ↓reduceIte]
-        constructor
-        · simp
-        · rintro ⟨i, hit, hcode, hval⟩
-          rcases Nat.lt_succ_iff_lt_or_eq.mp hit with hilt | rfl
-          · have : kcStreamEval req p t = some x := ih.mpr ⟨i, hilt, hcode, hval⟩
-            rw [h] at this
-            simp at this
-          · exact absurd hcode hkc
+        · simp [hkc] at hx
+      · rcases Nat.lt_succ_iff_lt_or_eq.mp hit with hilt | rfl
+        · simpa [h] using ih.mpr ⟨i, hilt, hcode, hval⟩
+        · simpa [hcode] using hval
+
+/-- Joint computability of `kcStreamEval` across any uniformly computable family of request streams
+`req : β → ℕ → Option (ℕ × α)`. -/
+theorem computable_kcStreamEval {α β : Type*} [Primcodable α] [Primcodable β]
+    {req : β → ℕ → Option (ℕ × α)} (hreq : Computable₂ req) :
+    Computable₂ fun (bp : β × List Bool) (t : ℕ) => kcStreamEval (req bp.1) bp.2 t := by
+  let reqs : β → ℕ → Option ℕ := fun b i => (req b i).map Prod.fst
+  have hreqs : Computable₂ reqs :=
+    Computable₂.mk <| (Computable.option_casesOn hreq (Computable.const Option.none)
+      (Computable.option_some.comp (Computable.fst.comp Computable.snd)).to₂).of_eq fun arg => by
+        dsimp only [reqs]
+        cases req arg.1 arg.2 <;> rfl
+  have htrace : Computable₂ fun b n => kcTrace (reqs b) n :=
+    Computable₂.mk <| (Computable.nat_rec Computable.snd (Computable.const ([[]], Option.none))
+      (primrec₂_kcStep.to_comp.comp
+        (Computable.fst.comp (Computable.snd.comp Computable.snd))
+        (hreqs.comp (Computable.fst.comp Computable.fst)
+          (Computable.fst.comp Computable.snd))).to₂).of_eq fun ⟨b, n⟩ => by
+      induction n with
+      | zero => rfl
+      | succ m ih => exact congrArg (fun st => kcStep st.1 (reqs b m)) ih
+  have hkcCode : Computable₂ fun b i => kcCode (reqs b) i :=
+    Computable.snd.comp (htrace.comp Computable.fst (Computable.succ.comp Computable.snd)) |>.to₂
+  have hval : Computable₂ fun b i => (req b i).map Prod.snd :=
+    Computable₂.mk <| (Computable.option_casesOn hreq (Computable.const Option.none)
+      (Computable.option_some.comp (Computable.snd.comp Computable.snd)).to₂).of_eq
+      fun arg => by dsimp only; cases req arg.1 arg.2 <;> rfl
+  have helse : Computable fun arg : (β × List Bool) × (ℕ × Option α) =>
+      bif decide (kcCode (reqs arg.1.1) arg.2.1 = some arg.1.2) then
+        (req arg.1.1 arg.2.1).map Prod.snd else Option.none :=
+    Computable.cond
+      (Primrec.eq.decide.to_comp.comp
+        (hkcCode.comp (Computable.fst.comp Computable.fst) (Computable.fst.comp Computable.snd))
+        (Computable.option_some.comp (Computable.snd.comp Computable.fst)))
+      (hval.comp (Computable.fst.comp Computable.fst) (Computable.fst.comp Computable.snd))
+      (Computable.const Option.none)
+  have hstep : Computable₂ fun (bpt : (β × List Bool) × ℕ) (a : ℕ × Option α) =>
+      match a.2 with
+      | some x => some x
+      | Option.none =>
+        bif decide (kcCode (reqs bpt.1.1) a.1 = some bpt.1.2) then (req bpt.1.1 a.1).map Prod.snd
+        else Option.none :=
+    (Computable.option_casesOn (Computable.snd.comp Computable.snd)
+      (helse.comp (Computable.pair (Computable.fst.comp Computable.fst) Computable.snd))
+      (Computable.option_some.comp Computable.snd).to₂).of_eq fun arg => by
+        rcases arg with ⟨⟨⟨_, _⟩, _⟩, ⟨_, _ | _⟩⟩ <;> rfl
+  exact Computable₂.mk <| (Computable.nat_rec Computable.snd (Computable.const Option.none)
+    hstep).of_eq fun ⟨⟨b, p⟩, n⟩ => by
+      induction n with
+      | zero => rfl
+      | succ m ih =>
+        dsimp only at ih ⊢
+        rw [ih, kcStreamEval]
+        cases kcStreamEval (req b) p m with
+        | none => by_cases hkc : kcCode (reqs b) m = some p <;> simp [reqs, hkc]
+        | some v => rfl
+
+/-- Prefix-freeness of the halting domain of `Nat.rfindOpt (kcStreamEval req ·)` whenever partial
+dyadic Kraft sums stay at most `1`. -/
+theorem isPrefixFree_rfindOpt_kcStreamEval {α : Type*} (req : ℕ → Option (ℕ × α))
+    (hbound : ∀ n : ℕ, ∑ i ∈ Finset.range n,
+      (match (req i).map Prod.fst with
+      | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ) ≤ 1) :
+    InformationTheory.IsPrefixFree {p | (Nat.rfindOpt (kcStreamEval req p)).Dom} := by
+  intro p₁ h₁ p₂ h₂ hpref
+  obtain ⟨x₁, hx₁⟩ := Part.dom_iff_mem.mp h₁
+  obtain ⟨x₂, hx₂⟩ := Part.dom_iff_mem.mp h₂
+  obtain ⟨t₁, ht₁⟩ := (Nat.rfindOpt_mono fun hmn => kcStreamEval_mono req p₁ hmn).mp hx₁
+  obtain ⟨t₂, ht₂⟩ := (Nat.rfindOpt_mono fun hmn => kcStreamEval_mono req p₂ hmn).mp hx₂
+  obtain ⟨i₁, -, hi₁, _⟩ := (mem_kcStreamEval_iff req hbound p₁).mp ht₁
+  obtain ⟨i₂, -, hi₂, _⟩ := (mem_kcStreamEval_iff req hbound p₂).mp ht₂
+  by_contra hne
+  have hine : i₁ ≠ i₂ := by
+    rintro rfl
+    exact hne (Option.some.inj (hi₁.symm.trans hi₂))
+  exact (kcCode_prefixDisjoint_of_ne hbound hine hi₁ hi₂).1 hpref
 
 /-- **Kraft–Chaitin theorem** (finite-partial-sum form) [LiVitanyi2019,
 ShenUspenskyVereshchagin2017]: every computable sequence of requests `(ℓ_i, y_i)` whose partial
@@ -1078,96 +1090,23 @@ theorem kraftChaitin_of_sum_le_one {α : Type*} [Primcodable α] {req : ℕ → 
       M.IsPrefixFree ∧
       (∃ eval : List Bool →. α, Partrec eval ∧ ∀ p x, M.Produces p x ↔ x ∈ eval p) ∧
       ∀ i ℓ y, req i = some (ℓ, y) → ∃ p : List Bool, p.length = ℓ ∧ M.Produces p y := by
-  let reqs : ℕ → Option ℕ := fun i => (req i).map Prod.fst
   have hbound_rat : ∀ n : ℕ, ∑ i ∈ Finset.range n,
-      (match reqs i with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ) ≤ 1 := by
+      (match (req i).map Prod.fst with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ) ≤ 1 := by
     intro n
-    have hb := hbound n
-    have hcast :
-        (((∑ i ∈ Finset.range n,
-          (match reqs i with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ)) : ℚ) : ℝ) =
-          ∑ i ∈ Finset.range n,
-            (match req i with | Option.none => (0 : ℝ) | some (ℓ, _) => (2 : ℝ)⁻¹ ^ ℓ) := by
-      let f : ℕ → ℚ := fun i =>
-        match reqs i with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ
-      have hsum_cast : ∀ s : Finset ℕ, ((∑ i ∈ s, f i : ℚ) : ℝ) = ∑ i ∈ s, (f i : ℝ) := by
-        intro s
-        induction s using Finset.induction_on with
-        | empty => simp
-        | insert a s ha ih => simp [Finset.sum_insert ha, ih]
-      change ((∑ i ∈ Finset.range n, f i : ℚ) : ℝ) = _
-      rw [hsum_cast]
-      refine Finset.sum_congr rfl fun i _ => ?_
-      dsimp only [f, reqs]
-      cases req i with
-      | none => simp
-      | some a => simp
-    exact_mod_cast (hcast ▸ hb)
-  have hreqs : Computable reqs := by
-    refine (Computable.option_casesOn hreq (Computable.const Option.none)
-      (Computable.option_some.comp (Computable.fst.comp Computable.snd)).to₂).of_eq fun i => ?_
-    cases h : req i <;> simp only [reqs, h] <;> rfl
-  have htrace : Computable (kcTrace reqs) := by
-    refine (Computable.nat_rec Computable.id (Computable.const ([[]], Option.none))
-      (primrec₂_kcStep.to_comp.comp
-        (Computable.fst.comp (Computable.snd.comp Computable.snd))
-        (hreqs.comp (Computable.fst.comp Computable.snd))).to₂).of_eq fun n => ?_
-    have hrec : ∀ m : ℕ, Nat.rec ([[]], Option.none)
-        (fun y IH => kcStep (n, y, IH).2.2.1 (reqs (n, y, IH).2.1)) m = kcTrace reqs m := by
-      intro m
-      induction m with
-      | zero => rfl
-      | succ m ih =>
-        change kcStep _ (reqs m) = _
-        rw [ih]
-        rfl
-    exact hrec n
-  have hkcCode : Computable (kcCode reqs) :=
-    Computable.snd.comp (htrace.comp Computable.succ)
-  have hstream : Computable₂ (kcStreamEval req) := by
-    have hval : Computable fun i : ℕ => (req i).map Prod.snd := by
-      refine (Computable.option_casesOn hreq (Computable.const Option.none)
-        (Computable.option_some.comp (Computable.snd.comp Computable.snd)).to₂).of_eq
-        fun i => ?_
-      cases req i <;> rfl
-    have helse : Computable fun arg : (List Bool × ℕ) × (ℕ × Option α) =>
-        bif decide (kcCode reqs arg.2.1 = some arg.1.1) then
-          (req arg.2.1).map Prod.snd else Option.none :=
-      Computable.cond
-        (Primrec.eq.decide.to_comp.comp
-          (hkcCode.comp (Computable.fst.comp Computable.snd))
-          (Computable.option_some.comp (Computable.fst.comp Computable.fst)))
-        (hval.comp (Computable.fst.comp Computable.snd))
-        (Computable.const Option.none)
-    have hstep : Computable₂ fun (pt : List Bool × ℕ) (a : ℕ × Option α) =>
-        match a.2 with
-        | some x => some x
-        | Option.none =>
-          bif decide (kcCode reqs a.1 = some pt.1) then (req a.1).map Prod.snd else Option.none :=
-      (Computable.option_casesOn (Computable.snd.comp Computable.snd)
-        helse (Computable.option_some.comp Computable.snd).to₂).of_eq fun arg => by
-          rcases arg with ⟨⟨_, _⟩, ⟨_, _ | _⟩⟩ <;> rfl
-    refine (Computable.nat_rec Computable.snd (Computable.const Option.none) hstep).of_eq
-      fun pt => ?_
-    have hrec : ∀ m : ℕ, Nat.rec Option.none
-        (fun y IH => match (pt, y, IH).2.2 with
-          | some x => some x
-          | Option.none =>
-            bif decide (kcCode reqs (pt, y, IH).2.1 = some (pt, y, IH).1.1) then
-              (req (pt, y, IH).2.1).map Prod.snd
-            else Option.none) m = kcStreamEval req pt.1 m := by
-      intro m
-      induction m with
-      | zero => rfl
-      | succ m ih =>
-        change (match Nat.rec Option.none _ m with
-          | some x => some x
-          | Option.none =>
-            bif decide (kcCode reqs m = some pt.1) then (req m).map Prod.snd
-            else Option.none) = kcStreamEval req pt.1 (m + 1)
-        rw [ih]
-        cases h : kcStreamEval req pt.1 m <;> simp [kcStreamEval, h, reqs]
-    exact hrec pt.2
+    let f : ℕ → ℚ := fun i =>
+      match (req i).map Prod.fst with | Option.none => (0 : ℚ) | some ℓ => (2 : ℚ)⁻¹ ^ ℓ
+    have hcast : ((∑ i ∈ Finset.range n, f i : ℚ) : ℝ) =
+        ∑ i ∈ Finset.range n,
+          (match req i with | Option.none => (0 : ℝ) | some (ℓ, _) => (2 : ℝ)⁻¹ ^ ℓ) :=
+      (map_sum (Rat.castHom ℝ) _ _).trans <| Finset.sum_congr rfl fun i _ => by
+        dsimp only [f]
+        cases req i <;> simp
+    exact_mod_cast (hcast ▸ hbound n)
+  have hreq₂ : Computable₂ fun (_ : Unit) (i : ℕ) => req i :=
+    Computable₂.mk <| hreq.comp Computable.snd
+  have hstream : Computable₂ (kcStreamEval req) :=
+    Computable₂.mk <| (computable_kcStreamEval hreq₂).comp
+      (Computable.pair (Computable.const ()) Computable.fst) Computable.snd
   let eval : List Bool →. α := fun p => Nat.rfindOpt (kcStreamEval req p)
   have heval : Partrec eval := Partrec.rfindOpt hstream
   let M : DescriptionMethod α :=
@@ -1177,21 +1116,14 @@ theorem kraftChaitin_of_sum_le_one {α : Type*} [Primcodable α] {req : ℕ → 
     intro p x
     rw [produces_iff_exists_mem_runFor]
     exact (Nat.rfindOpt_mono fun {y m n} hmn hy => kcStreamEval_mono req p hmn hy).symm
+  have hpf_dom := isPrefixFree_rfindOpt_kcStreamEval req hbound_rat
   have hpf : M.IsPrefixFree := by
     rintro p₁ ⟨x₁, h₁⟩ p₂ ⟨x₂, h₂⟩ hpref
-    obtain ⟨t₁, ht₁⟩ := produces_iff_exists_mem_runFor.mp h₁
-    obtain ⟨t₂, ht₂⟩ := produces_iff_exists_mem_runFor.mp h₂
-    obtain ⟨i₁, -, hi₁, _⟩ := (mem_kcStreamEval_iff req hbound_rat p₁).mp ht₁
-    obtain ⟨i₂, -, hi₂, _⟩ := (mem_kcStreamEval_iff req hbound_rat p₂).mp ht₂
-    by_contra hne
-    have hine : i₁ ≠ i₂ := by
-      rintro rfl
-      exact hne (Option.some.inj (hi₁.symm.trans hi₂))
-    exact (kcCode_prefixDisjoint_of_ne hbound_rat hine hi₁ hi₂).1 hpref
+    exact hpf_dom p₁ (Part.dom_iff_mem.mpr ⟨x₁, (hprod p₁ x₁).mp h₁⟩)
+      p₂ (Part.dom_iff_mem.mpr ⟨x₂, (hprod p₂ x₂).mp h₂⟩) hpref
   refine ⟨M, hpf, ⟨eval, heval, hprod⟩, fun i ℓ y hiy => ?_⟩
-  have hreqsi : reqs i = some ℓ := by simp [reqs, hiy]
-  obtain ⟨w, hw, hlen, _⟩ :=
-    (reqPrefix_eq_listWeight_allocs hbound_rat (i + 1)).2.2 i (Nat.lt_succ_self i) ℓ hreqsi
+  obtain ⟨w, hw, hlen⟩ :=
+    exists_kcCode_eq_some_of_sum_le_one hbound_rat (i := i) (ℓ := ℓ) (by simp [hiy])
   refine ⟨w, hlen, produces_iff_exists_mem_runFor.mpr ⟨i + 1, ?_⟩⟩
   exact (mem_kcStreamEval_iff req hbound_rat w).mpr
     ⟨i, Nat.lt_succ_self i, hw, by simp [hiy]⟩
