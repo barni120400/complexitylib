@@ -10,7 +10,6 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.LenU
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Top
-import CslibFrontier.Foundations.Data.Nat.BinarySize
 import Mathlib.Algebra.Order.Group.Unbundled.Int
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
@@ -20,8 +19,9 @@ import Mathlib.Tactic.Ring
 
 The number of steps of the universal machine on a plain instance (`Uni.runLength`), and bounds
 for the length `Uni.tU` of the tapes of the automaton that simulates a machine: it is monotone
-and at most quadratic in the number of bits of an address. The bound
-`(m * n).size ≤ m.size + n.size` that the source proves here is `Nat.size_mul_le`.
+and at most quadratic in the number of bits of an address. The bounds
+`(m * n).size ≤ m.size + n.size` and `n.size ≤ lg n` that the source proves here are
+`Nat.size_mul_le` and `Nat.size_le_log_two_add_one`.
 
 ## Main definitions
 
@@ -30,7 +30,7 @@ and at most quadratic in the number of bits of an address. The bound
 ## Main results
 
 * `Uni.natCast_runLength`: the bound of `Uni.sumTo_universalMachine` is `Uni.runLength`.
-* `Uni.tU_mono`, `Uni.tU_le`, `Uni.size_le_lg`.
+* `Uni.tU_mono`, `Uni.tU_le`.
 
 ## References
 
@@ -58,8 +58,5 @@ theorem tU_le (b T L : ℕ) : tU b T L ≤ (50 + b) * ((T + 1) * (L + 1) ^ 2) :=
   unfold tU
   nlinarith [Nat.zero_le (T * L ^ 2), Nat.zero_le (b * T), Nat.zero_le (b * (T * L)),
     Nat.zero_le (b * L ^ 2), Nat.zero_le (b * (T * L ^ 2))]
-
-/-- The number of binary digits is at most `Interpreter.lg`. -/
-theorem size_le_lg (n : ℕ) : n.size ≤ Interpreter.lg n := Nat.size_le_log_two_add_one n
 
 end Cslib.Circuits.Arithmetic.Separation.Uni

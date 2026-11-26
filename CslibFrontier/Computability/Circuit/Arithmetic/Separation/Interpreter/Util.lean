@@ -14,15 +14,16 @@ import Mathlib.Tactic.Linarith
 /-!
 # Words of trees, tests and prefixes of lists
 
-The brackets of a tree in preorder (`Interpreter.wordT`, computed by `Interpreter.wordF`), the
-test whether a binary number is nonzero (`Interpreter.nzB`), and the program `Interpreter.takeB`
-that splits off a prefix of a list whose length is a binary number.
+The brackets of a tree in preorder (`Interpreter.wordT`, computed by `Interpreter.wordF`, and as
+bits `Interpreter.tbits`), the test whether a binary number is nonzero (`Interpreter.nzB`), and the
+program `Interpreter.takeB` that splits off a prefix of a list whose length is a binary number.
 
 From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `NS1.Util`.
 
 ## Main definitions
 
-* `Interpreter.wordT`, `Interpreter.wordF`, `Interpreter.nzB`, `Interpreter.takeB`.
+* `Interpreter.wordT`, `Interpreter.tbits`, `Interpreter.wordF`, `Interpreter.nzB`,
+  `Interpreter.takeB`.
 
 ## Main results
 
@@ -49,6 +50,17 @@ theorem length_wordT (t0 t1 z : Tree) : (wordT t0 t1 z).length = z.size := by
   | nil => rfl
   | cons a b iha ihb =>
     simp only [wordT, List.length_cons, List.length_append, iha, ihb, Tree.size]
+
+/-- The brackets of a tree, in preorder: 0 = empty, 1 = a node. -/
+@[expose] def tbits : Tree → List Bool
+  | .nil => [false]
+  | .cons a b => true :: (tbits a ++ tbits b)
+
+theorem length_tbits (z : Tree) : (tbits z).length = z.size := by
+  induction z with
+  | nil => rfl
+  | cons a b iha ihb =>
+    simp only [tbits, List.length_cons, List.length_append, iha, ihb, Tree.size]
 
 /-- Write the brackets of a tree in front of a list. The argument is (this program, (tree, list)).
 -/
