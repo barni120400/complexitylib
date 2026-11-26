@@ -13,7 +13,6 @@ public import Mathlib.Tactic.DeriveFintype
 public import Mathlib.Data.Fintype.Sum
 public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Data.Fintype.Basic
-public import Mathlib.Data.Finset.Sort
 
 /-!
 # The rules of the universal machine

@@ -8506,7 +8506,6 @@ public import CslibFrontier.Foundations.MeasureTheory.MeasurableSpace.Embedding
 public import CslibFrontier.Algorithms.WordRAM.OddCycleTransversal.MinSep
 public import CslibFrontier.Foundations.Data.Nat.AlignedPacking
 public import CslibFrontier.Computability.Circuit.SumOfTerms.Coverage
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.OfTree
 public import CslibFrontier.Logics.FirstOrder.Interpretation.Tuple
 public import CslibFrontier.Computability.Complexity.Problems.MonotoneCircuitValue.Completeness
 public import CslibFrontier.Foundations.Algebra.BigOperators.Fin

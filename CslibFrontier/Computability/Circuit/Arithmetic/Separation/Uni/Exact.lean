@@ -7,13 +7,10 @@ Authors: Anthropic, PBC, Aviv Bar Natan
 module
 -- upstream: candidate
 
+public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Bounds
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Top
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Vals
-public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Sort.RunVal
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Exist
 import CslibFrontier.Foundations.Data.Nat.BinarySize
-import Mathlib.Data.Nat.Size
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Ring
 
@@ -60,7 +57,7 @@ of the program have total length at most `tU … Tm …`, and its value there is
 weights of the runs. -/
 theorem val_emX_eq_sum_wts {S₀ : Series A (Zc K × Sy M K)}
     (h : IsRuns S₀ (emX P) fun x => (x.steps.map fun s => P.wt s.1).prod) {bits : List Bool}
-    (hc : Mach.Closed (σi P bits)) (R : Finset (List P.Step))
+    (R : Finset (List P.Step))
     (hR : ∀ tr, tr ∈ R ↔ Mach.GV (σi P bits) tr) {Tm : ℕ} (hTm : ∀ tr ∈ R, tr.length ≤ Tm) :
     Bdd (tU (Fintype.card (Bl K)) Tm (Nat.size (Tm + 1))) S₀ (fun _ => bits.map .bit) ∧
       val (tU (Fintype.card (Bl K)) Tm (Nat.size (Tm + 1))) S₀ (fun _ => bits.map .bit) =
@@ -76,6 +73,7 @@ theorem val_emX_eq_sum_wts {S₀ : Series A (Zc K × Sy M K)}
   refine ⟨h.bdd hle, ?_⟩
   have hex (tr : List P.Step) (htr : tr ∈ R) : ∃ x : XP P, MX x bits ∧ x.steps.map nst = tr := by
     have hgv := (hR tr).1 htr
+    have hc := closed_σi P bits
     exact exists_MX hgv fun st hst i => by
       simpa [σi] using ((Mach.gv_iff hc tr).1 hgv).le hc st hst i
   choose f hf using hex
@@ -112,7 +110,8 @@ theorem exists_runs_universalMachine (hθ : ∀ q, q ∉ supp → θ q = 0) {τ 
       (∀ tr, tr ∈ R ↔ Mach.GV (initState supp z) tr) ∧ ∑ tr ∈ R, Mach.wts tr = pv θ z ∧
         ∀ tr ∈ R, tr.length ≤ runLength supp τ z.size := by
   obtain ⟨R, h1, h2, h3⟩ := sumTo_universalMachine (supp := supp) hθ h
-  refine ⟨R, fun tr => by rw [h1, Mach.gv_iff (closed_initState z)], h2, fun tr htr => ?_⟩
+  have hc : Mach.Closed (initState supp z) := closed_σi (universalMachine θ supp) (tbits z)
+  refine ⟨R, fun tr => by rw [h1, Mach.gv_iff hc], h2, fun tr htr => ?_⟩
   have := h3 tr htr
   rw [← natCast_runLength] at this
   exact_mod_cast this
@@ -125,15 +124,15 @@ theorem exists_series_universal (hθ : ∀ q, q ∉ supp → θ q = 0) :
     ∃ S₀ : Series A (Zc RecKind × Sy (Mode (Name supp)) RecKind),
       RatLe (dimX (universalMachine θ supp)) S₀ ∧ ∃ C : ℕ, ∀ (τ : ℕ) (z : Tree), Plain θ τ z →
         Bdd (C * ((z.size + τ + 2) * lg (z.size + τ + 2) ^ 2)) S₀
-            (fun _ => (treeWord z).map .bit) ∧
+            (fun _ => (tbits z).map .bit) ∧
           val (C * ((z.size + τ + 2) * lg (z.size + τ + 2) ^ 2)) S₀
-            (fun _ => (treeWord z).map .bit) = pv θ z := by
+            (fun _ => (tbits z).map .bit) = pv θ z := by
   obtain ⟨S₀, h1, h2⟩ := runs_X (universalMachine θ supp)
   set c := 41 + 2 * nameLength supp
   set d := Nat.size c + 2
   refine ⟨S₀, h1, (50 + Fintype.card (Bl RecKind)) * (c * d ^ 2), fun τ z hz => ?_⟩
   obtain ⟨R, r1, r2, r3⟩ := exists_runs_universalMachine (supp := supp) hθ hz
-  obtain ⟨a1, a2⟩ := val_emX_eq_sum_wts h2 (closed_initState z) R r1 r3
+  obtain ⟨a1, a2⟩ := val_emX_eq_sum_wts h2 R r1 r3
   set N := z.size + τ + 2
   have hT : runLength supp τ z.size + 1 ≤ c * N := by
     have := Tree.size_pos z
@@ -142,7 +141,7 @@ theorem exists_series_universal (hθ : ∀ q, q ∉ supp → θ q = 0) :
   have hL : Nat.size (runLength supp τ z.size + 1) + 1 ≤ d * lg N := by
     have h3 : Nat.size (runLength supp τ z.size + 1) ≤ Nat.size c + lg N :=
       (Nat.size_le_size hT).trans
-        ((Nat.size_mul_le c N).trans (Nat.add_le_add_left (size_le_lg N) _))
+        ((Nat.size_mul_le c N).trans (Nat.add_le_add_left (Nat.size_le_log_two_add_one N) _))
     have hlg : 1 ≤ lg N := Nat.le_add_left 1 _
     have h4 : Nat.size c ≤ Nat.size c * lg N := Nat.le_mul_of_pos_right _ hlg
     simp only [d]
