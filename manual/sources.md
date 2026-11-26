@@ -1528,6 +1528,16 @@ Proceedings of the 23rd IEEE Conference on Computational Complexity, 149–162, 
 Section 3.1 introduces the red–blue connector with minimum inflow one.
 [Authors’ version](https://erikdemaine.org/papers/CL_Complexity2008/paper.pdf)
 
+<a id="demirovicmccreeshmcilreenordstromoertelsidorov2024"></a>
+## demirovicmccreeshmcilreenordstromoertelsidorov2024
+
+Emir Demirović, Ciaran McCreesh, Matthew J. McIlree, Jakob Nordström, Andy Oertel and Konstantin Sidorov.
+"Pseudo-Boolean Reasoning About States and Transitions to Certify Dynamic Programming and Decision Diagram Algorithms."
+*30th International Conference on Principles and Practice of Constraint Programming (CP 2024)*, LIPIcs 307, 9:1–9:21, 2024 (bibliography key `DemirovicMcCreeshMcIlreeNordstromOertelSidorov2024`). https://doi.org/10.4230/LIPIcs.CP.2024.9 ; PDF https://drops.dagstuhl.de/storage/00lipics/lipics-vol307-cp2024/LIPIcs.CP.2024.9/LIPIcs.CP.2024.9.pdf . Checked against that PDF on 2026-11-23 (SHA-256 `f5a7037a0f74d32139a4914a4c4d9a864d744283b52e2f850eccc8ecbf09ab4d`): §3.1 (pp. 9:5–9:9), the 0/1 knapsack problem as the pseudo-Boolean problem of equations (1)–(3) (minimize `∑ -pᵢ xᵢ` subject to `∑ wᵢ xᵢ ≤ W`, p. 9:5), the state variables `S^i_{w,p} ⇔ W^i_w + P^i_p ≥ 2` with `W^i_w ⇔ ∑_{j≤i} wⱼ xⱼ ≥ w` and `P^i_p ⇔ ∑_{j≤i} pⱼ xⱼ ≤ p` (equations (8)–(10), p. 9:6), the transition implications by cutting-planes addition and RUP (equations (11)–(20), p. 9:7), the maximum rule `S^i_{w,p} ⇒ S^i_{w',p'}` for `w' ≤ w`, `p' ≥ p` (equation (21), pp. 9:7–9:8), the at-least-one constraints (equations (22)–(23), p. 9:8), the conclusion from a solution-improving constraint (p. 9:8), layer deletion (p. 9:8) and Algorithm 1 (p. 9:9).
+The section describes a method and states no theorem; the paper does no formal verification.
+Formalized in [`PseudoBoolean/Knapsack.lean`](../CslibFrontier/Logics/Propositional/PseudoBoolean/Knapsack.lean): the encoding and its correctness (`Cslib.Logic.PL.VeriPB.Knapsack.holds_capacity_iff`, `Cslib.Logic.PL.VeriPB.Knapsack.eval_objective`), the guarantee of any accepted proof (`Cslib.Logic.PL.VeriPB.Knapsack.bounds_of_checkRed`, `Cslib.Logic.PL.VeriPB.Knapsack.isGreatest_of_checkRed`) and a dynamic program writing such proofs (`Cslib.Logic.PL.VeriPB.Knapsack.certify`, whose acceptance is checked per run, not proved), which sends a dominated successor's transition directly to its dominating state instead of deriving equation (21), as the paper allows on p. 9:8.
+The reification combinators of §2.2, and an unsaturated integer cutting-planes guard lifting after Lemma 2 and Theorem 1 (Appendix A.2; the saturated pseudo-Boolean version with RUP is open in #7222), are in [`PseudoBoolean/Reification.lean`](../CslibFrontier/Logics/Propositional/PseudoBoolean/Reification.lean) and [`CuttingPlanes/Reification.lean`](../CslibFrontier/Logics/Propositional/CuttingPlanes/Reification.lean).
+
 <a id="desimone90"></a>
 ## desimone90
 
@@ -5451,6 +5461,14 @@ Christopher Patton and Tianyu Zhang.
 *vole-mole: Post-quantum anonymous credentials based on UOV and VOLE-in-the-Head* (`VoleMole2026`), GitHub repository https://github.com/cloudflareresearch/vole-mole at [commit 87af6871f49d29f9613ee893485c50566ca7d620](https://github.com/cloudflareresearch/vole-mole/tree/87af6871f49d29f9613ee893485c50566ca7d620) (2026-11-18).
 Checked firsthand on 2026-11-24: `src/keccak/segmented.hpp` (lines 1–35) instantiates the segmented Keccak-p[800, 12] constraint gadget at `d_zk = 9` (`max(2^3, 3^2) = 9`), `src/act/spend.hpp` specifies `SPEND_WITNESS_BYTES` offsets across lines 92–108 (`ℓ' = 6784`, `C' = 12283`) and invokes `ACT_SPEND_COMBINE_DST` (line 383), `src/dst.hpp` (line 44) defines `ACT_SPEND_COMBINE_DST = make_dst("rata", act::VERSION, 'l', '0')` (trailing ASCII byte `'0'` / `0x30`, also hashed inside the `Combination` constructor for batching `m_uov` constraints in `src/uov/circuit.hpp:63–64`; note `vole-mole`'s other 7-byte tags mostly share trailing `0x30` via distinct penultimate purpose bytes outside the single-trailing-byte model), `src/voleith.hpp` (line 126) extends the FAEST v3 domain-separator convention up to `domain_separator = 4` (`8 + 4 = 12`), and `src/act/issue.hpp:121`, `src/act/spend.hpp:289`, `src/ihat/circuit.hpp:33`, and `src/pomfrit/redeem.hpp:75` instantiate leaf hashing with `faest::leaf_hash::aes_ctr` (`EM128F::leaf_hash_v`).
 [HigherDegreeCheck.lean](../CslibFrontier/Crypto/Protocols/VOLE/HigherDegreeCheck.lean) cites the algebraic parameters and models only single-shot conditional Round-2+3 algebraic checks (it does not formalize full `vole-mole` `ZKHash`/`VOLEHash` or Fiat–Shamir soundness); [PRGLeafSeparation.lean](../CslibFrontier/Crypto/Protocols/VOLE/PRGLeafSeparation.lean) cites the `leaf_hash::aes_ctr` instantiation for why PRG-based leaf commitments do not yield a plain-ROM query-log extractor.
+
+<a id="volk26"></a>
+## volk26
+
+Ben Lee Volk.
+*A Lower Bound for Read-Once Parity Branching Programs* (`Volk2026`). arXiv:2607.05944v1, 2026. https://arxiv.org/abs/2607.05944v1 . Read in the arXiv HTML rendering of v1 on 2026-11-25 UTC: Section 1.1 with Definition 1.1 (a directed acyclic multigraph with a source and a target, edges labelled by `0`, `1`, `x_i` or `¬x_i`, acceptance when an odd number of source-to-target paths are consistent with the input, syntactic read-once on every source-to-target path, size the number of edges) and Section 2 with Claim 2.6 (replacing each `¬x_i` by `1 + x_i` turns a read-once parity program into a syntactically multilinear algebraic branching program over `F₂`).
+[ReadOnceParity.lean](../CslibFrontier/Computability/BranchingProgram/ReadOnceParity.lean) formalizes Definition 1.1 on the nondeterministic branching programs `NBP` with parity acceptance: rectifiers are the edges labelled `1`, contacts the literals, and edges labelled `0` are omitted since deleting them changes no path count and lowers the size; `NBP.wireCount` is the size and `NBP.IsReadOnce` the read-once condition.
+The cancellation of parallel edges in pairs (`NBP.reduce`, `NBP.wireCount_reduce_le`) is not from this paper; Claim 2.6 and the lower bound (Theorem 1.2) are not formalized.
 
 <a id="vonstengel07"></a>
 ## vonstengel07
