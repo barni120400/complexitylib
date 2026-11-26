@@ -22,14 +22,15 @@ commutative semiring, `VP K ⊂ VNP K` holds exactly when `Statement.VP K ⊂ St
 field (Corollary M.4, `Cslib.Circuits.Arithmetic.VP_ssubset_VNP`), the vp-vnp statement itself
 follows (`separation`).
 
-The models differ. Here a circuit is a straight-line program whose size counts its gates but not
-its inputs, its variables are `Fin n`, and sizes are bounded by `PolynomiallyBounded`. In vp-vnp a
+The models differ. Here a circuit is a straight-line program whose size counts its gates but not its
+inputs, its variables are `Fin n`, and sizes are bounded by `PolynomiallyBounded`. In vp-vnp a
 circuit is a list of polynomials whose length counts the variables too, its variables form any
-finite type, and sizes are bounded by `n ^ a + a`. None of this changes the classes: a circuit of
-size `s` gives a list of any length from `n + s` on (`computes_of_circuit`), a list of length `s`
-gives a circuit of size at most `s` (`exists_circuit_of_computes`), and renaming variables along
-bijections preserves membership. So the translations `toS` and `ofS` of families preserve VP and
-VNP.
+finite type, and sizes are bounded by `n ^ a + a`. None of this changes the classes: a polynomial
+computed within `s` nodes is an entry of a list of length `s` in vp-vnp's sense (the library's
+`ComputedWithin.exists_steps`, after raising the bound of `mem_VP_iff` to `n ^ a + a` with
+`ComputedWithin.mono`), a list of length `s` gives a circuit of size at most `s`
+(`exists_circuit_of_computes`), and renaming variables along bijections preserves membership. So the
+translations `toS` and `ofS` of families preserve VP and VNP.
 -/
 
 open MvPolynomial Cslib Cslib.Circuits Cslib.Circuits.Arithmetic
@@ -124,74 +125,6 @@ theorem exists_circuit_of_computes {s : ℕ} {p : MvPolynomial (Fin n) K}
     ((key s le_rfl).mono le_rfl (Set.singleton_subset_iff.mpr ⟨k₀, hk₀, rfl⟩) le_rfl)
   exact ⟨c, by simp [hc, F], hs⟩
 
-/-! ### From circuits to lists -/
-
-/-- The list of a program: the `n` variables, then the polynomials at its gates, then zeros. -/
-noncomputable def gateList : {g : ℕ} → Program (arithSignature K) n g → ℕ → MvPolynomial (Fin n) K
-  | _, .empty, k => if h : k < n then X ⟨k, h⟩ else 0
-  | _, @Program.gate _ _ g P line, k => if k = n + g then
-      line.eval (arithInterpretationWith K C) X (P.eval (arithInterpretationWith K C) X)
-    else gateList P k
-
-/-- The place of a wire in `gateList`. -/
-def wireIndex {g : ℕ} : Wire n g → ℕ
-  | .input i => i
-  | .gate j => n + j
-
-theorem wireIndex_lt {g : ℕ} (w : Wire n g) : wireIndex w < n + g := by
-  cases w <;> simp only [wireIndex] <;> omega
-
-theorem gateList_wireIndex : ∀ {g : ℕ} (P : Program (arithSignature K) n g) (w : Wire n g),
-    gateList P (wireIndex w) = P.trace (arithInterpretationWith K C) X w
-  | _, .empty, .input i => by simp [gateList, wireIndex, Program.trace]
-  | _, .empty, .gate j => j.elim0
-  | _, @Program.gate _ _ g P line, w => by
-    induction w using Wire.lastCases with
-    | last => simp [gateList, wireIndex, Program.trace]
-    | castSucc w =>
-      have : wireIndex w.castSucc = wireIndex w := by cases w <;> rfl
-      rw [Program.trace_gate_castSucc, ← gateList_wireIndex P w, gateList, this,
-        ite_eq_right (wireIndex_lt w).ne]
-
-/-- Below the zeros, every entry of the list of a program is a step. -/
-theorem gateList_step : ∀ {g : ℕ} (P : Program (arithSignature K) n g),
-    ∀ k < n + g, Step (gateList P) k
-  | _, .empty, k, hk => .inl ⟨⟨k, by omega⟩, by simp [gateList, show k < n by omega]⟩
-  | _, @Program.gate _ _ g P line, k, hk => by
-    have e {i} (hi : i < n + g) : gateList (P.gate line) i = gateList P i := by
-      simp [gateList, hi.ne]
-    obtain hk | rfl := (show k < n + g ∨ k = n + g by omega)
-    · exact step_rename id (gateList_step P k hk) fun i hi => by rw [rename_id_apply, e (by omega)]
-    · have hw (w : Wire n g) : Wire.elim X (P.eval (arithInterpretationWith K C) X) w =
-          gateList (P.gate line) (wireIndex w) := by
-        rw [e (wireIndex_lt w), gateList_wireIndex]
-        rfl
-      have hl : gateList (P.gate line) (n + g) =
-          line.eval (arithInterpretationWith K C) X (P.eval (arithInterpretationWith K C) X) := by
-        simp [gateList]
-      obtain ⟨op, wires⟩ := line
-      cases op with
-      | add => exact .inr <| .inr <| .inl ⟨_, wireIndex_lt (wires 0), _, wireIndex_lt (wires 1),
-          by rw [hl, ← hw, ← hw]; rfl⟩
-      | mul => exact .inr <| .inr <| .inr ⟨_, wireIndex_lt (wires 0), _, wireIndex_lt (wires 1),
-          by rw [hl, ← hw, ← hw]; rfl⟩
-      | const a => exact .inr <| .inl ⟨a, by rw [hl]; rfl⟩
-
-theorem gateList_eq_zero : ∀ {g : ℕ} (P : Program (arithSignature K) n g) {k : ℕ},
-    n + g ≤ k → gateList P k = 0
-  | _, .empty, k, hk => by simp [gateList, show ¬ k < n by omega]
-  | _, @Program.gate _ _ g P line, k, hk => by
-    simp [gateList, show k ≠ n + g by omega, gateList_eq_zero P (show n + g ≤ k by omega)]
-
-/-- A circuit with `s` gates in `n` variables gives a list of any length from `n + s` on. -/
-theorem computes_of_circuit (c : Circuit (arithSignature K) n 1) {t : ℕ} (ht : n + c.size ≤ t) :
-    Statement.Computes (c.polynomial 0) t := by
-  refine ⟨gateList c.program, fun k _ => ?_, wireIndex (c.outputs 0),
-    (wireIndex_lt _).trans_le ht, gateList_wireIndex _ _⟩
-  by_cases hk : k < n + c.size
-  · exact gateList_step _ k hk
-  · exact .inr <| .inl ⟨0, by rw [gateList_eq_zero _ (by omega), C_0]⟩
-
 /-! ### Translating families -/
 
 /-- A cslib-frontier family as a vp-vnp family, with variables `Fin (f.vars n)`. -/
@@ -205,14 +138,13 @@ noncomputable abbrev ofS (g : Statement.Family K) : PolynomialFamily K where
   poly n := rename (Fintype.equivFin (g.vars n)) (g.poly n)
 
 theorem toS_mem_VP {f : PolynomialFamily K} (hf : f ∈ VP K) : toS f ∈ Statement.VP K := by
-  obtain ⟨⟨hv, hd⟩, c, hs, hc⟩ := hf
+  obtain ⟨⟨hv, hd⟩, b, hb, hc⟩ := mem_VP_iff.1 hf
   obtain ⟨a, ha⟩ := exists_le_pow_add
-    (f := fun n => f.vars n + (c n).size + (f.poly n).totalDegree) ((hv.add hs).add hd)
+    (f := fun n => f.vars n + b n + (f.poly n).totalDegree) ((hv.add hb).add hd)
   refine ⟨a, fun n => ?_⟩
   have := ha n
   refine ⟨by rw [Fintype.card_fin]; omega, show (f.poly n).totalDegree ≤ _ by omega, ?_⟩
-  exact (hc n ▸ computes_of_circuit (c n) (t := n ^ a + a) (by omega) :
-    Statement.Computes (f.poly n) _)
+  exact ((hc n).mono (show b n ≤ n ^ a + a by omega)).exists_steps
 
 theorem mem_VP_of_toS {f : PolynomialFamily K} (hf : toS f ∈ Statement.VP K) : f ∈ VP K := by
   obtain ⟨a, ha⟩ := hf
@@ -276,7 +208,7 @@ theorem ssubset_iff {K : Type u} [CommSemiring K] :
     exact ⟨VP_subset_VNP, fun hsub => hnot fun g hg => mem_VP_of_ofS (hsub (ofS_mem_VNP hg))⟩
 
 /-- `VP ⊂ VNP` over every field, stated with cslib-frontier's `VP` and `VNP`, is equivalent to
-`Statement.Separation` of the vp-vnp development. Neither side is proved here. -/
+`Statement.Separation` of the vp-vnp development. -/
 theorem separation_iff :
     (∀ (K : Type u) [Field K], VP K ⊂ VNP K) ↔ Statement.Separation.{u} :=
   forall_congr' fun _ => forall_congr' fun _ => ssubset_iff
