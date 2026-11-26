@@ -31,6 +31,7 @@ From *VP ≠ VNP over every field* [AnthropicVPVNP2026], module `Nc.Uni.Trace`.
 
 ## Main results
 
+* `Uni.closed_σi`: the initial configuration is closed.
 * `Uni.cols_ext`, `Uni.unb_proj`, `Uni.unb_bv`: column-slice representation lemmas.
 * `Uni.chain_len`, `Uni.chain_val`: length and value invariants along matched chains.
 * `Uni.MX.len_cn`, `Uni.MX.len`, `Uni.MX.length_eq`, `Uni.MX.vals`, `Uni.MX.size_eq`.
@@ -128,6 +129,14 @@ variable {A M K : Type}
 /-- Initial configuration of pointer machine `P` on input `bits`. -/
 @[expose] def σi (P : Mach A M K) (bits : List Bool) : Mach.State M K :=
   ⟨P.m0, fun _ => 0, [(P.kN, ![0, 0, 0, 0])], 0, bits⟩
+
+/-- The initial configuration is closed: its counter, its registers and the entries of its only
+record `(P.kN, ![0, 0, 0, 0])` are `0`. -/
+theorem closed_σi (P : Mach A M K) (bits : List Bool) : Mach.Closed (σi P bits) := by
+  refine ⟨fun c hc i => ?_, fun j hj => ⟨_, List.mem_singleton_self _, (Nat.le_zero.1 hj).symm⟩,
+    fun _ => le_rfl⟩
+  rw [List.mem_singleton.1 hc]
+  fin_cases i <;> exact le_rfl
 
 /-- Key-letter content list of an `L`-bit numeric record `ρ : Rec K`. -/
 @[expose] def cN (L : ℕ) (ρ : Rec K) : List (Bl K) := cont ρ.1 (unb L ρ.2)
