@@ -191,12 +191,8 @@ theorem exists_epsAuction_program :
     rw [clientState_width w] at hmem
     rw [clientResult_width w] at hhalt₀
     dsimp only [wordWords] at hhalt₀
-    have hymem : y.mem =
-        ((Memory.spec 0).clientState (Memory.State.init inst.encode)
-          (epsMainProg (inst.n, inst.eps))).mem :=
-      congrArg Memory.State.mem hmem
     refine ⟨m + 1, ⟨⟨pc, y⟩, m, _, runs_stripRand hruns₀, step_stripRand_of_halt hhalt₀,
-      hymem ▸ hout, hfit_out, rfl⟩, ?_⟩
+      (show y.mem = _ from congrArg Memory.State.mem hmem) ▸ hout, hfit_out, rfl⟩, ?_⟩
     have hp := eps_poly_bound inst.n C inst.eps hε
     have hmul : C₁ * (memoryCost (epsMainProg (inst.n, inst.eps))
         (Memory.State.init inst.encode) + 0 + 1) ≤
@@ -240,9 +236,8 @@ theorem exists_scaledAuction_program :
       scaledSolveProg_spec inst hC hw
     have hv : (Memory.spec w).ValidHistory (Memory.State.init inst.encode)
         ((Memory.spec w).clientHistory (Memory.State.init inst.encode)
-          (scaledMainProg inst.n)) := by
-      unfold scaledMainProg
-      exact validHistory_bind_step hv_s (validHistory_pure w _ _)
+          (scaledMainProg inst.n)) :=
+      validHistory_bind_step hv_s (validHistory_pure w _ _)
     have hmc : memoryCost (scaledMainProg inst.n) (Memory.State.init inst.encode) ≤
         (inst.n * ((inst.n + 1) * C + 1) + 1) * (4 * inst.n + 6) +
           3 * (inst.n * inst.n) + 7 * inst.n + 2 := by
@@ -254,28 +249,14 @@ theorem exists_scaledAuction_program :
     rw [clientState_width w] at hmem
     rw [clientResult_width w] at hhalt₀
     dsimp only [wordWords] at hhalt₀
-    have hymem : y.mem =
-        ((Memory.spec 0).clientState (Memory.State.init inst.encode)
-          (scaledMainProg inst.n)).mem :=
-      congrArg Memory.State.mem hmem
-    have hres_eq : (Memory.spec 0).clientResult (Memory.State.init inst.encode)
-        (scaledMainProg inst.n) =
-        ((Memory.spec 0).clientResult (Memory.State.init inst.encode)
-          (scaledSolveProg inst.n)).outBase := by
-      unfold scaledMainProg
-      rw [clientResult_bind, clientResult_pure]
-    have hst_eq : (Memory.spec 0).clientState (Memory.State.init inst.encode)
-        (scaledMainProg inst.n) =
-        (Memory.spec 0).clientState (Memory.State.init inst.encode)
-          (scaledSolveProg inst.n) := by
-      unfold scaledMainProg
-      rw [clientState_bind, clientState_pure]
+    unfold scaledMainProg at hmem hhalt₀
+    rw [clientState_bind, clientState_pure] at hmem
+    rw [clientResult_bind, clientResult_pure] at hhalt₀
     refine ⟨m + 1, ⟨⟨pc, y⟩, m, _, runs_stripRand hruns₀, step_stripRand_of_halt hhalt₀,
-      ?_, ?_, rfl⟩, scaled_steps_le hsteps hmc⟩
-    · rw [hymem, hst_eq, hres_eq]; exact hout_s
-    · rw [hres_eq, inst.length_assignment]
-      rw [hws_n] at hfit_ws
-      exact hfit_ws.of_le (Nat.le_succ _)
+      (show y.mem = _ from congrArg Memory.State.mem hmem) ▸ hout_s, ?_, rfl⟩,
+      scaled_steps_le hsteps hmc⟩
+    · rw [inst.length_assignment]
+      exact (hws_n ▸ hfit_ws).of_le (Nat.le_succ _)
   refine ⟨r, 34 * C₁ + 1, by omega, prog, not_readsWidth_stripRand hnw₀,
     isRandFree_stripRand prog₀, @hmain, fun inst w hw _ =>
       hmain inst inst.sub_le_rowSpread hw⟩
@@ -309,19 +290,12 @@ theorem exists_scaledMinCost_program :
     obtain ⟨hin, hfit_len, hlayout, hk⟩ := init_words_spec inst hw
     obtain ⟨hsafe_s, hv_s, hmc_s, hws_s, hws_n, hws_sc, hM_le, hM_ge, hC_s, hout_s, hfit_ws⟩ :=
       scaledSolveProg_spec inst hC hw
-    let ws := (Memory.spec 0).clientResult (Memory.State.init inst.encode)
-      (scaledSolveProg inst.n)
-    let s_after := (Memory.spec 0).clientState (Memory.State.init inst.encode)
-      (scaledSolveProg inst.n)
     obtain ⟨hsafe_sum, hv_sum, hmc_sum, hres_sum⟩ :=
-      sumScaledCostProg_spec inst ws s_after hws_s hws_n hws_sc hM_le hM_ge hC_s hout_s hw hfit_ws
-    have hsafe : ScaledMinCostSafe w inst.n (Memory.State.init inst.encode) :=
-      ⟨hsafe_s, hsafe_sum⟩
+      sumScaledCostProg_spec inst _ _ hws_s hws_n hws_sc hM_le hM_ge hC_s hout_s hw hfit_ws
     have hv : (Memory.spec w).ValidHistory (Memory.State.init inst.encode)
         ((Memory.spec w).clientHistory (Memory.State.init inst.encode)
-          (scaledMinCostMainProg inst.n)) := by
-      unfold scaledMinCostMainProg
-      exact validHistory_bind_step hv_s hv_sum
+          (scaledMinCostMainProg inst.n)) :=
+      validHistory_bind_step hv_s hv_sum
     have hmc : memoryCost (scaledMinCostMainProg inst.n) (Memory.State.init inst.encode) ≤
         (inst.n * ((inst.n + 1) * C + 1) + 1) * (4 * inst.n + 6) +
           3 * (inst.n * inst.n) + 7 * inst.n + 2 := by
@@ -329,15 +303,11 @@ theorem exists_scaledMinCost_program :
       rw [memoryCost_bind']
       exact (Nat.add_le_add hmc_s hmc_sum).trans (by omega)
     obtain ⟨y, m, hruns₀, hhalt₀, _, _, hsteps⟩ :=
-      he w inst.n inst.encode hlayout hk hfit_len hin hsafe hv
+      he w inst.n inst.encode hlayout hk hfit_len hin ⟨hsafe_s, hsafe_sum⟩ hv
     rw [clientResult_width w] at hhalt₀
     dsimp only [wordWords] at hhalt₀
-    have hres_eq : (Memory.spec 0).clientResult (Memory.State.init inst.encode)
-        (scaledMinCostMainProg inst.n) = inst.encodedMinCost := by
-      unfold scaledMinCostMainProg
-      rw [clientResult_bind]
-      exact hres_sum
-    rw [hres_eq] at hhalt₀
+    unfold scaledMinCostMainProg at hhalt₀
+    rw [clientResult_bind, hres_sum] at hhalt₀
     exact ⟨m + 1, ⟨⟨pc, y⟩, m, runs_stripRand hruns₀, step_stripRand_of_halt hhalt₀, rfl⟩,
       scaled_steps_le hsteps hmc⟩
   refine ⟨r, 34 * C₁ + 1, by omega, prog, not_readsWidth_stripRand hnw₀,

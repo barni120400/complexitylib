@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.ParseLoop
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
 
 /-!
 # The program of an accelerator
@@ -138,29 +139,11 @@ private theorem treeF_gives (m : ℕ) (z : Tree) :
   rw [e]
   omega
 
-/-- The brackets of a tree, in preorder: 0 = empty, 1 = a node. -/
-@[expose] def tbits : Tree → List Bool
-  | .nil => [false]
-  | .cons a b => true :: (tbits a ++ tbits b)
-
-theorem length_tbits (z : Tree) : (tbits z).length = z.size := by
-  induction z with
-  | nil => rfl
-  | cons a b iha ihb =>
-    simp only [tbits, List.length_cons, List.length_append, iha, ihb, Tree.size]
-
 /-- The letter as a tree. -/
 @[expose] def ltr : Option Bool → Tree
   | some false => lt0
   | some true => lt1
   | none => lt2
-
-/-- The brackets of a tree with the letters `t false` and `t true` are the letters of its bits. -/
-theorem wordT_eq_map_tbits (t : Bool → Tree) (z : Tree) :
-    wordT (t false) (t true) z = (tbits z).map t := by
-  induction z with
-  | nil => rfl
-  | cons a b iha ihb => simp only [wordT, tbits, List.map_cons, List.map_append, iha, ihb]
 
 theorem wordT_eq (z : Tree) : wordT lt0 lt1 z ++ [lt2] = ((tbits z).map some ++ [none]).map ltr :=
   by rw [List.map_append, List.map_map, ← wordT_eq_map_tbits]; rfl
@@ -193,9 +176,10 @@ private theorem ltr_cases (o : Option (Option Bool)) :
   · exact Or.inr ⟨[true, false], rfl, rfl⟩
   · exact Or.inr ⟨[true, true], rfl, rfl⟩
 
-/-- The one-hot code of a word, with one letter `none` at the end. -/
+/-- The one-hot code of a word, with one letter `none` at the end, as `0`/`1` values: the tape's
+`Tape.wordCode` read in `R`. -/
 @[expose] def codeB (R : Type) [CommRing R] (N : ℕ) (w : List Bool) : Fin N × Option Bool → R :=
-  fun q => if (w.map some ++ [none])[(q.1 : ℕ)]? = some q.2 then 1 else 0
+  fun q => if Tape.wordCode N w q then 1 else 0
 
 /-- The weight of a letter at a place. -/
 private def lamK {N : ℕ} (lam : Fin N × Option Bool → R) (i : ℕ) (o : Option (Option Bool)) : R :=
@@ -325,11 +309,11 @@ theorem accF_kv {M m N d s : ℕ} {p : MvPolynomial (Fin N × Option Bool) R}
     rw [← Finset.sum_subset (Finset.range_mono hNm), Finset.sum_range, Fintype.sum_prod_type]
     · refine Finset.sum_congr rfl fun i _ => ?_
       rcases Option.eq_none_or_eq_some (((tbits z).map some ++ [none])[(i : ℕ)]?) with hc | ⟨γ, hc⟩
-      · simp [codeB, hc, lamK]
+      · simp [codeB, Tape.wordCode, hc, lamK]
       · rw [Finset.sum_eq_single γ]
-        · simp [codeB, hc, lamK, i.2]
+        · simp [codeB, Tape.wordCode, hc, lamK, i.2]
         · intro c _ hne
-          simp only [codeB, hc, Option.some.injEq]
+          simp only [codeB, Tape.wordCode, hc, Option.some.injEq, decide_eq_true_eq]
           rw [ite_eq_right hne.symm, mul_zero]
         · simp
     · intro i _ hi

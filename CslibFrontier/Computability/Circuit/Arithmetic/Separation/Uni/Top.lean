@@ -10,28 +10,28 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.EvalCore
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Accel
+public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Util
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.EvalRun
 import Mathlib.Algebra.Order.Group.Unbundled.Int
-import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.Linarith
 
 /-!
 # The universal machine: input and result
 
 The input of the universal machine is the word of a tree `z`, its brackets in preorder
-(`Uni.treeWord`). The machine reads the word and builds the tree in its heap, with a frame for
+(`Interpreter.tbits`). The machine reads the word and builds the tree in its heap, with a frame for
 every subtree that is being read (`Uni.sumTo_parse`), and then evaluates the formula with the
 code `z.hd` at `z.tl`. For a plain instance `z` the sum of the weights of its runs is the plain
 sum `Interpreter.pv θ z`, and the runs are short (`Uni.sumTo_universalMachine`).
 
 ## Main definitions
 
-* `Uni.treeWord`, `Uni.ParsesReturns`, `Uni.initState`.
+* `Uni.ParsesReturns`, `Uni.initState`.
 
 ## Main results
 
 * `Uni.sumTo_parse`: reading a tree.
-* `Uni.wellFormed_initState`, `Uni.closed_initState`.
+* `Uni.wellFormed_initState`.
 * `Uni.plainValue_one`: the sum `Uni.plainValue` with the factors `1` is `Interpreter.pval`.
 * `Uni.sumTo_universalMachine`: the universal machine is exact.
 
@@ -45,15 +45,10 @@ public section
 
 namespace Cslib.Circuits.Arithmetic.Separation.Uni
 
-open Interpreter (Tree Fm Run Plain pv pval evl)
+open Interpreter (Tree Fm Run Plain pv pval evl tbits)
 
 variable {A : Type} [CommRing A] {θ : List Bool → A} {supp : Finset (List Bool)}
   {σ : Config supp} {H : List (Rec RecKind)} {k : ℕ} {S : A} {B : ℤ}
-
-/-- The word of a tree: brackets in preorder. -/
-@[expose] def treeWord : Tree → List Bool
-  | .nil => [false]
-  | .cons a b => true :: (treeWord a ++ treeWord b)
 
 /-- What happens when a tree `o` that has been read is returned to the frame at the
 address `k`: the run sum is `S`, within `B` steps. -/
@@ -99,7 +94,7 @@ private theorem sumTo_read {b : Bool} {rest : List Bool} (hσ : InMode σ .parse
 /-- **Reading a tree**: from the mode `parse` with the frame at register `1`, the machine reads
 the word of `a`, builds `a` in the heap and returns it to the frame, in `3 * a.size` steps. -/
 theorem sumTo_parse (a : Tree) : ∀ (B : ℤ) (H : List (Rec RecKind)) (k : ℕ) (σ : Config supp)
-    (rest : List Bool), InMode σ .parse H (treeWord a ++ rest) → σ.regs 1 = k →
+    (rest : List Bool), InMode σ .parse H (tbits a ++ rest) → σ.regs 1 = k →
     ParsesReturns θ supp H k rest a S B →
     Mach.SumTo (universalMachine θ supp) σ S (B + 3 * a.size) := by
   induction a with
@@ -108,7 +103,7 @@ theorem sumTo_parse (a : Tree) : ∀ (B : ℤ) (H : List (Rec RecKind)) (k : ℕ
     refine sumTo_read hσ fun h₁ => .mono (h _ h₁ hk hσ.wf.r0) (by simp only [Tree.size]; omega)
   | cons a b iha ihb =>
     intro B H k σ rest hσ hk h
-    rw [treeWord, List.cons_append, List.append_assoc] at hσ
+    rw [tbits, List.cons_append, List.append_assoc] at hσ
     refine sumTo_read hσ fun h₁ => ?_
     refine .mono (iha (B + 3 * b.size + 2) _ _ _ _ h₁.self rfl fun σ₂ h₂ hk₂ hv => ?_) (by
       simp only [Tree.size]
@@ -122,17 +117,11 @@ theorem sumTo_parse (a : Tree) : ∀ (B : ℤ) (H : List (Rec RecKind)) (k : ℕ
 variable (supp) in
 /-- The first state: the mode `start₀`, the empty record, and the word of `z` as the input. -/
 @[expose] def initState (z : Tree) : Config supp :=
-  ⟨.start₀, fun _ => 0, [(.nil, ![0, 0, 0, 0])], 0, treeWord z⟩
+  ⟨.start₀, fun _ => 0, [(.nil, ![0, 0, 0, 0])], 0, tbits z⟩
 
 theorem wellFormed_initState (z : Tree) : WellFormed (initState supp z) :=
   ⟨List.mem_singleton_self _, fun c hc => by rw [List.mem_singleton.1 hc]; exact le_rfl,
     fun c hc c' hc' _ => by rw [List.mem_singleton.1 hc, List.mem_singleton.1 hc'], rfl⟩
-
-theorem closed_initState (z : Tree) : Mach.Closed (initState supp z) := by
-  refine ⟨fun c hc i => ?_, fun j hj => ⟨_, List.mem_singleton_self _, (Nat.le_zero.1 hj).symm⟩,
-    fun _ => le_rfl⟩
-  rw [List.mem_singleton.1 hc]
-  fin_cases i <;> exact le_rfl
 
 /-- The sum over runs that name no constants, with the factors `1`, is the plain value. -/
 theorem plainValue_one {l : List (Run A)} (h : ∀ r ∈ l, r.bill = []) :
@@ -147,7 +136,7 @@ theorem sumTo_universalMachine (hθ : ∀ q, q ∉ supp → θ q = 0) {τ : ℕ}
     (h : Plain θ τ z) : Mach.SumTo (universalMachine θ supp) (initState supp z) (pv θ z)
       (3 * z.size + codeCost supp * τ + 10) := by
   have hC := codeCost_ge (supp := supp)
-  have h₀ : InMode (initState supp z) .start₀ (initState supp z).heap (treeWord z ++ []) :=
+  have h₀ : InMode (initState supp z) .start₀ (initState supp z).heap (tbits z ++ []) :=
     ⟨wellFormed_initState z, rfl, List.Subset.refl _, (List.append_nil _).symm⟩
   refine h₀.sumTo_step (h₀.wf.nil_mem rfl) rfl fun h₁ => ?_
   have hh := mem_heap_step (θ := θ) (initState supp z) (.base .start₀) 0 0 0

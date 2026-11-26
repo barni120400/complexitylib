@@ -300,10 +300,7 @@ private theorem exists_mem_givenUnits {u : PlanUnit R FL Pl U0 U1}
       cases u with
       | init a c k => exact occurs_of_initialTarget_eq_relay hτ L
       | new ν k =>
-        revert hτ
-        simp only [unitTarget]
-        generalize moveChannelEquiv R FL Pl ν = w
-        rcases w with ⟨⟨x, hx⟩ | l, d⟩ <;> intro hτ
+        rcases hw : moveChannelEquiv R FL Pl ν with ⟨⟨x, hx⟩ | l, d⟩ <;> rw [unitTarget, hw] at hτ
         · exact Relay.occurs_of_target_eq_relay hx hτ L
         · cases hτ
     exact relay hy₁ hy₂ (hτ.trans hy₃.symm)
@@ -314,10 +311,7 @@ private theorem exists_mem_givenUnits {u : PlanUnit R FL Pl U0 U1}
         split_ifs at hτ
         simp at hτ
       | new ν k =>
-        revert hτ
-        simp only [unitTarget]
-        generalize moveChannelEquiv R FL Pl ν = w
-        rcases w with ⟨⟨x, hx⟩ | l, d⟩ <;> intro hτ
+        rcases hw : moveChannelEquiv R FL Pl ν with ⟨⟨x, hx⟩ | l, d⟩ <;> rw [unitTarget, hw] at hτ
         · obtain ⟨-, e, rfl, ⟨rfl, -, rfl⟩ | ⟨rfl, -, rfl⟩⟩ := Relay.of_target_eq_segment hτ
           exacts [not_isDiag_segment j.2 (hx.1 rfl), not_isDiag_segment j.2 (hx.2 rfl).symm]
         · cases hτ

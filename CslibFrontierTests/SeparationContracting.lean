@@ -15,8 +15,8 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 /-! Tests of the circuit lemma (Lemma K.3) and the lower bound in the contracting case
 (Theorem K.7), as a client that sees only the public statements.
 
-* Lemma K.3 as printed: for the table `0` over `ℤ` and the permanent over `ℚ`, small circuits give
-  accelerators.
+* Lemma K.3 as printed: for a table of `ℤ` with one generator and the permanent over `ℚ`, small
+  circuits give accelerators.
 * Theorem K.7 over `ℚ`: the flat case holds, or circuits for the permanent have more than
   `2 ^ (c (log m) ^ 2 / log log m)` nodes; the same for the Hamiltonian cycle polynomial, as
   Theorem M.3 uses it.
@@ -33,14 +33,20 @@ open Cslib.Circuits.Arithmetic Cslib.Circuits.Arithmetic.Separation
 
 /-! ### Closed examples -/
 
-/-- **Lemma K.3 as printed**, for the table `0` of the ring `ℤ`, `H = 32` and the permanent over
-`ℚ`, in which `2 ≠ 0`: a circuit with `v ^ a` nodes for `PERM_m`, `m ≥ v ^ B₀`, gives an
+/-- The table of `ℤ` with the one generator `[true]`, of value `1`. -/
+private def oneGen : List Bool → ℤ := fun w => if w = [true] then 1 else 0
+
+private theorem finite_support_oneGen : (Function.support oneGen).Finite :=
+  (Set.finite_singleton [true]).subset fun w hw => by simpa [oneGen] using hw
+
+/-- **Lemma K.3 as printed**, for the table `oneGen` of the ring `ℤ`, `H = 32` and the permanent
+over `ℚ`, in which `2 ≠ 0`: a circuit with `v ^ a` nodes for `PERM_m`, `m ≥ v ^ B₀`, gives an
 accelerator of size `v ^ (C (a + 1))` at the scale `v`. -/
 example : ∃ B₀ C v₀ : ℕ, 0 < B₀ ∧ ∀ v, v₀ ≤ v → ∀ a, lg v ^ (C * a) ≤ v → ∀ m, v ^ B₀ ≤ m →
     ComputedWithin ((permFamily ℚ).poly m) (v ^ a) →
-      HasAcc (fun _ => (0 : ℤ)) ℚ 32 v (v ^ (C * (a + 1))) := by
+      HasAcc oneGen ℚ 32 v (v ^ (C * (a + 1))) := by
   obtain ⟨B₀, C, v₀, hB₀, h⟩ := Contracting.exists_hasAcc_of_computedWithin
-    (θ := fun _ => (0 : ℤ)) (by simp) le_rfl 3
+    finite_support_oneGen le_rfl 3
   exact ⟨B₀, C, v₀, hB₀, h ℚ _ (gridComplete_permFamily (by norm_num))⟩
 
 /-- **Theorem K.7 over `ℚ`**: the flat case holds, or there are `c > 0` and `m₀` such that for

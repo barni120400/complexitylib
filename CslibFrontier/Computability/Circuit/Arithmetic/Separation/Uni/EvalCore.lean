@@ -10,6 +10,7 @@ module
 public import CslibFrontier.Init
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Det
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Machine
+public import Mathlib.Data.Finset.Lattice.Fold
 import CslibFrontier.Foundations.Data.List.Blocks
 import Mathlib.Algebra.BigOperators.Ring.List
 import Mathlib.Algebra.Order.Group.Unbundled.Int

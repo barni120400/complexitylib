@@ -19,7 +19,8 @@ the order of `groupScript`, the instructions of the base parties, of the roles a
 instruction is in the script if the group of its party, a step of the straight-line program, has
 the number of the group, and a unit is compared in the end if it is current. If the state has the
 values that the dealing program computes (`Final`), the filled template is the script of the group
-(`expand_scriptTm`).
+(`expand_scriptTm`). The templates of lists and of conditional lists expand to lists
+(`expand_listTm`, `toList_expand_ifTm`).
 
 ## Main definitions
 
@@ -31,7 +32,6 @@ values that the dealing program computes (`Final`), the filled template is the s
 
 ## Main results
 
-* `expand_listTm`, `expand_catTm`, `toList_expand_ifTm`: the expansions of the list templates.
 * `expand_scriptTm`: the template of the script of a group gives the script of the group.
 
 ## References
@@ -66,7 +66,7 @@ are lists. -/
   | [] => .c .nil
   | t :: ts => .app t (catTm ts)
 
-theorem expand_catTm (σ : List Bool → Tree) (ts : List Tm) :
+private theorem expand_catTm (σ : List Bool → Tree) (ts : List Tm) :
     (catTm ts).expand σ = listT (ts.flatMap fun t => (t.expand σ).toList) := by
   induction ts with
   | nil => rfl
@@ -79,10 +79,6 @@ theorem toList_expand_ifTm (σ : List Bool → Tree) (p : List Bool) (t : Tree) 
     ((ifTm p t a).expand σ).toList = if σ p = t then (a.expand σ).toList else [] := by
   rw [ifTm, Tm.expand]
   split_ifs <;> rfl
-
-private theorem flatMap_singleton_eq_map {α β : Type*} (l : List α) (f : α → β) :
-    (l.flatMap fun a => [f a]) = l.map f := by
-  induction l <;> simp_all
 
 private theorem flatMap_ite {α β : Type*} (l : List α) (p : α → Prop) [DecidablePred p]
     (f : α → List β) : (l.flatMap fun a => if p a then f a else []) = (l.filter p).flatMap f := by
@@ -265,7 +261,7 @@ private theorem expand_slotTm (z : M.Slot) (a : Fin (K + K + A')) :
   simp only [toList_expand_ifTm, gate_eq h,
     digitTree_eq_one C (tab.fn_givenGate z _ ⟨n, o⟩), Tm.expand, toList_listT]
   rw [flatMap_ite]
-  simp [List.filter_reverse, Plan.ids, wordsEnc, Function.comp_def, flatMap_singleton_eq_map]
+  simp [List.filter_reverse, Plan.ids, wordsEnc, Function.comp_def, ← List.map_eq_flatMap]
 
 omit [Fintype S] in
 private theorem expand_roleTm (tg : M.Role → ℕ) (r : M.Role) :
@@ -311,7 +307,7 @@ theorem expand_scriptTm {cb : Option Γ → Fin c → Bool} {x : Fin K → List 
     rw [flatMap_ite, baseParties_eq_filter, List.map_flatMap]
   · simp only [toList_expand_ifTm, gate_eq h, digitTree_group_iff, expand_listTm, List.map_cons,
       List.map_nil, expand_roleTm h, toList_listT]
-    rw [flatMap_ite, groupRoles_eq_filter, flatMap_singleton_eq_map, List.map_map]
+    rw [flatMap_ite, groupRoles_eq_filter, ← List.map_eq_flatMap, List.map_map]
     rfl
 
 end Expand

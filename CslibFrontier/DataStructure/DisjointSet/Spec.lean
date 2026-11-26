@@ -89,11 +89,9 @@ variable {n : ℕ}
 
 @[ext]
 theorem ext {p q : Partition n} (h : ∀ x y, p.rel x y = q.rel x y) : p = q := by
-  cases p
-  cases q
-  simp only [mk.injEq]
-  funext x y
-  exact h x y
+  rcases p with ⟨rp, _, _, _⟩
+  rcases q with ⟨rq, _, _, _⟩
+  simpa only [mk.injEq] using funext₂ h
 
 instance instDecidableEq (n : ℕ) : DecidableEq (Partition n) := fun p q =>
   if h : ∀ x y : Fin n, p.rel x y = q.rel x y then
@@ -106,12 +104,8 @@ theorem rel_refl (p : Partition n) (x : Fin n) : p.rel x x = true :=
   p.refl x
 
 /-- Boolean symmetry of `p.rel`. -/
-theorem rel_comm (p : Partition n) (x y : Fin n) : p.rel x y = p.rel y x := by
-  cases hxy : p.rel x y <;> cases hyx : p.rel y x
-  · rfl
-  · simp [p.symm hyx] at hxy
-  · simp [p.symm hxy] at hyx
-  · rfl
+theorem rel_comm (p : Partition n) (x y : Fin n) : p.rel x y = p.rel y x :=
+  Bool.eq_iff_iff.mpr ⟨p.symm, p.symm⟩
 
 /-- View a `Partition n` as a `Setoid (Fin n)`. -/
 @[expose] def toSetoid (p : Partition n) : Setoid (Fin n) where
@@ -164,10 +158,9 @@ theorem classOf_eq_iff {p : Partition n} {x y : Fin n} :
 
 /-- Unrelated elements have disjoint equivalence classes. -/
 theorem disjoint_classOf_of_rel_eq_false {p : Partition n} {x y : Fin n}
-    (h : p.rel x y = false) : Disjoint (p.classOf x) (p.classOf y) := by
-  refine Finset.disjoint_left.mpr fun z hzx hzy => ?_
-  have hxy : p.rel x y = true := p.trans (mem_classOf.mp hzx) (p.symm (mem_classOf.mp hzy))
-  simp [h] at hxy
+    (h : p.rel x y = false) : Disjoint (p.classOf x) (p.classOf y) :=
+  Finset.disjoint_left.mpr fun _ hzx hzy =>
+    Bool.eq_false_iff.mp h (p.trans (mem_classOf.mp hzx) (p.symm (mem_classOf.mp hzy)))
 
 /-- The finite set of equivalence classes (connected components) of `p`. -/
 @[expose] def components (p : Partition n) : Finset (Finset (Fin n)) :=
@@ -260,21 +253,15 @@ theorem rel_merge_iff_eqvGen {p : Partition n} {x y a b : Fin n} :
 
 theorem merge_comm (p : Partition n) (x y : Fin n) : p.merge x y = p.merge y x := by
   ext a b
-  simp only [rel_merge]
-  cases p.rel a b <;> cases p.rel a x <;> cases p.rel y b <;>
-    cases p.rel a y <;> cases p.rel x b <;> rfl
+  simp only [rel_merge, Bool.or_assoc, Bool.or_comm (x := p.rel a x && p.rel y b)]
 
 /-- Merging two already-equivalent elements leaves the partition unchanged. -/
 theorem merge_of_rel {p : Partition n} {x y : Fin n} (h : p.rel x y = true) :
     p.merge x y = p := by
   ext a b
-  cases hab : p.rel a b
-  · simp only [rel_merge, hab, Bool.false_or, Bool.or_eq_false_iff, Bool.and_eq_false_imp]
-    refine ⟨fun hax => Bool.eq_false_iff.mpr fun hyb => ?_,
-      fun hay => Bool.eq_false_iff.mpr fun hxb => ?_⟩
-    · simp [p.trans (p.trans hax h) hyb] at hab
-    · simp [p.trans (p.trans hay (p.symm h)) hxb] at hab
-  · simp [rel_merge, hab]
+  refine Bool.eq_iff_iff.mpr ⟨fun hm => ?_, fun hab => rel_merge_eq_true.mpr (.inl hab)⟩
+  rcases rel_merge_eq_true.mp hm with hab | ⟨hax, hyb⟩ | ⟨hay, hxb⟩
+  exacts [hab, p.trans (p.trans hax h) hyb, p.trans (p.trans hay (p.symm h)) hxb]
 
 @[simp]
 theorem merge_self (p : Partition n) (x : Fin n) : p.merge x x = p :=
@@ -334,17 +321,13 @@ theorem numComponents_merge_of_not_rel {p : Partition n} {x y : Fin n}
   rw [components_merge]
   have hne : p.classOf y ≠ p.classOf x := fun heq => by
     simp [p.symm (classOf_eq_iff.mp heq)] at h
-  have hunion_not_mem : p.classOf x ∪ p.classOf y ∉ p.components := by
-    intro hm
-    obtain ⟨z, hz⟩ := mem_components.mp hm
-    have hzx : p.rel z x = true :=
-      mem_classOf.mp (hz ▸ Finset.mem_union_left _ (p.self_mem_classOf x) : x ∈ p.classOf z)
-    have hzy : p.rel z y = true :=
-      mem_classOf.mp (hz ▸ Finset.mem_union_right _ (p.self_mem_classOf y) : y ∈ p.classOf z)
-    simp [p.trans (p.symm hzx) hzy] at h
   have hunion_not_erase :
-      p.classOf x ∪ p.classOf y ∉ (p.components.erase (p.classOf x)).erase (p.classOf y) :=
-    fun hm => hunion_not_mem (Finset.erase_subset _ _ (Finset.erase_subset _ _ hm))
+      p.classOf x ∪ p.classOf y ∉ (p.components.erase (p.classOf x)).erase (p.classOf y) := by
+    intro hm
+    obtain ⟨z, hz⟩ := mem_components.mp (Finset.erase_subset _ _ (Finset.erase_subset _ _ hm))
+    have hzx := mem_classOf.mp (hz ▸ Finset.mem_union_left _ (p.self_mem_classOf x))
+    have hzy := mem_classOf.mp (hz ▸ Finset.mem_union_right _ (p.self_mem_classOf y))
+    simp [p.trans (p.symm hzx) hzy] at h
   rw [Finset.card_insert_of_notMem hunion_not_erase]
   have hy_mem : p.classOf y ∈ p.components.erase (p.classOf x) :=
     Finset.mem_erase.mpr ⟨hne, p.classOf_mem_components y⟩
@@ -476,10 +459,9 @@ theorem spanningForestEdges_sublist {n : ℕ} {E : Type} (endpts : E → Fin n �
   | nil => simp
   | cons e es ih =>
     rw [eval_spanningForestEdges_cons]
-    dsimp only
     split
-    · exact List.Sublist.cons_cons e (ih (p.merge (endpts e).1 (endpts e).2))
-    · exact List.Sublist.cons e (ih (p.merge (endpts e).1 (endpts e).2))
+    · exact .cons_cons e (ih _)
+    · exact .cons e (ih _)
 
 /-- Exact conservation law: the final component count plus the number of accepted forest edges
 equals the initial component count. -/
@@ -491,15 +473,12 @@ theorem spanningForestEdges_numComponents_add_length {n : ℕ} {E : Type}
   | nil => simp
   | cons e es ih =>
     rw [eval_spanningForestEdges_cons]
-    dsimp only
     have hrec := ih (p.merge (endpts e).1 (endpts e).2)
     cases hrel : p.rel (endpts e).1 (endpts e).2
-    · simp only [Bool.not_false, ↓reduceIte, List.length_cons]
-      have hmerge := Partition.numComponents_merge_of_not_rel hrel
-      omega
-    · simp only [Bool.not_true, Bool.false_eq_true, ↓reduceIte]
-      have hmerge := Partition.numComponents_merge_of_rel hrel
-      omega
+    · have := Partition.numComponents_merge_of_not_rel hrel
+      simp; omega
+    · have := Partition.numComponents_merge_of_rel hrel
+      simp; omega
 
 /-- The final partition after `spanningForestEdges endpts es` is the exact equivalence closure of
 `p` together with all endpoint pairs in `es`. -/
@@ -539,12 +518,8 @@ theorem spanningForestEdges_idempotent_partition {n : ℕ} {E : Type} (endpts : 
   | nil => rfl
   | cons e es ih =>
     rw [eval_spanningForestEdges_cons]
-    dsimp only
     cases hrel : p.rel (endpts e).1 (endpts e).2
-    · simp only [Bool.not_false, ↓reduceIte, eval_spanningForestEdges_cons]
-      exact ih (p.merge (endpts e).1 (endpts e).2)
-    · simp only [Bool.not_true, Bool.false_eq_true, ↓reduceIte]
-      rw [Partition.merge_of_rel hrel]
-      exact ih p
+    · simpa [hrel] using ih (p.merge (endpts e).1 (endpts e).2)
+    · simpa [hrel, Partition.merge_of_rel hrel] using ih p
 
 end Cslib.DataStructure.DisjointSet
