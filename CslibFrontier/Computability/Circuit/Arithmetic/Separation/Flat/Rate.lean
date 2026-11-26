@@ -30,8 +30,8 @@ to `δ = 1 / (1000 k)`, and its scaled unit exponent at the ends is at most `√
 the network tensor by the hub tensors (`Flat.networkTensor_coveredBy_hubTensor`) enters through
 Lemma E.7, the lemma on sums with few terms
 (`PartyTensor.SpectralPoint.apply_le_of_borderCoveredBy`), in which the at most `2 ^ k` balanced
-sets cost only `k` times this unit exponent. So in the flat case, for
-`k ≥ 2` and `ℓ ≥ 100 √k`, every circuit for `f_{k,ℓ}` has at least `2 ^ (ℓ k^{3/2} / 16)` nodes
+sets cost only `k` times this unit exponent. So in the flat case, for `k ≥ 2` and `ℓ ≥ 100 √k`,
+every circuit for `f_{k,ℓ}` has at least `2 ^ (ℓ k^{3/2} / 16)` nodes
 (`Flat.networkPolynomial_size_ge_of_sqrt_le`). A circuit for the polynomial in the variables
 printed in the paper (`Flat.networkPolynomialOnViews`) is one for `Flat.networkPolynomial` with
 the same number of nodes (`Flat.rename_networkPolynomialOnViews`), so the bound holds for it too.
@@ -89,8 +89,8 @@ private theorem rate_numbers {k ℓ c N δ S1 S2 S3 g lg : ℝ} (hk1 : 1 ≤ k) 
   nlinarith [mul_le_mul_of_nonneg_left hℓ (by positivity : (0 : ℝ) ≤ r ^ 4),
     mul_le_mul_of_nonneg_right hr hlog, mul_nonneg hℓ0 (sq_nonneg r), mul_nonneg hℓ0 hr0.le]
 
-/-- **Paper: Proposition E.10** (lower bound for the network polynomial, p. 36). In the flat case,
-for `k ≥ 2` and `ℓ ≥ 100 √k`, every circuit over `K` for `f_{k,ℓ}` has at least
+/-- **Lower bound for the network polynomial** (Proposition E.10 of [AnthropicVPVNP2026], p. 36).
+In the flat case, for `k ≥ 2` and `ℓ ≥ 100 √k`, every circuit over `K` for `f_{k,ℓ}` has at least
 `2 ^ (ℓ k^{3/2} / 16)` nodes. -/
 theorem networkPolynomial_size_ge_of_sqrt_le {K : Type} [Field K] (hK : FlatCase K) (hk : 2 ≤ k)
     {ℓ s : ℕ} (hℓ : 100 * √k ≤ ℓ) (hP : ComputedWithin (networkPolynomial K k ℓ) s) :
@@ -197,10 +197,10 @@ theorem networkPolynomial_size_ge_of_sqrt_le {K : Type} [Field K] (hK : FlatCase
 /-- **From the network polynomial to the bound** (proof of Theorem E.11, p. 37). There is `m₀`,
 depending only on `κ`, with the following property for every `P : ℕ → ℕ → Prop`, such as
 `P m s`: some circuit with `s` nodes computes the member `m` of a family. Suppose that `P m s`
-gives the bound of Proposition E.10
-for `5 s`, `2 ^ (ℓ k^{3/2} / 16) ≤ 5 s`, whenever `k ≥ 2`, `ℓ ≥ 1`, `ℓ ≥ 100 √k` and
-`κ k³ ℓ 2^{kℓ} ≤ m`. Then `P m s` implies `2 ^ ((log m)^{4/3} / 1600²) < s` for `m ≥ m₀`. The
-proof takes `k = r²` and `ℓ = 100 r` for the largest `r` with `200 r³ ≤ ⌊log m⌋`. -/
+gives the bound of Proposition E.10 for `5 s`, `2 ^ (ℓ k^{3/2} / 16) ≤ 5 s`, whenever `k ≥ 2`,
+`ℓ ≥ 1`, `ℓ ≥ 100 √k` and `κ k³ ℓ 2^{kℓ} ≤ m`. Then `P m s` implies
+`2 ^ ((log m)^{4/3} / 1600²) < s` for `m ≥ m₀`. The proof takes `k = r²` and `ℓ = 100 r` for the
+largest `r` with `200 r³ ≤ ⌊log m⌋`. -/
 theorem exists_two_rpow_lt_of_networkPolynomial (κ : ℕ) : ∃ m₀ : ℕ, ∀ P : ℕ → ℕ → Prop,
     (∀ k ℓ m s : ℕ, 2 ≤ k → 1 ≤ ℓ → 100 * √k ≤ ℓ → κ * k ^ 3 * ℓ * 2 ^ (k * ℓ) ≤ m → P m s →
       (2 : ℝ) ^ ((ℓ : ℝ) * (k : ℝ) ^ (3 / 2 : ℝ) / 16) ≤ ((5 * s : ℕ) : ℝ)) →
@@ -282,9 +282,9 @@ end Cslib.Circuits.Arithmetic.Separation.Flat
 
 namespace Cslib.Circuits.Arithmetic.Separation.TwoCases
 
-/-- **Paper: Theorem E.11** (lower bound for the permanent in the flat case, p. 37). In the flat
-case, if `2 ≠ 0` in `K`, there is `m₀` such that for `m ≥ m₀` every circuit over `K` for the
-permanent `PERM_m` has more than `2 ^ ((log m)^{4/3} / 1600²)` nodes. -/
+/-- **Lower bound for the permanent in the flat case** (Theorem E.11 of [AnthropicVPVNP2026],
+p. 37). In the flat case, if `2 ≠ 0` in `K`, there is `m₀` such that for `m ≥ m₀` every circuit
+over `K` for the permanent `PERM_m` has more than `2 ^ ((log m)^{4/3} / 1600²)` nodes. -/
 theorem FlatCase.perm_size_gt {K : Type} [Field K] (hK : FlatCase K) (h2 : (2 : K) ≠ 0) :
     ∃ m₀ : ℕ, ∀ m ≥ m₀, ∀ s, ComputedWithin ((permFamily K).poly m) s →
       (2 : ℝ) ^ (Real.logb 2 m ^ (4 / 3 : ℝ) / 1600 ^ 2) < s :=

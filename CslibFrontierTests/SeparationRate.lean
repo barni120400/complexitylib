@@ -19,7 +19,6 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
   circuits for `f_{4,200}` have at least `2 ^ 100` nodes.
 * Theorem E.11 over `ℚ`, and the flat case for the Hamiltonian cycle polynomial with one `m₀` for
   all fields in the flat case.
-* From Proposition E.10 to the bound in `log m`, for the sizes `s ≥ 2 ^ m`.
 * Theorems L.1 and L.2 and Corollary L.3 over `ℝ` as stated in the paper, and Corollary L.3 over
   `ZMod 2` with the Hamiltonian cycle polynomial. -/
 
@@ -57,25 +56,6 @@ example : ∃ m₀ : ℕ, ∀ (K : Type) [Field K], FlatCase K → ∀ m ≥ m�
       (2 : ℝ) ^ (Real.logb 2 m ^ (4 / 3 : ℝ) / 1600 ^ 2) < s :=
   let ⟨m₀, h⟩ := size_gt_of_gridComplete 40
   ⟨m₀, fun K _ hK => h K hK _ gridComplete_hcFamily⟩
-
-/-- **From Proposition E.10 to the bound in `log m`**, for the sizes `s ≥ 2 ^ m`: these satisfy
-the bound of Proposition E.10 for `5 s` when `k³ ℓ 2^{kℓ} ≤ m`, as `ℓ k^{3/2} / 16 ≤ k³ ℓ ≤ m`. -/
-example : ∃ m₀ : ℕ, ∀ m ≥ m₀, ∀ s : ℕ, 2 ^ m ≤ s →
-    (2 : ℝ) ^ (Real.logb 2 m ^ (4 / 3 : ℝ) / 1600 ^ 2) < s := by
-  obtain ⟨m₀, h⟩ := exists_two_rpow_lt_of_networkPolynomial 1
-  refine ⟨m₀, h _ fun k ℓ m s hk _ _ hm hs => ?_⟩
-  have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast (by omega : 1 ≤ k)
-  have h1 : (ℓ : ℝ) * (k : ℝ) ^ (3 / 2 : ℝ) / 16 ≤ m := by
-    have h2 := Real.rpow_le_rpow_of_exponent_le hk1 (by norm_num : (3 / 2 : ℝ) ≤ (3 : ℕ))
-    have h3 : (k : ℝ) ^ 3 * ℓ ≤ m := by
-      exact_mod_cast (Nat.le_mul_of_pos_right _ (Nat.two_pow_pos _)).trans (by simpa using hm)
-    rw [Real.rpow_natCast] at h2
-    nlinarith [Nat.cast_nonneg (α := ℝ) ℓ]
-  calc (2 : ℝ) ^ ((ℓ : ℝ) * (k : ℝ) ^ (3 / 2 : ℝ) / 16) ≤ 2 ^ (m : ℝ) :=
-        Real.rpow_le_rpow_of_exponent_le one_le_two h1
-    _ ≤ ((5 * s : ℕ) : ℝ) := by
-        rw [Real.rpow_natCast]
-        exact_mod_cast hs.trans (Nat.le_mul_of_pos_left s (by norm_num))
 
 /-! ### The main theorems -/
 

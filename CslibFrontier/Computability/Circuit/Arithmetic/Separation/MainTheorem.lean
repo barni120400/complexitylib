@@ -39,8 +39,8 @@ field (`gridComplete_hcFamily`, `hcFamily_mem_VNP`).
 * `GridComplete.size_gt`: Theorem L.1.
 * `GridComplete.not_computedWithin_pow`: Theorem L.2.
 * `GridComplete.VP_ssubset_VNP`: Corollary L.3.
-* `PolynomialFamily.not_computedWithin_pow_of_rpow_lt`, `PolynomialFamily.not_mem_VP_of_rpow_lt`:
-  the bound of Theorem L.1 excludes circuits of polynomial size, over a field in any universe.
+* `PolynomialFamily.not_mem_VP_of_rpow_lt`: a family with the bound of Theorem L.1 is not in `VP`,
+  over a field in any universe.
 
 ## References
 
@@ -79,10 +79,11 @@ private theorem exists_le_quasipoly {c : ℝ} (hc : 0 < c) : ∃ m₀ : ℕ, ∀
   exact eventually_atTop.1 (((Real.tendsto_logb_atTop one_lt_two).comp
     tendsto_natCast_atTop_atTop).eventually hev)
 
-/-- **Paper: Theorem L.1** (main theorem, p. 59), for every family complete for grid sums over
-every field. If `G` is complete for grid sums with blow-up `κ`, there is `m₀` such that for
-`m ≥ m₀` every circuit for `G.poly m` has more than `m ^ ((log m)^{1/3} / 1600²)` nodes. For the
-permanent over `ℝ` (`gridComplete_permFamily`) this is Theorem L.1 with `c = 1 / 1600²`. -/
+/-- **The main theorem** (Theorem L.1 of [AnthropicVPVNP2026], p. 59), for every family complete
+for grid sums over every field. If `G` is complete for grid sums with blow-up `κ`, there is `m₀`
+such that for `m ≥ m₀` every circuit for `G.poly m` has more than `m ^ ((log m)^{1/3} / 1600²)`
+nodes. For the permanent over `ℝ` (`gridComplete_permFamily`) this is Theorem L.1 with
+`c = 1 / 1600²`. -/
 theorem GridComplete.size_gt {G : PolynomialFamily K} {κ : ℕ} (hG : GridComplete G κ) :
     ∃ m₀ : ℕ, ∀ m ≥ m₀, ∀ s, ComputedWithin (G.poly m) s →
       (m : ℝ) ^ (Real.logb 2 m ^ (1 / 3 : ℝ) / 1600 ^ 2) < s := by
@@ -114,7 +115,7 @@ variable {F : Type u} [Field F] {G : PolynomialFamily F} {m₀ : ℕ}
 /-- A bound beyond every polynomial: if every circuit for `G.poly m` has more than
 `m ^ ((log m)^{1/3} / 1600²)` nodes for `m ≥ m₀`, then for every `C` there is `m₁` such that no
 circuit with at most `m ^ C` nodes computes `G.poly m` for `m ≥ m₁`. -/
-theorem PolynomialFamily.not_computedWithin_pow_of_rpow_lt
+private theorem PolynomialFamily.not_computedWithin_pow_of_rpow_lt
     (h : ∀ m ≥ m₀, ∀ s, ComputedWithin (G.poly m) s →
       (m : ℝ) ^ (Real.logb 2 m ^ (1 / 3 : ℝ) / 1600 ^ 2) < s) (C : ℕ) :
     ∃ m₁ : ℕ, ∀ m ≥ m₁, ¬ ComputedWithin (G.poly m) (m ^ C) := by
@@ -138,20 +139,21 @@ theorem PolynomialFamily.not_mem_VP_of_rpow_lt
 
 end Universe
 
-/-- **Paper: Theorem L.2** (no circuits of polynomial size, p. 59), for every family complete for
-grid sums over every field: for every `C` there is `m₀` such that for `m ≥ m₀` no circuit with at
-most `m ^ C` nodes computes `G.poly m`. As in the paper, it follows from Theorem L.1. -/
+/-- **No circuits of polynomial size** (Theorem L.2 of [AnthropicVPVNP2026], p. 59), for every
+family complete for grid sums over every field: for every `C` there is `m₀` such that for `m ≥ m₀`
+no circuit with at most `m ^ C` nodes computes `G.poly m`. As in the paper, it follows from
+Theorem L.1. -/
 theorem GridComplete.not_computedWithin_pow {G : PolynomialFamily K} {κ : ℕ}
     (hG : GridComplete G κ) (C : ℕ) : ∃ m₀ : ℕ, ∀ m ≥ m₀, ¬ ComputedWithin (G.poly m) (m ^ C) :=
   let ⟨_, h⟩ := GridComplete.size_gt hG
   PolynomialFamily.not_computedWithin_pow_of_rpow_lt h C
 
-/-- **Paper: Corollary L.3** (p. 59; proof p. 60), for every family complete for grid sums: if
-`G` is complete for grid sums and in `VNP`, then `VP` is a proper subset of `VNP`, because `G` is
-not in `VP` by Theorem L.2. The permanent is such a family when `2 ≠ 0`
-(`gridComplete_permFamily`, `permFamily_mem_VNP` by Ryser's formula), which gives Corollary L.3
-over `ℝ`; the Hamiltonian cycle polynomial is one over every field (`gridComplete_hcFamily`,
-`hcFamily_mem_VNP`). -/
+/-- **VP ⊂ VNP** (Corollary L.3 of [AnthropicVPVNP2026], p. 59; proof p. 60), for every family
+complete for grid sums: if `G` is complete for grid sums and in `VNP`, then `VP` is a proper
+subset of `VNP`, because `G` is not in `VP` by Theorem L.2. The permanent is such a family when
+`2 ≠ 0` (`gridComplete_permFamily`, `permFamily_mem_VNP` by Ryser's formula), which gives
+Corollary L.3 over `ℝ`; the Hamiltonian cycle polynomial is one over every field
+(`gridComplete_hcFamily`, `hcFamily_mem_VNP`). -/
 theorem GridComplete.VP_ssubset_VNP {G : PolynomialFamily K} {κ : ℕ} (hG : GridComplete G κ)
     (hVNP : G ∈ VNP K) : VP K ⊂ VNP K :=
   let ⟨_, h⟩ := GridComplete.size_gt hG
