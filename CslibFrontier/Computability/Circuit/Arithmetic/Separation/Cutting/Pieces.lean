@@ -11,7 +11,6 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.Th
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Tables
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Time
-public import CslibFrontier.Foundations.Combinatorics.StagedTree
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Pieces.Program
 
 /-!
@@ -19,8 +18,8 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Pieces.Program
 
 Proposition J.2 of [AnthropicVPVNP2026] (p. 52, and its proof, p. 53) cuts the thin trees of
 Theorem H.2 (`Trees.ThinTrees`) into pieces. For the numbers `n` of initial units and the outcomes
-`o`, the tree of the parties is a tree by stages (`ThinTrees.stagedTree`), with the weight `1` at
-the `K + K` base parties and the units `units n o` between the parties and their parents. Its
+`o`, the tree of the parties is a tree by stages (`Cslib.StagedTree`), with the weight `1` at the
+`K + K` base parties and the units `units n o` between the parties and their parents. Its
 pieces for the budgets `K + K` and `Y = lg M ^ C * M * (N + M ^ 2)` (Theorem H.2(b)) and the number
 `k > 0` are the pieces of the parties (`ThinTrees.piece`); there are fewer than
 `pieceCount k = 1 + C + b * (depth * k)` of them (Proposition J.2: "at most `kΛ` pieces"). For good
@@ -38,9 +37,8 @@ of initial units and the outcomes as inputs, and `2 * depth + 6` stages of `Y ^ 
 
 ## Main definitions
 
-* `Trees.ThinTrees.stagedTree`: the tree of the parties, by stages.
 * `Trees.ThinTrees.pieceCount`: the bound for the number of pieces.
-* `Trees.ThinTrees.piece`: the piece of a party (`Trees.ThinTrees.piece_val`).
+* `Trees.ThinTrees.piece`: the piece of a party.
 
 ## Main results
 
@@ -70,7 +68,7 @@ variable {R : Type} [CommSemiring R] {laws : List (Law R)} {K N ℓ M b G C : �
 
 /-- The tree of the parties for the numbers `n` of initial units and the outcomes `o`, as a tree by
 stages: the parents, stages, depth and root of the thin trees. -/
-@[expose] def stagedTree (n : Fin (K + K) → Fin (K + K) → Fin (N + 1))
+private def stagedTree (n : Fin (K + K) → Fin (K + K) → Fin (N + 1))
     (o : TT.moves.Channel → Fin TT.U1) : StagedTree (Fin (K + K + TT.A')) where
   parent := TT.parent n o
   stage := TT.stage
@@ -104,14 +102,6 @@ def piece {k : ℕ} (hk : 0 < k) (n : Fin (K + K) → Fin (K + K) → Fin (N + 1
   ⟨TT.pieceNat k n o p, (TT.stagedTree n o).piece_lt hk TT.sum_baseWeight.le (TT.sum_units_le n o)
     (TT.card_children_le n o) (TT.card_children_root_le n o) p⟩
 
-/-- The piece of a party is its piece in the tree by stages. -/
-theorem piece_val {k : ℕ} (hk : 0 < k) (n : Fin (K + K) → Fin (K + K) → Fin (N + 1))
-    (o : TT.moves.Channel → Fin TT.U1) (p : Fin (K + K + TT.A')) :
-    (TT.piece hk n o p : ℕ) = (TT.stagedTree n o).piece (fun q => if (q : ℕ) < K + K then 1 else 0)
-      (TT.units n o) (K + K) (lg M ^ C * M * (N + M ^ 2)) k p := by
-  unfold piece pieceNat baseWeight
-  rfl
-
 /-! ### The bounds of a piece -/
 
 variable {n : Fin (K + K) → Fin (K + K) → Fin (N + 1)} {o : TT.moves.Channel → Fin TT.U1} {k : ℕ}
@@ -128,7 +118,7 @@ private theorem mul_sum_baseWeight_le (hk : 0 < k) (hkK : k ≤ 4 * (K + K)) (hM
       (Nat.mul_pos (Nat.mul_pos (Nat.pow_pos (Nat.succ_pos _)) hM) (by positivity)) hx)
     simp only [StagedTree.sumBelow, mul_sum]
 
-/-- **The base parties of a piece** (Proposition J.2: "a piece has at most `CK/k` blocks and
+/-- **The base parties of a piece** (Proposition J.2: "A piece has at most `CK/k` blocks and
 parts"): at most `4 (K + K) / k`, if `k ≤ 4 (K + K)`. -/
 theorem card_base_piece_le (hk : 0 < k) (hkK : k ≤ 4 * (K + K)) (hM : 0 < M)
     (g : Fin (TT.pieceCount k)) :
@@ -148,11 +138,11 @@ private theorem sum_card_filter_holds_le {U P : Type*} [Fintype P] [DecidableEq 
   obtain ⟨d, rfl⟩ := (mem_filter.1 ha).2
   cases d <;> simp
 
-/-- **The cut units of a piece** (Proposition J.2: "by (b) of the theorem a piece has at most
-`ΛM^(1−γ)Nℓ` bits in cut packets, besides the dead ones"): for a gain `w`, under which `X` units
-at one party with Theorem H.2(b)'s bound `Λ M ^ (1 - γ) (N + M ^ 2)` give `X * w ≤ Y`, the units
-with exactly one holder in a piece times `w` are at most `Y + M ^ C * w`, for good outcomes and at
-most `N` units at every base party. -/
+/-- **The cut units of a piece** (the proof of Proposition J.2, p. 53: "By part (b) of the theorem
+a piece has at most `ΛM^(1−γ)Nℓ ≤ KTΛ/v^300` bits in cut packets, besides the dead ones"): for a
+gain `w`, under which `X` units at one party with Theorem H.2(b)'s bound
+`Λ M ^ (1 - γ) (N + M ^ 2)` give `X * w ≤ Y`, the units with exactly one holder in a piece times `w`
+are at most `Y + M ^ C * w`, for good outcomes and at most `N` units at every base party. -/
 theorem card_oneIn_piece_le (hk : 0 < k) (hn : ∀ a, ∑ c, ((n a c : ℕ) + n c a) ≤ N)
     (hg : ∀ x, TT.plan.Good n o x) {w : ℕ}
     (hw : ∀ X : ℕ, (X : ℝ) ≤ (lg M ^ C : ℕ) * (M : ℝ) ^ (1 - γ) * (N + (M : ℝ) ^ 2) →
@@ -189,10 +179,10 @@ theorem card_oneIn_piece_le (hk : 0 < k) (hn : ∀ a, ∑ c, ((n a c : ℕ) + n 
   exact Nat.add_le_add (hw _ (TT.card_filter_holds_le hn hg x))
     (Nat.mul_le_mul_right w (TT.card_dead_le o))
 
-/-- **All bits of a piece** (Proposition J.2: "units used up and zeros in slots change this by a
-constant factor only, apart from `ΛN` at each given node"): for the gain `w ≥ k` of
-`card_oneIn_piece_le`, `k` times the units that the parties of a piece ever hold and that its
-roles read is at most `C (4 Y) + 4 (K + K) (Λ N) + 2 C M ^ C k`, for good outcomes and at most
+/-- **All bits of a piece** (the proof of Proposition J.2, p. 53: "Packets used up and zeros in
+slots change this by a constant factor only, apart from `ΛN` at each given node"): for the gain
+`w ≥ k` of `card_oneIn_piece_le`, `k` times the units that the parties of a piece ever hold and that
+its roles read is at most `C (4 Y) + 4 (K + K) (Λ N) + 2 C M ^ C k`, for good outcomes and at most
 `N` units at every base party, if `k ≤ 4 (K + K)`. -/
 theorem cellCount_add_roleUnitCount_le (hk : 0 < k) (hkK : k ≤ 4 * (K + K)) (hM : 0 < M)
     (hn : ∀ a, ∑ c, ((n a c : ℕ) + n c a) ≤ N) (hg : ∀ x, TT.plan.Good n o x) {w : ℕ}
@@ -251,7 +241,7 @@ theorem cellCount_add_roleUnitCount_le (hk : 0 < k) (hkK : k ≤ 4 * (K + K)) (h
 
 /-! ### The program of the pieces -/
 
-/-- **The program of the pieces** (Proposition J.2: "the packets, the pieces and what each node
+/-- **The program of the pieces** (Proposition J.2: "The packets, the pieces and what each node
 tensor consists of are computed from the numbers of packets and the outcomes by `v^C` binary
 operations on numbers below `v^C`"): if `Y ≥ 6` bounds `(M N) ^ C`, `N`, the depth and the
 number of the inputs, a program over the numbers below `Y ^ 4` with at most `Y ^ 15` steps
