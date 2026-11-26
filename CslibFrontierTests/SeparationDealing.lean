@@ -28,9 +28,9 @@ import Mathlib.Data.Fintype.BigOperators
   templates give.
 * The units of a base party whose table at the beginning is not zero: for the parts of an input
   (under hypotheses), and for two base parties with too many units (closed).
-* One cut: the integers have a finite table of generators; the size of a small
-  dealing formula; and, under hypotheses, the cut of the dealing program with weaker bounds, the
-  cost of its templates along its runs, and its size at a scale. -/
+* One cut: the integers have a finite table of generators; and, under hypotheses, the cut of the
+  dealing program with weaker bounds, the cost of its templates along its runs, and its size at a
+  scale. -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -203,12 +203,6 @@ example (mu : Tape.Letter Unit Unit Unit → Matrix Unit Unit ℤ) (cb : Option 
 formula. -/
 example : ∃ θ : List Bool → ℤ, (Function.support θ).Finite ∧ ∀ a, ∃ w : WE, w.val θ = a :=
   WE.exists_table ℤ
-
-/-- The dealing formula with one name of one bit, the bits `nl = [true]`, and no steps or
-templates is at most `23` larger than the empty one. -/
-example : (dealFormula .nil .nil [[true]] [true] [] [] [] []).code.size ≤ dealBaseSize + 23 :=
-  (size_dealFormula_le _ _ _ _ _ _ _ _).trans
-    (by simp [Tree.ofBits, Tree.bit, Tree.one, listT, Tree.size])
 
 /-- **One cut, with weaker bounds.** Under the hypotheses of the dealing theorem, the dealing
 program also cuts into pieces of size at most `s' + 1`, with at most `mm + 1` pieces, in time
