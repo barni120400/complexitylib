@@ -32,7 +32,7 @@ strings that the party reads (`packSem`).
 ## Main definitions
 
 * `channelSide`, `tapes`, `tapeCount`, `outputSide`: the tapes and their sides.
-* `Outputs`, `Outputs.enc`: the output lists of a simulation, and their encoding.
+* `Outputs`: the output lists of a simulation.
 * `letterCode`, `letterPush`, `separator`: the codes of the letters, and the separator.
 * `simTable`, `simSem`: the automaton as a transducer, and a simulation.
 * `inputOutputs`: the output lists of an input part.
@@ -90,7 +90,7 @@ abbrev Outputs : Type := Fin (tapeCount S + tapeCount S) → List (List Bool)
 variable {S}
 
 /-- Output lists as a tree. -/
-@[expose] noncomputable def Outputs.enc (o : Outputs S) : Tree :=
+private noncomputable def Outputs.enc (o : Outputs S) : Tree :=
   listT (List.ofFn fun j => wordsEnc (o j))
 
 /-- The tape and the side of an output list. -/
