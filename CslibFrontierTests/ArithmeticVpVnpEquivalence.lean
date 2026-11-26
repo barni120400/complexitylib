@@ -6,6 +6,7 @@ Authors: Aviv Bar Natan
 
 import CslibFrontierTests.ArithmeticVpVnpStatement
 import CslibFrontier.Computability.Circuit.Arithmetic.VNP
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.AllFields
 
 /-!
 # `VP` and `VNP` agree with an independent formalization
@@ -17,8 +18,9 @@ definitions that statement uses, copied line for line from its `Statement.lean`;
 differs (`import Mathlib` there). This file proves that the two formalizations agree: over every
 commutative semiring, `VP K ⊂ VNP K` holds exactly when `Statement.VP K ⊂ Statement.VNP K` does
 (`ssubset_iff`), so the separation stated with this library's `VP` and `VNP` is equivalent to
-`Statement.Separation` (`separation_iff`). It is a check of the definitions; neither statement is
-proved here.
+`Statement.Separation` (`separation_iff`). With the library's proof of `VP F ⊂ VNP F` over every
+field (Corollary M.4, `Cslib.Circuits.Arithmetic.VP_ssubset_VNP`), the vp-vnp statement itself
+follows (`separation`).
 
 The models differ. Here a circuit is a straight-line program whose size counts its gates but not
 its inputs, its variables are `Fin n`, and sizes are bounded by `PolynomiallyBounded`. In vp-vnp a
@@ -120,7 +122,7 @@ theorem exists_circuit_of_computes {s : ℕ} {p : MvPolynomial (Fin n) K}
       · exact .inr rfl
   obtain ⟨c, hc, hs⟩ := Synthesis.exists_circuit_polynomial
     ((key s le_rfl).mono le_rfl (Set.singleton_subset_iff.mpr ⟨k₀, hk₀, rfl⟩) le_rfl)
-  exact ⟨c, by simp [hc, F, aeval_X_left_apply], hs⟩
+  exact ⟨c, by simp [hc, F], hs⟩
 
 /-! ### From circuits to lists -/
 
@@ -257,7 +259,7 @@ theorem ofS_mem_VNP {g : Statement.Family K} (hg : g ∈ Statement.VNP K) : ofS 
 theorem VP_subset_VNP_statement : Statement.VP K ⊆ Statement.VNP K := fun g hg =>
   ⟨fun _ => 0, fun n => rename Sum.inl (g.poly n),
     mem_VP_of_equiv hg (fun n => (Equiv.sumEmpty _ _).symm) (fun n => rfl),
-    fun n => by simp [aeval_rename, aeval_X_left_apply]⟩
+    fun n => by simp [bind₁_rename, Function.comp_def]⟩
 
 /-! ### The equivalence -/
 
@@ -278,5 +280,11 @@ theorem ssubset_iff {K : Type u} [CommSemiring K] :
 theorem separation_iff :
     (∀ (K : Type u) [Field K], VP K ⊂ VNP K) ↔ Statement.Separation.{u} :=
   forall_congr' fun _ => forall_congr' fun _ => ssubset_iff
+
+/-- **VP ≠ VNP**, as the vp-vnp formalization states it (`Statement.Separation`): over every field,
+its `VP` is a proper subset of its `VNP`. This is the library's Corollary M.4
+(`Cslib.Circuits.Arithmetic.VP_ssubset_VNP`) carried over by `separation_iff`. -/
+theorem separation : Statement.Separation.{u} :=
+  separation_iff.1 fun K _ => VP_ssubset_VNP K
 
 end CslibFrontierTests.ArithmeticVpVnpEquivalence
