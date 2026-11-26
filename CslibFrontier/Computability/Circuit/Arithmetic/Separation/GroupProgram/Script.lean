@@ -26,17 +26,14 @@ units, lists of bits. An instruction is
 * a role of a law (`Instruction.role`), with the keys of the units at its slots and of the units
   that it writes on its channels.
 
-This file has the syntax, its encodings as trees, and the costs of the instructions.
+This file has the syntax, its encodings as trees, and the costs of the instructions: definitions,
+with `@[simp]` equations for the encodings.
 
 ## Main definitions
 
 * `Body`, `Instruction`: the syntax.
 * `wordsEnc`, `keysEnc`, `Body.enc`, `Instruction.enc`, `scriptEnc`: the encodings as trees.
 * `putCost`, `Body.cost`, `Instruction.cost`: the costs.
-
-## Main results
-
-* `hd_wordsEnc`, `tl_wordsEnc`: the first entry and the rest of an encoded list of bit lists.
 
 ## References
 
