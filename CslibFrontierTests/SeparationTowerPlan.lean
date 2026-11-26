@@ -15,6 +15,7 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.EverH
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.ProgramUnits
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Rules
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TowerPlan.Transfer
+import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.TreeProgram
 import CslibFrontier.Foundations.Algebra.BigOperators.Sym
 import CslibFrontier.Foundations.GroupTheory.SLTower.Tower
 import Mathlib.Algebra.BigOperators.Fin
@@ -57,6 +58,11 @@ import Mathlib.Data.Fintype.BigOperators
   the units that a party ever holds, exactly; possible outcomes are good, in the form that
   `Cut.Plan.value_moves` needs; and for good outcomes, the units that the party of a node ever
   holds.
+* The tree of that plan, for the outcome `1`: the stages of the nodes, the parent of a chamber is
+  the root, the units between the party `0` and its parent are at most the load `1` of the edge,
+  the root has at most `2` children, and the units of the root and its children at the rate `1`;
+  and the program of the tree for `Y = 1100`. For an arbitrary tower, the layers of the law moves
+  at a party within the bound for the units that it ever holds and reads.
 * Laws at the vertices of other towers: the laws of the tower with one edge, at the vertices of
   the tower without edges, with the same constants; the laws at the vertices of a tower of
   `SL_h(F₂)` at the vertices of every other one; and the `3` pairs of different elements of
@@ -483,18 +489,22 @@ private theorem moveCount_edgeRelay :
     moveCount 2 (initialCounts edgeCounts) (outcomeOf _ _ edgePlacement o) edgeRelay = 1 :=
   (moveCount_eq _).trans (load_edge o)
 
+/-- With the outcome `1` on every channel the outcomes are good. -/
+private theorem edgeGood (x) :
+    (towerPlan edgeRoutes (edgeLaws F) edgePlacement 2 1 2).Good edgeCounts edgeOutcome x := by
+  change GoodOutcome _ _ _ (moveOrder edgeRoutes edgeBase (edgeLaws F) x)
+  rw [eq_edgeRelay (moveOrder edgeRoutes edgeBase (edgeLaws F) x)]
+  exact fun _ => (moveCount_edgeRelay _).symm
+
 /-- The relay of the edge, the only move, uses the one unit on the edge; with the outcome `1` on
 every channel the outcomes are good, and both channels of the relay have one alive unit. -/
 example : moveCount 2 (initialCounts edgeCounts) (outcomeOf _ _ edgePlacement edgeOutcome)
       (edgeRelay (F := F)) = 1 ∧
     (∀ x, (towerPlan edgeRoutes (edgeLaws F) edgePlacement 2 1 2).Good edgeCounts edgeOutcome x) ∧
     ∀ β, alive 2 (initialCounts edgeCounts) (outcomeOf _ _ edgePlacement edgeOutcome)
-      ⟨edgeRelay (F := F), β⟩ = 1 := by
-  refine ⟨moveCount_edgeRelay _, fun x => ?_, fun _ =>
+      ⟨edgeRelay (F := F), β⟩ = 1 :=
+  ⟨moveCount_edgeRelay _, edgeGood, fun _ =>
     alive_eq_of_goodOutcome fun _ => (moveCount_edgeRelay _).symm⟩
-  change GoodOutcome _ _ _ (moveOrder edgeRoutes edgeBase (edgeLaws F) x)
-  rw [eq_edgeRelay (moveOrder edgeRoutes edgeBase (edgeLaws F) x)]
-  exact fun _ => (moveCount_edgeRelay _).symm
 
 /-- The first channel of the relay of the edge. -/
 private noncomputable def edgeChannel : (moves edgeRoutes (edgeLaws F) edgePlacement).Channel :=
@@ -540,6 +550,47 @@ example : UnitId.init 0 1 0 ∉ (towerPlan edgeRoutes (edgeLaws F) edgePlacement
   have := unitTarget_eq_done_of_mem_cur hu ⟨by decide, by decide⟩
   simp only [unitTarget, initialTarget_edge] at this
   cases this
+
+/-! ### The tree of the tower plan with one edge -/
+
+/-- The root is of the stage `J + 1 = 1` and the chambers of the stage `0`; the parent of the party
+`0`, the chamber `false`, is the party `2` of the root, and there are no units between the root and
+its parent. -/
+example : (Tower.Node.root : edgeTower.Node).stage = 1 ∧
+    (Tower.Node.ofChamber le_rfl false : edgeTower.Node).stage = 0 ∧
+    Trees.treeParent edgeRoutes (edgeLaws F) edgePlacement Nat.one_pos 2 edgeCounts edgeOutcome 0 =
+      2 ∧
+    Trees.treeUnits edgeRoutes (edgeLaws F) edgePlacement 2 edgeCounts edgeOutcome 2 = 0 :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- **The units between the party `0` and its parent**, for the outcome `1`: the units in the end
+that are not dead and join the party `0`, the chamber `false`, and the root are at most the load
+`1` of the edge (`Trees.card_between_le`). -/
+example : ((Play.cutUnits (UnitId.holder (moves edgeRoutes (edgeLaws F) edgePlacement).channelParty)
+      id ((towerPlan edgeRoutes (edgeLaws F) edgePlacement 2 1 2).cur edgeCounts edgeOutcome
+        (Fintype.card (Move edgeRoutes edgeBase (edgeLaws F))) \
+          deadUnits 1 edgeRoutes (edgeLaws F) edgePlacement edgeOutcome)).filter fun u =>
+      s(UnitId.holder (moves edgeRoutes (edgeLaws F) edgePlacement).channelParty u false,
+        UnitId.holder (moves edgeRoutes (edgeLaws F) edgePlacement).channelParty u true) =
+        s(0, Trees.treeParent edgeRoutes (edgeLaws F) edgePlacement Nat.one_pos 2 edgeCounts
+          edgeOutcome 0)).card ≤ 1 :=
+  (Trees.card_between_le Nat.one_pos (by decide) edgeGood (by decide)).trans_eq <| by
+    change Tower.Node.lift _ 0 (.ofChamber le_rfl false : edgeTower.Node) = 1
+    simp [Tower.incidentSum, edgeLoads, load_edge edgeOutcome]
+
+/-- The root has at most the `2` chambers of the last level as children
+(`Trees.card_children_root_le`), and at the rate `1` the units between the root and its children
+are at most `3` times `edgeUnitBound` (`Trees.treeUnits_add_sum_le` with `c = 2`). -/
+example : (Finset.univ.filter fun q => q ≠ 2 ∧
+      Trees.treeParent edgeRoutes (edgeLaws F) edgePlacement Nat.one_pos 2 edgeCounts edgeOutcome
+        q = 2).card ≤ 2 ∧
+    Trees.treeUnits edgeRoutes (edgeLaws F) edgePlacement 2 edgeCounts edgeOutcome 2 +
+      ∑ q ∈ Finset.univ.filter (fun q => q ≠ 2 ∧ Trees.treeParent edgeRoutes (edgeLaws F)
+        edgePlacement Nat.one_pos 2 edgeCounts edgeOutcome q = 2),
+        Trees.treeUnits edgeRoutes (edgeLaws F) edgePlacement 2 edgeCounts edgeOutcome q ≤
+      3 * edgeUnitBound (edgeLaws F) 2 2 2 1 :=
+  ⟨Trees.card_children_root_le Nat.one_pos,
+    Trees.treeUnits_add_sum_le edgeStageRate Nat.one_pos (c := 2) (by norm_num) le_rfl 2⟩
 
 /-! ### The sizes and the program of the tower with one edge -/
 
@@ -597,6 +648,17 @@ private theorem edgePlanUnitBound : UnitBound edgeRoutes (edgeLaws F) edgePlacem
   card_slot_le := (card_moveSlot_le two_pos edgeSize Nat.one_pos).trans (by norm_num)
   card_unit_le := (card_planUnit edgePlacement).trans_le (edge_numUnits_le.trans (by norm_num))
   padding_le := by norm_num
+
+/-- **The program of the tree of the tower with one edge** (`Trees.exists_treeProgram`): one gate
+for every number of initial units and every outcome, and `(22 + 8 · 1100) · 1100 ^ 12` more, over
+the letters below `1100 ^ 4`. -/
+example : Nonempty (Trees.TreeProgram (towerPlan edgeRoutes (edgeLaws F) edgePlacement 2 1 1)
+    (Trees.treeParent edgeRoutes (edgeLaws F) edgePlacement Nat.one_pos 2)
+    (Trees.treeUnits edgeRoutes (edgeLaws F) edgePlacement 2) (1100 ^ 4)
+    (Fintype.card ((Fin 2 × Fin 2) ⊕ (moves edgeRoutes (edgeLaws F) edgePlacement).Channel) +
+      (22 + 8 * 1100) * 1100 ^ 12)) :=
+  Trees.exists_treeProgram Nat.one_pos Nat.one_pos 2 ⟨by norm_num, le_rfl⟩ edgeProgramBound
+    edgePlanUnitBound le_rfl
 
 /-- **The program of the plan of the tower with one edge.** From a program that computes the
 numbers of initial units and the outcomes, `11 + 8 · 1100` stages of `1100 ^ 12` gates compute the
@@ -753,6 +815,27 @@ example (hr : 0 < r) (hb : 0 < b) (hh : 0 < h) (hg : ∀ x, (towerPlan R FL Pl l
             3 * T.childUnits hh (edgeLoads (load lhat (initialCounts n) (outcomeOf R FL Pl o)))
               J c) :=
   le_self_add.trans (heldCount_add_sum_roleUnits_le hr hb hh hg hnr hSm _ hini)
+
+/-- For good outcomes, if every place is an end of a near pair, every law has at most `Sm` slots
+and the base parties have at most `ℓf` initial units, the numbers of units of the law moves at a
+party (its layers, `Trees.sum_count_le_card_seenAt`) are within the bound for the units that it
+ever holds and reads (`Trees.card_held_add_le`). -/
+example (hr : 0 < r) (hb : 0 < b) (hh : 0 < h) (hg : ∀ x, (towerPlan R FL Pl lhat U0 U1).Good n o x)
+    (hnr : ∀ f : T.Fl, ∃ ν, T.cN ν = f ∨ T.dN ν = f) {Sm : ℕ}
+    (hSm : ∀ d, Fintype.card (FL.law d).Slot ≤ Sm) {ℓf : ℕ}
+    (hini : ∀ a, ∑ c, ((n a c : ℕ) + n c a) ≤ ℓf) (p : Fin (A + A')) :
+    ∑ ρ ∈ Finset.univ.filter (fun ρ : (moves R FL Pl).Role =>
+        (moves R FL Pl).roleParty ρ = p ∧ (moveOrder R ch FL ρ.1).isVertex = true),
+      (towerPlan R FL Pl lhat U0 U1).count n o ρ.1 ≤
+    (4 + (2 * Fintype.card T.Nr * FL.lengthBound + 1 + Sm) * Fintype.card FL.Kind) * 8 *
+        (Trees.treeUnits R FL Pl lhat n o p + ∑ q ∈ Finset.univ.filter
+          (fun q => q ≠ Pl.party .root ∧ Trees.treeParent R FL Pl hh lhat n o q = p),
+          Trees.treeUnits R FL Pl lhat n o q) +
+      (if (p : ℕ) < A then ℓf + 8 * m * lhat else 0) +
+      2 * ((deadUnits U0 R FL Pl o).filter
+        (Play.Holds (UnitId.holder (moves R FL Pl).channelParty) p)).card :=
+  (Trees.sum_count_le_card_seenAt hg hnr p).trans
+    (le_self_add.trans (Trees.card_held_add_le hr hb hh hg hnr hSm hini p))
 
 end
 
