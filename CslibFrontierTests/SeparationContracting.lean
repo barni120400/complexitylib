@@ -9,7 +9,6 @@ module
 
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.Accelerator
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Contracting.LowerBound
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Iterate
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 
 /-! Tests of the circuit lemma (Lemma K.3) and the lower bound in the contracting case
@@ -20,7 +19,6 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.TwoCases.Cube
 * Theorem K.7 over `ℚ`: the flat case holds, or circuits for the permanent have more than
   `2 ^ (c (log m) ^ 2 / log log m)` nodes; the same for the Hamiltonian cycle polynomial, as
   Theorem M.3 uses it.
-* The calculation from exponents to the quasi-polynomial bound, for the sizes `s ≥ M ^ (M + 1)`.
 * Under hypotheses: in the contracting case, one node does not suffice for a family complete for
   grid sums. -/
 
@@ -64,16 +62,6 @@ example : FlatCase ℚ ∨ ∃ c : ℝ, 0 < c ∧ ∃ m₀ : ℕ, ∀ m ≥ m₀
   refine (flatCase_or_contractingCase ℚ).imp_right fun hK => ?_
   obtain ⟨C, M₁, h⟩ := hK.not_computedWithin_pow gridComplete_hcFamily
   exact Contracting.exists_quasipoly_lt_of_not_pow (fun _ _ _ hst hs => hs.mono hst) h
-
-/-- **From exponents to the quasi-polynomial bound**, for the sizes `s ≥ M ^ (M + 1)`: the size
-`M ^ a` is too small whenever `(lg M) ^ a ≤ M`, as then `a ≤ lg M ≤ M`. -/
-example : ∃ c : ℝ, 0 < c ∧ ∃ m₀ : ℕ, ∀ m ≥ m₀, ∀ s, m ^ (m + 1) ≤ s →
-    (2 : ℝ) ^ (c * Real.logb 2 m ^ 2 / Real.logb 2 (Real.logb 2 m)) < s := by
-  refine Contracting.exists_quasipoly_lt_of_not_pow (P := fun M s => M ^ (M + 1) ≤ s)
-    (fun _ _ _ hst hs => hs.trans hst) (C := 1) (M₁ := 4) fun M hM a ha hs => ?_
-  have haM : a ≤ lg M := le_lg_of_lg_pow_le hM (by simpa using ha)
-  have hlg : lg M ≤ M := Nat.log_lt_self 2 (by omega)
-  exact absurd hs (not_le.2 (Nat.pow_lt_pow_right (by omega) (by omega)))
 
 /-! ### The contract under hypotheses -/
 
