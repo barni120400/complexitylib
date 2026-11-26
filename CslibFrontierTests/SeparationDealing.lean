@@ -19,8 +19,8 @@ import Mathlib.Data.Fintype.BigOperators
 /-! Tests of the dealing program, as a client that sees only the public statements.
 
 * Closed examples: the flags of a row as a tree, row data valid after a given party, a unit with
-  one holder in a group, a value of the trie of a function, and the dealing program with no steps
-  and no templates.
+  one holder in a group and one with both, a value of the trie of a function, and the dealing
+  program with no steps and no templates.
 * For the plan of two parties with one move with the equality law (the fixtures of
   `CslibFrontierTests.SeparationGroupTheorem`): the size of the script of the group of both
   parties, for concrete arguments.
@@ -56,6 +56,10 @@ example : RowValidAfter 1 (⟨false, 1, 3⟩ : RowData 4) ∧
 
 /-- The unit `()` with the holders `false` and `true` has one holder in the group `true`. -/
 example : OneIn (fun (_ : Unit) (d : Bool) => d) id true () := by decide
+
+/-- A unit whose two holders are both in the group `()` does not have exactly one holder in it. -/
+example : ¬OneIn (fun (_ : Unit) (_ : Bool) => ()) id () () := by
+  rw [oneIn_iff, not_not]
 
 /-- The trie of the bits `bit b` at the paths `[b]` has `bit true` at `[true]`. -/
 example : tget [true] (trieOf (fun b : Bool => [b]) Tree.bit) = Tree.bit true :=
