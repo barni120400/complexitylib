@@ -38,9 +38,7 @@ import Mathlib.Data.Fintype.BigOperators
 * Numbers: closed examples of the numbers of units, row data and names, of a binary value, of
   the time of a small dealing program, and of the bounds of one cut at the scale `10000`; under
   hypotheses, the cut of the dealing program with the numbers of Theorem J.3.
-* What the dealing program is applied to: the units of a base party whose table at the beginning
-  is not zero, for the parts of an input (under hypotheses) and for two base parties with too
-  many units (closed); and the universal automaton on the empty instance (closed). -/
+* The universal automaton on the empty instance (closed). -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -425,30 +423,7 @@ example {θ : List Bool → F} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
 
 end OneCut
 
-/-! ### Runs as networks and the universal automaton -/
-
-/-- **The units of a base party at the beginning** (Lemma I.2, its last bound), as the
-proposition on pieces uses it: for the parts of `ℓ ≤ T` letters of the input and numbers of units
-below `U0 + 1`, a base party whose table at the beginning is not zero holds at most
-`2 * ((T + (K + K) * (|S| + 1)) * c / ub + (K + K))` units. -/
-example [DecidableEq Γ] {N : Type} {T ℓ : ℕ} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
-    {cb : Option Γ → Fin c → Bool} (hℓ : ℓ ≤ T) (u : Unit → List Γ) (q : Fin (K + 1) → Q)
-    (ρ : Option S → RowData (K + K)) (n : Fin (K + K) → Fin (K + K) → Fin (U0 + 1))
-    (p : Fin (K + K)) (y : UnitId (K + K) U0 N U1 → UnitContent ub)
-    (h : initialTable mu T cb q (parts ℓ (u ())) ρ (fun a b => n a b) p y ≠ 0) :
-    ∑ b, ((n p b : ℕ) + n b p) ≤ 2 * ((T + (K + K) * (Fintype.card S + 1)) * c / ub + (K + K)) :=
-  sum_count_le_of_initialTable_ne_zero (fun _ => (length_parts_le _ _ _).trans hℓ) h
-
-/-- With one block of one step, one tape, and codes and units of one bit, a base party whose
-table at the beginning is not zero holds at most `2 * ((1 + 2 * 2) * 1 / 1 + 2) = 14` units. So
-the table of a base party with four units to and from each of the two base parties is zero. -/
-example (mu : Tape.Letter Unit Unit Unit → Matrix Unit Unit ℤ) (cb : Option Unit → Fin 1 → Bool)
-    (q : Fin (1 + 1) → Unit) (ρ : Option Unit → RowData (1 + 1)) (p : Fin (1 + 1))
-    (y : UnitId (1 + 1) 4 Empty 0 → UnitContent 1) :
-    initialTable mu 1 cb q (fun _ => []) ρ (fun _ _ => 4) p y = 0 := by
-  by_contra h
-  have := sum_count_le_of_initialTable_ne_zero (fun _ => Nat.zero_le 1) h
-  simp at this
+/-! ### The universal automaton -/
 
 /-- **The universal automaton on the empty instance.** Over `ℤ`, with no named generator of
 nonzero weight, the empty instance `nil` (the program `nil` at the argument `nil`: one run of one
