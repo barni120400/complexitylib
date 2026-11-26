@@ -26,7 +26,7 @@ whether the output is a single given symbol, without storing an output that may 
 run.
 
 It is computed by the in-place run of the universal machine
-(`Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace`): the same
+(`Turing.MultiTapeTM.Universal.computableInTimeAndSpace_universal_inPlace`): the same
 multi-pass fold over the input, one pass per step, reading the symbol under the simulated input
 head by counting down the symbols of `x`, with the budget and the first two symbols of the output
 added to its state, and a budget test at the end of each pass. So it is computable within
@@ -54,7 +54,7 @@ cells the machine visits, is within the budget
   simulation up to some step.
 * `Turing.MultiTapeTM.Universal.budgetedUniversal_eq_of_le`,
   `Turing.MultiTapeTM.Universal.budgetedUniversal_desc`: within the budget, the universal function.
-* `Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_budgetedUniversal`,
+* `Turing.MultiTapeTM.Universal.computableInTimeAndSpace_budgetedUniversal`,
   `Turing.MultiTapeTM.Universal.computableInO_budgetedUniversal`: it is computable in
   space linear in `budgetSpace`.
 * `Turing.MultiTapeTM.Universal.budgetSpace_le`: `budgetSpace` is linear in the description, the
@@ -66,7 +66,7 @@ cells the machine visits, is within the budget
 The fold reuses the parts of the in-place fold (`Turing.MultiTapeTM.Universal.foldNext`,
 `Turing.MultiTapeTM.Universal.stepAt`, `Turing.MultiTapeTM.Universal.foldEnd`) on the state of the
 in-place fold, and its proof of computability adapts that of
-`Turing.MultiTapeTM.Universal.computableTidilyInTimeAndSpace_universal_inPlace`, by Christian
+`Turing.MultiTapeTM.Universal.computableInTimeAndSpace_universal_inPlace`, by Christian
 Reitwiessner. The events of the input (`Turing.MultiTapeTM.Universal.inTr_events_frame`) and the
 parts the initial state reads (`Turing.MultiTapeTM.Universal.extractT_run_frame`) are those of the
 in-place fold, since the encoding `Turing.MultiTapeTM.Universal.eInS` only appends a budget to the
@@ -140,8 +140,7 @@ public theorem budgetStep_iterate (i : ℕ) : ∃ j ≤ i,
 private lemma length_budgetStep_iterate_le (i : ℕ) :
     ((budgetStep d x b)^[i] (init d, [])).2.length ≤ 2 := by
   obtain ⟨j, -, heq, -⟩ := budgetStep_iterate d x b i
-  rw [heq, List.length_take]
-  exact min_le_left _ _
+  simpa only [heq] using List.length_take_le 2 _
 
 /-- The symbols of the output kept by the run within the budget are numbers of the description. -/
 private lemma le_of_mem_budgetStep_iterate (i : ℕ) {o : ℕ}
@@ -158,12 +157,12 @@ private theorem budgetStep_iterate_of_le {t : ℕ}
   induction t with
   | zero => rfl
   | succ t ih =>
-    rw [Function.iterate_succ_apply', ih fun j hj => hb j (by omega), budgetStep]
+    rw [Function.iterate_succ_apply', ih fun j hj => hb j (Nat.lt_succ_of_lt hj), budgetStep]
     dsimp only
     split_ifs with h
     · simp only [simulate]
       rw [stepOut_iterate_succ, ← run_succ, take_two_append_take_two]
-    · exact absurd (by rw [← run_succ]; exact hb t (by omega)) h
+    · exact absurd (run_succ d x t ▸ hb t (Nat.lt_succ_self t)) h
 
 /-- **Within the budget, the universal function**: if every configuration of the simulation within
 `t` steps is encoded within `b` bits, `budgetedUniversal` returns the first two symbols of the
@@ -502,12 +501,12 @@ local instance : FinEnum InState :=
   FinEnum.ofList [.descMarker, .descBit, .marker, .bit, .digitMarker, .digit, .steps]
     fun q => by cases q <;> decide
 
-/-- **The universal machine within a space budget.** The budgeted universal function is tidily
+/-- **The universal machine within a space budget.** The budgeted universal function is
 computable within space linear in the bound `budgetSpace` on the states of its fold, by the
 multi-pass fold of the in-place universal machine with the budget test at the end of each pass.
 Each of the `t` passes reads the whole input. -/
-public theorem computableTidilyInTimeAndSpace_budgetedUniversal : ∃ c,
-    ComputableTidilyInTimeAndSpace budgetedUniversal eInS eOut
+public theorem computableInTimeAndSpace_budgetedUniversal : ∃ c,
+    ComputableInTimeAndSpace budgetedUniversal eInS eOut
       (fun i => c * ((i.2.2.1 + 1) * ((eInS i).length + 1) ^ 2 * (budgetSpace i + 1) ^ 3))
       (fun i => c * (budgetSpace i + 1)) := by
   refine Exists.elim (ComputableTidilyInTimeAndSpace.multiPassFold_translate inTr
@@ -559,41 +558,32 @@ public theorem computableTidilyInTimeAndSpace_budgetedUniversal : ∃ c,
     have h₂ := length_eSSt_le' d x b t (i + 1) 0
     rw [streamState_zero] at h₂
     omega
-  case refine_7 =>
-    rintro ⟨d, x, t, b⟩ i - j -
-    exact length_eSSt_le' d x b t i j
+  case refine_7 => exact fun ⟨d, x, t, b⟩ i _ j _ => length_eSSt_le' d x b t i j
   case refine_8 =>
     rintro ⟨d, x, t, b⟩
-    have h := length_eSSt_le' d x b t (t - 1 + 1) 0
-    rw [streamState_zero] at h
+    simpa only [streamState_zero] using length_eSSt_le' d x b t (t - 1 + 1) 0
+  refine ⟨20 * c, (ComputableTidilyInTimeAndSpace.computableInTimeAndSpace h).mono
+    (fun i => ?_) fun i => ?_⟩
+  all_goals
+    obtain ⟨d, x, t, b⟩ := i
     dsimp only
-    exact h
-  refine ⟨20 * c, h.mono (fun i => ?_) fun i => ?_⟩ <;> obtain ⟨d, x, t, b⟩ := i <;> dsimp only
-  · have hP : (encPair eDesc (encPair encNat encUnary) (d, t, b)).length ≤
+    have hP : (encPair eDesc (encPair encNat encUnary) (d, t, b)).length ≤
         budgetSpace (d, x, t, b) := by
       simp only [length_encPair, encUnary_apply, List.length_replicate, budgetSpace, descLen]
       omega
     have hE := length_eSSt_le' d x b t (t - 1 + 1) 0
     rw [streamState_zero] at hE
-    exact final_time c _ t _ _ _ hP hE
-  · have hP : (encPair eDesc (encPair encNat encUnary) (d, t, b)).length ≤
-        budgetSpace (d, x, t, b) := by
-      simp only [length_encPair, encUnary_apply, List.length_replicate, budgetSpace, descLen]
-      omega
-    have := length_eSSt_le' d x b t (t - 1 + 1) 0
-    simp only [streamState_zero] at this
-    nlinarith
+  · exact final_time c _ t _ _ _ hP hE
+  · nlinarith
 
 /-- The initial configuration is encoded within `11 * descLen d + 6` bits: the initial state, the
 input head at `1` and blank work tapes. -/
 public lemma length_eCfg_init_le : (eCfg (init d)).length ≤ 11 * descLen d + 6 := by
-  have hq : d.q₀ ≤ descLen d := by
-    simp only [descLen, eDesc_apply, length_encPair, encUnary_apply, List.length_replicate]; omega
-  have hk : d.tapes ≤ descLen d := by
-    simp only [descLen, eDesc_apply, length_encPair, encUnary_apply, List.length_replicate]; omega
-  have ht := length_encList_le eTape (List.replicate d.tapes ⟨0, [], []⟩) (b := 4) fun t ht => by
-    rw [List.eq_of_mem_replicate ht]
-    rfl
+  have hqk : d.q₀ ≤ descLen d ∧ d.tapes ≤ descLen d := by
+    simp only [descLen, eDesc_apply, length_encPair, encUnary_apply, List.length_replicate]
+    omega
+  have ht := length_encList_le eTape (List.replicate d.tapes ⟨0, [], []⟩) (b := 4)
+    fun t ht => List.eq_of_mem_replicate ht ▸ le_rfl
   rw [List.length_replicate] at ht
   simp only [init, eCfg_apply, length_encPair, eSym, encOption_some, List.length_cons,
     encUnary_apply, List.length_replicate]
@@ -629,13 +619,10 @@ public theorem computableInO_budgetedUniversal :
     ComputableInO budgetedUniversal eInS eOut
       (fun i => (i.2.2.1 + 1) * ((eInS i).length + 1) ^ 2 * (budgetSpace i + 1) ^ 3)
       budgetSpace := by
-  obtain ⟨c, h⟩ := computableTidilyInTimeAndSpace_budgetedUniversal
-  refine .of_bounds (ComputableTidilyInTimeAndSpace.computableInTimeAndSpace h) (c + 1)
-    (fun i => ?_) (fun i => ?_) fun i => ?_
-  · exact Nat.mul_le_mul (Nat.le_succ c) (Nat.le_succ _)
-  · exact Nat.mul_le_mul (Nat.le_succ c) le_rfl
-  · obtain ⟨d, x, t, b⟩ := i
-    have := length_eOut_budgetedUniversal_le d x b t
-    nlinarith
+  obtain ⟨c, h⟩ := computableInTimeAndSpace_budgetedUniversal
+  refine .of_bounds h (c + 1) (fun _ => Nat.mul_le_mul (Nat.le_succ c) (Nat.le_succ _))
+    (fun _ => Nat.mul_le_mul (Nat.le_succ c) le_rfl) fun ⟨d, x, t, b⟩ => ?_
+  have := length_eOut_budgetedUniversal_le d x b t
+  nlinarith
 
 end Turing.MultiTapeTM.Universal

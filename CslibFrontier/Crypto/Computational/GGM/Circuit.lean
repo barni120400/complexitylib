@@ -137,9 +137,8 @@ theorem ofFn_evalBits (G : PRG.Generator (BitString k) (BitString (2 * k)))
   induction n generalizing seed with
   | zero => simp
   | succ n ih =>
-    rw [evalBits_succ, ih, List.ofFn_succ, eval_cons]
-    congr 1
-    rw [child, List.length_ofFn, ofFn_block, listGenerator]
+    rw [evalBits_succ, ih, List.ofFn_succ, eval_cons, child, List.length_ofFn, ofFn_block,
+      listGenerator]
     congr 3 with i : 1
     simp
 
@@ -159,19 +158,20 @@ theorem complexity_evalBits_le (G : PRG.Generator (BitString k) (BitString (2 * 
       n * complexity interpretation ⇑G := by
   induction n with
   | zero =>
-    have h : (fun seed : BitString k => evalBits G seed x) = fun seed => seed ∘ id := rfl
-    rw [h, complexity_wiring, zero_mul]
+    change complexity interpretation (fun seed => seed ∘ id) ≤ _
+    rw [complexity_wiring, zero_mul]
   | succ n ih =>
-    have h : (fun seed : BitString k => evalBits G seed x) =
-        (fun seed => evalBits G seed (Fin.tail x)) ∘
-          (fun y => y ∘ fun i : Fin k => finProdFinEquiv (finTwoEquiv.symm (x 0), i)) ∘ ⇑G := rfl
-    have hstep := complexity_comp_le (I := interpretation) ⇑G
-      (fun y => y ∘ fun i : Fin k => finProdFinEquiv (finTwoEquiv.symm (x 0), i))
-    rw [complexity_wiring, add_zero] at hstep
-    rw [h]
-    calc _ ≤ _ := complexity_comp_le _ _
+    let w : BitString (2 * k) → BitString k :=
+      fun y => y ∘ fun i : Fin k => finProdFinEquiv (finTwoEquiv.symm (x 0), i)
+    have hw : complexity interpretation (w ∘ ⇑G) ≤ complexity interpretation ⇑G := by
+      simpa only [w, complexity_wiring, add_zero] using
+        complexity_comp_le (I := interpretation) ⇑G w
+    calc complexity interpretation (fun seed : BitString k => evalBits G seed x)
+        ≤ complexity interpretation (w ∘ ⇑G) +
+            complexity interpretation (fun seed => evalBits G seed (Fin.tail x)) :=
+          complexity_comp_le (w ∘ ⇑G) (fun seed => evalBits G seed (Fin.tail x))
       _ ≤ complexity interpretation ⇑G + n * complexity interpretation ⇑G :=
-          add_le_add hstep (ih (Fin.tail x))
+          add_le_add hw (ih (Fin.tail x))
       _ = (n + 1) * complexity interpretation ⇑G := by ring
 
 /-- One bit of the evaluation along a fixed query of length `n`, as a function of a string of
@@ -181,15 +181,12 @@ theorem complexity_evalBits_block_le (G : PRG.Generator (BitString k) (BitString
     (b : Fin 2) (x : BitString n) (i : Fin k) :
     complexity interpretation (single fun y => evalBits G (BitString.block y b) x i) ≤
       n * complexity interpretation ⇑G := by
-  have h : (single fun y => evalBits G (BitString.block y b) x i) =
-      (fun z => z ∘ fun _ : Fin 1 => i) ∘ (fun seed => evalBits G seed x) ∘
-        (fun y => y ∘ fun i : Fin k => finProdFinEquiv (b, i)) := rfl
-  rw [h]
-  refine (complexity_comp_le _ _).trans ?_
-  rw [complexity_wiring, add_zero]
-  refine (complexity_comp_le _ _).trans ?_
-  rw [complexity_wiring, zero_add]
-  exact complexity_evalBits_le G x
+  refine (complexity_comp_le ((fun seed => evalBits G seed x) ∘
+      fun y => y ∘ fun j : Fin k => finProdFinEquiv (b, j))
+    (fun z => z ∘ fun _ : Fin 1 => i)).trans ?_
+  simpa only [complexity_wiring, add_zero, zero_add] using
+    (complexity_comp_le (fun y => y ∘ fun j : Fin k => finProdFinEquiv (b, j)) _).trans
+      (Nat.add_le_add_left (complexity_evalBits_le G x) _)
 
 /-- **Circuits for tree evaluation.** If the bits of a seed and of a query of length `n` are
 available, the bits of the label reached are synthesized with, per query bit, a smallest circuit
@@ -209,26 +206,21 @@ theorem synthesis_evalBits {N : ℕ} (G : PRG.Generator (BitString k) (BitString
     -- the expansion of the current label, by a smallest circuit for the generator
     have h1 : Synthesis interpretation s (Set.range fun j z => G (seed z) j)
         (complexity interpretation ⇑G) := by
-      have h := Synthesis.circuit (I := interpretation) c (fun i z => seed z i) hseed
-      rw [hsize] at h
-      convert h using 3 with j
-      funext z
-      exact (congrFun (hc (seed z)) j).symm
+      convert hsize ▸ Synthesis.circuit (I := interpretation) c (fun i z => seed z i) hseed
+        using 3 with j
+      exact funext fun z => (congrFun (hc (seed z)) j).symm
     -- the block selected by the first query bit, by one multiplexer per bit
     have h2 : Synthesis interpretation (s ∪ Set.range fun j z => G (seed z) j)
         (Set.range fun i z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)) i)
         (4 * k) := by
-      have h := Synthesis.family (I := interpretation)
+      simpa [mul_comm] using Synthesis.family (I := interpretation)
         (s := s ∪ Set.range fun j z => G (seed z) j)
         (fun i : Fin k => fun z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)) i)
         (fun _ => 4) fun i => by
-          have hmux := Synthesis.mux (s := s ∪ Set.range fun j z => G (seed z) j)
+          convert Synthesis.mux (s := s ∪ Set.range fun j z => G (seed z) j)
             (Or.inl (hquery 0)) (Or.inr ⟨finProdFinEquiv (1, i), rfl⟩)
-            (Or.inr ⟨finProdFinEquiv (0, i), rfl⟩)
-          convert hmux using 2
-          funext z
-          cases query z 0 <;> rfl
-      simpa [mul_comm] using h
+            (Or.inr ⟨finProdFinEquiv (0, i), rfl⟩) using 2
+          exact funext fun z => by cases query z 0 <;> rfl
     have h3 := ih
       (s := s ∪ Set.range fun i z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)) i)
       (fun z => BitString.block (G (seed z)) (finTwoEquiv.symm (query z 0)))
@@ -300,12 +292,7 @@ private theorem leaves_succ (G : PRG.Generator (BitString k) (BitString (2 * k))
       leaves G (j + 1) m (by omega) (reshape fun q => G (labels q)) := by
   funext x
   rw [leaves, evalBits_succ]
-  congr 1 with i : 1
-  simp only [Fin.tail, Fin.val_succ]
-  congr 1
-  ext
-  simp only
-  omega
+  exact congrArg (evalBits G _) (funext fun i => congrArg x (Fin.ext (by dsimp [Fin.tail]; omega)))
 
 variable [NeZero k]
 
@@ -327,15 +314,10 @@ private theorem abs_hybridProb_sub_le (G : PRG.Generator (BitString k) (BitStrin
         𝔼 b, (if D (truthTable n fun x =>
           leaves G (j + 1) m (by omega) (reshape (update c q b)) x 0) then 1 else 0 : ℝ)| ≤ ε) :
     |hybridProb G D j (m + 1) h - hybridProb G D (j + 1) m (by omega)| ≤ 2 ^ j * ε := by
-  have h0 : hybridProb G D j (m + 1) h = 𝔼 labels : BitString j → BitString k,
-      (if D (truthTable n fun x => leaves G (j + 1) m (by omega)
-        (reshape fun q => G (labels q)) x 0) then 1 else 0 : ℝ) := by
-    simp only [hybridProb, leaves_succ G h]
-  have h1 : hybridProb G D (j + 1) m (by omega) = 𝔼 Y : BitString j → BitString (2 * k),
-      (if D (truthTable n fun x => leaves G (j + 1) m (by omega) (reshape Y) x 0)
-        then 1 else 0 : ℝ) :=
-    (Fintype.expect_equiv reshape _ _ fun _ => rfl).symm
-  rw [h0, h1]
+  rw [hybridProb, hybridProb, ← Fintype.expect_equiv reshape
+    (fun Y => (if D (truthTable n fun x => leaves G (j + 1) m (by omega) (reshape Y) x 0)
+      then 1 else 0 : ℝ)) _ fun _ => rfl]
+  simp only [leaves_succ G h]
   simpa [BitString, Fintype.card_fun] using PRG.abs_expect_comp_sub_expect_le ⇑G
     (fun Y => (if D (truthTable n fun x => leaves G (j + 1) m (by omega) (reshape Y) x 0)
       then 1 else 0 : ℝ)) hε
@@ -361,24 +343,17 @@ private theorem complexity_slice_le (G : PRG.Generator (BitString k) (BitString 
   -- the bit of the truth table at the input `x`
   set x := (BitString.equivFin n).symm i
   set p : BitString (j + 1) := fun l => x ⟨l, by omega⟩
+  have hfn : (fun y => truthTable n (fun x =>
+        leaves G (j + 1) m h (reshape (update c q y)) x 0) i) =
+      fun y => evalBits G
+        (BitString.block (update c q y (Fin.init p)) (finTwoEquiv.symm (p (Fin.last j))))
+        (fun l : Fin m => x ⟨j + 1 + l, by omega⟩) 0 :=
+    funext fun _ => by simp only [truthTable_apply, leaves, reshape_apply, p, x]
+  rw [hfn]
   by_cases hp : Fin.init p = q
-  · have he : (fun y => truthTable n (fun x =>
-        leaves G (j + 1) m h (reshape (update c q y)) x 0) i) =
-        fun y => evalBits G (BitString.block y (finTwoEquiv.symm (p (Fin.last j))))
-          (fun l : Fin m => x ⟨j + 1 + l, by omega⟩) 0 := by
-      funext y
-      simp only [truthTable_apply, leaves, reshape_apply]
-      rw [← hp, update_self]
-    rw [he]
+  · simp only [hp, update_self]
     exact (complexity_evalBits_block_le G _ _ 0).trans (Nat.le_succ _)
-  · have he : (fun y => truthTable n (fun x =>
-        leaves G (j + 1) m h (reshape (update c q y)) x 0) i) =
-        fun _ => evalBits G (BitString.block (c (Fin.init p)) (finTwoEquiv.symm (p (Fin.last j))))
-          (fun l : Fin m => x ⟨j + 1 + l, by omega⟩) 0 := by
-      funext y
-      simp only [truthTable_apply, leaves, reshape_apply]
-      rw [update_of_ne hp]
-    rw [he]
+  · simp only [update_of_ne hp]
     exact (Synthesis.const _).complexity_le.trans (Nat.le_add_left _ _)
 
 /-- The first hybrid is the GGM family with a uniformly random key. -/
@@ -389,12 +364,11 @@ private theorem hybridProb_zero (G : PRG.Generator (BitString k) (BitString (2 *
         (fun T => PMF.pure (D T)) true).toReal := by
   rw [PRG.Generator.toReal_realExperiment_pure, ← Fintype.expect_boole, hybridProb]
   refine Fintype.expect_equiv (Equiv.funUnique (BitString 0) (BitString k)) _ _ fun L => ?_
-  have hx (x : BitString n) : (fun i : Fin n => x ⟨0 + i, by omega⟩) = x :=
-    funext fun i => congrArg x (Fin.ext (zero_add _))
-  have hL (x : BitString n) : L (fun i : Fin 0 => x ⟨i, by omega⟩) =
-      Equiv.funUnique (BitString 0) (BitString k) L :=
-    congrArg L (Subsingleton.elim _ _)
-  simp only [leaves, hx, hL, truthTableGenerator_apply]
+  have hx (x : BitString n) : leaves G 0 n (zero_add n) L x =
+      evalBits G (Equiv.funUnique (BitString 0) (BitString k) L) x :=
+    congrArg₂ (evalBits G) (congrArg L (Subsingleton.elim _ _))
+      (funext fun i => congrArg x (Fin.ext (zero_add _)))
+  simp only [hx, truthTableGenerator_apply]
   rfl
 
 /-- The last hybrid is a uniformly random function. -/
@@ -432,17 +406,15 @@ theorem secure_truthTableGenerator_booleanFamily [NeZero k]
   have htel (m : ℕ) : ∀ j (h : j + m = n),
       |hybridProb G D j m h - hybridProb G D n 0 (add_zero n)| ≤ (2 ^ n - 2 ^ j) * ε := by
     induction m with
-    | zero =>
-      intro j h
-      subst h
-      simp
+    | zero => exact fun _ h => by simp [← h]
     | succ m ih =>
       intro j h
       have hstep := abs_hybridProb_sub_le G D h (ε := ε) fun c q => by
-        have hslice := complexity_slice_le G D (j := j) (m := m) (by omega) c q
         have hadv := hG (fun y => PMF.pure (D (truthTable n fun x =>
           leaves G (j + 1) m (by omega) (reshape (update c q y)) x 0)))
-          ⟨_, hslice.trans (by rw [add_comm]; gcongr; omega), rfl⟩
+          ⟨_, (complexity_slice_le G D (j := j) (m := m) (by omega) c q).trans
+            ((add_comm _ _).trans_le (add_le_add hD (Nat.mul_le_mul_left _
+              (Nat.succ_le_succ (Nat.mul_le_mul_right _ (by omega)))))), rfl⟩
         rwa [PRG.Generator.advantage, PRG.Generator.toReal_realExperiment_pure,
           PRG.Generator.toReal_idealExperiment_pure, ← Fintype.expect_boole,
           ← Fintype.expect_boole] at hadv
@@ -451,11 +423,9 @@ theorem secure_truthTableGenerator_booleanFamily [NeZero k]
             abs_sub_le _ _ _
         _ ≤ 2 ^ j * ε + (2 ^ n - 2 ^ (j + 1)) * ε := add_le_add hstep (ih (j + 1) (by omega))
         _ = (2 ^ n - 2 ^ j) * ε := by ring
-  have h := htel n 0 (zero_add n)
-  rw [hybridProb_zero, hybridProb_self, pow_zero] at h
-  rw [PRG.Generator.advantage, NNReal.coe_mul, NNReal.coe_sub (one_le_pow₀ one_le_two),
-    NNReal.coe_pow, NNReal.coe_ofNat, NNReal.coe_one]
-  exact h
+  simpa only [hybridProb_zero, hybridProb_self, pow_zero, PRG.Generator.advantage, NNReal.coe_mul,
+    NNReal.coe_sub (one_le_pow₀ one_le_two), NNReal.coe_pow, NNReal.coe_ofNat, NNReal.coe_one] using
+    htel n 0 (zero_add n)
 
 /-! ### Asymptotic security -/
 
@@ -490,19 +460,16 @@ theorem isExponentiallySecure_booleanFamily
   -- which exceeds the size of the reduction
   have hsize : 2 ^ (c * n) +
       2 ^ n * (n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d + 1))) + 1) ≤ 2 ^ (n ^ 2) := by
-    have h1 : 2 ^ (c * n) ≤ 2 ^ ((c + 3) * n - 1) := Nat.pow_le_pow_right two_pos (by
-      rw [add_mul]; omega)
+    have h1 : 2 ^ (c * n) ≤ 2 ^ ((c + 3) * n - 1) :=
+      Nat.pow_le_pow_right two_pos (by rw [add_mul]; omega)
     have h2 : 2 ^ n * (n * complexity interpretation ⇑(G ((n + 1) ^ (2 * d + 1))) + 1) ≤
         2 ^ ((c + 3) * n - 1) := by
       calc _ ≤ 2 ^ n * 2 ^ n := Nat.mul_le_mul_left _ hn.le
         _ = 2 ^ (2 * n) := by rw [← pow_add, two_mul]
         _ ≤ _ := Nat.pow_le_pow_right two_pos (by rw [add_mul]; omega)
+    have hpos : 1 ≤ (c + 3) * n := Nat.mul_pos (by omega) (by omega)
     calc _ ≤ 2 * 2 ^ ((c + 3) * n - 1) := by omega
-      _ = 2 ^ ((c + 3) * n) := by
-          rw [← pow_succ']
-          congr 1
-          have : 1 ≤ (c + 3) * n := Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by omega) (by omega))
-          omega
+      _ = 2 ^ ((c + 3) * n) := by rw [← pow_succ', Nat.sub_add_cancel hpos]
       _ ≤ 2 ^ (n ^ 2) := Nat.pow_le_pow_right two_pos (by rw [sq]; exact Nat.mul_le_mul_right _ hc)
   refine (secure_truthTableGenerator_booleanFamily ((hsec.of_admissible fun A ⟨test, htest, hA⟩ =>
     ⟨test, htest.trans hsize, hA⟩))).mono ?_
