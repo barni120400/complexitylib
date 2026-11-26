@@ -34,6 +34,7 @@ the units cut with one holder in the group (`size_scriptEnc_le`).
 
 ## Main results
 
+* `oneIn_iff`: `OneIn` without `Xor`.
 * `size_scriptEnc_le`: the size of the script of a group.
 
 ## References
@@ -57,6 +58,11 @@ open Finset Interpreter Interpreter.Tree Cut GroupProgram
 instance {U A G : Type*} [DecidableEq G] (h : U → Bool → A) (grp : A → G) (g : G) (u : U) :
     Decidable (OneIn h grp g u) :=
   inferInstanceAs (Decidable (Xor _ _))
+
+/-- Exactly one holder of `u` is in `g` if and only if not both or neither of them are. -/
+theorem oneIn_iff {U A G : Type*} {h : U → Bool → A} {grp : A → G} {g : G} {u : U} :
+    OneIn h grp g u ↔ ¬(grp (h u false) = g ↔ grp (h u true) = g) :=
+  xor_iff_not_iff _ _
 
 section Sizes
 
