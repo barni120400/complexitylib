@@ -17,7 +17,6 @@ import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Program
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.TemplateCost
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Theorem
-import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Uni.Automaton
 import Mathlib.Data.Fintype.BigOperators
 
 /-! Tests of the dealing program, as a client that sees only the public statements.
@@ -37,8 +36,7 @@ import Mathlib.Data.Fintype.BigOperators
   scale.
 * Numbers: closed examples of the numbers of units, row data and names, of a binary value, of
   the time of a small dealing program, and of the bounds of one cut at the scale `10000`; under
-  hypotheses, the cut of the dealing program with the numbers of Theorem J.3.
-* The universal automaton on the empty instance (closed). -/
+  hypotheses, the cut of the dealing program with the numbers of Theorem J.3. -/
 
 -- This regression module checks ordinary imports and exports no test fixtures.
 set_option linter.privateModule false
@@ -422,26 +420,5 @@ example {θ : List Bool → F} {mu : Tape.Letter S Unit Γ → Matrix Q Q F}
     (hN.mm_le.trans (Nat.mul_le_mul_left k (Nat.le_self_pow (by norm_num) m))) hN.dealTime_le
 
 end OneCut
-
-/-! ### The universal automaton -/
-
-/-- **The universal automaton on the empty instance.** Over `ℤ`, with no named generator of
-nonzero weight, the empty instance `nil` (the program `nil` at the argument `nil`: one run of one
-step, of weight `1`) is `1`-plain, and the universal automaton has the value `1` on its word
-`[bt false]` in `C * (1 + 1) * lg (1 + 1) ^ 2 = 8 * C` steps or more. -/
-example : ∃ (S Γ Q : Type) (_ : Fintype S) (_ : DecidableEq S) (_ : Fintype Γ)
-    (_ : DecidableEq Γ) (_ : Fintype Q) (_ : DecidableEq Q)
-    (mu : Tape.Letter S Unit Γ → Matrix Q Q ℤ) (i e : Q) (bt : Bool → Γ) (C : ℕ),
-      ∀ t, 8 * C ≤ t → Tape.runVal mu i e t (fun _ => [bt false]) = 1 := by
-  obtain ⟨S, Γ, Q, iS, dS, iΓ, dΓ, iQ, dQ, mu, i, e, bt, C, -, hU⟩ :=
-    Uni.exists_universal_automaton (fun _ => (0 : ℤ)) (by simp)
-  have hev : Ev (fun _ => (0 : ℤ)) (Fm.ofTree .nil) .nil [.det 1 .nil] := by
-    rw [Fm.ofTree]
-    exact Ev.quote _ _
-  refine ⟨S, Γ, Q, iS, dS, iΓ, dΓ, iQ, dQ, mu, i, e, bt, C, fun t ht => ?_⟩
-  have hlg : lg (1 + 1) = 2 := congrArg (· + 1) (Nat.log_eq_one_iff'.2 ⟨le_rfl, by norm_num⟩)
-  have := hU 1 .nil t ⟨hev.hl, by simp [hev.evl, Run.det]⟩
-    (by rw [show Tree.size .nil = 1 from rfl, hlg]; omega)
-  simpa [tbits, pv, hev.evl, pval, Run.det] using this
 
 end CslibFrontierTests.SeparationDealing

@@ -32,8 +32,9 @@ that `Tape.exists_run_val` gives for the series of the universal machine
 ## References
 
 * [Anthropic, *VP ≠ VNP over every field*, paper and Lean formalization][AnthropicVPVNP2026],
-  Proposition I.1 (p. 49), with the two letters different (a separate theorem there,
-  `universal_symbols_ne`); module `Paper.Universal`
+  Proposition I.1 (p. 49); module `Paper.Universal`. That the two letters are different is a
+  separate theorem of the source (`universal_symbols_ne`, for a nonzero ring; p. 69), and here a
+  part of the statement, for every ring
 -/
 
 public section
