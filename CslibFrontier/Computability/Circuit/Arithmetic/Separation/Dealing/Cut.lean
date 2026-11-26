@@ -55,7 +55,7 @@ namespace Cslib.Circuits.Arithmetic.Separation.Dealing
 open Function Finset Interpreter Interpreter.Tree Cut GroupProgram
 
 /-- The part `κ` of the input `x`, as the list of the codes of its letters, last letter first. -/
-@[expose] def partTree {Γ : Type} {K c : ℕ} (cb : Option Γ → Fin c → Bool) (x : Fin K → List Γ)
+def partTree {Γ : Type} {K c : ℕ} (cb : Option Γ → Fin c → Bool) (x : Fin K → List Γ)
     (κ : Fin K) : Tree :=
   wordsEnc (((x κ).map (letterCode cb)).reverse)
 
