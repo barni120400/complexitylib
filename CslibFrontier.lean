@@ -6992,6 +6992,7 @@ public import CslibFrontier.Computability.Complexity.Problems.NCL.Diagram.Genera
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.IntersectionParity
 public import CslibFrontier.Probability.MarkovChain.Coupling
 public import CslibFrontier.Computability.PCP.Composition
+public import CslibFrontier.Computability.Circuit.Boolean.DeterministicDecomposable
 public import CslibFrontier.Computability.Complexity.Problems.Bipartite.LogSpace
 public import CslibFrontier.Foundations.Data.Polynomial.TruncatedAlgebra
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.PolyTime.Length
@@ -10781,6 +10782,7 @@ public import CslibFrontier.Logics.FirstOrder.ZeroOneLaw
 public import CslibFrontier.Algorithms.WordRAM.Auction.RowScan
 public import CslibFrontier.MachineLearning.PACLearning.SampleComplexityLower.EHKVProof
 public import CslibFrontier.Foundations.BooleanAnalysis.Degree
+public import CslibFrontier.Computability.Circuit.DecomposableGates
 public import CslibFrontier.DataStructure.Retroactive.Basic
 public import CslibFrontier.Logics.Propositional.PseudoBoolean.Print
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.KernelFacts
