@@ -296,8 +296,8 @@ example : Fintype.card (UnitId 2 1 Unit 3) = 7 := by
 /-- Two parties have eight row data. -/
 example : Fintype.card (RowData 2) = 8 := RowData.card_eq 2
 
-/-- With one block, no moves, no steps and no tapes, channels or units, there are `25` names. -/
-example : Fintype.card (Name 1 0 0 Empty Empty Empty) = 25 := by
+/-- With one block, one move, one step, and one tape, channel and unit, there are `39` names. -/
+example : Fintype.card (Name 1 1 1 Unit Unit Unit) = 39 := by
   rw [Name.card_eq]
   simp
 
@@ -306,47 +306,58 @@ example : BitString.binaryValue [true, false] = 2 := by
   rw [show [true, false] = [false, true].reverse from rfl, ← KT.val_eq_binaryValue_reverse]
   rfl
 
-/-- The time bound of the dealing program with one block, one group, codes of one bit, one bit
-per unit, no cut units and the empty argument. -/
-example : dealTime 1 1 1 1 1 0 0 = 26612 := by
+/-- The time bound of the dealing program with codes of two bits, numbers at most `3`, one block,
+two groups, units of four bits, one cut unit and an argument of size `5`. -/
+example : dealTime 2 3 1 2 4 1 5 = 355586 := by
   norm_num [dealTime, stepBound, pieceBound]
 
-/-- The numbers of one cut at the scale `v = m = 10000`, with one block of one step, one group
-of one base party, codes of one bit, an empty instance and `τ = 10000 ^ 320`. -/
+/-- The numbers of one cut at the scale `v = m = 10000`: an instance of size `5` and time
+`τ = 10000 ^ 321`, cut by `2` into two blocks of three steps with parts of three letters, units of
+two bits, three units at the beginning of a base party, codes of four bits and letters of one bit,
+`X = 2`, and two groups, each with one base party, one unit with one holder in it and five cells
+and units read by its roles. -/
 private theorem cutNumbers :
-    CutNumbers 10000 1 (10000 ^ 320) 0 1 1 1 1 0 1 1 10000 0 1 0 0 1 where
+    CutNumbers 10000 2 (10000 ^ 321) 5 2 3 3 2 3 2 4 10000 1 1 1 5 2 where
   le_m := le_rfl
   m_le_v := le_rfl
-  k_pos := one_pos
+  k_pos := by norm_num
   k_le_K := le_rfl
-  KT_le := Nat.one_le_iff_ne_zero.mpr (mul_ne_zero (pow_ne_zero _ (by norm_num)) (by norm_num))
-  ℓ_eq := rfl
-  ub_pos := one_pos
+  KT_le := le_trans (b := 1 * 10000) (by norm_num)
+    (Nat.mul_le_mul_right _ (one_le_pow₀ (by norm_num)))
+  ℓ_eq := by norm_num
+  ub_pos := by norm_num
   ub_le := by norm_num
   lh_mul_ub_le := by norm_num
   Lc_lt := by norm_num
   c_le := by norm_num
   K_le_X := le_rfl
   ιb_mul_le := by norm_num
-  ιb_le_X := le_rfl
-  bd_le := by rw [zero_mul, zero_mul]; exact Nat.zero_le _
-  ev_le := by rw [zero_mul, zero_mul]; exact Nat.zero_le _
+  ιb_le_X := by norm_num
+  bd_le := by
+    rw [show 321 = 21 + 300 from rfl, pow_add]
+    generalize 10000 ^ 300 = a
+    exact le_trans (b := 10000 ^ 21 * a) (Nat.mul_le_mul_right _ (by norm_num))
+      (Nat.le_mul_of_pos_right _ (by positivity))
+  ev_le := le_trans (b := 1 * 10000 ^ 2) (by norm_num)
+    (Nat.mul_le_mul_right _ (one_le_pow₀ (by norm_num)))
   mm_le := by norm_num
   mm_le_X := le_rfl
-  small := by rw [one_pow, one_mul, ← pow_add]
+  small := by
+    rw [show 321 = 21 + 300 from rfl, pow_add]
+    exact Nat.mul_le_mul_right _ (by norm_num)
 
-/-- **The time of the dealing program at the scale `10000`.** -/
-example : dealTime 1 1 1 1 1 (1 * 0) 0 ≤ (0 + 10000 ^ 320 * 1 / 10000 ^ 256) * 10000 ^ 10 :=
+/-- **The time of the dealing program at the scale `10000`**, with at most `2 * 1` cut units. -/
+example : dealTime 4 2 2 2 2 (2 * 1) 5 ≤ (5 + 10000 ^ 321 * 2 / 10000 ^ 256) * 10000 ^ 10 :=
   cutNumbers.dealTime_le
 
 /-- **The size of the pieces at the scale `10000`.** -/
-example : 1 + 1 + (200 * 1 ^ 3 * 1 + 1 * 1 * (4 * 0 + 2) + 0 * (4 * 1)) ≤
-    (0 / 1 + 10000 ^ 320 / 10000 ^ 256) * 10000 ^ 10 :=
+example : 2 + 1 + (200 * 2 ^ 3 * 4 + 1 * 3 * (4 * 1 + 2) + 1 * (4 * 2)) ≤
+    (5 / 2 + 10000 ^ 321 / 10000 ^ 256) * 10000 ^ 10 :=
   cutNumbers.size_le
 
-/-- **The time of the pieces at the scale `10000`**, for `κ = 1`. -/
-example : 1 * ((1 + 1) * (1 + 1 + 2) + 1 * 1 + 3 * (0 + 1 * 0) * (1 + 1 + 1) + 10 * 1 ^ 3) ≤
-    10000 ^ 320 * 10000 ^ 10 / 1 :=
+/-- **The time of the pieces at the scale `10000`**, for `κ = 3`. -/
+example : 3 * ((4 + 1) * (3 + 2 + 2) + 1 * 3 + 3 * (5 + 1 * 3) * (2 + 4 + 1) + 10 * 2 ^ 3) ≤
+    10000 ^ 321 * 10000 ^ 10 / 2 :=
   cutNumbers.time_le (by norm_num)
 
 section OneCut
