@@ -11,6 +11,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Trees.Th
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.ScriptSize
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Dealing.Tables
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.GroupProgram.Time
+public import CslibFrontier.Foundations.Combinatorics.StagedTree
 import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Pieces.Program
 
 /-!
