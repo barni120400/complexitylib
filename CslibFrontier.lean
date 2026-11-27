@@ -2708,6 +2708,7 @@ public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpBTreePro
 public import CslibFrontier.Computability.Complexity.Classes.CountingSimulation.Separation
 public import CslibFrontier.Computability.LogSpaceDerandomization.RowCompression.FalseOverflow
 public import CslibFrontier.Computability.LogSpaceDerandomization.PilotDetectorTransport
+public import CslibFrontier.DataStructure.BTree.Comparisons.LookupLowerBound
 public import CslibFrontier.Algorithms.Lean.Freivalds
 public import CslibFrontier.GameTheory.SocialChoice.SinglePeaked.Ching
 public import CslibFrontier.Computability.Complexity.Problems.STCON.JustesenSourceLoop
@@ -4327,6 +4328,7 @@ public import CslibFrontier.Crypto.Computational.PedersenCommitment.PublicOperat
 public import CslibFrontier.Crypto.Primitives.PRG.LinearCongruential
 public import CslibFrontier.Computability.Complexity.Problems.SAT.Planar.PairedCrossoverLayoutData
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.InEpoch
+public import CslibFrontier.DataStructure.BTree.Comparisons.KeyOracle
 public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Strassen.Entry
 public import CslibFrontier.Algorithms.WordRAM.OddCycleTransversal.CompressSpec
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Encodings.Frame.Basic
