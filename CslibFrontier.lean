@@ -4118,6 +4118,7 @@ public import CslibFrontier.Algorithms.WordRAM.ExactTriangle.RecordWitness.Trace
 public import CslibFrontier.Algorithms.WordRAM.VariableElimination.Horner
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.NamedValue
 public import CslibFrontier.Crypto.Protocols.FRI.Soundness
+public import CslibFrontier.Crypto.Primitives.Garbling.FoundationsAsymptotic
 public import CslibFrontier.Crypto.Primitives.BlockCipher.ECB
 public import CslibFrontier.Computability.Circuit.Frontier.TensorNetwork.ReductionLift
 public import CslibFrontier.Logics.Propositional.CNF.TruthTable
