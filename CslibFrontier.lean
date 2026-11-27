@@ -2335,6 +2335,7 @@ public import CslibFrontier.MachineLearning.PACLearning.Realizable
 public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.Product.Catalogue
 public import CslibFrontier.Computability.Circuit.Boolean.Hierarchy
 public import CslibFrontier.Logics.FirstOrder.EhrenfeuchtFraisse.DefinedGraph
+public import CslibFrontier.Crypto.Protocols.MPC.InputConsistency
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Halting.Rice
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Groups
 public import CslibFrontier.Computability.Circuit.Boolean.SemiUnbounded.MinIsolation
