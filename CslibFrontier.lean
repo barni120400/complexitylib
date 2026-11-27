@@ -4548,6 +4548,7 @@ public import CslibFrontier.Algorithms.WordRAM.Arborescence.Internal.CoreProg
 public import CslibFrontier.Algorithms.WordRAM.ExactTriangle.FixedPrime
 public import CslibFrontier.DataStructure.Dictionary.SuccinctWhpModelStep.DeleteLast
 public import CslibFrontier.GameTheory.Mechanism.Taxation
+public import CslibFrontier.Crypto.Primitives.Garbling.CircuitInvertersPPT
 public import CslibFrontier.Languages.Probabilistic.QueriesWith
 public import CslibFrontier.Foundations.Data.BitString.PartialAssignment.Counting
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Cuts.Law
