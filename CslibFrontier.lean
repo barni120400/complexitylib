@@ -8101,6 +8101,7 @@ public import CslibFrontier.Algorithms.WordRAM.EdmondsKarp.UniformBipartite
 public import CslibFrontier.Computability.PropertyTesting.DenseGraph.TriangleFree
 public import CslibFrontier.MachineLearning.OnlineLearning.Hedge
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Universal.WindowedInit
+public import CslibFrontier.Algorithms.WordRAM.MinimumSpanningForest.OptimalMSF.Driver
 public import CslibFrontier.Computability.Circuit.Rational.MatrixEval.Defs
 public import CslibFrontier.Algorithms.Reachability.SavitchWalk
 public import CslibFrontier.Algorithms.Lean.EditDistance.LCS
