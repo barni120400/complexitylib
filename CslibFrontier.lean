@@ -5074,6 +5074,7 @@ public import CslibFrontier.Computability.Communication.Distributional
 public import CslibFrontier.Algorithms.ExactTriangle.Defs
 public import CslibFrontier.Foundations.Probability.Multilinear.InvarianceLipschitz
 public import CslibFrontier.Computability.Complexity.Problems.CSP.RotationSystem.Darts
+public import CslibFrontier.Crypto.Protocols.UC.Computational
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.RouteSupports
 public import CslibFrontier.Foundations.Analysis.SpecialFunctions.Trigonometric.Bounds
 public import CslibFrontier.Foundations.Probability.Gaussian.Measure
@@ -5321,6 +5322,7 @@ public import CslibFrontier.Crypto.Protocols.SigmaProtocol.Lyubashevsky.Signatur
 public import CslibFrontier.Computability.TreeEval.Ary.Packed.RawController
 public import CslibFrontier.Foundations.Algebra.Polynomial.RealRoot.CoeffNormBound
 public import CslibFrontier.Computability.PCP.TwoProverGame.LowIndividualDegree.SliceSelfImprovement
+public import CslibFrontier.Crypto.Protocols.UC.PPT.Composition
 public import CslibFrontier.Crypto.Protocols.SSP.Hybrid
 public import CslibFrontier.Probability.EntropyConcentration
 public import CslibFrontier.DataStructure.Dictionary.SuccinctWhpModelTick.InsertCollision
