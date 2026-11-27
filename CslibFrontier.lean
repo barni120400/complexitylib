@@ -1644,6 +1644,7 @@ public import CslibFrontier.Foundations.RelationAlgebra.AtomTable
 public import CslibFrontier.Logics.Propositional.CSP.Edge.DAGPaths.Preparation
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctDispatch
 public import CslibFrontier.Algorithms.WordRAM.KMP
+public import CslibFrontier.Crypto.Protocols.UC.PushProperties
 public import CslibFrontier.Computability.Complexity.Problems.NCL.Diagram.Word.PolyTime
 public import CslibFrontier.Tactic.Realize
 public import CslibFrontier.Foundations.Probability.Gaussian.Real
