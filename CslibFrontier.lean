@@ -4582,6 +4582,7 @@ public import CslibFrontier.Languages.Probabilistic.QueryCount.Demand
 public import CslibFrontier.Computability.Complexity.Problems.Hamiltonian.Diamond.Defs
 public import CslibFrontier.DataStructure.BallsToSlots.Spec
 public import CslibFrontier.Computability.Complexity.Problems.Graph.PolygonalDrawing.Restoration
+public import CslibFrontier.Computability.Complexity.RealAlgebraic.ControlledTwoBlockDecision
 public import CslibFrontier.Computability.Complexity.Fagin.Ordered.Problems
 public import CslibFrontier.Logics.Propositional.CSP.CNFTemplate
 public import CslibFrontier.DataStructure.PriorityQueue.WordRAM.FibonacciHeap.MinPQ
