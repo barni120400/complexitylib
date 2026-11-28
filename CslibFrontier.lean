@@ -5744,6 +5744,7 @@ public import CslibFrontier.Computability.Geometry.Orthogonal.Subdivision
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpFastOpProg.InsGuards
 public import CslibFrontier.Algorithms.WordRAM.ExactTriangle.PrimeSelection.Loop
 public import CslibFrontier.Foundations.Data.Nat.TwoAdicInterval
+public import CslibFrontier.Foundations.BooleanAnalysis.BiasedFourier
 public import CslibFrontier.Foundations.Quantum.DensityMatrix.RelativeEntropyDomination
 public import CslibFrontier.Logics.Propositional.PlaistedGreenbaumCNF.Refutation
 public import CslibFrontier.DataStructure.SearchTree.Erase
