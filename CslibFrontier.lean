@@ -9948,6 +9948,7 @@ public import CslibFrontier.Computability.Interactive.Sumcheck
 public import CslibFrontier.Computability.Circuit.Frontier.Layouts.Gaussian.PairBound.CertChecker
 public import CslibFrontier.Foundations.RingTheory.MvPolynomial.PurePower.SeparatedCriticalValues
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.ReachableViews
+public import CslibFrontier.Crypto.Computational.PseudorandomGenerator.NextBit
 public import CslibFrontier.Tactic.FinIndex
 public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.BoxBatch.Exec
 public import CslibFrontier.Crypto.Computational.Encryption.Deterministic
