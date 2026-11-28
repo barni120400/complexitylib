@@ -1309,6 +1309,7 @@ public import CslibFrontier.Foundations.Quantum.Algebra.SandwichedMeasurement
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine.Offset
 public import CslibFrontier.Logics.FirstOrder.EhrenfeuchtFraisse.GraphProperties
 public import CslibFrontier.Algorithms.WordRAM.AhoCorasick.Layout
+public import CslibFrontier.Computability.Complexity.Problems.HittingSet
 public import CslibFrontier.Computability.Machines.Turing.SingleTape.PostTuringMachine
 public import CslibFrontier.Computability.Complexity.FineGrained.Reduction
 public import CslibFrontier.MachineLearning.OnlineLearning.OCOLowerBound
