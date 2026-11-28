@@ -84,6 +84,7 @@ import CslibFrontierResults.Entries.IndirectRevelation
 import CslibFrontierResults.Entries.PotentialPolymatrix
 import CslibFrontierResults.Entries.EvolutionaryStability
 import CslibFrontierResults.Entries.ODonnellFriedgutConcentration
+import CslibFrontierResults.Entries.BooleanAggregation
 import CslibFrontierResults.Entries.LupanovRectifier
 import CslibFrontierResults.Entries.CBCMAC
 import CslibFrontierResults.Entries.BiddingLanguage
