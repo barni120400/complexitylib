@@ -8331,6 +8331,7 @@ public import CslibFrontier.Computability.Circuit.Arithmetic.FormulaInterpolatio
 public import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.AtomBoundary
 public import CslibFrontier.Foundations.Data.ZMod.DotProduct
 public import CslibFrontier.Computability.Distributed.ApproxAgreement.TrimmedMidpoint
+public import CslibFrontier.Computability.Complexity.RealAlgebraic.RelativeWordCriterion
 public import CslibFrontier.Computability.PolyTime.CSP.CyclicDifference.FaceParity
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.PolyTimeListToBits
 public import CslibFrontier.Computability.Complexity.Problems.Graph.RotationSystem.Star
