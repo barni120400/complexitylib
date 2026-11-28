@@ -5,7 +5,9 @@ Authors: Aviv Bar Natan
 -/
 
 import CslibFrontier.Computability.Circuit.Arithmetic.MatrixMultiplication.NineQuarters
+import CslibFrontier.Computability.Circuit.Arithmetic.MatrixMultiplication.Characteristic
 import CslibFrontier.Computability.Circuit.Arithmetic.MatrixMultiplication.StrassenRank
+import Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.MvPolynomial.NoZeroDivisors
 
@@ -143,6 +145,10 @@ example : omega (ZMod 2) = rankExponent (ZMod 2) :=
 example {τ : ℝ} (hτ : omega (ZMod 2) < τ) : ∃ c : ℝ, 0 < c ∧ ∀ D : ℕ, 1 ≤ D →
     ∃ r : ℕ, (r : ℝ) ≤ c * (D : ℝ) ^ τ ∧ Rank r (mm D D D : Tensor (ZMod 2) _ _ _) :=
   exists_rank_mm_le_rpow (ZMod 2) hτ
+
+/-- A lower bound on `omega` over the algebraic closure of `𝔽₂` holds over `𝔽₂`. -/
+example : omega (AlgebraicClosure (ZMod 2)) ≤ omega (ZMod 2) :=
+  omega_le_of_isAlgClosed 2
 
 end RankExponent
 

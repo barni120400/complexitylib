@@ -51,6 +51,8 @@ for every `D ≥ 1`. Together with block recursion this identifies `omega K` wit
 * `Cslib.Circuits.Arithmetic.MatrixMultiplication.rankExponent`,
   `Cslib.Circuits.Arithmetic.MatrixMultiplication.omega_eq_rankExponent`: `omega K` is the rank
   exponent over every nontrivial commutative ring.
+* `Cslib.Circuits.Arithmetic.MatrixMultiplication.rankExponent_le_of_rank`: comparison of rank
+  exponents.
 
 ## References
 
@@ -469,5 +471,13 @@ theorem omega_eq_rankExponent (K : Type*) [CommRing K] [Nontrivial K] :
     calc c * (v : ℝ) ^ (omega K + ε / 2) ≤ (v : ℝ) ^ (ε / 2) * (v : ℝ) ^ (omega K + ε / 2) :=
           mul_le_mul_of_nonneg_right hcv (by positivity)
       _ = (v : ℝ) ^ (omega K + ε) := by rw [← Real.rpow_add hv0]; ring_nf
+
+/-- If every rank decomposition of `⟨v, v, v⟩` over `L` gives one with as many terms over `K`,
+then the rank exponent of `K` is at most that of `L`. -/
+theorem rankExponent_le_of_rank {K L : Type*} [CommRing K] [Nontrivial K] [CommSemiring L]
+    (h : ∀ v r : ℕ, Rank r (mm v v v : Tensor L _ _ _) → Rank r (mm v v v : Tensor K _ _ _)) :
+    rankExponent K ≤ rankExponent L :=
+  csInf_le_csInf ⟨2, fun _ hτ => two_le_of_mem_rankExponent_set hτ⟩ (rankExponent_set_nonempty L)
+    fun _ ⟨v, r, hv, hr, hrτ⟩ => ⟨v, r, hv, h v r hr, hrτ⟩
 
 end Cslib.Circuits.Arithmetic.MatrixMultiplication
