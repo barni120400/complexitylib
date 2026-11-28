@@ -10851,6 +10851,7 @@ public import CslibFrontier.Computability.Circuit.Frontier.TensorNetwork.Open
 public import CslibFrontier.Computability.TreeEval.Ary.Packed.Interpolation
 public import CslibFrontier.Foundations.Data.Int.LogBounds
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Poincare.Poincare
+public import CslibFrontier.Foundations.BooleanAnalysis.ParityPTF
 public import CslibFrontier.Foundations.Combinatorics.Multigraph
 public import CslibFrontier.Computability.Circuit.Frontier.Layouts.Gaussian.PairBound.Profiles
 public import CslibFrontier.Crypto.Computational.Lattice.GIVP
