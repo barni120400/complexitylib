@@ -84,6 +84,7 @@ import CslibFrontierResults.Entries.ODonnellFriedgutConcentration
 import CslibFrontierResults.Entries.LupanovRectifier
 import CslibFrontierResults.Entries.CBCMAC
 import CslibFrontierResults.Entries.LogspaceUniformNC
+import CslibFrontierResults.Entries.ODonnellHammingBall
 import CslibFrontierResults.Entries.ExternalRegret
 import CslibFrontierResults.Entries.UtilityGame
 import CslibFrontierResults.Entries.PrefixFreePRF

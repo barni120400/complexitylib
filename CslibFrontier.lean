@@ -1105,6 +1105,7 @@ public import CslibFrontier.Computability.Circuit.NNF.ReadOnce
 public import CslibFrontier.GameTheory.NetworkFormation.LocalConnection.Bounds
 public import CslibFrontier.Algorithms.MatrixMultiplication.Schonhage.Full
 public import CslibFrontier.MachineLearning.UniformLearning.CryptoHardness.Circuit
+public import CslibFrontier.Foundations.BooleanAnalysis.HammingBallWeight
 public import CslibFrontier.Computability.Complexity.Classes.IP.Games.Repetition
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.InSpace.ToeplitzHash
 public import CslibFrontier.Foundations.Probability.Gaussian.SmoothingParameter
@@ -4613,6 +4614,7 @@ public import CslibFrontier.Computability.GenericRAM.Simulation.Finite
 public import CslibFrontier.Foundations.Data.BitString.CyclicSeam
 public import CslibFrontier.Computability.LogSpaceDerandomization.RootMetric.ConditionalWalk
 public import CslibFrontier.Foundations.LinearAlgebra.KernelVector
+public import CslibFrontier.Foundations.BooleanAnalysis.MajorityInfluence
 public import CslibFrontier.GameTheory.Congestion.StrongNash
 public import CslibFrontier.MachineLearning.UniformLearning.BestOf
 public import CslibFrontier.DataStructure.SearchTree.PointerMachine.Structured.Height
@@ -4720,6 +4722,7 @@ public import CslibFrontier.Computability.Complexity.Fagin.Layout
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.RunCount
 public import CslibFrontier.Foundations.Combinatorics.SimpleGraph.CubicMatching
 public import CslibFrontier.Computability.Complexity.Reduction.Isomorphism.SchroederBernstein
+public import CslibFrontier.Foundations.BooleanAnalysis.CentralLimit
 public import CslibFrontier.GameTheory.Bimatrix.CorrelatedPolytope
 public import CslibFrontier.Computability.Circuit.Unfolding
 public import CslibFrontier.Foundations.GroupTheory.Perm.ListColorPath
@@ -9650,6 +9653,7 @@ public import CslibFrontier.Crypto.Computational.MLDSA.ExpandAProgramming
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.ProgramSemantics
 public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.Product.Admission
 public import CslibFrontier.Computability.PolyTime.CSP.Edge.Solver.Lifting
+public import CslibFrontier.Foundations.MeasureTheory.Measure.WeakConvergenceMoments
 public import CslibFrontier.Computability.Circuit.Arithmetic.DepthFive.UpperBound
 public import CslibFrontier.DataStructure.CountMin.LinearHash
 public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.Product.SavedGroups
