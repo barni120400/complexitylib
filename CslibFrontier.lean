@@ -2530,6 +2530,7 @@ public import CslibFrontier.Computability.Complexity.Problems.UGraph.USTCONWrite
 public import CslibFrontier.Computability.GenericRAM.Native.Certificate
 public import CslibFrontier.Crypto.Protocols.MPC.PolyTime.Certificates
 public import CslibFrontier.Algorithms.Lean.TSP.Walk
+public import CslibFrontier.Crypto.Computational.PseudorandomFunction.Cascade.AdjacentPRF
 public import CslibFrontier.Computability.Complexity.Problems.SAT.ExactOne.DrawingValid
 public import CslibFrontier.Tactic.Negligible
 public import CslibFrontier.Crypto.Computational.Encryption.Roulette
