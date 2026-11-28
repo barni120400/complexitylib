@@ -6261,6 +6261,7 @@ public import CslibFrontier.Tactic.LRATTauto
 public import CslibFrontier.Logics.Propositional.CNF.Coding
 public import CslibFrontier.Algorithms.Lean.Dijkstra.Native.Word
 public import CslibFrontier.Crypto.Computational.DiffieHellman.ListCDHFamily
+public import CslibFrontier.GameTheory.Congestion.BeckmannPotential
 public import CslibFrontier.Computability.LogSpaceDerandomization.DenseRowRecipes.Stability
 public import CslibFrontier.Computability.PCP.TwoProverGame.SymmetricLinearityReduction
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Combinators.StepCounter.Unary
@@ -7090,6 +7091,7 @@ public import CslibFrontier.Algorithms.WordRAM.ThreeSum.Decision.VisitorTransiti
 public import CslibFrontier.Foundations.Analysis.LpNorm
 public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.LowerBound
 public import CslibFrontier.Foundations.Geometry.Polyhedra.InequalitySystem
+public import CslibFrontier.GameTheory.Congestion.WardropNoRegret
 public import CslibFrontier.Computability.Complexity.Problems.CSP.Affine
 public import CslibFrontier.Probability.BitString.Rademacher.Tail
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.TraceRank
@@ -7829,6 +7831,7 @@ public import CslibFrontier.Computability.Circuit.Frontier.Layouts.Carving.Decom
 public import CslibFrontier.Computability.Complexity.Problems.SAT.ExactOne.DrawingClauseVertices
 public import CslibFrontier.Languages.Probabilistic.Oracle.Substitution
 public import CslibFrontier.Foundations.Data.Fintype.AgreeOn
+public import CslibFrontier.GameTheory.Congestion.CapacityAugmentation
 public import CslibFrontier.Computability.TreeEval.Ary.Packed.RawControllerEncoding
 public import CslibFrontier.Computability.Complexity.Problems.SAT.ExactOne.DrawingCosts
 public import CslibFrontier.Crypto.Computational.Nonuniform.Advice
@@ -9846,6 +9849,7 @@ public import CslibFrontier.Computability.Complexity.Problems.Graph.SpanningTree
 public import CslibFrontier.Algorithms.Lean.CDCL.Phase
 public import CslibFrontier.Algorithms.WordRAM.ThreeSum.ChanHe.Count
 public import CslibFrontier.Crypto.Computational.MLDSA.ResponseBinding
+public import CslibFrontier.GameTheory.Congestion.MarginalCostPricing
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.Space
 public import CslibFrontier.Crypto.Primitives.UHF.XorHash.PRF
 public import CslibFrontier.Computability.Circuit.Frontier.TensorRank.ThreeWayCut.DegreeThreeCap
