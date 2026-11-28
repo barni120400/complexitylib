@@ -85,6 +85,7 @@ import CslibFrontierResults.Entries.EvolutionaryStability
 import CslibFrontierResults.Entries.ODonnellFriedgutConcentration
 import CslibFrontierResults.Entries.LupanovRectifier
 import CslibFrontierResults.Entries.CBCMAC
+import CslibFrontierResults.Entries.BiddingLanguage
 import CslibFrontierResults.Entries.LogspaceUniformNC
 import CslibFrontierResults.Entries.ODonnellHammingBall
 import CslibFrontierResults.Entries.ExternalRegret
