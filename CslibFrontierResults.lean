@@ -71,6 +71,7 @@ import CslibFrontierResults.Entries.PlantedClique
 import CslibFrontierResults.Entries.NetworkContagion
 import CslibFrontierResults.Entries.BanditRegret
 import CslibFrontierResults.Entries.SamplableNotComputable
+import CslibFrontierResults.Entries.DHKEM
 import CslibFrontierResults.Entries.KellyMarketClearing
 import CslibFrontierResults.Entries.SelfClosingDoor
 import CslibFrontierResults.Entries.AlternatingTimeSpace
