@@ -5,6 +5,7 @@ Authors: Aviv Bar Natan
 -/
 
 import CslibFrontier.Computability.Circuit.Arithmetic.MatrixMultiplication.NineQuarters
+import CslibFrontier.Computability.Circuit.Arithmetic.MatrixMultiplication.StrassenRank
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.Algebra.MvPolynomial.NoZeroDivisors
 
@@ -14,7 +15,8 @@ The trivial algorithm shows that `3` is an admissible exponent over `ℚ`, so th
 exponents is nonempty; every admissible exponent is at least `2`, so `omega ℚ` is a true infimum
 with `2 ≤ omega ℚ ≤ 3`; and the headline gives `omega ℚ ≤ 9 / 4` and circuits of size
 `O(n ^ (9/4 + 1/100))`. Over `𝔽₂` a circuit can output the product of every pair of matrices
-without computing matrix multiplication in the formal model. -/
+without computing matrix multiplication in the formal model. Over every field, including `𝔽₂`,
+`omega` is the rank exponent. -/
 
 namespace CslibFrontierTests.MatrixMultiplicationExponent
 
@@ -122,5 +124,26 @@ example : ∃ C : Circuit (arithSignature (ZMod 2)) (1 * 1 + 1 * 1) (1 * 1),
     omega
 
 end Formal
+
+/-! ### The exponent is the rank exponent, over every field -/
+
+section RankExponent
+
+open Cslib Cslib.Tensor
+
+/-- The flattening bound: a rank decomposition of `⟨2, 2, 2⟩` has at least `4` terms. -/
+example {r : ℕ} (h : Rank r (mm 2 2 2 : Tensor (ZMod 2) _ _ _)) : 4 ≤ r :=
+  mul_self_le_of_rank_mm h
+
+/-- Over `𝔽₂`, `omega` is the rank exponent. -/
+example : omega (ZMod 2) = rankExponent (ZMod 2) :=
+  omega_eq_rankExponent (ZMod 2)
+
+/-- Over `𝔽₂`, circuits below an exponent give rank decompositions below it. -/
+example {τ : ℝ} (hτ : omega (ZMod 2) < τ) : ∃ c : ℝ, 0 < c ∧ ∀ D : ℕ, 1 ≤ D →
+    ∃ r : ℕ, (r : ℝ) ≤ c * (D : ℝ) ^ τ ∧ Rank r (mm D D D : Tensor (ZMod 2) _ _ _) :=
+  exists_rank_mm_le_rpow (ZMod 2) hτ
+
+end RankExponent
 
 end CslibFrontierTests.MatrixMultiplicationExponent
