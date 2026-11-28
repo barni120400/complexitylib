@@ -1077,6 +1077,7 @@ public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.En
 public import CslibFrontier.Foundations.Data.List.Palindrome
 public import CslibFrontier.Computability.PolyTime.CSP.Edge.Solver.Agreement
 public import CslibFrontier.Computability.Complexity.Classes.Oracle.ThresholdSearch
+public import CslibFrontier.MachineLearning.UniformLearning.DecisionTreeClass
 public import CslibFrontier.Computability.Complexity.Classes.Advice.OneBit
 public import CslibFrontier.Logics.SecondOrder.Horn.LeastFixedPoint
 public import CslibFrontier.Languages.Probabilistic.Repeat
@@ -2186,6 +2187,7 @@ public import CslibFrontier.Computability.Complexity.Problems.SAT.ExactOne.Drawi
 public import CslibFrontier.Crypto.Computational.GMW.Soundness
 public import CslibFrontier.Logics.Propositional.CSP.BinaryDigits
 public import CslibFrontier.Computability.LogSpaceDerandomization.RowCompression.OverflowNoise
+public import CslibFrontier.Computability.DecisionTree.Truncate
 public import CslibFrontier.Foundations.Data.Finset.ExpectPi
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.ResizableSuccinct.Dispatch.BucketOps.QueryInsertSpec
 public import CslibFrontier.Logics.BooleanClone.Formula

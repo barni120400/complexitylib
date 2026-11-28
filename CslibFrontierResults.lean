@@ -71,6 +71,7 @@ import CslibFrontierResults.Entries.UniformFanIn
 import CslibFrontierResults.Entries.RelabelToFront
 import CslibFrontierResults.Entries.LoadBalancing
 import CslibFrontierResults.Entries.PlantedClique
+import CslibFrontierResults.Entries.ODonnellDecisionTreeConcentration
 import CslibFrontierResults.Entries.NetworkContagion
 import CslibFrontierResults.Entries.BanditRegret
 import CslibFrontierResults.Entries.SamplableNotComputable
