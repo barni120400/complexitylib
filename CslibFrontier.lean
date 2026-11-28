@@ -6812,6 +6812,7 @@ public import CslibFrontier.Logics.Propositional.CSP.Occurrence.AppendScope
 public import CslibFrontier.Computability.PolyTime.Int.Jet
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Tape.WordCode
 public import CslibFrontier.Computability.Circuit.Boolean.Layered
+public import CslibFrontier.Foundations.Data.Nat.ProgressionFreeAddress
 public import CslibFrontier.DataStructure.PriorityQueue.BinaryHeap.Native.Initialize
 public import CslibFrontier.Foundations.Combinatorics.SimpleGraph.MetricGraph.Maps
 public import CslibFrontier.Foundations.BooleanAnalysis.SparseEquations.Degree
