@@ -75,6 +75,7 @@ public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.Pr
 public import CslibFrontier.Foundations.Quantum.Algebra.CompletionConsistency
 public import CslibFrontier.Computability.WordRAM.Native
 public import CslibFrontier.Computability.Circuit.Quantum.Oracle.Controller.Program
+public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.ColorDegree
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Internal.ResourceFacts
 public import CslibFrontier.Computability.Probabilistic.Internal.Oracle.AuxClock
 public import CslibFrontier.Crypto.Computational.Encryption.Hybrid
@@ -1080,6 +1081,7 @@ public import CslibFrontier.Computability.PolyTime.CSP.Edge.Solver.Agreement
 public import CslibFrontier.Computability.Complexity.Classes.Oracle.ThresholdSearch
 public import CslibFrontier.MachineLearning.UniformLearning.DecisionTreeClass
 public import CslibFrontier.Computability.Complexity.Classes.Advice.OneBit
+public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.AnyOrderBoundedDegree
 public import CslibFrontier.Logics.SecondOrder.Horn.LeastFixedPoint
 public import CslibFrontier.Languages.Probabilistic.Repeat
 public import CslibFrontier.Algorithms.WordRAM.ExactTriangle.StreamingFixedPrime.Cost
@@ -8042,6 +8044,7 @@ public import CslibFrontier.Crypto.Computational.Encryption.CBCMode
 public import CslibFrontier.Logics.Propositional.Resolution.FromLRAT
 public import CslibFrontier.Algorithms.Lean.MaxFlow.Dinitz
 public import CslibFrontier.Foundations.Analysis.SpecialFunctions.DescFactorialExp
+public import CslibFrontier.Computability.Circuit.Arithmetic.ROABP.SplitRank
 public import CslibFrontier.Algorithms.ThreeSum.ChanHe.Collisions
 public import CslibFrontier.Foundations.BooleanAnalysis.ResilientComposition
 public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.Callable.Program
@@ -8723,6 +8726,7 @@ public import CslibFrontier.Computability.Complexity.Classes.Hierarchy.LazyDiago
 public import CslibFrontier.Computability.Circuit.Boolean.CarrySave.Reduce.PolyTime
 public import CslibFrontier.Computability.PolyTime.CSP.CyclicDifference.Size
 public import CslibFrontier.Computability.Probabilistic.Oracle.ReplayParameter
+public import CslibFrontier.Computability.Circuit.Arithmetic.HittingSet.ColorComponentEval
 public import CslibFrontier.Foundations.Data.Fin.Tuple
 public import CslibFrontier.Logics.FirstOrder.FiniteVariable.BijectiveGame
 public import CslibFrontier.Probability.PMF.UniformIndex
