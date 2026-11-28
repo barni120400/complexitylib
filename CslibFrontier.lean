@@ -7869,6 +7869,7 @@ public import CslibFrontier.Crypto.Computational.Encryption.CTRMode.Uniform
 public import CslibFrontier.Computability.Circuit.Quantum.EncodingSize
 public import CslibFrontier.Algorithms.PlantedClique.Correctness
 public import CslibFrontier.Crypto.Computational.Kilian.Micali
+public import CslibFrontier.Algorithms.LinearAlgebra.SparseDescriptorCertificate
 public import CslibFrontier.Computability.Circuit.Boolean.WordConstant.PolyTime
 public import CslibFrontier.Computability.Communication.Lifting.DiscrepancyLifting
 public import CslibFrontier.Computability.Circuit.Arithmetic.Separation.Interpreter.Postpone
@@ -10480,6 +10481,7 @@ public import CslibFrontier.Algorithms.WordRAM.MatrixMultiplication.Schonhage.Pr
 public import CslibFrontier.Foundations.Combinatorics.Multidigraph.BEST
 public import CslibFrontier.Algorithms.WordRAM.Arborescence.Internal.BestEntryExitSpec
 public import CslibFrontier.Foundations.Data.Code.HammingCode
+public import CslibFrontier.Languages.Electrical.SparseDecoupling
 public import CslibFrontier.Crypto.Computational.Homomorphic.Evaluation
 public import CslibFrontier.Computability.QueryComplexity.OneSided
 public import CslibFrontier.Computability.LogSpaceDerandomization.TrueSampleMeans
