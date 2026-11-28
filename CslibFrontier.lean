@@ -1320,6 +1320,7 @@ public import CslibFrontier.Computability.Complexity.Classes.MIP.CorrectionProba
 public import CslibFrontier.Crypto.Computational.SIS.ModulusSwitch.CenteredBinomial
 public import CslibFrontier.Computability.MCSP.Restrictions
 public import CslibFrontier.Computability.LogSpaceDerandomization.NormalizedAtomRows.MeanEvent
+public import CslibFrontier.Computability.WordRAM.Realization.FramedLoop
 public import CslibFrontier.Foundations.Quantum.Algebra.SandwichedMeasurement
 public import CslibFrontier.Computability.Machines.Turing.MultiTape.Complexity.LogSpace.QueryMachine.Offset
 public import CslibFrontier.Logics.FirstOrder.EhrenfeuchtFraisse.GraphProperties
