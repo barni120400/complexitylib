@@ -706,6 +706,7 @@ public import CslibFrontier.Computability.Complexity.Problems.SAT.Relation
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.CutRank
 public import CslibFrontier.Computability.Complexity.Classes.SharpP.OracleReplay
 public import CslibFrontier.Computability.PCP.TwoProverGame.Seeded.Basic
+public import CslibFrontier.Computability.Circuit.Boolean.SymmetricNC1
 public import CslibFrontier.Computability.Reduction.ManyOne
 public import CslibFrontier.Computability.Complexity.Problems.NCL.ConstraintGraph.SelectorNetwork.Legality
 public import CslibFrontier.Computability.Communication.Lifting.RatioWitness
