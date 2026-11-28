@@ -695,6 +695,7 @@ public import CslibFrontier.Computability.LogSpaceDerandomization.NormalizedAtom
 public import CslibFrontier.Computability.Complexity.Problems.NCL.ConstraintGraph.Clause
 public import CslibFrontier.Languages.SQL.Typing
 public import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.BoundaryDeletion
+public import CslibFrontier.Computability.Complexity.Problems.Permanent.XorGadget
 public import CslibFrontier.Computability.Circuit.Frontier.Quantum.WireNetwork
 public import CslibFrontier.Algorithms.WordRAM.ThreeSum.Decision.VisitorRelease
 public import CslibFrontier.Logics.Propositional.CSP.Planar.Embedding.Construction
@@ -6242,6 +6243,7 @@ public import CslibFrontier.Computability.Complexity.Classes.Selective
 public import CslibFrontier.Algorithms.WordRAM.ExactTriangle.RecordWitness.FailureCount
 public import CslibFrontier.DataStructure.Dictionary.WordRAM.SuccinctWhpBTreeProg.Descend
 public import CslibFrontier.Computability.Complexity.Problems.SAT.ExactOne.DrawingProfiles
+public import CslibFrontier.Foundations.Data.Matrix.Permanent.Gadget
 public import CslibFrontier.Computability.Circuit.Boolean.WeightedThreshold.AndreevTruncatedCircuit
 public import CslibFrontier.Computability.Complexity.Problems.NCL.Diagram.Word.TypingPolyTime
 public import CslibFrontier.DataStructure.PriorityQueue.WordRAM.FibonacciHeap.Consolidate
