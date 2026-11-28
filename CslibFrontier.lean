@@ -771,6 +771,7 @@ public import CslibFrontier.Foundations.Data.BitString.CyclicDifference
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.VertexOrientation
 public import CslibFrontier.Foundations.LinearAlgebra.Matrix.GlueDeterminant
 public import CslibFrontier.Foundations.Data.Fin.Prod
+public import CslibFrontier.Algorithms.Lean.Query.MinimumSpanningForest.Boruvka
 public import CslibFrontier.Probability.HashFamily.MultiplyShift
 public import CslibFrontier.MachineLearning.PACLearning.SampleComplexityLower
 public import CslibFrontier.Computability.Circuit.Quantum.AcceptOperator
